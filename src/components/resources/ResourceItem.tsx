@@ -50,6 +50,7 @@ const DocumentItem: React.FC<{ resource: ResourceItemEntity }> = ({
 				width="100%"
 				height="100%"
 			/> */}
+			<a href="{resource.resourceUrl}">Download {resource.title}</a>
 		</div>
 	);
 };

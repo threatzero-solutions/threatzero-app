@@ -32,7 +32,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
 		queryFn: ({ queryKey }) =>
 			getThreatAssessments(queryKey[1] as ThreatAssessmentFilterOptions),
 	});
-	const [statsFilterOptions, setStatsFilterOptions] =
+	const [statsFilterOptions] =
 		useState<ThreatAssessmentFilterOptions>({});
 	const { data: assessmentStats } = useQuery({
 		queryKey: ["threat-assessment-stats", statsFilterOptions],

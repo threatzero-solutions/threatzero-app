@@ -167,7 +167,7 @@ const EditFieldGroup: React.FC = () => {
 		fieldGroupMutation.mutate(newGroup);
 	};
 
-	const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+	const handleDelete = () => {
 		deleteFieldGroupMutation.mutate(group.id);
 	};
 

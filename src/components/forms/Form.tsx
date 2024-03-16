@@ -270,7 +270,7 @@ const Form: React.FC<FormProps> = ({
 
 	const deleteDraftMutation = useMutation({
 		mutationFn: deleteForm,
-		onSuccess: (data) => {
+		onSuccess: () => {
 			setSearchParams((p) => {
 				p.delete("v");
 				return p;

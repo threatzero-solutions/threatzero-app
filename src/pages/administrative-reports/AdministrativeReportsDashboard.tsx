@@ -35,7 +35,7 @@ const AdministrativeReportsDashboard: React.FC = () => {
 			getTipSubmissions(queryKey[1] as TipSubmissionFilterOptions),
 	});
 
-	const [tipFilterOptions, setTipFilterOptions] =
+	const [tipFilterOptions] =
 		useState<TipSubmissionFilterOptions>({});
 	const { data: tipStats } = useQuery({
 		queryKey: ["tip-submission-stats", tipFilterOptions],

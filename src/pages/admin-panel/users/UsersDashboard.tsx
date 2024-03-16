@@ -22,7 +22,7 @@ const colorForJobStatus = (status: any) => {
 };
 
 const UsersDashboard: React.FC = () => {
-	const [recentImports, setRecentImports] = useState<any[]>([
+	const [recentImports] = useState<any[]>([
 		{
 			id: "abc04-ab03k4j-alsj30999944-909449",
 			type: "users_import",

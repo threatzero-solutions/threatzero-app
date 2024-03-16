@@ -218,7 +218,7 @@ const EditTrainingSection: React.FC = () => {
 		saveSectionMutation.mutate();
 	};
 
-	const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+	const handleDelete = () => {
 		deleteSectionMutation.mutate();
 	};
 
