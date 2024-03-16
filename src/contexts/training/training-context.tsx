@@ -13,13 +13,13 @@ import {
 	TrainingSection,
 } from "../../types/entities";
 import SlideOver from "../../components/layouts/SlideOver";
-import ViewCourses from "../../pages/training-library.tsx/components/ViewCourses";
-import ViewTrainingAudiences from "../../pages/training-library.tsx/components/ViewTrainingAudiences";
+import ViewCourses from "../../pages/training-library/components/ViewCourses";
+import ViewTrainingAudiences from "../../pages/training-library/components/ViewTrainingAudiences";
 import { useQuery } from "@tanstack/react-query";
 import { getTrainingCourse, getTrainingCourses } from "../../queries/training";
-import EditTrainingSection from "../../pages/training-library.tsx/components/EditTrainingSection";
-import ManageItems from "../../pages/training-library.tsx/components/ManageItems";
-import EditTrainingAudience from "../../pages/training-library.tsx/components/EditTrainingAudience";
+import EditTrainingSection from "../../pages/training-library/components/EditTrainingSection";
+import ManageItems from "../../pages/training-library/components/ManageItems";
+import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
 import { useSearchParams } from "react-router-dom";
 import { CoreContext } from "../core/core-context";
 import { AxiosError } from "axios";

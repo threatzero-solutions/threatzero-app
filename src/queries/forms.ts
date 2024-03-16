@@ -18,6 +18,11 @@ export const getForms = (params: { [key: string]: any } = {}) =>
     })
     .then((res) => res.data);
 
+export const getFormsGroupedBySlug = () =>
+  axios
+    .get<Form[]>(`${API_BASE_URL}/api/forms/grouped-by-slug`)
+    .then((res) => res.data);
+
 // MUTATIONS
 
 export const saveForm = async (form: Partial<Form>) => {

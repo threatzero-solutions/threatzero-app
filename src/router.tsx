@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import App from "./App";
 import Dashboard from "./pages/dashboard/Dashboard";
-import TrainingLibrary from "./pages/training-library.tsx/TrainingLibrary";
+import TrainingLibrary from "./pages/training-library/TrainingLibrary";
 import TipSubmission from "./pages/tip-submission/TipSubmission";
 import Login from "./pages/Login";
 import AuthProvider from "./contexts/AuthProvider";
@@ -18,17 +18,17 @@ import {
 } from "@tanstack/react-query";
 import { PropsWithChildren, useContext, useEffect } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
-import TrainingItem from "./pages/training-library.tsx/TrainingItem";
+import TrainingItem from "./pages/training-library/TrainingItem";
 import ThreatAssessmentDashboard from "./pages/threat-assessments/ThreatAssessmentDashboard";
 import ThreatAssessmentForm from "./pages/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
 import { FormsContextProvider } from "./contexts/forms/forms-context";
 import { TrainingContextProvider } from "./contexts/training/training-context";
-import CourseBuilder from "./pages/training-library.tsx/CourseBuilder";
+import CourseBuilder from "./pages/training-library/CourseBuilder";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
 import PublicLayout from "./components/layouts/PublicLayout";
 import AdministrativeReportsDashboard from "./pages/administrative-reports/AdministrativeReportsDashboard";
-import ViewTrainingSection from "./pages/training-library.tsx/ViewTrainingSection";
+import ViewTrainingSection from "./pages/training-library/ViewTrainingSection";
 import { SurveysContextProvider } from "./contexts/surveys/surveys-context";
 import Page404 from "./pages/Page404";
 import FirstLinkRedirect from "./components/layouts/side-nav/FirstLinkRedirect";
@@ -385,7 +385,7 @@ const router = createBrowserRouter(
 		},
 	],
 	{
-		basename: import.meta.env.BASE_NAME,
+		basename: import.meta.env.VITE_BASE_NAME,
 	},
 );
 

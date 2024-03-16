@@ -8,7 +8,7 @@ import {
 import UserMenu from "../../UserMenu";
 import SideNavLink from "./SideNavLink";
 import { NavigationItem } from "../../../types/core";
-import { trainingLibraryPermissionsOptions } from "../../../pages/training-library.tsx/TrainingLibrary";
+import { trainingLibraryPermissionsOptions } from "../../../pages/training-library/TrainingLibrary";
 import { threatAssessmentPermissionsOptions } from "../../../pages/threat-assessments/ThreatAssessmentDashboard";
 import { CoreContext } from "../../../contexts/core/core-context";
 import { administrativeReportsDashboardPermissionsOptions } from "../../../pages/administrative-reports/AdministrativeReportsDashboard";

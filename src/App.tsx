@@ -1,4 +1,4 @@
-import './App.scss';
+import './App.css';
 import { Outlet } from 'react-router-dom';
 import SplashScreen from './components/layouts/SplashScreen';
 import { useContext } from 'react';

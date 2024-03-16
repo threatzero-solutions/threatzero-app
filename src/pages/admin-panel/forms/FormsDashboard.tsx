@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { classNames, fromStatus, humanizeSlug } from "../../../utils/core";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getForms } from "../../../queries/forms";
+import { getFormsGroupedBySlug } from "../../../queries/forms";
 
 const states = {
 	draft: "text-gray-700 bg-gray-50 ring-gray-600/20",
@@ -11,7 +11,7 @@ const states = {
 
 const FormsDashboard: React.FC = () => {
 	const { data: forms } = useQuery({queryKey: ["form"], queryFn: () =>
-		getForms({ resultType: "basic" }),
+		getFormsGroupedBySlug(),
 });
 
 	return (
@@ -22,7 +22,7 @@ const FormsDashboard: React.FC = () => {
 				</h3>
 			</div>
 			<ul className="divide-y divide-gray-100">
-				{forms?.results.map((form) => (
+				{forms?.map((form) => (
 					<li
 						key={form.id}
 						className="flex items-center justify-between gap-x-6 py-5"

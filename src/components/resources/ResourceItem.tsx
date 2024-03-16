@@ -40,7 +40,7 @@ const DocumentItem: React.FC<{ resource: ResourceItemEntity }> = ({
 
 	return (
 		<div className="h-screen snap-start md:mx-0 -mx-4 md:w-full w-screen">
-			<iframe
+			{/* <iframe
 				id="pdf-js-viewer"
 				title={resource.title}
 				src={
@@ -49,7 +49,7 @@ const DocumentItem: React.FC<{ resource: ResourceItemEntity }> = ({
 				}
 				width="100%"
 				height="100%"
-			/>
+			/> */}
 		</div>
 	);
 };
