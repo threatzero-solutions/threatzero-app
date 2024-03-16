@@ -1,0 +1,10 @@
+{
+	"keycloak": {
+		"config": {
+			"url": "https://auth.threatzero.org/",
+			"realm": "threatzero",
+			"clientId": "threatzero-app"
+		},
+		"initOptions": {}
+	}
+}
