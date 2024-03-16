@@ -117,10 +117,10 @@ export const filePreload = async (
           .filter(([_, f]) => !!f)
           .map(async ([result, file]) => {
             return axios
+              .create()
               .put(result.putUrl, file, {
                 headers: {
                   "Content-Type": file!.type,
-                  "x-local-noauth": "true",
                 },
               })
               .then(() => ({

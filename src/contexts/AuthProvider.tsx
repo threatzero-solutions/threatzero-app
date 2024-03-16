@@ -6,7 +6,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import configJson from "../config.json";
+import configJson from "../config";
 import { useNavigate } from "react-router-dom";
 import ErrorPage from "../pages/ErrorPage";
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
@@ -70,10 +70,7 @@ export const AuthContext = createContext<AuthContextType>({
 	authError: null,
 	accessToken: null,
 	authenticated: false,
-	addEventListener: (
-		event: string,
-		cb: (kc: Keycloak, ...args: any[]) => void,
-	) => {},
+	addEventListener: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -117,7 +114,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
 		setAuthenticated(!!authenticated);
 	};
 
-	const _onError = (kc: Keycloak, error: unknown) => {
+	const _onError = (_: Keycloak, error: unknown) => {
 		setAuthError(error);
 	};
 

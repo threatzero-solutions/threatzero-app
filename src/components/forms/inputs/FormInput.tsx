@@ -103,8 +103,8 @@ const FormInput = <
 
 	if (Object.hasOwn(attrs, "value") && attrs.value !== undefined) {
 		if (attrs.type === FieldType.CHECKBOX) {
-			Reflect.deleteProperty(attrs, "value");
 			attrs.checked = !!attrs?.value ?? false;
+			Reflect.deleteProperty(attrs, "value");
 		} else if (attrs.type === FieldType.DATE) {
 			attrs.value = dayjs(attrs.value as string).format("YYYY-MM-DD");
 		} else {

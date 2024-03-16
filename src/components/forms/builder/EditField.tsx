@@ -22,6 +22,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteField, saveField } from "../../../queries/forms";
 import { produce } from "immer";
 import FormInput, { FieldOnChangeEventType } from "../inputs/FormInput";
+import { useImmer } from "use-immer";
 
 type EditFieldFieldType = Partial<Field> & { name: keyof Field | "parent" };
 const INPUT_DATA: EditFieldFieldType[] = [
@@ -154,7 +155,7 @@ const getNameFromLabel = (label: string, existingFieldNames: string[]) => {
 };
 
 const EditField: React.FC = () => {
-	const [field, setField] = useState<Partial<Field>>({
+	const [field, setField] = useImmer<Partial<Field>>({
 		name: "",
 		label: "",
 		placeholder: "",
@@ -269,24 +270,21 @@ const EditField: React.FC = () => {
 		(input: EditFieldFieldType, event: FieldOnChangeEventType) => {
 			const existingFieldNames = allFields.map((f) => f.name);
 
-			const newValue = typeof event === "string" ? event : event.target.value;
+			const newValue = typeof event === "string" ? event : event.target.type === "checkbox" ? (event.target as HTMLInputElement).checked : event.target.value;
 
 			setField((f) => {
-				const newForm = {
-					...f,
-					[input.name]: newValue,
-				};
+				// @ts-ignore
+				f[input.name] = newValue;
 
 				// Automatically set name field based on label.
-				if (Object.hasOwn(newForm, "label")) {
-					newForm.name = getNameFromLabel(
-						newForm.label ?? "",
+				if (Object.hasOwn(f, "label")) {
+					f.name = getNameFromLabel(
+						f.label ?? "",
 						existingFieldNames,
 					);
 				}
-
-				return newForm;
 			});
+
 		},
 		[allFields],
 	);
@@ -365,7 +363,7 @@ const EditField: React.FC = () => {
 		fieldMutation.mutate(newField);
 	};
 
-	const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+	const handleDelete = () => {
 		deleteFieldMutation.mutate(field.id);
 	};
 
