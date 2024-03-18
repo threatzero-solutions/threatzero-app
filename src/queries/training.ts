@@ -13,7 +13,11 @@ import {
 
 export const getTrainingAudiences = () =>
   axios
-    .get<Paginated<Audience>>(`${API_BASE_URL}/api/training/audiences/`)
+    .get<Paginated<Audience>>(`${API_BASE_URL}/api/training/audiences/`, {
+      params: {
+        limit: 50,
+      },
+    })
     .then((res) => res.data);
 
 export const getTrainingCourses = () =>
@@ -37,7 +41,11 @@ export const getTrainingSection = (id?: string) =>
 
 export const getTrainingItems = () =>
   axios
-    .get<Paginated<TrainingItem>>(`${API_BASE_URL}/api/training/items/`)
+    .get<Paginated<TrainingItem>>(`${API_BASE_URL}/api/training/items/`, {
+      params: {
+        limit: 25,
+      },
+    })
     .then((res) => res.data);
 
 export const getTrainingItem = (id?: string) =>
