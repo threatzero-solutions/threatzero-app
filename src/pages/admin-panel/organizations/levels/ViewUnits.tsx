@@ -42,8 +42,8 @@ export const ViewUnits: React.FC = () => {
 								key: "slug",
 							},
 							{
-								label: "District",
-								key: "institution",
+								label: "Organization",
+								key: "organization",
 							},
 							{
 								label: <span className="sr-only">QR Code</span>,
@@ -59,7 +59,7 @@ export const ViewUnits: React.FC = () => {
 							id: unit.id,
 							name: unit.name,
 							slug: unit.slug,
-							institution: unit.organization?.name,
+							organization: unit.organization?.name,
 							edit: (
 								<button
 									type="button"

@@ -142,7 +142,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
 							key: "updatedOn",
 						},
 						{
-							label: "School",
+							label: "Unit",
 							key: "unit",
 						},
 						{
@@ -216,7 +216,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
 						},
 						{
 							key: "unitSlug",
-							label: "School",
+							label: "Unit",
 							value: tableFilterOptions.unitSlug
 								? `${tableFilterOptions.unitSlug}`
 								: undefined,

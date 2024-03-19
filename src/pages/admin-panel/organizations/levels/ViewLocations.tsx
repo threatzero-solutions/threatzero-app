@@ -57,7 +57,7 @@ export const ViewLocations: React.FC = () => {
 								key: "locationId",
 							},
 							{
-								label: "School",
+								label: "Unit",
 								key: "unit",
 							},
 							{
