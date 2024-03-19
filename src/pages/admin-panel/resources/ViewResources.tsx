@@ -51,7 +51,7 @@ export const ViewResources: React.FC = () => {
 							id: resource.id,
 							title: <div className="flex flex-col gap-2 flex-wrap">
 								<span>{resource.title}</span>
-								<div className="flex">
+								<div className="flex gap-1">
 								<PillBadge
 											color={resource.organizations.length === 0 ? "gray" : "blue"}
 											value={""}
