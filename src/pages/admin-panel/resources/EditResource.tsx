@@ -81,6 +81,14 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
 		required: true,
 		order: 6,
 	},
+	{
+		name: "fileKey",
+		label: "Resource File Key",
+		helpText: "S3 key of the resource.",
+		type: FieldType.TEXT,
+		required: true,
+		order: 7,
+	},
 ];
 
 interface EditResourceProps {
@@ -192,7 +200,9 @@ const EditResource: React.FC<EditResourceProps> = ({
 							</div>
 						</div>
 					</div>
-					{INPUT_DATA.sort(orderSort).map((input) => (
+					{INPUT_DATA.sort(orderSort).filter(
+						(i) => resourceItem.type === ResourceType.VIDEO && i.name !== "fileKey" || resourceItem.type === ResourceType.DOCUMENT && i.name !== "vimeoUrl"
+					).map((input) => (
 						<div
 							key={input.name}
 							className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
