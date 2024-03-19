@@ -54,7 +54,7 @@ const TrainingLibrary: React.FC = () => {
 				state.activeCourse && (
 					<div className="pb-5 flex items-center justify-between">
 						<div className="grid">
-							<div className="flex items-center gap-4">
+							<div className="flex items-center gap-4 flex-wrap">
 								<h1
 									className="text-2xl font-bold text-gray-900"
 									// biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe

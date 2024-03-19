@@ -357,4 +357,5 @@ export interface ResourceItem extends Base {
   description?: string;
   type: ResourceType;
   category: ResourceItemCategory;
+  organizations: Organization[];
 }

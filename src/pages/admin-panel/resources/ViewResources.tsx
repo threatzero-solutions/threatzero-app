@@ -5,6 +5,7 @@ import SlideOver from "../../../components/layouts/SlideOver";
 import EditResource from "./EditResource";
 import { getResourceItems } from "../../../queries/media";
 import { ResourceItem } from "../../../types/entities";
+import PillBadge from "../../../components/PillBadge";
 
 export const ViewResources: React.FC = () => {
 	const [editResourceSliderOpen, setEditResourceSliderOpen] = useState(false);
@@ -48,7 +49,34 @@ export const ViewResources: React.FC = () => {
 						],
 						rows: resources.results.map((resource) => ({
 							id: resource.id,
-							title: resource.title,
+							title: <div className="flex flex-col gap-2 flex-wrap">
+								<span>{resource.title}</span>
+								<div className="flex">
+								<PillBadge
+											color={resource.organizations.length === 0 ? "gray" : "blue"}
+											value={""}
+											displayValue={
+												resource.organizations.length === 0
+													? "No organizations"
+													: resource.organizations.length > 2
+													? `${resource.organizations.length} organizations`
+													: resource.organizations[0].name
+											}
+										/>
+										{resource.organizations.length > 0 &&
+											resource.organizations.length < 3 &&
+											resource.organizations
+												.slice(1)
+												.map((o) => (
+													<PillBadge
+														key={o.id}
+														color={"blue"}
+														value={""}
+														displayValue={o.name}
+													/>
+												))}
+								</div>
+								</div>,
 							type: resource.type,
 							category: resource.category,
 							edit: (

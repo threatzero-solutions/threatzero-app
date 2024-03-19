@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { classNames } from "../../utils/core";
+import { READ } from "../../constants/permissions";
+import { withRequirePermissions } from "../../guards/RequirePermissions";
 
 interface ResourcePageProps {
 	title: string;
@@ -45,4 +47,8 @@ const ResourcePage: React.FC<ResourcePageProps> = ({ title }) => {
 	);
 };
 
-export default ResourcePage;
+export const resourcePermissionsOptions = {
+	permissions: [READ.RESOURCES],
+};
+
+export default withRequirePermissions(ResourcePage, resourcePermissionsOptions);

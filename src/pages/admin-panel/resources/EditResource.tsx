@@ -1,6 +1,6 @@
 import { Dialog } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
 	Field,
 	FieldType,
@@ -14,6 +14,8 @@ import { deleteResourceItem, saveResourceItem } from "../../../queries/media";
 import { ResourceVideoTile } from "../../../components/resources/ResourceVideos";
 import { ResourceDocumentTile } from "../../../components/resources/ResourceDocuments";
 import FormInput from "../../../components/forms/inputs/FormInput";
+import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
+import { SimpleChangeEvent } from "../../../types/core";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
 	{
@@ -46,12 +48,20 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
 		order: 2,
 	},
 	{
+		name: "organizations",
+		label: "Organizations",
+		helpText: "The organizations that can access this resource.",
+		type: FieldType.SELECT,
+		required: true,
+		order: 3,
+	},
+	{
 		name: "title",
 		label: "Title",
 		helpText: "The title displayed for this resource.",
 		type: FieldType.TEXT,
 		required: true,
-		order: 3,
+		order: 4,
 	},
 	{
 		name: "description",
@@ -61,7 +71,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
 			rows: 3,
 		},
 		required: false,
-		order: 4,
+		order: 5,
 	},
 	{
 		name: "vimeoUrl",
@@ -69,7 +79,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
 		helpText: "Video URL from Vimeo.",
 		type: FieldType.TEXT,
 		required: true,
-		order: 5,
+		order: 6,
 	},
 ];
 
@@ -114,14 +124,12 @@ const EditResource: React.FC<EditResourceProps> = ({
 	}, [resourceItemProp]);
 
 	const handleChange = (
-		event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+		event: SimpleChangeEvent<unknown>,
 	) => {
-		const value = event.target.value;
-
-		setResourceItem((r) => ({
+		setResourceItem((r) => event.target ? {
 			...r,
-			[event.target.name]: value,
-		}));
+			[event.target.name]: event.target.value,
+		} : r);
 	};
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -198,11 +206,20 @@ const EditResource: React.FC<EditResourceProps> = ({
 								</label>
 							</div>
 							<div className="sm:col-span-2">
+								{input.name === "organizations" ? (
+									<OrganizationSelect
+										value={resourceItem.organizations ?? []}
+										name="organizations"
+										onChange={handleChange}
+										many />
+								) : (
+
 								<FormInput
 									field={input}
 									onChange={handleChange}
 									value={resourceItem[input.name as keyof ResourceItem]}
 								/>
+								)}
 							</div>
 						</div>
 					))}

@@ -15,6 +15,7 @@ import { administrativeReportsDashboardPermissionsOptions } from "../../../pages
 import { adminPanelPermissionOptions } from "../../../pages/admin-panel/AdminPanel";
 import { NavLink } from "react-router-dom";
 import { classNames } from "../../../utils/core";
+import { resourcePermissionsOptions } from "../../resources/ResourcePage";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
 	{
@@ -39,14 +40,17 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
 	{
 		name: "Prevention Resources",
 		href: "/prevention-resources",
+		permissionOptions: resourcePermissionsOptions,
 	},
 	{
 		name: "Preparation Resources",
 		href: "/preparation-resources",
+		permissionOptions: resourcePermissionsOptions,
 	},
 	{
 		name: "Response Resources",
 		href: "/response-resources",
+		permissionOptions: resourcePermissionsOptions,
 	},
 	{
 		name: "Admin Panel",
