@@ -80,8 +80,8 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
 
 					{/* NOTES */}
 					<ul className="grid grid-cols-1 mt-6 gap-6 px-4 sm:px-6">
-						{notes?.map((note, idx) => (
-							<li key={idx} className="relative flex gap-x-4">
+						{notes && [...notes].reverse().map((note, idx) => (
+							<li key={note.id} className="relative flex gap-x-4">
 								<div
 									className={classNames(
 										idx === notes.length - 1 ? "h-6" : "-bottom-6",

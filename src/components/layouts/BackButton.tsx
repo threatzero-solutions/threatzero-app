@@ -1,24 +1,26 @@
-import { useNavigate } from "react-router-dom";
+import { Link, To, useLocation } from "react-router-dom";
 import { classNames } from "../../utils/core";
 
 interface BackButtonProps {
 	value?: string;
 	className?: string;
+	defaultTo: To;
+	valueOnDefault?: string;
 }
 
-const BackButton: React.FC<BackButtonProps> = ({ value, className }) => {
-	const navigate = useNavigate();
+const BackButton: React.FC<BackButtonProps> = ({ value, className, defaultTo, valueOnDefault }) => {
+	const { state } = useLocation();
+
 	return (
-		<button
-			type="button"
+		<Link
+			to={state?.from ?? defaultTo}
 			className={classNames(
 				"block text-sm text-gray-900 hover:text-gray-600 mb-4 w-max",
 				className ?? "",
 			)}
-			onClick={() => navigate(-1)}
 		>
-			&larr; {value ?? "Back"}
-		</button>
+			&larr; {(!state?.from && valueOnDefault ? valueOnDefault : value) ?? "Back"}
+		</Link>
 	);
 };
 

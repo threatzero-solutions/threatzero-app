@@ -68,7 +68,7 @@ const ResourceItem: React.FC = () => {
 
 	return (
 		<>
-			<BackButton />
+			<BackButton defaultTo={"/"} />
 			{resource ? (
 				<>
 					{resource.type === ResourceType.VIDEO ? (

@@ -9,7 +9,7 @@ import {
 	getThreatAssessments,
 } from "../../queries/threat-assessments";
 import { AssessmentStatus } from "../../types/entities";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import StatusPill from "./components/StatusPill";
@@ -23,6 +23,8 @@ dayjs.extend(relativeTime);
 const DEFAULT_PAGE_SIZE = 10;
 
 const ThreatAssessmentDashboard: React.FC = () => {
+	const location = useLocation();
+		
 	const { tableFilterOptions, setTableFilterOptions } =
 		useDataTableFilterOptions({
 			order: { createdOn: "DESC" },
@@ -161,6 +163,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
 							view: (
 								<Link
 									to={`./${assessment.id}`}
+									state={{ from: location }}
 									className="text-secondary-600 hover:text-secondary-900 font-medium"
 								>
 									View

@@ -15,7 +15,7 @@ import { TipStatus } from "../../types/entities";
 import DataTable, {
 	useDataTableFilterOptions,
 } from "../../components/layouts/DataTable";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import StatusPill from "../tip-submission/components/StatusPill";
 import { getUnits } from "../../queries/organizations";
@@ -24,6 +24,8 @@ const DEFAULT_PAGE_SIZE = 10;
 // const AUDIENCE_COLORS = ["#050505", "#004FFF", "#31AFD4", "#902D41", "#FF007F"];
 
 const AdministrativeReportsDashboard: React.FC = () => {
+	const location = useLocation();
+	
 	const { tableFilterOptions, setTableFilterOptions } =
 		useDataTableFilterOptions({
 			order: { createdOn: "DESC" },
@@ -164,6 +166,7 @@ const AdministrativeReportsDashboard: React.FC = () => {
 							view: (
 								<Link
 									to={`./safety-concerns/${tip.id}`}
+									state={{ from: location }}
 									className="text-secondary-600 hover:text-secondary-900 font-medium"
 								>
 									View

@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import LocalizedFormat from "dayjs/plugin/localizedFormat";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
 	ResourceItem,
 	ResourceItemCategory,
@@ -17,6 +17,8 @@ export const ResourceDocumentTile: React.FC<{
 	category?: ResourceItemCategory;
 	disabled?: boolean;
 }> = ({ document, category, disabled }) => {
+	const location = useLocation();
+	
 	return (
 		<li className="flex items-center justify-between gap-x-6 py-5">
 			<div className="min-w-0">
@@ -37,6 +39,7 @@ export const ResourceDocumentTile: React.FC<{
 			<div className="flex flex-none items-center gap-x-4">
 				<Link
 					to={"/resources/" + document.id + "?category=" + category}
+					state={{ from: location }}
 					className={classNames(
 						"rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
 						disabled ? "pointer-events-none opacity-50" : "",

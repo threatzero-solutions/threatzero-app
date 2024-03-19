@@ -109,7 +109,7 @@ const Root: React.FC = () => {
 	);
 };
 
-const router = createBrowserRouter(
+export const router = createBrowserRouter(
 	[
 		{
 			path: "/sos",
@@ -388,5 +388,3 @@ const router = createBrowserRouter(
 		basename: import.meta.env.VITE_BASE_NAME ?? '/',
 	},
 );
-
-export default router;

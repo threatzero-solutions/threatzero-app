@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { classNames } from "../../utils/core";
 import {
 	ResourceItem,
@@ -13,6 +13,8 @@ export const ResourceVideoTile: React.FC<{
 	category?: ResourceItemCategory;
 	disabled?: boolean;
 }> = ({ video, category, disabled }) => {
+	const location = useLocation();
+	
 	return (
 		<li className="relative">
 			<div
@@ -33,6 +35,7 @@ export const ResourceVideoTile: React.FC<{
 				/>
 				<Link
 					to={"/resources/" + video.id + "?category=" + category}
+					state={{ from: location }}
 					className={classNames(
 						"absolute inset-0 focus:outline-none",
 						disabled ? "pointer-events-none" : "",

@@ -170,7 +170,7 @@ const ThreatAssessmentForm: React.FC = () => {
 
 	return (
 		<>
-			<BackButton />
+			<BackButton defaultTo={"../"} valueOnDefault="Back to Dashboard"/>
 			{assessment && (
 				<div className="flex justify-between items-end mb-4 sticky top-0 border-b bg-gray-50 border-gray-200 py-5 z-20">
 					<Dropdown

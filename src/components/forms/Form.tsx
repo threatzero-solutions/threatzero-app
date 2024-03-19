@@ -186,7 +186,12 @@ const Form: React.FC<FormProps> = ({
 
 		setFieldResponses(
 			(submission?.fieldResponses ?? []).reduce((acc, response) => {
-				acc[response.field.id] = response;
+				acc[response.field.id] = {
+					...response,
+					field: {
+						id: response.field.id,
+					} as Field,
+				};
 				return acc;
 			}, {} as Record<string, FieldResponse>),
 		);
@@ -314,6 +319,7 @@ const Form: React.FC<FormProps> = ({
 		if (onSubmit) {
 			try {
 				await onSubmit(event, {
+					id: submission?.id,
 					form: form.id as unknown as FormEntity,
 					fieldResponses: Object.values(fieldResponses),
 				});
