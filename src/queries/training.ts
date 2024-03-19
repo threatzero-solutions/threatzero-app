@@ -10,6 +10,7 @@ import {
   Video,
   VideoEvent,
 } from "../types/entities";
+import { DataTableQueryParams } from "../components/layouts/DataTable";
 
 export const getTrainingAudiences = () =>
   axios
@@ -20,9 +21,13 @@ export const getTrainingAudiences = () =>
     })
     .then((res) => res.data);
 
-export const getTrainingCourses = () =>
+export const getTrainingCourses = (options: DataTableQueryParams = {}) =>
   axios
-    .get<Paginated<TrainingCourse>>(`${API_BASE_URL}/api/training/courses/`)
+    .get<Paginated<TrainingCourse>>(`${API_BASE_URL}/api/training/courses/`, {
+      params: {
+        ...options,
+      },
+    })
     .then((res) => res.data);
 
 export const getTrainingCourse = (id?: string) =>
@@ -39,11 +44,13 @@ export const getTrainingSection = (id?: string) =>
         .then((res) => res.data)
     : Promise.reject(new Error("Training section ID must not be empty."));
 
-export const getTrainingItems = () =>
+export const getTrainingItems = (
+  options: DataTableQueryParams = { limit: 25 }
+) =>
   axios
     .get<Paginated<TrainingItem>>(`${API_BASE_URL}/api/training/items/`, {
       params: {
-        limit: 25,
+        ...options,
       },
     })
     .then((res) => res.data);
