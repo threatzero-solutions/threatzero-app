@@ -13,7 +13,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteResourceItem, saveResourceItem } from "../../../queries/media";
 import { ResourceVideoTile } from "../../../components/resources/ResourceVideos";
 import { ResourceDocumentTile } from "../../../components/resources/ResourceDocuments";
-import ThumbnailCreator from "../../../components/media/ThumbnailCreator";
 import FormInput from "../../../components/forms/inputs/FormInput";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
@@ -65,21 +64,12 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
 		order: 4,
 	},
 	{
-		name: "fileKey",
-		label: "File Key",
-		helpText: "Location of the resource file.",
+		name: "vimeoUrl",
+		label: "Vimeo URL",
+		helpText: "Video URL from Vimeo.",
 		type: FieldType.TEXT,
 		required: true,
 		order: 5,
-	},
-	{
-		name: "thumbnailKey",
-		label: "Thumbnail Key",
-		helpText:
-			"Location of thumbnail image. Required only if resource type is video.",
-		type: FieldType.TEXT,
-		required: false,
-		order: 6,
 	},
 ];
 
@@ -93,8 +83,6 @@ const EditResource: React.FC<EditResourceProps> = ({
 	resource: resourceItemProp,
 }) => {
 	const [resourceItem, setResourceItem] = useState<Partial<ResourceItem>>({});
-	const [previewEnabled, setPreviewEnabled] = useState(false);
-	const [previewThumbnail, setPreviewThumbnail] = useState<File | undefined>();
 
 	const isNew = useMemo(() => !resourceItemProp, [resourceItemProp]);
 
@@ -147,17 +135,6 @@ const EditResource: React.FC<EditResourceProps> = ({
 		deleteResourceMutation.mutate(resourceItem.id);
 	};
 
-	const downloadThumbnail = () => {
-		if (previewThumbnail) {
-			const url = URL.createObjectURL(previewThumbnail);
-			const anchor = document.createElement("a");
-			anchor.href = url;
-			anchor.download = "thumbnail.png";
-			anchor.click();
-			URL.revokeObjectURL(url);
-		}
-	};
-
 	return (
 		<form className="flex h-full flex-col" onSubmit={handleSubmit}>
 			<div className="flex-1">
@@ -197,9 +174,6 @@ const EditResource: React.FC<EditResourceProps> = ({
 									<ResourceVideoTile
 										video={resourceItem as ResourceItem}
 										disabled={true}
-										previewLocalThumbnailFile={
-											previewEnabled ? previewThumbnail : undefined
-										}
 									/>
 								) : (
 									<ResourceDocumentTile
@@ -229,37 +203,6 @@ const EditResource: React.FC<EditResourceProps> = ({
 									onChange={handleChange}
 									value={resourceItem[input.name as keyof ResourceItem]}
 								/>
-								{resourceItem.type === ResourceType.VIDEO &&
-									input.name === "thumbnailKey" && (
-										<div className="mt-4 pt-4 border-t border-gray-200">
-											<p className="text-sm text-gray-500">
-												Create Thumbnail From Video
-											</p>
-											<ThumbnailCreator
-												videoSrc={resourceItem.resourceUrl}
-												setThumbnail={setPreviewThumbnail}
-											/>
-											<div className="flex justify-between">
-												<label>
-													<input
-														type="checkbox"
-														className="h-4 w-4 rounded border-gray-300 text-secondary-600 focus:ring-secondary-600"
-														onChange={(e) =>
-															setPreviewEnabled(e.target.checked)
-														}
-													/>
-													<span className="ml-2">Preview</span>
-												</label>
-												<button
-													type="button"
-													className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-													onClick={() => downloadThumbnail()}
-												>
-													Download
-												</button>
-											</div>
-										</div>
-									)}
 							</div>
 						</div>
 					))}

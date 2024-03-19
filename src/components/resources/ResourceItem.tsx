@@ -7,15 +7,15 @@ import {
 import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getResourceItem } from "../../queries/media";
-import ReactPlayer from "react-player/lazy";
+import VimeoPlayer from "react-player/vimeo";
 
 const VideoItem: React.FC<{ resource: ResourceItemEntity }> = ({
 	resource,
 }) => {
 	return (
 		<>
-			<ReactPlayer
-				url={resource.resourceUrl}
+			<VimeoPlayer
+				url={resource.vimeoUrl}
 				controls={true}
 				width="100%"
 				height="unset"

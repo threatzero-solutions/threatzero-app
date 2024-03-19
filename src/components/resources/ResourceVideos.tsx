@@ -12,8 +12,7 @@ export const ResourceVideoTile: React.FC<{
 	video: ResourceItem;
 	category?: ResourceItemCategory;
 	disabled?: boolean;
-	previewLocalThumbnailFile?: File;
-}> = ({ video, category, disabled, previewLocalThumbnailFile }) => {
+}> = ({ video, category, disabled }) => {
 	return (
 		<li className="relative">
 			<div
@@ -24,9 +23,7 @@ export const ResourceVideoTile: React.FC<{
 			>
 				<img
 					src={
-						previewLocalThumbnailFile
-							? URL.createObjectURL(previewLocalThumbnailFile)
-							: video.thumbnailUrl ?? ""
+						video.thumbnailUrl
 					}
 					alt=""
 					className={classNames(
