@@ -10,8 +10,10 @@ import { TrainingItem, TrainingSectionItem } from "../../../types/entities";
 import SlideOver from "../../../components/layouts/SlideOver";
 import EditTrainingItem from "./edit-training-item/EditTrainingItem";
 import FilterBar from "../../../components/layouts/FilterBar";
-import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import Paginator from "../../../components/layouts/Paginator";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
 
 interface ManageItemsProps {
   setOpen: (open: boolean) => void;
@@ -44,16 +46,9 @@ const ManageItems: React.FC<ManageItemsProps> = ({
     [setOpenSlider, isEditingSection, isManagingItems]
   );
 
-  const {
-    itemFilterOptions,
-    setItemFilterOptions,
-    debouncedItemFilterOptions,
-  } = useItemFilterQuery(
-    {
-      order: { createdOn: "DESC" },
-    },
-    { prefix: "items_", pageSize: DEFAULT_PAGE_SIZE }
-  );
+  const [itemFilterOptions, setItemFilterOptions] =
+    useImmer<ItemFilterQueryParams>({});
+  const [debouncedItemFilterOptions] = useDebounceValue(itemFilterOptions, 300);
 
   const { data: itemsData } = useQuery({
     queryKey: ["training-items", debouncedItemFilterOptions] as const,
