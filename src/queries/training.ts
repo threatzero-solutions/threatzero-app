@@ -10,6 +10,7 @@ import {
   Video,
   VideoEvent,
 } from "../types/entities";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
 export const getTrainingAudiences = () =>
   axios
@@ -39,11 +40,11 @@ export const getTrainingSection = (id?: string) =>
         .then((res) => res.data)
     : Promise.reject(new Error("Training section ID must not be empty."));
 
-export const getTrainingItems = () =>
+export const getTrainingItems = (options: ItemFilterQueryParams = {}) =>
   axios
     .get<Paginated<TrainingItem>>(`${API_BASE_URL}/api/training/items/`, {
       params: {
-        limit: 25,
+        ...options,
       },
     })
     .then((res) => res.data);
