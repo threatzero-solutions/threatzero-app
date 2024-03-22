@@ -2,9 +2,9 @@ import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { Form, Note, Paginated, ThreatAssessment } from "../types/entities";
 import { ThreatAssessmentStats } from "../types/api";
-import { DataTableQueryParams } from "../components/layouts/DataTable";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
-export interface ThreatAssessmentFilterOptions extends DataTableQueryParams {
+export interface ThreatAssessmentFilterOptions extends ItemFilterQueryParams {
   unitSlug?: string;
   status?: string;
 }

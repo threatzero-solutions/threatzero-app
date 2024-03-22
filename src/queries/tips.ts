@@ -2,7 +2,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { Form, FormSubmission, Note, Paginated, Tip } from "../types/entities";
 import { TipSubmissionStats } from "../types/api";
-import { DataTableQueryParams } from "../components/layouts/DataTable";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
 export const getTipForm = () =>
   axios
@@ -13,7 +13,7 @@ export const getTipForm = () =>
       return null;
     });
 
-export interface TipSubmissionFilterOptions extends DataTableQueryParams {
+export interface TipSubmissionFilterOptions extends ItemFilterQueryParams {
   status?: string;
   unitSlug?: string;
 }
