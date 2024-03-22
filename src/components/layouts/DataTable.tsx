@@ -77,10 +77,12 @@ const DataTable: React.FC<DataTableProps> = ({
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">{action}</div>
         </div>
         {(searchOptions || filterOptions) && (
-          <FilterBar
-            searchOptions={searchOptions}
-            filterOptions={filterOptions}
-          />
+          <div className="mt-4 -mb-4">
+            <FilterBar
+              searchOptions={searchOptions}
+              filterOptions={filterOptions}
+            />
+          </div>
         )}
         <div className="mt-8 flow-root">
           <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">

@@ -137,7 +137,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
           </div>
         </div>
 
-        <div className="px-4 py-2 sm:px-6">
+        <div className="px-4 py-4 sm:px-6">
           <FilterBar
             searchOptions={{
               setSearchQuery: (query: string) => {
@@ -152,7 +152,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
         </div>
 
         {/* ITEMS */}
-        <div className="grow py-8 px-4 space-y-6 sm:px-6 overflow-y-auto">
+        <div className="grow pt-2 pb-8 px-4 space-y-6 sm:px-6 overflow-y-auto">
           {items && (
             <>
               {items?.map((item) => (

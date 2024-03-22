@@ -37,7 +37,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   filterOptions,
 }) => {
   return (
-    <div className="flex justify-end mt-4 -mb-4 gap-4">
+    <div className="flex justify-end gap-4">
       {filterOptions && (
         <Dropdown
           value="Filter"
