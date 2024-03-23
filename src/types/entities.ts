@@ -23,6 +23,8 @@ export interface OrganizationBase extends Base {
 /** Represents an organization (ie district, company, etc.) */
 export interface Organization extends OrganizationBase {
   groupId: string | null;
+  courses?: TrainingCourse[];
+  resources?: ResourceItem[];
 }
 
 /** Represents a unit of an organization (ie school, office, college, etc.) */

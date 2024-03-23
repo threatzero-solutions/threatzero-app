@@ -1,11 +1,15 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { Unit, Organization, Location } from "../types/entities";
-import { deleteOne, findMany, save } from "./utils";
+import { deleteOne, findMany, findOneOrFail, save } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
+import { DeepPartial } from "../types/core";
 
 export const getOrganizations = (query?: ItemFilterQueryParams) =>
   findMany<Organization>("/organizations/organizations/", query);
+
+export const getOrganization = (id?: string) =>
+  findOneOrFail<Organization>("/organizations/organizations/", id);
 
 export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);
@@ -24,7 +28,7 @@ export const generateQrCode = async (locationId: string) => {
 
 // ------------- MUTATIONS -------------
 
-export const saveOrganization = (organization: Partial<Organization>) =>
+export const saveOrganization = (organization: DeepPartial<Organization>) =>
   save<Organization>("/organizations/organizations/", organization);
 
 export const deleteOrganization = (id: string | undefined) =>

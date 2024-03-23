@@ -81,7 +81,10 @@ export const ViewUnits: React.FC = () => {
           currentOffset: units?.offset,
           total: units?.count,
           limit: units?.limit,
-          setOffset: (offset) => setUnitsQuery((q) => (q.offset = offset)),
+          setOffset: (offset) =>
+            setUnitsQuery((q) => {
+              q.offset = offset;
+            }),
         }}
         searchOptions={{
           searchQuery: unitsQuery.search ?? "",

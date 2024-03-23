@@ -14,7 +14,6 @@ import { deleteResourceItem, saveResourceItem } from "../../../queries/media";
 import { ResourceVideoTile } from "../../../components/resources/ResourceVideos";
 import { ResourceDocumentTile } from "../../../components/resources/ResourceDocuments";
 import FormInput from "../../../components/forms/inputs/FormInput";
-import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
 import { SimpleChangeEvent } from "../../../types/core";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
@@ -46,14 +45,6 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
     },
     required: true,
     order: 2,
-  },
-  {
-    name: "organizations",
-    label: "Organizations",
-    helpText: "The organizations that can access this resource.",
-    type: FieldType.SELECT,
-    required: true,
-    order: 3,
   },
   {
     name: "title",
@@ -227,20 +218,11 @@ const EditResource: React.FC<EditResourceProps> = ({
                   </label>
                 </div>
                 <div className="sm:col-span-2">
-                  {input.name === "organizations" ? (
-                    <OrganizationSelect
-                      value={resourceItem.organizations ?? []}
-                      name="organizations"
-                      onChange={handleChange}
-                      many
-                    />
-                  ) : (
-                    <FormInput
-                      field={input}
-                      onChange={handleChange}
-                      value={resourceItem[input.name as keyof ResourceItem]}
-                    />
-                  )}
+                  <FormInput
+                    field={input}
+                    onChange={handleChange}
+                    value={resourceItem[input.name as keyof ResourceItem]}
+                  />
                 </div>
               </div>
             ))}

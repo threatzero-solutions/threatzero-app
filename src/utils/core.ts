@@ -1,4 +1,3 @@
-import { API_BASE_URL } from "../contexts/core/constants";
 import { OrderOptions, Ordering } from "../types/core";
 
 export const classNames = (...classes: (string | undefined)[]) =>
@@ -73,27 +72,6 @@ export const getIframeSrcFromEmbed = (embed: string) => {
   node.innerHTML = embed;
   const src = node.querySelector("iframe")?.getAttribute("src");
   return src;
-};
-
-export const getThumbnailForEmbed = (
-  embed: string,
-  height?: number,
-  width?: number
-) => {
-  const src = getIframeSrcFromEmbed(embed);
-  if (!src) {
-    return null;
-  }
-  let url = `${API_BASE_URL}/api/media/thumbnail-for-video-url?videoUrl=${encodeURIComponent(
-    src
-  )}`;
-  if (height) {
-    url = `${url}&height=${height}`;
-  }
-  if (width) {
-    url = `${url}&width=${width}`;
-  }
-  return url;
 };
 
 export const pathJoin = (...args: string[]) => {

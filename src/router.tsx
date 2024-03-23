@@ -52,6 +52,7 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
 
   const handleError = (error: unknown) => {
+    console.error(error);
     if (error instanceof AxiosError && error.response?.status) {
       if (error.response.status >= 400 && error.response.status < 500) {
         setError(error.response?.data?.message ?? error.message ?? `${error}`);
