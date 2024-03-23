@@ -111,6 +111,7 @@ export const router = createBrowserRouter(
     {
       path: "/sos",
       handle: { title: "S.O.S." },
+      errorElement: <ErrorPage />,
       element: (
         <ErrorContextProvider>
           <QueryContext>
@@ -137,6 +138,7 @@ export const router = createBrowserRouter(
     {
       path: "/",
       element: <Root />,
+      errorElement: <ErrorPage />,
       children: [
         {
           path: "/login",
@@ -365,6 +367,14 @@ export const router = createBrowserRouter(
         <AuthProvider>
           <ErrorPage />
         </AuthProvider>
+      ),
+    },
+    {
+      path: "support",
+      element: (
+        <PublicLayout>
+          <HelpCenter />
+        </PublicLayout>
       ),
     },
     {
