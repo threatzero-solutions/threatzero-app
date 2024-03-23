@@ -8,7 +8,7 @@ import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { READ } from "../../constants/permissions";
 import { TrainingContext } from "../../contexts/training/training-context";
 import TrainingItemTile from "./components/TrainingItemTile";
-import { VideoEventType } from "../../types/entities";
+import { Video, VideoEventType } from "../../types/entities";
 import { ErrorBoundary } from "react-error-boundary";
 
 const VideoUnavailable: React.FC = () => (
@@ -78,13 +78,13 @@ const TrainingItem: React.FC = () => {
           {item.prerequisitesFulfilled ? (
             <>
               <div className="w-full aspect-video">
-                {item.vimeoUrl ? (
+                {(item as Video).vimeoUrl ? (
                   <ErrorBoundary
                     fallback={<VideoUnavailable />}
                     onError={handleVideoError}
                   >
                     <VimeoPlayer
-                      url={item.vimeoUrl}
+                      url={(item as Video).vimeoUrl}
                       controls={true}
                       width={"100%"}
                       height={"100%"}
