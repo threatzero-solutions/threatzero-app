@@ -8,7 +8,6 @@ import {
   getResourceItems,
 } from "../../../queries/media";
 import { ResourceItem, ResourceType } from "../../../types/entities";
-import PillBadge from "../../../components/PillBadge";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
 
@@ -58,38 +57,7 @@ export const ViewResources: React.FC = () => {
           ],
           rows: (resources?.results ?? []).map((resource) => ({
             id: resource.id,
-            title: (
-              <div className="flex flex-col gap-2 flex-wrap">
-                <span>{resource.title}</span>
-                <div className="flex gap-1">
-                  <PillBadge
-                    color={
-                      resource.organizations.length === 0 ? "gray" : "blue"
-                    }
-                    value={""}
-                    displayValue={
-                      resource.organizations.length === 0
-                        ? "No organizations"
-                        : resource.organizations.length > 2
-                        ? `${resource.organizations.length} organizations`
-                        : resource.organizations[0].name
-                    }
-                  />
-                  {resource.organizations.length > 0 &&
-                    resource.organizations.length < 3 &&
-                    resource.organizations
-                      .slice(1)
-                      .map((o) => (
-                        <PillBadge
-                          key={o.id}
-                          color={"blue"}
-                          value={""}
-                          displayValue={o.name}
-                        />
-                      ))}
-                </div>
-              </div>
-            ),
+            title: resource.title,
             type: resource.type,
             category: resource.category,
             edit: (
@@ -130,7 +98,9 @@ export const ViewResources: React.FC = () => {
           total: resources?.count,
           limit: resources?.limit,
           setOffset: (offset) =>
-            setItemFilterOptions((q) => (q.offset = offset)),
+            setItemFilterOptions((q) => {
+              q.offset = offset;
+            }),
         }}
         searchOptions={{
           searchQuery: itemFilterOptions.search ?? "",

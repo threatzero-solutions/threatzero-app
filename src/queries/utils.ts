@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { Paginated } from "../types/entities";
+import { DeepPartial } from "../types/core";
 
 export const findOneOrFail = <T>(path: string, id?: string) =>
   id
@@ -33,37 +34,35 @@ export const findManyRaw = <T>(
 export const findMany = <T>(path: string, query: ItemFilterQueryParams = {}) =>
   findManyRaw<Paginated<T>>(path, query);
 
-export const insertOne = async <T>(
+export const insertOne = <T>(
   path: string,
-  entity: Partial<T>,
+  entity: DeepPartial<T>,
   options: AxiosRequestConfig = {}
-) => {
-  return axios
+) =>
+  axios
     .post<T>(
       `${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`,
       entity,
       options
     )
     .then((res) => res.data);
-};
 
-export const updateOne = async <T extends { id: string }>(
+export const updateOne = <T extends { id: string }>(
   path: string,
-  entity: Partial<T>,
+  entity: DeepPartial<T>,
   options: AxiosRequestConfig = {}
-) => {
-  return axios
+) =>
+  axios
     .patch<T>(
       `${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${entity.id ?? ""}`,
       entity,
       options
     )
     .then((res) => res.data);
-};
 
 export const save = async <T extends { id: string }>(
   path: string,
-  entity: Partial<T>,
+  entity: DeepPartial<T>,
   options: AxiosRequestConfig = {}
 ) =>
   entity.id

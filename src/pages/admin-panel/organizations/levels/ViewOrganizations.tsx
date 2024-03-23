@@ -85,7 +85,9 @@ export const ViewOrganizations: React.FC = () => {
           total: organizations?.count,
           limit: organizations?.limit,
           setOffset: (offset) =>
-            setOrganizationsQuery((q) => (q.offset = offset)),
+            setOrganizationsQuery((q) => {
+              q.offset = offset;
+            }),
         }}
         searchOptions={{
           searchQuery: organizationsQuery.search ?? "",

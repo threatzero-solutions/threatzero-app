@@ -27,7 +27,7 @@ import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 
-const MEDIA_UPLOAD_URL = `${API_BASE_URL}/api/tips/submissions/presigned-upload-urls`;
+const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
 const TipSubmission: React.FC = () => {
   const [manageNotesOpen, setManageNotesOpen] = useState(false);

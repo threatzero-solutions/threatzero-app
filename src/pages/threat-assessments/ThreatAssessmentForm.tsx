@@ -31,7 +31,7 @@ import ManageNotes from "../../components/notes/ManageNotes";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { API_BASE_URL } from "../../contexts/core/constants";
 
-const MEDIA_UPLOAD_URL = `${API_BASE_URL}/api/assessments/submissions/presigned-upload-urls`;
+const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
 
 const ThreatAssessmentForm: React.FC = () => {
   const [manageNotesOpen, setManageNotesOpen] = useState(false);

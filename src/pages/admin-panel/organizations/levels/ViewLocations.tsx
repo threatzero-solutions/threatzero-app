@@ -46,69 +46,67 @@ export const ViewLocations: React.FC = () => {
   return (
     <>
       <DataTable
-        data={
-          locations && {
-            headers: [
-              {
-                label: "Name",
-                key: "name",
-              },
-              {
-                label: "Location ID",
-                key: "locationId",
-              },
-              {
-                label: "Unit",
-                key: "unit.name",
-              },
-              {
-                label: <span className="sr-only">QR Code</span>,
-                key: "qrCode",
-                noSort: true,
-              },
-              {
-                label: <span className="sr-only">Edit</span>,
-                key: "edit",
-                align: "right",
-                noSort: true,
-              },
-            ],
-            rows: locations.results.map((location) => ({
-              id: location.id,
-              name: location.name,
-              locationId: location.locationId,
-              ["unit.name"]: location.unit.name,
-              qrCode: (
-                <span>
-                  <Link
-                    to={`/sos/?loc_id=${location.locationId}`}
-                    className="text-secondary-600 hover:text-secondary-900 font-medium"
-                  >
-                    SOS Link
-                  </Link>
-                  <span> / </span>
-                  <button
-                    type="button"
-                    className="text-secondary-600 hover:text-secondary-900 font-medium"
-                    onClick={() => handleDownloadQRCode(location.locationId)}
-                  >
-                    QR Code
-                  </button>
-                </span>
-              ),
-              edit: (
+        data={{
+          headers: [
+            {
+              label: "Name",
+              key: "name",
+            },
+            {
+              label: "Location ID",
+              key: "locationId",
+            },
+            {
+              label: "Unit",
+              key: "unit.name",
+            },
+            {
+              label: <span className="sr-only">QR Code</span>,
+              key: "qrCode",
+              noSort: true,
+            },
+            {
+              label: <span className="sr-only">Edit</span>,
+              key: "edit",
+              align: "right",
+              noSort: true,
+            },
+          ],
+          rows: (locations?.results ?? []).map((location) => ({
+            id: location.id,
+            name: location.name,
+            locationId: location.locationId,
+            ["unit.name"]: location.unit.name,
+            qrCode: (
+              <span>
+                <Link
+                  to={`/sos/?loc_id=${location.locationId}`}
+                  className="text-secondary-600 hover:text-secondary-900 font-medium"
+                >
+                  SOS Link
+                </Link>
+                <span> / </span>
                 <button
                   type="button"
                   className="text-secondary-600 hover:text-secondary-900 font-medium"
-                  onClick={() => handleEditLocation(location)}
+                  onClick={() => handleDownloadQRCode(location.locationId)}
                 >
-                  Edit
-                  <span className="sr-only">, {location.id}</span>
+                  QR Code
                 </button>
-              ),
-            })),
-          }
-        }
+              </span>
+            ),
+            edit: (
+              <button
+                type="button"
+                className="text-secondary-600 hover:text-secondary-900 font-medium"
+                onClick={() => handleEditLocation(location)}
+              >
+                Edit
+                <span className="sr-only">, {location.id}</span>
+              </button>
+            ),
+          })),
+        }}
         title="Locations"
         subtitle="View, add or edit specific locations that belong to an organizational unit."
         orderOptions={{
@@ -124,7 +122,10 @@ export const ViewLocations: React.FC = () => {
           currentOffset: locations?.offset,
           total: locations?.count,
           limit: locations?.limit,
-          setOffset: (offset) => setLocationsQuery((q) => (q.offset = offset)),
+          setOffset: (offset) =>
+            setLocationsQuery((q) => {
+              q.offset = offset;
+            }),
         }}
         searchOptions={{
           searchQuery: locationsQuery.search ?? "",
