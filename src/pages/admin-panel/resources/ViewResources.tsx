@@ -21,7 +21,7 @@ export const ViewResources: React.FC = () => {
     useImmer<GetResourceItemOptions>({});
   const [debouncedItemFilterOptions] = useDebounceValue(itemFilterOptions, 300);
 
-  const { data: resources } = useQuery({
+  const { data: resources, isLoading: resourcesLoading } = useQuery({
     queryKey: ["resource-items-all", debouncedItemFilterOptions] as const,
     queryFn: ({ queryKey }) => getResourceItems(queryKey[1]),
   });
@@ -72,6 +72,7 @@ export const ViewResources: React.FC = () => {
             ),
           })),
         }}
+        isLoading={resourcesLoading}
         title="Resources"
         subtitle="View, add or edit resource items."
         notFoundDetail="No resources found."

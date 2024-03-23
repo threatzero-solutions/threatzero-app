@@ -23,7 +23,7 @@ export const ViewOrganizations: React.FC = () => {
     300
   );
 
-  const { data: organizations } = useQuery({
+  const { data: organizations, isLoading: organizationsLoading } = useQuery({
     queryKey: ["organizations", debouncedOrganizationsQuery] as const,
     queryFn: ({ queryKey }) => getOrganizations(queryKey[1]),
   });
@@ -69,6 +69,7 @@ export const ViewOrganizations: React.FC = () => {
             ),
           })),
         }}
+        isLoading={organizationsLoading}
         title="Organizations"
         subtitle="View, add or edit top-level organizations (i.e. school districts, companies)."
         orderOptions={{
