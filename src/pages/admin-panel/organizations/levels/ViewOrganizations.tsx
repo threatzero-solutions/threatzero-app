@@ -5,102 +5,117 @@ import DataTable from "../../../../components/layouts/DataTable";
 import SlideOver from "../../../../components/layouts/SlideOver";
 import EditOrganization from "./EditOrganization";
 import { Organization } from "../../../../types/entities";
-import { PageOptions } from "../../../../components/layouts/Paginator";
-
-const DEFAULT_PAGE_SIZE = 10;
+import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
+import { useDebounceValue } from "usehooks-ts";
+import { useImmer } from "use-immer";
 
 export const ViewOrganizations: React.FC = () => {
-	const [organizationPageOptions, setOrganizationPageOptions] =
-		useState<PageOptions>({
-			limit: DEFAULT_PAGE_SIZE,
-			offset: 0,
-		});
-	const [editOrganizationSliderOpen, setEditOrganizationSliderOpen] =
-		useState(false);
-	const [selectedOrganization, setSelectedOrganization] = useState<
-		Partial<Organization> | undefined
-	>();
+  const [editOrganizationSliderOpen, setEditOrganizationSliderOpen] =
+    useState(false);
+  const [selectedOrganization, setSelectedOrganization] = useState<
+    Partial<Organization> | undefined
+  >();
 
-	const { data: institutions } = useQuery({
-		queryKey: ["organizations", organizationPageOptions],
-		queryFn: ({ queryKey }) => getOrganizations(queryKey[1] as PageOptions),
-	});
+  const [organizationsQuery, setOrganizationsQuery] =
+    useImmer<ItemFilterQueryParams>({});
+  const [debouncedOrganizationsQuery] = useDebounceValue(
+    organizationsQuery,
+    300
+  );
 
-	const handleEditOrganization = (organization?: Organization) => {
-		setSelectedOrganization(organization);
-		setEditOrganizationSliderOpen(true);
-	};
+  const { data: organizations } = useQuery({
+    queryKey: ["organizations", debouncedOrganizationsQuery] as const,
+    queryFn: ({ queryKey }) => getOrganizations(queryKey[1]),
+  });
 
-	return (
-		<>
-			<DataTable
-				data={
-					institutions && {
-						headers: [
-							{
-								label: "Name",
-								key: "name",
-							},
-							{
-								label: "Slug",
-								key: "slug",
-							},
-							{
-								label: <span className="sr-only">Edit</span>,
-								key: "edit",
-								align: "right",
-							},
-						],
-						rows: institutions.results.map((organization) => ({
-							id: organization.id,
-							name: organization.name,
-							slug: organization.slug,
-							edit: (
-								<button
-									type="button"
-									className="text-secondary-600 hover:text-secondary-900 font-medium"
-									onClick={() => handleEditOrganization(organization)}
-								>
-									Edit
-									<span className="sr-only">, {organization.id}</span>
-								</button>
-							),
-						})),
-					}
-				}
-				title="Organizations"
-				subtitle="View, add or edit top-level organizations (i.e. school districts, companies)."
-				paginationOptions={
-					institutions && {
-						pageParamName: "organizations_page",
-						pageSize: DEFAULT_PAGE_SIZE,
-						currentOffset: institutions.offset,
-						total: institutions.count,
-						limit: institutions.limit,
-						setOffset: (offset) =>
-							setOrganizationPageOptions((options) => ({ ...options, offset })),
-					}
-				}
-				notFoundDetail="No organizations found."
-				action={
-					<button
-						type="button"
-						className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-						onClick={() => handleEditOrganization()}
-					>
-						+ Add New Organization
-					</button>
-				}
-			/>
-			<SlideOver
-				open={editOrganizationSliderOpen}
-				setOpen={setEditOrganizationSliderOpen}
-			>
-				<EditOrganization
-					setOpen={setEditOrganizationSliderOpen}
-					organization={selectedOrganization}
-				/>
-			</SlideOver>
-		</>
-	);
+  const handleEditOrganization = (organization?: Organization) => {
+    setSelectedOrganization(organization);
+    setEditOrganizationSliderOpen(true);
+  };
+
+  return (
+    <>
+      <DataTable
+        data={{
+          headers: [
+            {
+              label: "Name",
+              key: "name",
+            },
+            {
+              label: "Slug",
+              key: "slug",
+            },
+            {
+              label: <span className="sr-only">Edit</span>,
+              key: "edit",
+              align: "right",
+              noSort: true,
+            },
+          ],
+          rows: (organizations?.results ?? []).map((organization) => ({
+            id: organization.id,
+            name: organization.name,
+            slug: organization.slug,
+            edit: (
+              <button
+                type="button"
+                className="text-secondary-600 hover:text-secondary-900 font-medium"
+                onClick={() => handleEditOrganization(organization)}
+              >
+                Edit
+                <span className="sr-only">, {organization.id}</span>
+              </button>
+            ),
+          })),
+        }}
+        title="Organizations"
+        subtitle="View, add or edit top-level organizations (i.e. school districts, companies)."
+        orderOptions={{
+          order: organizationsQuery.order,
+          setOrder: (k, v) => {
+            setOrganizationsQuery((q) => {
+              q.order = { [k]: v };
+              q.offset = 0;
+            });
+          },
+        }}
+        paginationOptions={{
+          currentOffset: organizations?.offset,
+          total: organizations?.count,
+          limit: organizations?.limit,
+          setOffset: (offset) =>
+            setOrganizationsQuery((q) => (q.offset = offset)),
+        }}
+        searchOptions={{
+          searchQuery: organizationsQuery.search ?? "",
+          setSearchQuery: (search) => {
+            setOrganizationsQuery((q) => {
+              q.search = search;
+              q.offset = 0;
+            });
+          },
+        }}
+        notFoundDetail="No organizations found."
+        action={
+          <button
+            type="button"
+            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            onClick={() => handleEditOrganization()}
+          >
+            + Add New Organization
+          </button>
+        }
+      />
+      <SlideOver
+        open={editOrganizationSliderOpen}
+        setOpen={setEditOrganizationSliderOpen}
+      >
+        <EditOrganization
+          setOpen={setEditOrganizationSliderOpen}
+          organization={selectedOrganization}
+        />
+      </SlideOver>
+    </>
+  );
 };

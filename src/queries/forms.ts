@@ -1,26 +1,18 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
-import { Field, FieldGroup, Form, Paginated } from "../types/entities";
+import { Field, FieldGroup, Form } from "../types/entities";
+import { deleteOne, findMany, findOneOrFail, save } from "./utils";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
 export const getForm = (formId?: string) =>
-  formId
-    ? axios
-        .get<Form>(`${API_BASE_URL}/api/forms/${formId}`)
-        .then((res) => res.data)
-    : Promise.reject(new Error("Form ID must not be empty."));
+  findOneOrFail<Form>("/forms/", formId);
 
-export const getForms = (params: { [key: string]: any } = {}) =>
-  axios
-    .get<Paginated<Form>>(`${API_BASE_URL}/api/forms/`, {
-      params: {
-        ...params,
-      },
-    })
-    .then((res) => res.data);
+export const getForms = (query: ItemFilterQueryParams = {}) =>
+  findMany<Form>("/forms/", query);
 
 export const getFormsGroupedBySlug = () =>
   axios
-    .get<Form[]>(`${API_BASE_URL}/api/forms/grouped-by-slug`)
+    .get<Form[]>(`${API_BASE_URL}/forms/grouped-by-slug`)
     .then((res) => res.data);
 
 // MUTATIONS
@@ -30,50 +22,29 @@ export const saveForm = async (form: Partial<Form>) => {
     return Promise.reject(new Error("Form slug must not be empty."));
   }
 
-  const method = form.id ? "patch" : "post";
-  return axios[method]<Form>(
-    `${API_BASE_URL}/api/forms/${form.id ? form.id : ""}`,
-    form
-  ).then((res) => res.data);
+  return save<Form>("/forms/", form);
 };
 
 export const newDraftForm = async (formId?: string) =>
   formId
     ? axios
-        .post<Form>(`${API_BASE_URL}/api/forms/${formId}/new-draft`)
+        .post<Form>(`${API_BASE_URL}/forms/${formId}/new-draft`)
         .then((res) => res.data)
     : Promise.reject(new Error("Form ID must not be empty."));
 
-export const deleteForm = async (formId?: string) =>
-  formId
-    ? axios.delete(`${API_BASE_URL}/api/forms/${formId}`)
-    : Promise.reject(new Error("Form ID must not be empty."));
+export const deleteForm = (formId?: string) => deleteOne("/forms/", formId);
 
-export const saveFieldGroup = async (fieldGroup: Partial<FieldGroup>) => {
-  const method = fieldGroup.id ? "patch" : "post";
-  return axios[method]<FieldGroup>(
-    `${API_BASE_URL}/api/forms/groups/${fieldGroup.id ?? ""}`,
-    fieldGroup
-  ).then((res) => res.data);
-};
+export const saveFieldGroup = (fieldGroup: Partial<FieldGroup>) =>
+  save<FieldGroup>("/forms/groups/", fieldGroup);
 
-export const deleteFieldGroup = async (groupId?: string) =>
-  groupId
-    ? axios.delete(`${API_BASE_URL}/api/forms/groups/${groupId}`)
-    : Promise.reject(new Error("Field Group ID must not be empty."));
+export const deleteFieldGroup = (groupId?: string) =>
+  deleteOne("/forms/groups/", groupId);
 
-export const saveField = async (field: Partial<Field>) => {
-  const method = field.id ? "patch" : "post";
-  return axios[method]<FieldGroup>(
-    `${API_BASE_URL}/api/forms/fields/${field.id ?? ""}`,
-    field
-  ).then((res) => res.data);
-};
+export const saveField = (field: Partial<Field>) =>
+  save<Field>("/forms/fields/", field);
 
-export const deleteField = async (fieldId?: string) =>
-  fieldId
-    ? axios.delete(`${API_BASE_URL}/api/forms/fields/${fieldId}`)
-    : Promise.reject(new Error("Field ID must not be empty."));
+export const deleteField = (fieldId?: string) =>
+  deleteOne("/forms/fields/", fieldId);
 
 export interface FilePreloadResult {
   key: string;

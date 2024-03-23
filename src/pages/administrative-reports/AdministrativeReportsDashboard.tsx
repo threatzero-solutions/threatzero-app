@@ -147,12 +147,13 @@ const AdministrativeReportsDashboard: React.FC = () => {
             },
             {
               label: "Unit",
-              key: "unit",
+              key: "unit.name",
             },
             {
               label: <span className="sr-only">View</span>,
               key: "view",
               align: "right",
+              noSort: true,
             },
           ],
           rows:
@@ -161,7 +162,7 @@ const AdministrativeReportsDashboard: React.FC = () => {
               status: <StatusPill status={tip.status} />,
               createdOn: dayjs(tip.createdOn).format("MMM D, YYYY"),
               updatedOn: dayjs(tip.updatedOn).fromNow(),
-              unit: tip.unit?.name ?? tip.unit?.slug,
+              ["unit.name"]: tip.unit?.name,
               view: (
                 <Link
                   to={`./safety-concerns/${tip.id}`}
