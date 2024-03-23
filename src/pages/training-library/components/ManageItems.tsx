@@ -138,6 +138,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
               setSearchQuery: (query: string) => {
                 setItemFilterOptions((o) => {
                   o.search = query;
+                  o.offset = 0;
                 });
               },
               searchQuery: itemFilterOptions.search ?? "",
