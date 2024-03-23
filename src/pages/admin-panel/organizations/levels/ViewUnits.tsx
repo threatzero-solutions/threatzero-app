@@ -16,7 +16,7 @@ export const ViewUnits: React.FC = () => {
   const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({});
   const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
 
-  const { data: units } = useQuery({
+  const { data: units, isLoading: unitsLoading } = useQuery({
     queryKey: ["units", debouncedUnitsQuery] as const,
     queryFn: ({ queryKey }) => getUnits(queryKey[1]),
   });
@@ -66,6 +66,7 @@ export const ViewUnits: React.FC = () => {
             ),
           })),
         }}
+        isLoading={unitsLoading}
         title="Units"
         subtitle="View, add or edit organizational units (i.e. schools, offices)."
         orderOptions={{

@@ -24,7 +24,7 @@ export const ViewLocations: React.FC = () => {
   );
   const [debouncedLocationsQuery] = useDebounceValue(locationsQuery, 500);
 
-  const { data: locations } = useQuery({
+  const { data: locations, isLoading: locationsLoading } = useQuery({
     queryKey: ["locations", debouncedLocationsQuery] as const,
     queryFn: ({ queryKey }) => getLocations(queryKey[1]),
   });
@@ -107,6 +107,7 @@ export const ViewLocations: React.FC = () => {
             ),
           })),
         }}
+        isLoading={locationsLoading}
         title="Locations"
         subtitle="View, add or edit specific locations that belong to an organizational unit."
         orderOptions={{
