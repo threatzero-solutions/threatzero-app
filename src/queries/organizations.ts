@@ -1,46 +1,20 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
-import { Unit, Organization, Location, Paginated } from "../types/entities";
-import { PageOptions } from "../components/layouts/Paginator";
+import { Unit, Organization, Location } from "../types/entities";
+import { deleteOne, findMany, save } from "./utils";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
-export const getOrganizations = (options?: Partial<PageOptions>) =>
-  axios
-    .get<Paginated<Organization>>(
-      `${API_BASE_URL}/api/organizations/organizations/`,
-      {
-        params: {
-          limit: options?.limit ?? 10,
-          offset: options?.offset ?? 0,
-          search: options?.search,
-        },
-      }
-    )
-    .then((res) => res.data);
+export const getOrganizations = (query?: ItemFilterQueryParams) =>
+  findMany<Organization>("/organizations/organizations/", query);
 
-export const getUnits = (options?: Partial<PageOptions>) =>
-  axios
-    .get<Paginated<Unit>>(`${API_BASE_URL}/api/organizations/units/`, {
-      params: {
-        limit: options?.limit ?? 10,
-        offset: options?.offset ?? 0,
-        search: options?.search,
-      },
-    })
-    .then((res) => res.data);
+export const getUnits = (query?: ItemFilterQueryParams) =>
+  findMany<Unit>("/organizations/units/", query);
 
-export const getLocations = (options?: Partial<PageOptions>) =>
-  axios
-    .get<Paginated<Location>>(`${API_BASE_URL}/api/organizations/locations/`, {
-      params: {
-        limit: options?.limit ?? 10,
-        offset: options?.offset ?? 0,
-        search: options?.search,
-      },
-    })
-    .then((res) => res.data);
+export const getLocations = (query?: ItemFilterQueryParams) =>
+  findMany<Location>("/organizations/locations/", query);
 
 export const generateQrCode = async (locationId: string) => {
-  const url = `${API_BASE_URL}/api/organizations/locations/${locationId}/sos-qr-code/`;
+  const url = `${API_BASE_URL}/organizations/locations/${locationId}/sos-qr-code/`;
   return axios
     .get(url, {
       responseType: "blob",
@@ -50,41 +24,20 @@ export const generateQrCode = async (locationId: string) => {
 
 // ------------- MUTATIONS -------------
 
-export const saveOrganization = async (organization: Partial<Organization>) => {
-  const method = organization.id ? "patch" : "post";
-  return axios[method](
-    `${API_BASE_URL}/api/organizations/organizations/${organization.id ?? ""}`,
-    organization
-  ).then((res) => res.data);
-};
+export const saveOrganization = (organization: Partial<Organization>) =>
+  save<Organization>("/organizations/organizations/", organization);
 
 export const deleteOrganization = (id: string | undefined) =>
-  id
-    ? axios.delete(`${API_BASE_URL}/api/organizations/organizations/${id}`)
-    : Promise.reject(new Error("Organization ID must not be empty."));
+  deleteOne("/organizations/organizations/", id);
 
-export const saveUnit = async (unit: Partial<Unit>) => {
-  const method = unit.id ? "patch" : "post";
-  return axios[method](
-    `${API_BASE_URL}/api/organizations/units/${unit.id ?? ""}`,
-    unit
-  ).then((res) => res.data);
-};
+export const saveUnit = (unit: Partial<Unit>) =>
+  save<Unit>("/organizations/units/", unit);
 
 export const deleteUnit = (id: string | undefined) =>
-  id
-    ? axios.delete(`${API_BASE_URL}/api/organizations/units/${id}`)
-    : Promise.reject(new Error("Unit ID must not be empty."));
+  deleteOne("/organizations/units/", id);
 
-export const saveLocation = async (location: Partial<Location>) => {
-  const method = location.id ? "patch" : "post";
-  return axios[method](
-    `${API_BASE_URL}/api/organizations/locations/${location.id ?? ""}`,
-    location
-  ).then((res) => res.data);
-};
+export const saveLocation = async (location: Partial<Location>) =>
+  save<Location>("/organizations/locations/", location);
 
 export const deleteLocation = (id: string | undefined) =>
-  id
-    ? axios.delete(`${API_BASE_URL}/api/organizations/locations/${id}`)
-    : Promise.reject(new Error("Location ID must not be empty."));
+  deleteOne("/organizations/locations/", id);

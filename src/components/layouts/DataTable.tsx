@@ -24,6 +24,7 @@ interface DataTableProps {
       label: ReactNode;
       key: string;
       align?: "left" | "center" | "right";
+      noSort?: boolean;
     }[];
     rows: {
       id: string;
@@ -90,7 +91,7 @@ const DataTable: React.FC<DataTableProps> = ({
               <table className="min-w-full divide-y divide-gray-300">
                 <thead>
                   <tr>
-                    {data?.headers.map(({ label, key, align }, idx) => (
+                    {data?.headers.map(({ label, key, align, noSort }, idx) => (
                       <th
                         key={key}
                         scope="col"
@@ -107,9 +108,12 @@ const DataTable: React.FC<DataTableProps> = ({
                         <div
                           className={classNames(
                             "group inline-flex",
-                            orderOptions?.setOrder ? "cursor-pointer" : ""
+                            !noSort && orderOptions?.setOrder
+                              ? "cursor-pointer"
+                              : ""
                           )}
                           onClick={() =>
+                            !noSort &&
                             orderOptions?.setOrder?.(
                               key,
                               orderOptions?.order?.[key] === "ASC"
@@ -120,7 +124,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           onKeyUp={() => {}}
                         >
                           {label}
-                          {!!orderOptions?.setOrder && (
+                          {!noSort && !!orderOptions?.setOrder && (
                             <span
                               className={classNames(
                                 "ml-2 flex-none rounded transition-colors",

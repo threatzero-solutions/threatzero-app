@@ -9,28 +9,37 @@ export interface PageOptions {
 }
 
 export interface PaginatorProps {
-  pageSize: number;
-  currentOffset: number;
-  total: number;
-  limit: number;
+  pageSize?: number;
+  currentOffset?: number;
+  total?: number;
+  limit?: number;
   setOffset: (offset: number) => void;
-  pageParamName?: string;
 }
 
 const MAX_PAGE_BUTTONS = 7;
 
+export const DEFAULT_PAGE_SIZE = 10;
+
 const Paginator: React.FC<PaginatorProps> = ({
-  pageSize: limit,
-  currentOffset: offset,
-  total: count,
-  limit: currentLimit,
+  pageSize,
+  currentOffset,
+  total,
+  limit,
   setOffset,
 }) => {
-  const activePage = useMemo(() => offset / limit + 1, [offset, limit]);
+  const nextLimit = useMemo(() => pageSize ?? DEFAULT_PAGE_SIZE, [pageSize]);
+  const offset = useMemo(() => currentOffset ?? 0, [currentOffset]);
+  const count = useMemo(() => total ?? 0, [total]);
+  const currentLimit = useMemo(() => limit ?? DEFAULT_PAGE_SIZE, [limit]);
+
+  const activePage = useMemo(() => offset / nextLimit + 1, [offset, nextLimit]);
 
   const totalPages = useMemo(() => {
-    return Array.from({ length: Math.ceil(count / limit) }, (_, i) => i + 1);
-  }, [count, limit]);
+    return Array.from(
+      { length: Math.ceil(count / nextLimit) },
+      (_, i) => i + 1
+    );
+  }, [count, nextLimit]);
 
   const pageButtons = useMemo(() => {
     if (!totalPages.length) return [];
@@ -64,7 +73,7 @@ const Paginator: React.FC<PaginatorProps> = ({
   }, [totalPages, activePage]);
 
   const handleChangePage = (newPage: number) => {
-    setOffset((newPage - 1) * limit);
+    setOffset((newPage - 1) * nextLimit);
   };
 
   return (

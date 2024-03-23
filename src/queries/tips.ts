@@ -1,16 +1,19 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
-import { Form, FormSubmission, Note, Paginated, Tip } from "../types/entities";
+import { Form, FormSubmission, Note, Tip } from "../types/entities";
 import { TipSubmissionStats } from "../types/api";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
+import { findMany, findManyRaw, findOne, insertOne, updateOne } from "./utils";
 
 export const getTipForm = () =>
   axios
-    .get<Form>(`${API_BASE_URL}/api/tips/form/`)
+    .get<Form>(`${API_BASE_URL}/tips/form/`)
     .then((res) => res.data)
     .catch((e) => {
-      console.error(e);
-      return null;
+      if (e instanceof AxiosError && e.response?.status === 404) {
+        return null;
+      }
+      throw e;
     });
 
 export interface TipSubmissionFilterOptions extends ItemFilterQueryParams {
@@ -19,52 +22,16 @@ export interface TipSubmissionFilterOptions extends ItemFilterQueryParams {
 }
 
 export const getTipSubmissions = (options: TipSubmissionFilterOptions = {}) =>
-  axios
-    .get<Paginated<Tip>>(`${API_BASE_URL}/api/tips/submissions/`, {
-      params: {
-        limit: options.limit,
-        offset: options.offset ?? 0,
-        status: options.status,
-        unitSlug: options.unitSlug,
-        order: options.order,
-      },
-    })
-    .then((res) => res.data);
+  findMany<Tip>("/tips/submissions/", options);
 
-export const getTipSubmissionStats = (options?: TipSubmissionFilterOptions) =>
-  axios
-    .get<TipSubmissionStats>(`${API_BASE_URL}/api/tips/stats/`, {
-      params: {
-        unitSlug: options?.unitSlug,
-        organizationSlug: options?.organizationSlug,
-      },
-    })
-    .then((res) => res.data);
+export const getTipSubmissionStats = (query: TipSubmissionFilterOptions = {}) =>
+  findManyRaw<TipSubmissionStats>("/tips/stats/", query);
 
 export const getTipSubmission = (id?: string) =>
-  id
-    ? axios
-        .get<Tip>(`${API_BASE_URL}/api/tips/submissions/${id}`)
-        .then((res) => res.data)
-        .catch((e) => {
-          console.error(e);
-          return null;
-        })
-    : Promise.reject(new Error("Tip submission ID must not be empty."));
+  findOne<Tip>("/tips/submissions/", id);
 
-export const getTipNotes = (id?: string) =>
-  id
-    ? axios
-        .get<Paginated<Note>>(
-          `${API_BASE_URL}/api/tips/submissions/${id}/notes`,
-          {
-            params: {
-              limit: 25,
-            },
-          }
-        )
-        .then((res) => res.data)
-    : Promise.reject(new Error("Tip ID must not be empty."));
+export const getTipNotes = (id?: string, query: ItemFilterQueryParams = {}) =>
+  findMany<Note>(`/tips/submissions/${id}/notes/`, query);
 
 // -------- MUTATIONS ---------
 
@@ -72,27 +39,18 @@ export type SubmitTipInput =
   | Partial<Tip>
   | { submission: Partial<FormSubmission> };
 export const submitTip = async (tip: SubmitTipInput, locationId?: string) =>
-  axios
-    .post<Tip>(`${API_BASE_URL}/api/tips/submit`, tip, {
-      params: {
-        locationId,
-      },
-    })
-    .then((res) => res.data);
+  insertOne<Tip>("/tips/submit", tip as Partial<Tip>, {
+    params: {
+      locationId,
+    },
+  });
 
-export const saveTip = async (tip: Partial<Tip>) =>
+export const saveTip = (tip: Partial<Tip>) =>
   tip.id
-    ? axios
-        .patch<Tip>(`${API_BASE_URL}/api/tips/submissions/${tip.id}`, tip)
-        .then((res) => res.data)
+    ? updateOne<Tip>(`/tips/submissions/${tip.id}`, tip)
     : Promise.reject(new Error("Tip ID must not be empty."));
 
-export const addTipNote = async (
-  tipId: string | undefined,
-  note: Partial<Note>
-) =>
+export const addTipNote = (tipId: string | undefined, note: Partial<Note>) =>
   tipId
-    ? axios
-        .post<Note>(`${API_BASE_URL}/api/tips/submissions/${tipId}/notes`, note)
-        .then((res) => res.data)
+    ? insertOne<Note>(`/tips/submissions/${tipId}/notes`, note)
     : Promise.reject(new Error("Tip ID must not be empty."));

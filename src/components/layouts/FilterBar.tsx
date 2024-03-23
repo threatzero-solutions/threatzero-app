@@ -5,8 +5,8 @@ import Input from "../forms/inputs/Input";
 
 export interface FilterBarSearchOptions {
   placeholder?: string;
-  setSearchQuery?: (query: string) => void;
-  searchQuery?: string;
+  setSearchQuery: (query: string) => void;
+  searchQuery: string;
   fullWidth?: boolean;
 }
 
@@ -99,7 +99,12 @@ const FilterBar: React.FC<FilterBarProps> = ({
             value={searchOptions.searchQuery}
           />
           <div
-            className="cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 hover:opacity-75 transition-opacity"
+            className={classNames(
+              searchOptions.searchQuery
+                ? "opacity-100"
+                : "pointer-events-none opacity-0",
+              "cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 hover:opacity-75 transition-opacity"
+            )}
             onClick={() => searchOptions.setSearchQuery?.("")}
           >
             <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />

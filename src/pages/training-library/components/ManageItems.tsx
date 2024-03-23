@@ -20,8 +20,6 @@ interface ManageItemsProps {
   isEditingSection?: boolean;
 }
 
-const DEFAULT_PAGE_SIZE = 10;
-
 const ManageItems: React.FC<ManageItemsProps> = ({
   setOpen: setOpenSlider,
   isEditingSection,
@@ -178,16 +176,14 @@ const ManageItems: React.FC<ManageItemsProps> = ({
 
         <div>
           <Paginator
-            currentOffset={itemsData?.offset ?? 0}
-            pageSize={DEFAULT_PAGE_SIZE}
-            total={itemsData?.count ?? 0}
-            limit={itemsData?.limit ?? DEFAULT_PAGE_SIZE}
+            currentOffset={itemsData?.offset}
+            total={itemsData?.count}
+            limit={itemsData?.limit}
             setOffset={(offset) =>
               setItemFilterOptions((o) => {
                 o.offset = offset;
               })
             }
-            pageParamName="items_page"
           />
         </div>
 

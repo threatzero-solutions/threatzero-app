@@ -1,8 +1,9 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
-import { Form, Note, Paginated, ThreatAssessment } from "../types/entities";
+import { Form, Note, ThreatAssessment } from "../types/entities";
 import { ThreatAssessmentStats } from "../types/api";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
+import { findMany, findManyRaw, findOne, insertOne, save } from "./utils";
 
 export interface ThreatAssessmentFilterOptions extends ItemFilterQueryParams {
   unitSlug?: string;
@@ -10,47 +11,15 @@ export interface ThreatAssessmentFilterOptions extends ItemFilterQueryParams {
 }
 
 export const getThreatAssessments = (
-  options: ThreatAssessmentFilterOptions = {}
-) =>
-  axios
-    .get<Paginated<ThreatAssessment>>(
-      `${API_BASE_URL}/api/assessments/submissions/`,
-      {
-        params: {
-          limit: options.limit,
-          offset: options.offset ?? 0,
-          unitSlug: options?.unitSlug,
-          status: options?.status,
-          order: options.order,
-        },
-      }
-    )
-    .then((res) => res.data);
+  query: ThreatAssessmentFilterOptions = {}
+) => findMany<ThreatAssessment>("/assessments/submissions/", query);
 
 export const getThreatAssessmentStats = (
-  options?: ThreatAssessmentFilterOptions
-) =>
-  axios
-    .get<ThreatAssessmentStats>(`${API_BASE_URL}/api/assessments/stats/`, {
-      params: {
-        unitSlug: options?.unitSlug,
-        organizationSlug: options?.organizationSlug,
-      },
-    })
-    .then((res) => res.data);
+  query: ThreatAssessmentFilterOptions = {}
+) => findManyRaw<ThreatAssessmentStats>("/assessments/stats/", query);
 
 export const getThreatAssessment = (id?: string) =>
-  id
-    ? axios
-        .get<ThreatAssessment>(
-          `${API_BASE_URL}/api/assessments/submissions/${id}`
-        )
-        .then((res) => res.data)
-        .catch((e) => {
-          console.error(e);
-          return null;
-        })
-    : Promise.reject(new Error("Threat assessment ID must not be empty."));
+  findOne<ThreatAssessment>("/assessments/submissions/", id);
 
 export const getThreatAssessmentForm = (
   options: {
@@ -59,33 +28,28 @@ export const getThreatAssessmentForm = (
   } = {}
 ) =>
   axios
-    .get<Form>(`${API_BASE_URL}/api/assessments/form/`, {
-      params: options ?? {},
+    .get<Form>(`${API_BASE_URL}/assessments/form/`, {
+      params: {
+        ...options,
+      },
     })
     .then((res) => res.data)
     .catch((e) => {
-      console.error(e);
-      return null;
+      if (e instanceof AxiosError && e.response?.status === 404) {
+        return null;
+      }
+      throw e;
     });
 
-export const getAssessmentNotes = (id?: string) =>
-  id
-    ? axios
-        .get<Paginated<Note>>(
-          `${API_BASE_URL}/api/assessments/submissions/${id}/notes`,
-          {
-            params: {
-              limit: 25,
-            },
-          }
-        )
-        .then((res) => res.data)
-    : Promise.reject(new Error("Threat assessment ID must not be empty."));
+export const getAssessmentNotes = (
+  id?: string,
+  query: ItemFilterQueryParams = {}
+) => findMany<Note>(`/assessments/submissions/${id}/notes/`, query);
 
 export const assessmentToPdf = (id?: string) =>
   id
     ? axios
-        .get(`${API_BASE_URL}/api/assessments/submissions/${id}/pdf`, {
+        .get(`${API_BASE_URL}/assessments/submissions/${id}/pdf`, {
           responseType: "arraybuffer",
         })
         .then((res) => res.data)
@@ -94,25 +58,13 @@ export const assessmentToPdf = (id?: string) =>
 // ------- MUTATIONS ---------
 
 export const saveThreatAssessment = async (
-  id: string | undefined,
   assessment: Partial<ThreatAssessment>
-) => {
-  const method = id ? "patch" : "post";
-  return axios[method](
-    `${API_BASE_URL}/api/assessments/submissions/` + (id ?? ""),
-    assessment
-  ).then((res) => res.data);
-};
+) => save<ThreatAssessment>(`/assessments/submissions/`, assessment);
 
 export const addAssessmentNote = async (
   assessmentId: string | undefined,
   note: Partial<Note>
 ) =>
   assessmentId
-    ? axios
-        .post<Note>(
-          `${API_BASE_URL}/api/assessments/submissions/${assessmentId}/notes`,
-          note
-        )
-        .then((res) => res.data)
+    ? insertOne<Note>(`/assessments/submissions/${assessmentId}/notes`, note)
     : Promise.reject(new Error("Threat assessment ID must not be empty."));

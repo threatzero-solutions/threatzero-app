@@ -145,12 +145,13 @@ const ThreatAssessmentDashboard: React.FC = () => {
             },
             {
               label: "Unit",
-              key: "unit",
+              key: "unit.name",
             },
             {
               label: <span className="sr-only">View</span>,
               key: "view",
               align: "right",
+              noSort: true,
             },
           ],
           rows:
@@ -159,7 +160,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
               status: <StatusPill status={assessment.status} />,
               createdOn: dayjs(assessment.createdOn).format("MMM D, YYYY"),
               updatedOn: dayjs(assessment.updatedOn).fromNow(),
-              unit: assessment.unit?.name ?? assessment.unit?.slug,
+              ["unit.name"]: assessment.unit?.name ?? assessment.unit?.slug,
               view: (
                 <Link
                   to={`./${assessment.id}`}
