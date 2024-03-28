@@ -47,7 +47,7 @@ export const submitTip = async (tip: SubmitTipInput, locationId?: string) =>
 
 export const saveTip = (tip: Partial<Tip>) =>
   tip.id
-    ? updateOne<Tip>(`/tips/submissions/${tip.id}`, tip)
+    ? updateOne<Tip>(`/tips/submissions/`, tip)
     : Promise.reject(new Error("Tip ID must not be empty."));
 
 export const addTipNote = (tipId: string | undefined, note: Partial<Note>) =>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { READ } from "../../constants/permissions";
+import { useContext, useMemo, useState } from "react";
+import { READ, WRITE } from "../../constants/permissions";
 import {
   RequirePermissionsOptions,
   withRequirePermissions,
@@ -8,8 +8,9 @@ import {
   TipSubmissionFilterOptions,
   getTipSubmissionStats,
   getTipSubmissions,
+  saveTip,
 } from "../../queries/tips";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { classNames, fromDaysKey, fromStatus } from "../../utils/core";
 import { TipStatus } from "../../types/entities";
 import DataTable from "../../components/layouts/DataTable";
@@ -18,22 +19,30 @@ import dayjs from "dayjs";
 import StatusPill from "../tip-submission/components/StatusPill";
 import { getLocations, getUnits } from "../../queries/organizations";
 import { useItemFilterQuery } from "../../hooks/use-item-filter-query";
+import EditableCell from "../../components/layouts/EditableCell";
+import { CoreContext } from "../../contexts/core/core-context";
 
 const DEFAULT_PAGE_SIZE = 10;
 // const AUDIENCE_COLORS = ["#050505", "#004FFF", "#31AFD4", "#902D41", "#FF007F"];
 
 const AdministrativeReportsDashboard: React.FC = () => {
   const location = useLocation();
+  const { hasPermissions } = useContext(CoreContext);
 
   const {
     itemFilterOptions: tableFilterOptions,
+    debouncedItemFilterOptions: debouncedTableFilterOptions,
     setItemFilterOptions: setTableFilterOptions,
   } = useItemFilterQuery({
     order: { createdOn: "DESC" },
   });
 
-  const { data: tips, isLoading: tipsLoading } = useQuery({
-    queryKey: ["tip-submissions", tableFilterOptions] as const,
+  const {
+    data: tips,
+    isLoading: tipsLoading,
+    refetch: refetchTips,
+  } = useQuery({
+    queryKey: ["tip-submissions", debouncedTableFilterOptions] as const,
     queryFn: ({ queryKey }) => getTipSubmissions(queryKey[1]),
   });
 
@@ -43,6 +52,18 @@ const AdministrativeReportsDashboard: React.FC = () => {
     queryFn: ({ queryKey }) =>
       getTipSubmissionStats(queryKey[1] as TipSubmissionFilterOptions),
   });
+
+  const saveTipMutation = useMutation({
+    mutationFn: saveTip,
+    onSuccess: () => {
+      refetchTips();
+    },
+  });
+
+  const canAlterTip = useMemo(
+    () => hasPermissions([WRITE.TIPS]),
+    [hasPermissions]
+  );
 
   const { data: units } = useQuery({
     queryKey: ["units"],
@@ -143,6 +164,10 @@ const AdministrativeReportsDashboard: React.FC = () => {
               key: "status",
             },
             {
+              label: "Tag",
+              key: "tag",
+            },
+            {
               label: "Created On",
               key: "createdOn",
             },
@@ -169,10 +194,23 @@ const AdministrativeReportsDashboard: React.FC = () => {
             tips?.results.map((tip) => ({
               id: tip.id,
               status: <StatusPill status={tip.status} />,
+              tag: (
+                <EditableCell
+                  value={tip.tag}
+                  onSave={(tag) =>
+                    saveTipMutation.mutate({
+                      id: tip.id,
+                      tag,
+                    })
+                  }
+                  emptyValue="—"
+                  readOnly={!canAlterTip}
+                />
+              ),
               createdOn: dayjs(tip.createdOn).format("MMM D, YYYY"),
               updatedOn: dayjs(tip.updatedOn).fromNow(),
-              ["unit.name"]: tip.unit?.name ?? "No unit",
-              ["location.name"]: tip.location?.name ?? "No location",
+              ["unit.name"]: tip.unit?.name ?? "—",
+              ["location.name"]: tip.location?.name ?? "—",
               view: (
                 <Link
                   to={`./safety-concerns/${tip.id}`}
@@ -208,6 +246,14 @@ const AdministrativeReportsDashboard: React.FC = () => {
             setTableFilterOptions((options) => {
               options.offset = offset;
             }),
+        }}
+        searchOptions={{
+          setSearchQuery: (q) =>
+            setTableFilterOptions((o) => {
+              o.search = q;
+              o.offset = 0;
+            }),
+          searchQuery: tableFilterOptions.search ?? "",
         }}
         filterOptions={{
           filters: [

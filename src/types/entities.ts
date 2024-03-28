@@ -257,6 +257,7 @@ export enum TipStatus {
 
 /** Metadata about a tip and its form submission. */
 export interface Tip extends Base {
+  tag?: string;
   unitSlug: string;
   unit: Unit;
   location?: Location;
@@ -280,6 +281,7 @@ export enum AssessmentStatus {
 
 /** Metadata about a threat assessment and its form submission. */
 export interface ThreatAssessment extends Base {
+  tag?: string;
   unitSlug: string;
   unit: Unit;
   submission: FormSubmission;

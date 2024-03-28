@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   SubmitTipInput,
   addTipNote,
@@ -26,6 +26,7 @@ import SlideOver from "../../components/layouts/SlideOver";
 import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
+import EditableCell from "../../components/layouts/EditableCell";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
@@ -56,7 +57,7 @@ const TipSubmission: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: tip } = useQuery({
+  const { data: tip, refetch: refetchTip } = useQuery({
     queryKey: ["tip", params.tipId],
     queryFn: ({ queryKey }) =>
       getTipSubmission(queryKey[1] as string).catch(() => null),
@@ -77,11 +78,10 @@ const TipSubmission: React.FC = () => {
     },
   });
 
-  const queryClient = useQueryClient();
   const saveTipMutation = useMutation({
     mutationFn: saveTip,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tip", params.tipId] });
+      refetchTip();
     },
   });
 
@@ -148,6 +148,23 @@ const TipSubmission: React.FC = () => {
           <Dropdown actions={tipActions} value="Actions" openTo="right" />
 
           <div className="flex gap-4">
+            <span className="flex items-center gap-1 text-sm">
+              <span className="font-medium">Tag:</span>
+              <span className="italic">
+                <EditableCell
+                  value={tip.tag}
+                  onSave={(tag) =>
+                    saveTipMutation.mutate({
+                      id: tip.id,
+                      tag,
+                    })
+                  }
+                  emptyValue="—"
+                  readOnly={!canAlterTip}
+                  alwaysShowEdit
+                />
+              </span>
+            </span>
             <StatusPill status={tip.status} />
             <button
               type="button"

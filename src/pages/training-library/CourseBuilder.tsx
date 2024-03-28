@@ -119,7 +119,7 @@ const CourseBuilder = () => {
       queryClient.invalidateQueries({
         queryKey: ["training-courses"],
       });
-      queryClient.invalidateQueries({
+      queryClient.refetchQueries({
         queryKey: ["training-courses", data.id],
       });
       dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });

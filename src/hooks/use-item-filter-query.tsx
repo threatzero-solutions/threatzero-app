@@ -58,7 +58,7 @@ export const useItemFilterQuery = (
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const itemFilterOptions = useMemo<ItemFilterQueryParams>(() => {
+  const parsedSearchParams = useMemo<ItemFilterQueryParams>(() => {
     const customParams = Array.from(searchParams.entries()).reduce(
       (acc, [key, value]) => {
         if (key.startsWith(prefix) && value) {
@@ -83,11 +83,6 @@ export const useItemFilterQuery = (
     });
   }, [searchParams, options.pageSize, prefix]);
 
-  const [debouncedItemFilterOptions] = useDebounceValue(
-    itemFilterOptions,
-    options.debounceTime ?? 300
-  );
-
   const [params, setParams] = useImmer<ItemFilterQueryParams>({});
 
   useEffect(() => {
@@ -95,11 +90,16 @@ export const useItemFilterQuery = (
       initialized.current = true;
       setParams({
         ...initialValue,
-        ...itemFilterOptions,
+        ...parsedSearchParams,
       });
       return;
     }
-  }, [initialValue, itemFilterOptions, setParams]);
+  }, [initialValue, parsedSearchParams, setParams]);
+
+  const [debouncedItemFilterOptions] = useDebounceValue(
+    params,
+    options.debounceTime ?? 300
+  );
 
   useEffect(() => {
     if (!Object.keys(params).length) {
@@ -123,27 +123,17 @@ export const useItemFilterQuery = (
       },
       { replace: true }
     );
+  }, [debouncedItemFilterOptions, options.prefix, setSearchParams]);
 
-    return () => {
-      setSearchParams(
-        (draft) => {
-          Object.entries(p).forEach(([k, v]) => {
-            const key = `${prefix}${camelToSnake(k)}`;
-            if (v) {
-              draft.delete(key);
-            }
-          });
-          return draft;
-        },
-        { replace: true }
-      );
-    };
-  }, [params, options.prefix, setSearchParams]);
+  const clearParams = () => {
+    setParams({});
+  };
 
   return {
-    itemFilterOptions,
+    itemFilterOptions: params,
     setItemFilterOptions: setParams,
     debouncedItemFilterOptions,
+    clearFilterOptions: clearParams,
     searchParams,
     setSearchParams,
   };

@@ -107,7 +107,7 @@ const DataTable: React.FC<DataTableProps> = ({
                       >
                         <div
                           className={classNames(
-                            "group inline-flex",
+                            "whitespace-nowrap group inline-flex",
                             !noSort && orderOptions?.setOrder
                               ? "cursor-pointer"
                               : ""
@@ -159,7 +159,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           <td
                             key={`${row.id}_${key}`}
                             className={classNames(
-                              "whitespace-nowrap py-4 text-sm text-gray-500",
+                              "py-4 text-sm text-gray-500",
                               idx_col === 0
                                 ? "pl-4 pr-3 sm:pl-0"
                                 : idx_col === data.headers.length - 1
