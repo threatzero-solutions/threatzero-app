@@ -1,5 +1,5 @@
 import { useContext, useMemo, useState } from "react";
-import { READ, WRITE } from "../../constants/permissions";
+import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import {
   RequirePermissionsOptions,
   withRequirePermissions,
@@ -65,9 +65,15 @@ const AdministrativeReportsDashboard: React.FC = () => {
     [hasPermissions]
   );
 
+  const hasOrganizationOrAdminLevel = useMemo(
+    () => hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]),
+    [hasPermissions]
+  );
+
   const { data: units } = useQuery({
     queryKey: ["units"],
     queryFn: () => getUnits({ limit: 100 }),
+    enabled: hasOrganizationOrAdminLevel,
   });
 
   const { data: locations } = useQuery({
@@ -178,6 +184,7 @@ const AdministrativeReportsDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
+              hidden: !hasOrganizationOrAdminLevel,
             },
             {
               label: "Location",
@@ -279,6 +286,7 @@ const AdministrativeReportsDashboard: React.FC = () => {
                 value: unit.slug,
                 label: unit.name,
               })) ?? [{ value: undefined, label: "All units" }],
+              hidden: !hasOrganizationOrAdminLevel,
             },
             {
               key: "location.id",

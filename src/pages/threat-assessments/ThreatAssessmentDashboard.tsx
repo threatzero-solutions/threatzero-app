@@ -1,5 +1,5 @@
 import { useContext, useMemo, useState } from "react";
-import { READ, WRITE } from "../../constants/permissions";
+import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { classNames, fromDaysKey, fromStatus } from "../../utils/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -62,9 +62,15 @@ const ThreatAssessmentDashboard: React.FC = () => {
     [hasPermissions]
   );
 
+  const hasOrganizationOrAdminLevel = useMemo(
+    () => hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]),
+    [hasPermissions]
+  );
+
   const { data: units } = useQuery({
     queryKey: ["units"],
     queryFn: () => getUnits({ limit: 100 }),
+    enabled: hasOrganizationOrAdminLevel,
   });
 
   return (
@@ -170,6 +176,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
+              hidden: !hasOrganizationOrAdminLevel,
             },
             {
               label: <span className="sr-only">View</span>,
@@ -274,6 +281,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
                 value: unit.slug,
                 label: unit.name,
               })) ?? [{ value: undefined, label: "All schools" }],
+              hidden: !hasOrganizationOrAdminLevel,
             },
           ],
           setFilter: (key, value) =>
