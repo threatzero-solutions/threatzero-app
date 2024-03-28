@@ -16,7 +16,7 @@ import DataTable from "../../components/layouts/DataTable";
 import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import StatusPill from "../tip-submission/components/StatusPill";
-import { getUnits } from "../../queries/organizations";
+import { getLocations, getUnits } from "../../queries/organizations";
 import { useItemFilterQuery } from "../../hooks/use-item-filter-query";
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -47,6 +47,11 @@ const AdministrativeReportsDashboard: React.FC = () => {
   const { data: units } = useQuery({
     queryKey: ["units"],
     queryFn: () => getUnits({ limit: 100 }),
+  });
+
+  const { data: locations } = useQuery({
+    queryKey: ["locations"],
+    queryFn: () => getLocations({ limit: 100 }),
   });
 
   return (
@@ -150,6 +155,10 @@ const AdministrativeReportsDashboard: React.FC = () => {
               key: "unit.name",
             },
             {
+              label: "Location",
+              key: "location.name",
+            },
+            {
               label: <span className="sr-only">View</span>,
               key: "view",
               align: "right",
@@ -162,7 +171,8 @@ const AdministrativeReportsDashboard: React.FC = () => {
               status: <StatusPill status={tip.status} />,
               createdOn: dayjs(tip.createdOn).format("MMM D, YYYY"),
               updatedOn: dayjs(tip.updatedOn).fromNow(),
-              ["unit.name"]: tip.unit?.name,
+              ["unit.name"]: tip.unit?.name ?? "No unit",
+              ["location.name"]: tip.location?.name ?? "No location",
               view: (
                 <Link
                   to={`./safety-concerns/${tip.id}`}
@@ -222,7 +232,19 @@ const AdministrativeReportsDashboard: React.FC = () => {
               options: units?.results.map((unit) => ({
                 value: unit.slug,
                 label: unit.name,
-              })) ?? [{ value: undefined, label: "All schools" }],
+              })) ?? [{ value: undefined, label: "All units" }],
+            },
+            {
+              key: "location.id",
+              label: "Location",
+              value: tableFilterOptions["location.id"]
+                ? `${tableFilterOptions["location.id"]}`
+                : undefined,
+              // TODO: Dynamically get all units.
+              options: locations?.results.map((locations) => ({
+                value: locations.id,
+                label: locations.name,
+              })) ?? [{ value: undefined, label: "All locations" }],
             },
           ],
           setFilter: (key, value) =>
