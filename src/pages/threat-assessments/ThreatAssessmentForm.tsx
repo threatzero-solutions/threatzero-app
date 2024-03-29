@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   addAssessmentNote,
   assessmentToPdf,
@@ -30,6 +30,7 @@ import SlideOver from "../../components/layouts/SlideOver";
 import ManageNotes from "../../components/notes/ManageNotes";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { API_BASE_URL } from "../../contexts/core/constants";
+import EditableCell from "../../components/layouts/EditableCell";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
 
@@ -39,7 +40,6 @@ const ThreatAssessmentForm: React.FC = () => {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { hasPermissions } = useContext(CoreContext);
 
   const isEditing = useMemo(() => searchParams.has("edit"), [searchParams]);
@@ -65,7 +65,7 @@ const ThreatAssessmentForm: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: assessment } = useQuery({
+  const { data: assessment, refetch: refetchAssessment } = useQuery({
     queryKey: ["assessment", params.assessmentId],
     queryFn: ({ queryKey }) => getThreatAssessment(queryKey[1]),
     enabled: !!params.assessmentId,
@@ -93,9 +93,7 @@ const ThreatAssessmentForm: React.FC = () => {
   const assessmentMutation = useMutation({
     mutationFn: saveThreatAssessment,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["assessment", params.assessmentId],
-      });
+      refetchAssessment();
       if (!params.assessmentId) {
         navigate(`/threat-assessments/${data.id}?edit=true`);
       }
@@ -176,6 +174,23 @@ const ThreatAssessmentForm: React.FC = () => {
           />
 
           <div className="flex gap-4">
+            <span className="flex items-center gap-1 text-sm">
+              <span className="font-medium">Tag:</span>
+              <span className="italic">
+                <EditableCell
+                  value={assessment.tag}
+                  onSave={(tag) =>
+                    assessmentMutation.mutate({
+                      id: assessment.id,
+                      tag,
+                    })
+                  }
+                  emptyValue="—"
+                  readOnly={!canAlterAssessment}
+                  alwaysShowEdit
+                />
+              </span>
+            </span>
             <StatusPill status={assessment.status} />
             <button
               type="button"

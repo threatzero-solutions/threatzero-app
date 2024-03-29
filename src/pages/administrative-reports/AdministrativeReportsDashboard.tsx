@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { READ } from "../../constants/permissions";
+import { useContext, useMemo, useState } from "react";
+import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import {
   RequirePermissionsOptions,
   withRequirePermissions,
@@ -8,32 +8,41 @@ import {
   TipSubmissionFilterOptions,
   getTipSubmissionStats,
   getTipSubmissions,
+  saveTip,
 } from "../../queries/tips";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { classNames, fromDaysKey, fromStatus } from "../../utils/core";
 import { TipStatus } from "../../types/entities";
 import DataTable from "../../components/layouts/DataTable";
 import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import StatusPill from "../tip-submission/components/StatusPill";
-import { getUnits } from "../../queries/organizations";
+import { getLocations, getUnits } from "../../queries/organizations";
 import { useItemFilterQuery } from "../../hooks/use-item-filter-query";
+import EditableCell from "../../components/layouts/EditableCell";
+import { CoreContext } from "../../contexts/core/core-context";
 
 const DEFAULT_PAGE_SIZE = 10;
 // const AUDIENCE_COLORS = ["#050505", "#004FFF", "#31AFD4", "#902D41", "#FF007F"];
 
 const AdministrativeReportsDashboard: React.FC = () => {
   const location = useLocation();
+  const { hasPermissions } = useContext(CoreContext);
 
   const {
     itemFilterOptions: tableFilterOptions,
+    debouncedItemFilterOptions: debouncedTableFilterOptions,
     setItemFilterOptions: setTableFilterOptions,
   } = useItemFilterQuery({
     order: { createdOn: "DESC" },
   });
 
-  const { data: tips, isLoading: tipsLoading } = useQuery({
-    queryKey: ["tip-submissions", tableFilterOptions] as const,
+  const {
+    data: tips,
+    isLoading: tipsLoading,
+    refetch: refetchTips,
+  } = useQuery({
+    queryKey: ["tip-submissions", debouncedTableFilterOptions] as const,
     queryFn: ({ queryKey }) => getTipSubmissions(queryKey[1]),
   });
 
@@ -44,9 +53,32 @@ const AdministrativeReportsDashboard: React.FC = () => {
       getTipSubmissionStats(queryKey[1] as TipSubmissionFilterOptions),
   });
 
+  const saveTipMutation = useMutation({
+    mutationFn: saveTip,
+    onSuccess: () => {
+      refetchTips();
+    },
+  });
+
+  const canAlterTip = useMemo(
+    () => hasPermissions([WRITE.TIPS]),
+    [hasPermissions]
+  );
+
+  const hasOrganizationOrAdminLevel = useMemo(
+    () => hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]),
+    [hasPermissions]
+  );
+
   const { data: units } = useQuery({
     queryKey: ["units"],
     queryFn: () => getUnits({ limit: 100 }),
+    enabled: hasOrganizationOrAdminLevel,
+  });
+
+  const { data: locations } = useQuery({
+    queryKey: ["locations"],
+    queryFn: () => getLocations({ limit: 100 }),
   });
 
   return (
@@ -138,6 +170,10 @@ const AdministrativeReportsDashboard: React.FC = () => {
               key: "status",
             },
             {
+              label: "Tag",
+              key: "tag",
+            },
+            {
               label: "Created On",
               key: "createdOn",
             },
@@ -148,6 +184,11 @@ const AdministrativeReportsDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
+              hidden: !hasOrganizationOrAdminLevel,
+            },
+            {
+              label: "Location",
+              key: "location.name",
             },
             {
               label: <span className="sr-only">View</span>,
@@ -160,9 +201,23 @@ const AdministrativeReportsDashboard: React.FC = () => {
             tips?.results.map((tip) => ({
               id: tip.id,
               status: <StatusPill status={tip.status} />,
+              tag: (
+                <EditableCell
+                  value={tip.tag}
+                  onSave={(tag) =>
+                    saveTipMutation.mutate({
+                      id: tip.id,
+                      tag,
+                    })
+                  }
+                  emptyValue="—"
+                  readOnly={!canAlterTip}
+                />
+              ),
               createdOn: dayjs(tip.createdOn).format("MMM D, YYYY"),
               updatedOn: dayjs(tip.updatedOn).fromNow(),
-              ["unit.name"]: tip.unit?.name,
+              ["unit.name"]: tip.unit?.name ?? "—",
+              ["location.name"]: tip.location?.name ?? "—",
               view: (
                 <Link
                   to={`./safety-concerns/${tip.id}`}
@@ -199,6 +254,14 @@ const AdministrativeReportsDashboard: React.FC = () => {
               options.offset = offset;
             }),
         }}
+        searchOptions={{
+          setSearchQuery: (q) =>
+            setTableFilterOptions((o) => {
+              o.search = q;
+              o.offset = 0;
+            }),
+          searchQuery: tableFilterOptions.search ?? "",
+        }}
         filterOptions={{
           filters: [
             {
@@ -222,7 +285,20 @@ const AdministrativeReportsDashboard: React.FC = () => {
               options: units?.results.map((unit) => ({
                 value: unit.slug,
                 label: unit.name,
-              })) ?? [{ value: undefined, label: "All schools" }],
+              })) ?? [{ value: undefined, label: "All units" }],
+              hidden: !hasOrganizationOrAdminLevel,
+            },
+            {
+              key: "location.id",
+              label: "Location",
+              value: tableFilterOptions["location.id"]
+                ? `${tableFilterOptions["location.id"]}`
+                : undefined,
+              // TODO: Dynamically get all units.
+              options: locations?.results.map((locations) => ({
+                value: locations.id,
+                label: locations.name,
+              })) ?? [{ value: undefined, label: "All locations" }],
             },
           ],
           setFilter: (key, value) =>

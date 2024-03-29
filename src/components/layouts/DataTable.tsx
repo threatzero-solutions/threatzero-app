@@ -25,6 +25,7 @@ interface DataTableProps {
       key: string;
       align?: "left" | "center" | "right";
       noSort?: boolean;
+      hidden?: boolean;
     }[];
     rows: {
       id: string;
@@ -91,86 +92,90 @@ const DataTable: React.FC<DataTableProps> = ({
               <table className="min-w-full divide-y divide-gray-300">
                 <thead>
                   <tr>
-                    {data?.headers.map(({ label, key, align, noSort }, idx) => (
-                      <th
-                        key={key}
-                        scope="col"
-                        className={classNames(
-                          "py-3.5 text-left text-sm font-semibold text-gray-900",
-                          idx === 0
-                            ? "pl-4 pr-3 sm:pl-0"
-                            : idx === data.headers.length - 1
-                            ? "pl-3 pr-4 sm:pr-0"
-                            : "px-3",
-                          `text-${align ?? "left"}`
-                        )}
-                      >
-                        <div
+                    {data?.headers
+                      .filter((h) => !h.hidden)
+                      .map(({ label, key, align, noSort }, idx) => (
+                        <th
+                          key={key}
+                          scope="col"
                           className={classNames(
-                            "group inline-flex",
-                            !noSort && orderOptions?.setOrder
-                              ? "cursor-pointer"
-                              : ""
+                            "py-3.5 text-left text-sm font-semibold text-gray-900",
+                            idx === 0
+                              ? "pl-4 pr-3 sm:pl-0"
+                              : idx === data.headers.length - 1
+                              ? "pl-3 pr-4 sm:pr-0"
+                              : "px-3",
+                            `text-${align ?? "left"}`
                           )}
-                          onClick={() =>
-                            !noSort &&
-                            orderOptions?.setOrder?.(
-                              key,
-                              orderOptions?.order?.[key] === "ASC"
-                                ? "DESC"
-                                : "ASC"
-                            )
-                          }
-                          onKeyUp={() => {}}
                         >
-                          {label}
-                          {!noSort && !!orderOptions?.setOrder && (
-                            <span
-                              className={classNames(
-                                "ml-2 flex-none rounded transition-colors",
-                                orderOptions?.order?.[key]
-                                  ? "bg-gray-100 text-gray-900 group-hover:bg-gray-200"
-                                  : "invisible text-gray-400 group-hover:visible group-focus:visible"
-                              )}
-                            >
-                              {orderOptions?.order?.[key] !== "ASC" ? (
-                                <ChevronDownIcon
-                                  className="h-5 w-5"
-                                  aria-hidden="true"
-                                />
-                              ) : (
-                                <ChevronUpIcon
-                                  className="h-5 w-5"
-                                  aria-hidden="true"
-                                />
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                    ))}
+                          <div
+                            className={classNames(
+                              "whitespace-nowrap group inline-flex",
+                              !noSort && orderOptions?.setOrder
+                                ? "cursor-pointer"
+                                : ""
+                            )}
+                            onClick={() =>
+                              !noSort &&
+                              orderOptions?.setOrder?.(
+                                key,
+                                orderOptions?.order?.[key] === "ASC"
+                                  ? "DESC"
+                                  : "ASC"
+                              )
+                            }
+                            onKeyUp={() => {}}
+                          >
+                            {label}
+                            {!noSort && !!orderOptions?.setOrder && (
+                              <span
+                                className={classNames(
+                                  "ml-2 flex-none rounded transition-colors",
+                                  orderOptions?.order?.[key]
+                                    ? "bg-gray-100 text-gray-900 group-hover:bg-gray-200"
+                                    : "invisible text-gray-400 group-hover:visible group-focus:visible"
+                                )}
+                              >
+                                {orderOptions?.order?.[key] !== "ASC" ? (
+                                  <ChevronDownIcon
+                                    className="h-5 w-5"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <ChevronUpIcon
+                                    className="h-5 w-5"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200" ref={rowsRef}>
                   {!isLoading &&
                     data?.rows.map((row) => (
                       <tr key={row.id}>
-                        {data.headers.map(({ key, align }, idx_col) => (
-                          <td
-                            key={`${row.id}_${key}`}
-                            className={classNames(
-                              "whitespace-nowrap py-4 text-sm text-gray-500",
-                              idx_col === 0
-                                ? "pl-4 pr-3 sm:pl-0"
-                                : idx_col === data.headers.length - 1
-                                ? "pl-3 pr-4 sm:pr-0"
-                                : "px-3",
-                              `text-${align ?? "left"}`
-                            )}
-                          >
-                            {row[key]}
-                          </td>
-                        ))}
+                        {data.headers
+                          .filter((h) => !h.hidden)
+                          .map(({ key, align }, idx_col) => (
+                            <td
+                              key={`${row.id}_${key}`}
+                              className={classNames(
+                                "py-4 text-sm text-gray-500",
+                                idx_col === 0
+                                  ? "pl-4 pr-3 sm:pl-0"
+                                  : idx_col === data.headers.length - 1
+                                  ? "pl-3 pr-4 sm:pr-0"
+                                  : "px-3",
+                                `text-${align ?? "left"}`
+                              )}
+                            >
+                              {row[key]}
+                            </td>
+                          ))}
                       </tr>
                     ))}
                 </tbody>

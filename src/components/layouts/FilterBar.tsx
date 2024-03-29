@@ -20,6 +20,7 @@ export interface FilterBarFilter {
   label: string;
   options: FilterBarFilterOption[];
   value?: string;
+  hidden?: boolean;
 }
 
 export interface FilterBarFilterOptions {
@@ -41,45 +42,47 @@ const FilterBar: React.FC<FilterBarProps> = ({
       {filterOptions && (
         <Dropdown
           value="Filter"
-          actionGroups={filterOptions.filters?.map((f) => ({
-            id: `id-${f.key}`,
-            value: f.label,
-            actions: [
-              ...f.options.map((o) => ({
-                id: o.value ?? "none",
-                value: (
-                  <div className="pl-1">
-                    <input
-                      type="checkbox"
-                      readOnly={true}
-                      className="pointer-events-none h-4 w-4 mr-2 rounded border-gray-300 text-secondary-600 focus:ring-secondary-600"
-                      checked={o.value === f.value}
-                    />
-                    {o.label}
-                  </div>
-                ),
-                action: () => filterOptions?.setFilter?.(f.key, o.value),
-              })),
-              {
-                id: "clear",
-                value: (
-                  <span
-                    className={classNames(
-                      "pl-1 text-xs font-semibol",
-                      f.value === undefined
-                        ? "text-gray-400"
-                        : "text-secondary-600"
-                    )}
-                  >
-                    clear
-                  </span>
-                ),
-                action: () => filterOptions?.setFilter?.(f.key, undefined),
-                disabled: f.value === undefined,
-                hidden: f.options.some((o) => o.value === undefined),
-              },
-            ],
-          }))}
+          actionGroups={filterOptions.filters
+            ?.filter((f) => !f.hidden)
+            .map((f) => ({
+              id: `id-${f.key}`,
+              value: f.label,
+              actions: [
+                ...f.options.map((o) => ({
+                  id: o.value ?? "none",
+                  value: (
+                    <div className="pl-1">
+                      <input
+                        type="checkbox"
+                        readOnly={true}
+                        className="pointer-events-none h-4 w-4 mr-2 rounded border-gray-300 text-secondary-600 focus:ring-secondary-600"
+                        checked={o.value === f.value}
+                      />
+                      {o.label}
+                    </div>
+                  ),
+                  action: () => filterOptions?.setFilter?.(f.key, o.value),
+                })),
+                {
+                  id: "clear",
+                  value: (
+                    <span
+                      className={classNames(
+                        "pl-1 text-xs font-semibol",
+                        f.value === undefined
+                          ? "text-gray-400"
+                          : "text-secondary-600"
+                      )}
+                    >
+                      clear
+                    </span>
+                  ),
+                  action: () => filterOptions?.setFilter?.(f.key, undefined),
+                  disabled: f.value === undefined,
+                  hidden: f.options.some((o) => o.value === undefined),
+                },
+              ],
+            }))}
           openTo="left"
           showDividers={true}
         />

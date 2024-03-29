@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { READ } from "../../constants/permissions";
+import { useContext, useMemo, useState } from "react";
+import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { classNames, fromDaysKey, fromStatus } from "../../utils/core";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ThreatAssessmentFilterOptions,
   getThreatAssessmentStats,
   getThreatAssessments,
+  saveThreatAssessment,
 } from "../../queries/threat-assessments";
 import { AssessmentStatus } from "../../types/entities";
 import { Link, useLocation } from "react-router-dom";
@@ -16,6 +17,8 @@ import StatusPill from "./components/StatusPill";
 import DataTable from "../../components/layouts/DataTable";
 import { getUnits } from "../../queries/organizations";
 import { useItemFilterQuery } from "../../hooks/use-item-filter-query";
+import { CoreContext } from "../../contexts/core/core-context";
+import EditableCell from "../../components/layouts/EditableCell";
 
 dayjs.extend(relativeTime);
 
@@ -23,6 +26,7 @@ const DEFAULT_PAGE_SIZE = 10;
 
 const ThreatAssessmentDashboard: React.FC = () => {
   const location = useLocation();
+  const { hasPermissions } = useContext(CoreContext);
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -30,7 +34,11 @@ const ThreatAssessmentDashboard: React.FC = () => {
   } = useItemFilterQuery({
     order: { createdOn: "DESC" },
   });
-  const { data: assessments, isLoading: assessmentsLoading } = useQuery({
+  const {
+    data: assessments,
+    isLoading: assessmentsLoading,
+    refetch: refetchAssessments,
+  } = useQuery({
     queryKey: ["threat-assessments", tableFilterOptions],
     queryFn: ({ queryKey }) =>
       getThreatAssessments(queryKey[1] as ThreatAssessmentFilterOptions),
@@ -42,9 +50,27 @@ const ThreatAssessmentDashboard: React.FC = () => {
       getThreatAssessmentStats(queryKey[1] as ThreatAssessmentFilterOptions),
   });
 
+  const saveAssessmentMutation = useMutation({
+    mutationFn: saveThreatAssessment,
+    onSuccess: () => {
+      refetchAssessments();
+    },
+  });
+
+  const canAlterAssessment = useMemo(
+    () => hasPermissions([WRITE.THREAT_ASSESSMENTS]),
+    [hasPermissions]
+  );
+
+  const hasOrganizationOrAdminLevel = useMemo(
+    () => hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]),
+    [hasPermissions]
+  );
+
   const { data: units } = useQuery({
     queryKey: ["units"],
     queryFn: () => getUnits({ limit: 100 }),
+    enabled: hasOrganizationOrAdminLevel,
   });
 
   return (
@@ -136,6 +162,10 @@ const ThreatAssessmentDashboard: React.FC = () => {
               key: "status",
             },
             {
+              label: "Tag",
+              key: "tag",
+            },
+            {
               label: "Created On",
               key: "createdOn",
             },
@@ -146,6 +176,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
+              hidden: !hasOrganizationOrAdminLevel,
             },
             {
               label: <span className="sr-only">View</span>,
@@ -158,6 +189,19 @@ const ThreatAssessmentDashboard: React.FC = () => {
             assessments?.results.map((assessment) => ({
               id: assessment.id,
               status: <StatusPill status={assessment.status} />,
+              tag: (
+                <EditableCell
+                  value={assessment.tag}
+                  onSave={(tag) =>
+                    saveAssessmentMutation.mutate({
+                      id: assessment.id,
+                      tag,
+                    })
+                  }
+                  emptyValue="—"
+                  readOnly={!canAlterAssessment}
+                />
+              ),
               createdOn: dayjs(assessment.createdOn).format("MMM D, YYYY"),
               updatedOn: dayjs(assessment.updatedOn).fromNow(),
               ["unit.name"]: assessment.unit?.name ?? assessment.unit?.slug,
@@ -205,6 +249,14 @@ const ThreatAssessmentDashboard: React.FC = () => {
           setOffset: (offset) =>
             setTableFilterOptions((options) => ({ ...options, offset })),
         }}
+        searchOptions={{
+          setSearchQuery: (q) =>
+            setTableFilterOptions((o) => {
+              o.search = q;
+              o.offset = 0;
+            }),
+          searchQuery: tableFilterOptions.search ?? "",
+        }}
         filterOptions={{
           filters: [
             {
@@ -229,6 +281,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
                 value: unit.slug,
                 label: unit.name,
               })) ?? [{ value: undefined, label: "All schools" }],
+              hidden: !hasOrganizationOrAdminLevel,
             },
           ],
           setFilter: (key, value) =>

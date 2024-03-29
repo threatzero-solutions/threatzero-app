@@ -36,7 +36,7 @@ export interface Unit extends OrganizationBase {
 
 export interface Location extends Base {
   unit: Unit;
-  name: string | null;
+  name: string;
   locationId: string;
 }
 
@@ -257,8 +257,10 @@ export enum TipStatus {
 
 /** Metadata about a tip and its form submission. */
 export interface Tip extends Base {
+  tag?: string;
   unitSlug: string;
   unit: Unit;
+  location?: Location;
   submission: FormSubmission;
   informantFirstName: string;
   informantLastName: string;
@@ -279,6 +281,7 @@ export enum AssessmentStatus {
 
 /** Metadata about a threat assessment and its form submission. */
 export interface ThreatAssessment extends Base {
+  tag?: string;
   unitSlug: string;
   unit: Unit;
   submission: FormSubmission;
