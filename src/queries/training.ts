@@ -55,7 +55,12 @@ export const deleteTrainingSection = async (id?: string) =>
 
 export const saveTrainingItem = async (item: Partial<TrainingItem & Video>) => {
   // TODO: Add support for other items.
-  item.type = "Video";
+  const type = "Video";
+
+  item = {
+    ...item,
+    type,
+  };
 
   return save<Video>("/training/items/", item);
 };
