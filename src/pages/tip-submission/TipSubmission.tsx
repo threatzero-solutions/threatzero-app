@@ -27,6 +27,7 @@ import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 import EditableCell from "../../components/layouts/EditableCell";
+import POCFilesButtonCompact from "../threat-management/poc-files/components/POCFilesButtonCompact";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
@@ -164,6 +165,13 @@ const TipSubmission: React.FC = () => {
                   alwaysShowEdit
                 />
               </span>
+            </span>
+            <span className="inline-flex items-center gap-1 text-sm font-medium">
+              PoC files:
+              <POCFilesButtonCompact
+                pocFiles={tip.pocFiles}
+                className="text-gray-500"
+              />
             </span>
             <StatusPill status={tip.status} />
             <button

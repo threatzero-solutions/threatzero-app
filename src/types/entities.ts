@@ -247,7 +247,15 @@ export interface Note extends Base {
   user: UserRepresentation | null;
 }
 
-// ------------------ TIP SUBMISSIONS ------------------
+// ------------------ THREAT MANAGEMENT ------------------
+
+export interface POCFile extends Base {
+  pocFirstName: string;
+  pocLastName: string;
+  unit: Unit;
+  tips: Tip[];
+  assessments: ThreatAssessment[];
+}
 
 export enum TipStatus {
   NEW = "new",
@@ -262,6 +270,7 @@ export interface Tip extends Base {
   unit: Unit;
   location?: Location;
   submission: FormSubmission;
+  pocFiles: POCFile[];
   informantFirstName: string;
   informantLastName: string;
   informantEmail: string;
@@ -269,8 +278,6 @@ export interface Tip extends Base {
   notes: Note[];
   status: TipStatus;
 }
-
-// ------------------ THREAT ASSESSMENTS ------------------
 
 export enum AssessmentStatus {
   IN_PROGRESS = "in_progress",
@@ -285,6 +292,7 @@ export interface ThreatAssessment extends Base {
   unitSlug: string;
   unit: Unit;
   submission: FormSubmission;
+  pocFiles: POCFile[];
   status: AssessmentStatus;
   statusName?: string;
 }

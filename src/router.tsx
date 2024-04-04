@@ -19,8 +19,9 @@ import {
 import { PropsWithChildren, useContext, useEffect } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
 import TrainingItem from "./pages/training-library/TrainingItem";
-import ThreatAssessmentDashboard from "./pages/threat-assessments/ThreatAssessmentDashboard";
-import ThreatAssessmentForm from "./pages/threat-assessments/ThreatAssessmentForm";
+import ThreatAssessmentDashboardOld from "./pages/threat-assessments/ThreatAssessmentDashboard";
+import ThreatAssessmentDashboard from "./pages/threat-management/threat-assessments/ThreatAssessmentDashboard";
+import ThreatAssessmentForm from "./pages/threat-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
 import { FormsContextProvider } from "./contexts/forms/forms-context";
 import { TrainingContextProvider } from "./contexts/training/training-context";
@@ -47,6 +48,9 @@ import ErrorPage from "./pages/ErrorPage";
 import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
 import HelpCenter from "./pages/HelpCenter";
 import { AxiosError } from "axios";
+import ThreatManagementRoot from "./pages/threat-management/ThreatManagementRoot";
+import SafetyConcernsDashboard from "./pages/threat-management/safety-concerns/SafetyConcernsDashboard";
+import POCFilesDashboard from "./pages/threat-management/poc-files/POCFilesDashboard";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -226,15 +230,55 @@ export const router = createBrowserRouter(
                   children: [
                     {
                       path: "",
-                      element: <ThreatAssessmentDashboard />,
+                      element: <ThreatAssessmentDashboardOld />,
+                    },
+                  ],
+                },
+                {
+                  path: "threat-management",
+                  handle: { title: "Threat Management" },
+                  element: <ThreatManagementRoot />,
+                  children: [
+                    {
+                      path: "poc-files",
+                      handle: { title: "POC Files" },
+                      element: <POCFilesDashboard />,
                     },
                     {
-                      path: "new",
-                      element: <ThreatAssessmentForm />,
+                      path: "safety-concerns",
+                      handle: { title: "Administrative Reports" },
+                      children: [
+                        {
+                          path: "",
+                          element: <SafetyConcernsDashboard />,
+                        },
+                        {
+                          path: ":tipId",
+                          element: <TipSubmission />,
+                        },
+                      ],
                     },
                     {
-                      path: ":assessmentId",
-                      element: <ThreatAssessmentForm />,
+                      path: "threat-assessments",
+                      handle: { title: "Threat Assessments" },
+                      children: [
+                        {
+                          path: "",
+                          element: <ThreatAssessmentDashboard />,
+                        },
+                        {
+                          path: "new",
+                          element: <ThreatAssessmentForm />,
+                        },
+                        {
+                          path: ":assessmentId",
+                          element: <ThreatAssessmentForm />,
+                        },
+                      ],
+                    },
+                    {
+                      path: "*?",
+                      loader: () => redirect("poc-files"),
                     },
                   ],
                 },
