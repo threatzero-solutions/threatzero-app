@@ -156,7 +156,9 @@ const TrainingItem: React.FC = () => {
               <p
                 className="text-gray-500 text-md"
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
-                dangerouslySetInnerHTML={{ __html: item.metadata.description }}
+                dangerouslySetInnerHTML={{
+                  __html: item.metadata.description ?? "",
+                }}
               />
             </>
           ) : (

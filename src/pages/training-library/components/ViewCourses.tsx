@@ -1,12 +1,12 @@
 import { useContext, useMemo } from "react";
 import { TrainingContext } from "../../../contexts/training/training-context";
-import { TrainingCourse } from "../../../types/entities";
-import { classNames, humanizeSlug } from "../../../utils/core";
+import { TrainingCourse, TrainingVisibility } from "../../../types/entities";
 import { Dialog } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { EyeSlashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { CoreContext } from "../../../contexts/core/core-context";
 import { LEVEL, WRITE } from "../../../constants/permissions";
+import PillBadge from "../../../components/PillBadge";
 
 const ViewCourses: React.FC = () => {
   const { dispatch, setActiveCourse, state } = useContext(TrainingContext);
@@ -67,7 +67,14 @@ const ViewCourses: React.FC = () => {
             >
               <div className="flex min-w-0 gap-x-4">
                 <div className="min-w-0 flex-auto">
-                  <div className="flex items-start flex-wrap gap-x-3">
+                  <div className="flex items-center flex-wrap gap-x-3">
+                    {isTrainingAdmin &&
+                      course.visibility === TrainingVisibility.HIDDEN && (
+                        <EyeSlashIcon
+                          className="h-5 w-5 text-purple-600"
+                          aria-hidden="true"
+                        />
+                      )}
                     <p
                       className="text-sm font-semibold leading-6 text-gray-900 line-clamp-1"
                       // biome-ignore lint/security/noDangerouslySetInnerHtml: set by Admins only
@@ -75,23 +82,23 @@ const ViewCourses: React.FC = () => {
                         __html: course.metadata.title,
                       }}
                     />
-                    {isTrainingAdmin &&
-                      course.audiences.map((audience) => (
-                        <p
-                          key={audience.id}
-                          className={classNames(
-                            "hidden sm:block rounded-md whitespace-nowrap mt-0.5 px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset"
-                          )}
-                        >
-                          {humanizeSlug(audience.slug)}
-                        </p>
-                      ))}
+                    {isTrainingAdmin && (
+                      <>
+                        {course.metadata.tag && (
+                          <PillBadge
+                            color={"secondary"}
+                            value={course.metadata.tag}
+                            displayValue={course.metadata.tag}
+                          />
+                        )}
+                      </>
+                    )}
                   </div>
                   <p
                     className="mt-1 flex text-xs leading-5 text-gray-500 line-clamp-1"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: set by Admins only
                     dangerouslySetInnerHTML={{
-                      __html: course.metadata.description,
+                      __html: course.metadata.description ?? "",
                     }}
                   />
                 </div>

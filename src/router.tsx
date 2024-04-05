@@ -16,7 +16,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { PropsWithChildren, useContext, useEffect } from "react";
+import { PropsWithChildren, useContext, useEffect, useState } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
 import TrainingItem from "./pages/training-library/TrainingItem";
 import ThreatAssessmentDashboard from "./pages/threat-assessments/ThreatAssessmentDashboard";
@@ -61,13 +61,17 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
       setError("Oops! Something went wrong.");
     }
   };
-  const queryClient = new QueryClient({
-    queryCache: new QueryCache({
-      onError: handleError,
-    }),
-    mutationCache: new MutationCache({
-      onError: handleError,
-    }),
+
+  const [queryClient] = useState(() => {
+    console.debug("creating query client");
+    return new QueryClient({
+      queryCache: new QueryCache({
+        onError: handleError,
+      }),
+      mutationCache: new MutationCache({
+        onError: handleError,
+      }),
+    });
   });
 
   return (

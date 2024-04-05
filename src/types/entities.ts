@@ -56,7 +56,8 @@ export enum TrainingVisibility {
 /** Metadata about a piece of training material. */
 export interface TrainingMetadata {
   title: string;
-  description: string;
+  description?: string;
+  tag?: string;
 }
 
 /** A group of training sections. */
