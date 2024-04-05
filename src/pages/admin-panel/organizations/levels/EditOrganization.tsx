@@ -177,9 +177,10 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
     event.preventDefault();
     event.stopPropagation();
 
-    organization.slug = slugify(organization.slug ?? "");
-
-    saveOrganizationMutation.mutate(organization);
+    saveOrganizationMutation.mutate({
+      ...organization,
+      slug: slugify(organization.slug ?? ""),
+    });
   };
 
   const handleDelete = () => {
