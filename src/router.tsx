@@ -47,6 +47,7 @@ import ErrorPage from "./pages/ErrorPage";
 import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
 import HelpCenter from "./pages/HelpCenter";
 import { AxiosError } from "axios";
+import { ResourceItemCategories } from "./types/entities";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -63,7 +64,6 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   };
 
   const [queryClient] = useState(() => {
-    console.debug("creating query client");
     return new QueryClient({
       queryCache: new QueryCache({
         onError: handleError,
@@ -283,72 +283,43 @@ export const router = createBrowserRouter(
                   ],
                 },
                 {
-                  path: "prevention-resources",
+                  path: "resources/:category",
                   handle: { title: "Resources" },
-                  element: <ResourcePage title={"Prevention Resources"} />,
+                  loader: ({ params }) => {
+                    if (
+                      !ResourceItemCategories.includes(params.category as any)
+                    ) {
+                      return redirect("/");
+                    }
+                    return null;
+                  },
                   children: [
                     {
-                      path: "videos",
-                      handle: { title: "Prevention Videos" },
-                      element: <ResourceVideos category={"prevention"} />,
+                      path: "",
+                      element: <ResourcePage />,
+                      children: [
+                        {
+                          path: "videos",
+                          handle: { title: "Videos" },
+                          element: <ResourceVideos />,
+                        },
+                        {
+                          path: "documents",
+                          handle: { title: "Documents" },
+                          element: <ResourceDocuments />,
+                        },
+                        {
+                          path: "*?",
+                          loader: () => redirect("videos"),
+                        },
+                      ],
                     },
                     {
-                      path: "documents",
-                      handle: { title: "Prevention Documents" },
-                      element: <ResourceDocuments category={"prevention"} />,
-                    },
-                    {
-                      path: "*?",
-                      loader: () => redirect("videos"),
+                      path: ":id",
+                      handle: { title: "View Resource" },
+                      element: <ResourceItemEntity />,
                     },
                   ],
-                },
-                {
-                  path: "preparation-resources",
-                  handle: { title: "Resources" },
-                  element: <ResourcePage title={"Preparation Resources"} />,
-                  children: [
-                    {
-                      path: "videos",
-                      handle: { title: "Preparation Videos" },
-                      element: <ResourceVideos category={"preparation"} />,
-                    },
-                    {
-                      path: "documents",
-                      handle: { title: "Preparation Documents" },
-                      element: <ResourceDocuments category={"preparation"} />,
-                    },
-                    {
-                      path: "*?",
-                      loader: () => redirect("videos"),
-                    },
-                  ],
-                },
-                {
-                  path: "response-resources",
-                  handle: { title: "Resources" },
-                  element: <ResourcePage title={"Response Resources"} />,
-                  children: [
-                    {
-                      path: "videos",
-                      handle: { title: "Response Videos" },
-                      element: <ResourceVideos category={"response"} />,
-                    },
-                    {
-                      path: "documents",
-                      handle: { title: "Response Documents" },
-                      element: <ResourceDocuments category={"response"} />,
-                    },
-                    {
-                      path: "*?",
-                      loader: () => redirect("videos"),
-                    },
-                  ],
-                },
-                {
-                  path: "resources/:id",
-                  handle: { title: "View Resource" },
-                  element: <ResourceItemEntity />,
                 },
                 {
                   path: "help-center",

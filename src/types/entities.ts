@@ -346,7 +346,14 @@ export interface VideoEvent {
   url: string;
 }
 
-export type ResourceItemCategory = "prevention" | "preparation" | "response";
+export const ResourceItemCategories = [
+  "prevention",
+  "preparation",
+  "response",
+  "resiliency",
+] as const;
+
+export type ResourceItemCategory = (typeof ResourceItemCategories)[number];
 
 export enum ResourceType {
   VIDEO = "video",
