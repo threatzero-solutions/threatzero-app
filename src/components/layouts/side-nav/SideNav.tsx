@@ -38,7 +38,7 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     permissionOptions: threatAssessmentPermissionsOptions,
   },
   {
-    name: "Resources",
+    name: "Additional Resources",
     permissionOptions: resourcePermissionsOptions,
     children: [
       {
