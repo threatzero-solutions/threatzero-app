@@ -15,6 +15,7 @@ import { getTrainingCourses } from "../../../../queries/training";
 import { getResourceItems } from "../../../../queries/media";
 import { DeepPartial } from "../../../../types/core";
 import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
+import PillBadge from "../../../../components/PillBadge";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
   {
@@ -243,7 +244,18 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
                     }
                     options={(courses?.results ?? []).map((c) => ({
                       key: c.id,
-                      label: c.metadata.title,
+                      label: (
+                        <span className="inline-flex items-center gap-2">
+                          {c.metadata.title}
+                          {c.metadata.tag && (
+                            <PillBadge
+                              color={"secondary"}
+                              value={c.metadata.tag}
+                              displayValue={c.metadata.tag}
+                            />
+                          )}
+                        </span>
+                      ),
                     }))}
                     onChange={(ids) => handleRelationChange("courses", ids)}
                   />
