@@ -59,6 +59,14 @@ const METADATA_INPUT_DATA: Array<MetadataFieldType> = [
     required: false,
     order: 2,
   },
+  {
+    name: "tag",
+    label: "Tag",
+    helpText: "Internal tag for distinguishing courses.",
+    type: FieldType.TEXT,
+    required: false,
+    order: 3,
+  },
 ];
 
 const VISIBILITY_FIELD = {
@@ -119,8 +127,9 @@ const CourseBuilder = () => {
       queryClient.invalidateQueries({
         queryKey: ["training-courses"],
       });
-      queryClient.refetchQueries({
+      queryClient.invalidateQueries({
         queryKey: ["training-courses", data.id],
+        exact: true,
       });
       dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
     },
@@ -219,7 +228,7 @@ const CourseBuilder = () => {
               <FormField
                 key={field.name}
                 field={field}
-                value={course.metadata[field.name]}
+                value={course.metadata[field.name] ?? ""}
                 onChange={(e) => handleMetadataChange(field, e)}
                 mediaUploadUrl=""
               />
@@ -228,7 +237,7 @@ const CourseBuilder = () => {
             <FormField
               key={"visibility"}
               field={VISIBILITY_FIELD}
-              value={course.visibility}
+              value={course.visibility ?? TrainingVisibility.HIDDEN}
               onChange={handleChange}
               mediaUploadUrl=""
             />

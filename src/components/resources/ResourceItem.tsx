@@ -4,7 +4,7 @@ import {
   ResourceItem as ResourceItemEntity,
   ResourceType,
 } from "../../types/entities";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getResourceItem } from "../../queries/media";
 import VimeoPlayer from "react-player/vimeo";
@@ -66,10 +66,9 @@ const DocumentItem: React.FC<{ resource: ResourceItemEntity }> = ({
 
 const ResourceItem: React.FC = () => {
   const params = useParams();
-  const [searchParams] = useSearchParams();
 
   const { data: resource, isLoading } = useQuery({
-    queryKey: ["resource-items", searchParams.get("category"), params.id],
+    queryKey: ["resource-items", params.category, params.id],
     queryFn: ({ queryKey }) => getResourceItem(queryKey[2] as string),
     refetchOnWindowFocus: false,
     enabled: !!params.id,
@@ -77,7 +76,7 @@ const ResourceItem: React.FC = () => {
 
   return (
     <>
-      <BackButton defaultTo={"/"} />
+      <BackButton defaultTo="../" />
       {resource ? (
         <>
           {resource.type === ResourceType.VIDEO ? (

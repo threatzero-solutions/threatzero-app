@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import LocalizedFormat from "dayjs/plugin/localizedFormat";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import {
   ResourceItem,
   ResourceItemCategory,
@@ -38,7 +38,7 @@ export const ResourceDocumentTile: React.FC<{
       </div>
       <div className="flex flex-none items-center gap-x-4">
         <Link
-          to={"/resources/" + document.id + "?category=" + category}
+          to={`/resources/${category}/${document.id}`}
           state={{ from: location }}
           className={classNames(
             "rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
@@ -52,11 +52,10 @@ export const ResourceDocumentTile: React.FC<{
   );
 };
 
-interface ResourceDocumentsProps {
-  category: ResourceItemCategory;
-}
+const ResourceDocuments: React.FC = () => {
+  const params = useParams();
+  const category = params.category as ResourceItemCategory;
 
-const ResourceDocuments: React.FC<ResourceDocumentsProps> = ({ category }) => {
   const { data: documents, isLoading } = useQuery({
     queryKey: ["resource-items", category, ResourceType.DOCUMENT],
     queryFn: () =>
