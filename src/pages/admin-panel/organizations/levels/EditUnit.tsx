@@ -129,9 +129,10 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
     event.preventDefault();
     event.stopPropagation();
 
-    unit.slug = slugify(unit.slug ?? "");
-
-    saveUnitMutation.mutate(unit);
+    saveUnitMutation.mutate({
+      ...unit,
+      slug: slugify(unit.slug ?? ""),
+    });
   };
 
   const handleDelete = () => {
