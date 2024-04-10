@@ -21,6 +21,7 @@ export const humanizeSlug = (slug: string) =>
 export const slugify = (str: string, strict = true) => {
   const slug = str
     .toLowerCase()
+    .replace(/[']/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/--+/g, "-");
 
