@@ -24,18 +24,6 @@ const INPUT_DATA: Array<
   Partial<Field> & { name: keyof Unit | "autoAddLocation" }
 > = [
   {
-    name: "groupId",
-    label: "Group ID",
-    helpText:
-      "This id correlates with the unit's Group ID in the identity provider.",
-    type: FieldType.TEXT,
-    elementProperties: {
-      disabled: true,
-    },
-    required: false,
-    order: 0,
-  },
-  {
     name: "organization",
     label: "Organization",
     helpText: "The organization this unit belongs to.",
@@ -46,7 +34,7 @@ const INPUT_DATA: Array<
   {
     name: "name",
     label: "Name",
-    helpText: "A friendly name for the unit.",
+    helpText: "A friendly name for this unit.",
     type: FieldType.TEXT,
     required: true,
     order: 2,
@@ -71,10 +59,25 @@ const INPUT_DATA: Array<
   },
   {
     name: "autoAddLocation",
-    label: "Automatically add new location to this unit",
+    label: "Automatically Add Location",
+    helpText:
+      "Automatically create a new location with the same name for this unit",
     type: FieldType.CHECKBOX,
     required: false,
     order: 5,
+  },
+  {
+    name: "groupId",
+    label: "Group ID",
+    helpText:
+      "This id correlates with the unit's Group ID in the identity provider.",
+    placeholder: "Automatically generated",
+    type: FieldType.TEXT,
+    elementProperties: {
+      disabled: true,
+    },
+    required: false,
+    order: 6,
   },
 ];
 
@@ -192,8 +195,10 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
                 {isNew ? "Add unit" : "Edit unit"}
               </Dialog.Title>
               <p className="text-sm text-gray-500">
-                Units are the parts that make up a organization, such as a
-                school in a district.
+                Units are the parts that make up an organization, such as a
+                school in a district. They generally represent a school, office,
+                or other general location where unit members work or attend
+                school.
               </p>
             </div>
             <div className="flex h-7 items-center">
@@ -227,7 +232,7 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
                     {input.label}
                   </label>
                 </div>
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2 space-y-2">
                   {input.name === "organization" ? (
                     <OrganizationSelect
                       value={unit.organization}
@@ -252,6 +257,9 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
                       onChange={handleChange}
                       value={unit[input.name as keyof Unit] ?? ""}
                     />
+                  )}
+                  {input.helpText && (
+                    <p className="text-sm text-gray-500">{input.helpText}</p>
                   )}
                 </div>
               </div>
