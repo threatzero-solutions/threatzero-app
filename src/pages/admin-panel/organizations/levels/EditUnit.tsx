@@ -1,27 +1,28 @@
 import { Dialog } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Unit, Field, FieldType } from "../../../../types/entities";
 import { orderSort, slugify } from "../../../../utils/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { saveUnit, deleteUnit } from "../../../../queries/organizations";
+import {
+  saveUnit,
+  deleteUnit,
+  saveLocation,
+} from "../../../../queries/organizations";
 import OrganizationSelect from "../../../../components/forms/inputs/OrganizationSelect";
 import FormInput from "../../../../components/forms/inputs/FormInput";
 import { useImmer } from "use-immer";
 
-const INPUT_DATA: Array<Partial<Field> & { name: keyof Unit }> = [
-  {
-    name: "groupId",
-    label: "Group ID",
-    helpText:
-      "This id correlates with the unit's Group ID in the identity provider.",
-    type: FieldType.TEXT,
-    elementProperties: {
-      disabled: true,
-    },
-    required: false,
-    order: 0,
-  },
+const INPUT_DATA: Array<
+  Partial<Field> & { name: keyof Unit | "autoAddLocation" }
+> = [
   {
     name: "organization",
     label: "Organization",
@@ -33,7 +34,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Unit }> = [
   {
     name: "name",
     label: "Name",
-    helpText: "A friendly name for the unit.",
+    helpText: "A friendly name for this unit.",
     type: FieldType.TEXT,
     required: true,
     order: 2,
@@ -56,6 +57,28 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Unit }> = [
     required: false,
     order: 4,
   },
+  {
+    name: "autoAddLocation",
+    label: "Automatically Add Location",
+    helpText:
+      "Automatically create a new location with the same name for this unit",
+    type: FieldType.CHECKBOX,
+    required: false,
+    order: 5,
+  },
+  {
+    name: "groupId",
+    label: "Group ID",
+    helpText:
+      "This id correlates with the unit's Group ID in the identity provider.",
+    placeholder: "Automatically generated",
+    type: FieldType.TEXT,
+    elementProperties: {
+      disabled: true,
+    },
+    required: false,
+    order: 6,
+  },
 ];
 
 interface EditUnitProps {
@@ -65,6 +88,7 @@ interface EditUnitProps {
 
 const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
   const [unit, setUnit] = useImmer<Partial<Unit>>({});
+  const [autoAddLocation, setAutoAddLocation] = useState(false);
 
   const isNew = useMemo(() => !unitProp, [unitProp]);
 
@@ -72,6 +96,16 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
   const slugDebounceTimeout = useRef<number>();
 
   const queryClient = useQueryClient();
+
+  const saveLocationMutation = useMutation({
+    mutationFn: saveLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["locations"],
+      });
+    },
+  });
+
   const onMutateSuccess = () => {
     queryClient.invalidateQueries({
       queryKey: ["units"],
@@ -80,7 +114,18 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
   };
   const saveUnitMutation = useMutation({
     mutationFn: saveUnit,
-    onSuccess: onMutateSuccess,
+    onSuccess: (newUnit) => {
+      onMutateSuccess();
+
+      if (autoAddLocation) {
+        saveLocationMutation.mutate({
+          name: newUnit.name,
+          unit: {
+            id: newUnit.id,
+          },
+        });
+      }
+    },
   });
 
   const deleteUnitMutation = useMutation({
@@ -150,8 +195,10 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
                 {isNew ? "Add unit" : "Edit unit"}
               </Dialog.Title>
               <p className="text-sm text-gray-500">
-                Units are the parts that make up a organization, such as a
-                school in a district.
+                Units are the parts that make up an organization, such as a
+                school in a district. They generally represent a school, office,
+                or other general location where unit members work or attend
+                school.
               </p>
             </div>
             <div className="flex h-7 items-center">
@@ -170,40 +217,53 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
 
         {/* Divider container */}
         <div className="space-y-6 py-6 sm:space-y-0 sm:divide-y sm:divide-gray-200 sm:py-0">
-          {INPUT_DATA.sort(orderSort).map((input) => (
-            <div
-              key={input.name}
-              className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
-            >
-              <div>
-                <label
-                  htmlFor={input.name}
-                  className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
-                >
-                  {input.label}
-                </label>
+          {INPUT_DATA.sort(orderSort)
+            .filter((input) => input.name !== "autoAddLocation" || isNew)
+            .map((input) => (
+              <div
+                key={input.name}
+                className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
+              >
+                <div>
+                  <label
+                    htmlFor={input.name}
+                    className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
+                  >
+                    {input.label}
+                  </label>
+                </div>
+                <div className="sm:col-span-2 space-y-2">
+                  {input.name === "organization" ? (
+                    <OrganizationSelect
+                      value={unit.organization}
+                      onChange={(e) =>
+                        setUnit((u) => ({
+                          ...u,
+                          organization: e.target?.value ?? undefined,
+                        }))
+                      }
+                    />
+                  ) : input.name === "autoAddLocation" ? (
+                    <FormInput
+                      field={input}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setAutoAddLocation(e.target.checked)
+                      }
+                      value={autoAddLocation}
+                    />
+                  ) : (
+                    <FormInput
+                      field={input}
+                      onChange={handleChange}
+                      value={unit[input.name as keyof Unit] ?? ""}
+                    />
+                  )}
+                  {input.helpText && (
+                    <p className="text-sm text-gray-500">{input.helpText}</p>
+                  )}
+                </div>
               </div>
-              <div className="sm:col-span-2">
-                {input.name === "organization" ? (
-                  <OrganizationSelect
-                    value={unit.organization}
-                    onChange={(e) =>
-                      setUnit((u) => ({
-                        ...u,
-                        organization: e.target?.value ?? undefined,
-                      }))
-                    }
-                  />
-                ) : (
-                  <FormInput
-                    field={input}
-                    onChange={handleChange}
-                    value={unit[input.name as keyof Unit] ?? ""}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 
