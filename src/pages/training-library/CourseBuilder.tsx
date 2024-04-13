@@ -129,7 +129,7 @@ const CourseBuilder = () => {
         setCourse({
           metadata: {
             ...courseToDuplicate.metadata,
-            title: `${courseToDuplicate.metadata.title} (Copy)`,
+            tag: `${courseToDuplicate.metadata.tag} (Copy)`,
           },
           visibility: TrainingVisibility.HIDDEN,
           audiences: courseToDuplicate.audiences,
