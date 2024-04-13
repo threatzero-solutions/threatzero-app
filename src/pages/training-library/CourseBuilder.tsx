@@ -19,9 +19,10 @@ import {
 } from "../../types/entities";
 import { orderSort } from "../../utils/core";
 import FormField from "../../components/forms/FormField";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteTrainingCourse,
+  getTrainingCourse,
   saveTrainingCourse,
 } from "../../queries/training";
 import BackButtonLink from "../../components/layouts/BackButtonLink";
@@ -32,7 +33,7 @@ import { LEVEL, WRITE } from "../../constants/permissions";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import SuccessButton from "../../components/layouts/buttons/SuccessButton";
 import { SimpleChangeEvent } from "../../types/core";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type MetadataFieldType = Partial<Field> & { name: keyof TrainingMetadata };
 
@@ -109,6 +110,28 @@ const CourseBuilder = () => {
   const { state, dispatch, setActiveCourse } = useContext(TrainingContext);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const { data: courseToDuplicate } = useQuery({
+    queryKey: ["training-courses", searchParams.get("duplicate_course_id")],
+    enabled: !!searchParams.get("duplicate_course_id"),
+    queryFn: () => getTrainingCourse(searchParams.get("duplicate_course_id")!),
+  });
+
+  useEffect(() => {
+    if (courseToDuplicate) {
+      setCourse({
+        metadata: {
+          ...courseToDuplicate.metadata,
+          title: `${courseToDuplicate.metadata.title} (Copy)`,
+        },
+        visibility: TrainingVisibility.HIDDEN,
+        audiences: courseToDuplicate.audiences,
+        presentableBy: courseToDuplicate.presentableBy,
+        sections: courseToDuplicate.sections,
+      });
+    }
+  });
 
   const queryClient = useQueryClient();
   const saveCourseMutation = useMutation({
@@ -132,6 +155,7 @@ const CourseBuilder = () => {
         exact: true,
       });
       dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
+      navigate(`/training/library/manage/`);
     },
     onError: () => {
       setCourseSaving(false);
