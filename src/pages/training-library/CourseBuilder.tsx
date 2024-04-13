@@ -105,33 +105,45 @@ const CourseBuilder = () => {
   >(INITIAL_COURSE_STATE);
   const [courseSaving, setCourseSaving] = useState(false);
   const [courseSaveSuccessful, setCourseSaveSuccessful] = useState(false);
+
   const courseSaveTimeout = useRef<number>();
+  const duplicateCourseLoaded = useRef(false);
 
   const { state, dispatch, setActiveCourse } = useContext(TrainingContext);
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const duplicateCourseId = searchParams.get("duplicate_course_id");
   const { data: courseToDuplicate } = useQuery({
-    queryKey: ["training-courses", searchParams.get("duplicate_course_id")],
-    enabled: !!searchParams.get("duplicate_course_id"),
-    queryFn: () => getTrainingCourse(searchParams.get("duplicate_course_id")!),
+    queryKey: ["training-courses", duplicateCourseId],
+    enabled: !!duplicateCourseId,
+    queryFn: () => getTrainingCourse(duplicateCourseId!),
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
-    if (courseToDuplicate) {
-      setCourse({
-        metadata: {
-          ...courseToDuplicate.metadata,
-          title: `${courseToDuplicate.metadata.title} (Copy)`,
-        },
-        visibility: TrainingVisibility.HIDDEN,
-        audiences: courseToDuplicate.audiences,
-        presentableBy: courseToDuplicate.presentableBy,
-        sections: courseToDuplicate.sections,
-      });
+    if (duplicateCourseId && courseToDuplicate) {
+      if (!duplicateCourseLoaded.current) {
+        duplicateCourseLoaded.current = true;
+        setCourse({
+          metadata: {
+            ...courseToDuplicate.metadata,
+            title: `${courseToDuplicate.metadata.title} (Copy)`,
+          },
+          visibility: TrainingVisibility.HIDDEN,
+          audiences: courseToDuplicate.audiences,
+          presentableBy: courseToDuplicate.presentableBy,
+          sections: courseToDuplicate.sections,
+        });
+      }
+    } else if (!state.buildingNewCourse) {
+      setCourse((c) => ({
+        ...c,
+        ...(state.activeCourse ?? {}),
+      }));
     }
-  });
+  }, [courseToDuplicate, state.activeCourse, state.buildingNewCourse]);
 
   const queryClient = useQueryClient();
   const saveCourseMutation = useMutation({
@@ -154,8 +166,11 @@ const CourseBuilder = () => {
         queryKey: ["training-courses", data.id],
         exact: true,
       });
-      dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
-      navigate(`/training/library/manage/`);
+      setSearchParams({}, { replace: true });
+
+      setTimeout(() => {
+        dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
+      }, 500);
     },
     onError: () => {
       setCourseSaving(false);
@@ -183,17 +198,6 @@ const CourseBuilder = () => {
       ) && course.audiences.length > 0,
     [course.metadata, course.audiences]
   );
-
-  useEffect(() => {
-    if (!state.buildingNewCourse) {
-      setCourse((c) => ({
-        ...c,
-        ...(state.activeCourse ?? {}),
-      }));
-    }
-
-    return () => setCourse(INITIAL_COURSE_STATE);
-  }, [state.activeCourse, state.buildingNewCourse]);
 
   const handleMetadataChange = (
     input: MetadataFieldType,
