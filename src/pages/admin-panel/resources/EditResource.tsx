@@ -41,6 +41,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof ResourceItem }> = [
         prevention: "Prevention",
         preparation: "Preparation",
         response: "Response",
+        resiliency: "Resiliency",
       } as Record<ResourceItemCategory, string>,
     },
     required: true,

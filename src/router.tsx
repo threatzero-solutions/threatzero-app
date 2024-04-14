@@ -16,7 +16,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { PropsWithChildren, useContext, useEffect } from "react";
+import { PropsWithChildren, useContext, useEffect, useState } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
 import TrainingItem from "./pages/training-library/TrainingItem";
 import ThreatAssessmentDashboardOld from "./pages/threat-assessments/ThreatAssessmentDashboard";
@@ -51,6 +51,7 @@ import { AxiosError } from "axios";
 import ThreatManagementRoot from "./pages/threat-management/ThreatManagementRoot";
 import SafetyConcernsDashboard from "./pages/threat-management/safety-concerns/SafetyConcernsDashboard";
 import POCFilesDashboard from "./pages/threat-management/poc-files/POCFilesDashboard";
+import { ResourceItemCategories } from "./types/entities";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -65,13 +66,16 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
       setError("Oops! Something went wrong.");
     }
   };
-  const queryClient = new QueryClient({
-    queryCache: new QueryCache({
-      onError: handleError,
-    }),
-    mutationCache: new MutationCache({
-      onError: handleError,
-    }),
+
+  const [queryClient] = useState(() => {
+    return new QueryClient({
+      queryCache: new QueryCache({
+        onError: handleError,
+      }),
+      mutationCache: new MutationCache({
+        onError: handleError,
+      }),
+    });
   });
 
   return (
@@ -323,72 +327,43 @@ export const router = createBrowserRouter(
                   ],
                 },
                 {
-                  path: "prevention-resources",
+                  path: "resources/:category",
                   handle: { title: "Resources" },
-                  element: <ResourcePage title={"Prevention Resources"} />,
+                  loader: ({ params }) => {
+                    if (
+                      !ResourceItemCategories.includes(params.category as any)
+                    ) {
+                      return redirect("/");
+                    }
+                    return null;
+                  },
                   children: [
                     {
-                      path: "videos",
-                      handle: { title: "Prevention Videos" },
-                      element: <ResourceVideos category={"prevention"} />,
+                      path: "",
+                      element: <ResourcePage />,
+                      children: [
+                        {
+                          path: "videos",
+                          handle: { title: "Videos" },
+                          element: <ResourceVideos />,
+                        },
+                        {
+                          path: "documents",
+                          handle: { title: "Documents" },
+                          element: <ResourceDocuments />,
+                        },
+                        {
+                          path: "*?",
+                          loader: () => redirect("videos"),
+                        },
+                      ],
                     },
                     {
-                      path: "documents",
-                      handle: { title: "Prevention Documents" },
-                      element: <ResourceDocuments category={"prevention"} />,
-                    },
-                    {
-                      path: "*?",
-                      loader: () => redirect("videos"),
+                      path: ":id",
+                      handle: { title: "View Resource" },
+                      element: <ResourceItemEntity />,
                     },
                   ],
-                },
-                {
-                  path: "preparation-resources",
-                  handle: { title: "Resources" },
-                  element: <ResourcePage title={"Preparation Resources"} />,
-                  children: [
-                    {
-                      path: "videos",
-                      handle: { title: "Preparation Videos" },
-                      element: <ResourceVideos category={"preparation"} />,
-                    },
-                    {
-                      path: "documents",
-                      handle: { title: "Preparation Documents" },
-                      element: <ResourceDocuments category={"preparation"} />,
-                    },
-                    {
-                      path: "*?",
-                      loader: () => redirect("videos"),
-                    },
-                  ],
-                },
-                {
-                  path: "response-resources",
-                  handle: { title: "Resources" },
-                  element: <ResourcePage title={"Response Resources"} />,
-                  children: [
-                    {
-                      path: "videos",
-                      handle: { title: "Response Videos" },
-                      element: <ResourceVideos category={"response"} />,
-                    },
-                    {
-                      path: "documents",
-                      handle: { title: "Response Documents" },
-                      element: <ResourceDocuments category={"response"} />,
-                    },
-                    {
-                      path: "*?",
-                      loader: () => redirect("videos"),
-                    },
-                  ],
-                },
-                {
-                  path: "resources/:id",
-                  handle: { title: "View Resource" },
-                  element: <ResourceItemEntity />,
                 },
                 {
                   path: "help-center",

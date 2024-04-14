@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { classNames } from "../../utils/core";
 import {
   ResourceItem,
@@ -32,7 +32,7 @@ export const ResourceVideoTile: React.FC<{
           )}
         />
         <Link
-          to={"/resources/" + video.id + "?category=" + category}
+          to={`/resources/${category}/${video.id}`}
           state={{ from: location }}
           className={classNames(
             "absolute inset-0 focus:outline-none",
@@ -52,11 +52,10 @@ export const ResourceVideoTile: React.FC<{
   );
 };
 
-interface ResourceVideosProps {
-  category: ResourceItemCategory;
-}
+const ResourceVideos: React.FC = () => {
+  const params = useParams();
+  const category = params.category as ResourceItemCategory;
 
-const ResourceVideos: React.FC<ResourceVideosProps> = ({ category }) => {
   const { data: videos, isLoading } = useQuery({
     queryKey: ["resource-items", category, ResourceType.VIDEO],
     queryFn: () =>

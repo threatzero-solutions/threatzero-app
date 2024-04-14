@@ -34,13 +34,13 @@ export const saveOrganization = (organization: DeepPartial<Organization>) =>
 export const deleteOrganization = (id: string | undefined) =>
   deleteOne("/organizations/organizations/", id);
 
-export const saveUnit = (unit: Partial<Unit>) =>
+export const saveUnit = (unit: DeepPartial<Unit>) =>
   save<Unit>("/organizations/units/", unit);
 
 export const deleteUnit = (id: string | undefined) =>
   deleteOne("/organizations/units/", id);
 
-export const saveLocation = async (location: Partial<Location>) =>
+export const saveLocation = async (location: DeepPartial<Location>) =>
   save<Location>("/organizations/locations/", location);
 
 export const deleteLocation = (id: string | undefined) =>

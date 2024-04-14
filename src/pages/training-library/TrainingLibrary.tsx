@@ -10,9 +10,13 @@ import TrainingSections from "./components/TrainingSections";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import { classNames } from "../../utils/core";
-import { FolderOpenIcon } from "@heroicons/react/24/outline";
+import { EyeSlashIcon, FolderOpenIcon } from "@heroicons/react/20/solid";
 import PillBadge from "../../components/PillBadge";
 import { TrainingVisibility } from "../../types/entities";
+
+interface NewCourseOptions {
+  duplicateCourseId?: string;
+}
 
 const TrainingLibrary: React.FC = () => {
   const { state, dispatch, setActiveCourse } = useContext(TrainingContext);
@@ -42,10 +46,16 @@ const TrainingLibrary: React.FC = () => {
     return currentSection ?? sections[0];
   }, [sections?.[0]]);
 
-  const handleNewCourse = () => {
+  const handleNewCourse = (options: NewCourseOptions = {}) => {
     dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: true });
     setActiveCourse(undefined);
-    navigate("/training/library/manage/");
+    navigate(
+      `/training/library/manage/${
+        options.duplicateCourseId
+          ? `?duplicate_course_id=${options.duplicateCourseId}`
+          : ""
+      }`
+    );
   };
 
   return (
@@ -54,6 +64,13 @@ const TrainingLibrary: React.FC = () => {
         state.activeCourse && (
           <div className="pb-5 flex items-center justify-between">
             <div className="grid">
+              {isTrainingAdmin &&
+                state.activeCourse.visibility === TrainingVisibility.HIDDEN && (
+                  <span className="w-max mb-2 rounded bg-purple-600 px-4 py-1 text-sm font-semibold text-white shadow-sm inline-flex items-center gap-2">
+                    <EyeSlashIcon className="h-4 w-4" />
+                    This course is hidden
+                  </span>
+                )}
               <div className="flex items-center gap-4 flex-wrap">
                 <h1
                   className="text-2xl font-bold text-gray-900"
@@ -64,19 +81,13 @@ const TrainingLibrary: React.FC = () => {
                 />
                 {isTrainingAdmin && (
                   <>
-                    <PillBadge
-                      color={
-                        state.activeCourse.visibility ===
-                        TrainingVisibility.VISIBLE
-                          ? "green"
-                          : "purple"
-                      }
-                      value={state.activeCourse.visibility}
-                      displayValue={state.activeCourse.visibility.replace(
-                        /^[a-z]/,
-                        (c) => c.toUpperCase()
-                      )}
-                    />
+                    {state.activeCourse.metadata.tag && (
+                      <PillBadge
+                        color={"secondary"}
+                        value={state.activeCourse.metadata.tag}
+                        displayValue={state.activeCourse.metadata.tag}
+                      />
+                    )}
                   </>
                 )}
               </div>
@@ -84,7 +95,7 @@ const TrainingLibrary: React.FC = () => {
                 className="text-sm font-medium text-gray-500"
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe
                 dangerouslySetInnerHTML={{
-                  __html: state.activeCourse.metadata.description,
+                  __html: state.activeCourse.metadata.description ?? "",
                 }}
               />
               <button
@@ -119,14 +130,14 @@ const TrainingLibrary: React.FC = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
+                    <Menu.Items className="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
                       <Menu.Item>
                         {({ active }) => (
                           <Link
                             to={`/training/library/manage?courseId=${state.activeCourse?.id}`}
                             className={classNames(
                               active ? "bg-gray-50" : "",
-                              "block px-3 py-1 text-sm leading-6 text-gray-900"
+                              "block px-3 py-1 text-sm leading-6 text-gray-900 text-end"
                             )}
                           >
                             Manage
@@ -134,6 +145,27 @@ const TrainingLibrary: React.FC = () => {
                               , {state.activeCourse?.metadata.title}
                             </span>
                           </Link>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleNewCourse({
+                                duplicateCourseId: state.activeCourse?.id,
+                              })
+                            }
+                            className={classNames(
+                              active ? "bg-gray-50" : "",
+                              "px-3 py-1 text-sm leading-6 text-gray-900 w-max text-end"
+                            )}
+                          >
+                            Duplicate Course
+                            <span className="sr-only">
+                              , {state.activeCourse?.metadata.title}
+                            </span>
+                          </button>
                         )}
                       </Menu.Item>
                     </Menu.Items>

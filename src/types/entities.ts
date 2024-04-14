@@ -56,7 +56,8 @@ export enum TrainingVisibility {
 /** Metadata about a piece of training material. */
 export interface TrainingMetadata {
   title: string;
-  description: string;
+  description?: string;
+  tag?: string;
 }
 
 /** A group of training sections. */
@@ -353,7 +354,14 @@ export interface VideoEvent {
   url: string;
 }
 
-export type ResourceItemCategory = "prevention" | "preparation" | "response";
+export const ResourceItemCategories = [
+  "prevention",
+  "preparation",
+  "response",
+  "resiliency",
+] as const;
+
+export type ResourceItemCategory = (typeof ResourceItemCategories)[number];
 
 export enum ResourceType {
   VIDEO = "video",

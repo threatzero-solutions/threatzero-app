@@ -15,20 +15,9 @@ import { getTrainingCourses } from "../../../../queries/training";
 import { getResourceItems } from "../../../../queries/media";
 import { DeepPartial } from "../../../../types/core";
 import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
+import PillBadge from "../../../../components/PillBadge";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
-  {
-    name: "groupId",
-    label: "Group ID",
-    helpText:
-      "This id correlates with the organization's Group ID in the identity provider.",
-    type: FieldType.TEXT,
-    elementProperties: {
-      disabled: true,
-    },
-    required: false,
-    order: 1,
-  },
   {
     name: "name",
     label: "Name",
@@ -56,6 +45,19 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
     order: 4,
   },
   {
+    name: "groupId",
+    label: "Group ID",
+    helpText:
+      "This id correlates with the organization's Group ID in the identity provider.",
+    placeholder: "Automatically generated",
+    type: FieldType.TEXT,
+    elementProperties: {
+      disabled: true,
+    },
+    required: false,
+    order: 5,
+  },
+  {
     name: "courses",
     label: "Training Courses",
     type: FieldType.SELECT,
@@ -63,7 +65,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
       rows: 3,
     },
     required: false,
-    order: 4,
+    order: 6,
   },
   {
     name: "resources",
@@ -73,7 +75,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
       rows: 3,
     },
     required: false,
-    order: 4,
+    order: 7,
   },
 ];
 
@@ -177,9 +179,10 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
     event.preventDefault();
     event.stopPropagation();
 
-    organization.slug = slugify(organization.slug ?? "");
-
-    saveOrganizationMutation.mutate(organization);
+    saveOrganizationMutation.mutate({
+      ...organization,
+      slug: slugify(organization.slug ?? ""),
+    });
   };
 
   const handleDelete = () => {
@@ -231,7 +234,7 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
                   {input.label}
                 </label>
               </div>
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 space-y-2">
                 {input.name === "courses" ? (
                   <MultipleSelect
                     prefix="organization_courses"
@@ -242,7 +245,18 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
                     }
                     options={(courses?.results ?? []).map((c) => ({
                       key: c.id,
-                      label: c.metadata.title,
+                      label: (
+                        <span className="inline-flex items-center gap-2">
+                          {c.metadata.title}
+                          {c.metadata.tag && (
+                            <PillBadge
+                              color={"secondary"}
+                              value={c.metadata.tag}
+                              displayValue={c.metadata.tag}
+                            />
+                          )}
+                        </span>
+                      ),
                     }))}
                     onChange={(ids) => handleRelationChange("courses", ids)}
                   />
@@ -273,6 +287,9 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
                     onChange={handleChange}
                     value={organization[input.name as keyof Organization] ?? ""}
                   />
+                )}
+                {input.helpText && (
+                  <p className="text-sm text-gray-500">{input.helpText}</p>
                 )}
               </div>
             </div>

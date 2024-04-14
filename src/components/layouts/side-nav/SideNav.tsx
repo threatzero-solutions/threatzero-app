@@ -44,19 +44,26 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     permissionOptions: threatManagementPermissionOptions,
   },
   {
-    name: "Prevention Resources",
-    href: "/prevention-resources",
+    name: "Additional Resources",
     permissionOptions: resourcePermissionsOptions,
-  },
-  {
-    name: "Preparation Resources",
-    href: "/preparation-resources",
-    permissionOptions: resourcePermissionsOptions,
-  },
-  {
-    name: "Response Resources",
-    href: "/response-resources",
-    permissionOptions: resourcePermissionsOptions,
+    children: [
+      {
+        name: "Prevention",
+        href: "/resources/prevention",
+      },
+      {
+        name: "Preparation",
+        href: "/resources/preparation",
+      },
+      {
+        name: "Response",
+        href: "/resources/response",
+      },
+      {
+        name: "Resiliency",
+        href: "/resources/resiliency",
+      },
+    ],
   },
   {
     name: "Admin Panel",

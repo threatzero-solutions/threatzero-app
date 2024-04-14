@@ -19,9 +19,10 @@ import {
 } from "../../types/entities";
 import { orderSort } from "../../utils/core";
 import FormField from "../../components/forms/FormField";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteTrainingCourse,
+  getTrainingCourse,
   saveTrainingCourse,
 } from "../../queries/training";
 import BackButtonLink from "../../components/layouts/BackButtonLink";
@@ -32,7 +33,7 @@ import { LEVEL, WRITE } from "../../constants/permissions";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import SuccessButton from "../../components/layouts/buttons/SuccessButton";
 import { SimpleChangeEvent } from "../../types/core";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type MetadataFieldType = Partial<Field> & { name: keyof TrainingMetadata };
 
@@ -58,6 +59,14 @@ const METADATA_INPUT_DATA: Array<MetadataFieldType> = [
     },
     required: false,
     order: 2,
+  },
+  {
+    name: "tag",
+    label: "Tag",
+    helpText: "Internal tag for distinguishing courses.",
+    type: FieldType.TEXT,
+    required: false,
+    order: 3,
   },
 ];
 
@@ -96,11 +105,45 @@ const CourseBuilder = () => {
   >(INITIAL_COURSE_STATE);
   const [courseSaving, setCourseSaving] = useState(false);
   const [courseSaveSuccessful, setCourseSaveSuccessful] = useState(false);
+
   const courseSaveTimeout = useRef<number>();
+  const duplicateCourseLoaded = useRef(false);
 
   const { state, dispatch, setActiveCourse } = useContext(TrainingContext);
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const duplicateCourseId = searchParams.get("duplicate_course_id");
+  const { data: courseToDuplicate } = useQuery({
+    queryKey: ["training-courses", duplicateCourseId],
+    enabled: !!duplicateCourseId,
+    queryFn: () => getTrainingCourse(duplicateCourseId!),
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (duplicateCourseId && courseToDuplicate) {
+      if (!duplicateCourseLoaded.current) {
+        duplicateCourseLoaded.current = true;
+        setCourse({
+          metadata: {
+            ...courseToDuplicate.metadata,
+            tag: `${courseToDuplicate.metadata.tag} (Copy)`,
+          },
+          visibility: TrainingVisibility.HIDDEN,
+          audiences: courseToDuplicate.audiences,
+          presentableBy: courseToDuplicate.presentableBy,
+          sections: courseToDuplicate.sections,
+        });
+      }
+    } else if (!state.buildingNewCourse) {
+      setCourse((c) => ({
+        ...c,
+        ...(state.activeCourse ?? {}),
+      }));
+    }
+  }, [courseToDuplicate, state.activeCourse, state.buildingNewCourse]);
 
   const queryClient = useQueryClient();
   const saveCourseMutation = useMutation({
@@ -119,10 +162,15 @@ const CourseBuilder = () => {
       queryClient.invalidateQueries({
         queryKey: ["training-courses"],
       });
-      queryClient.refetchQueries({
+      queryClient.invalidateQueries({
         queryKey: ["training-courses", data.id],
+        exact: true,
       });
-      dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
+      setSearchParams({}, { replace: true });
+
+      setTimeout(() => {
+        dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
+      }, 500);
     },
     onError: () => {
       setCourseSaving(false);
@@ -150,17 +198,6 @@ const CourseBuilder = () => {
       ) && course.audiences.length > 0,
     [course.metadata, course.audiences]
   );
-
-  useEffect(() => {
-    if (!state.buildingNewCourse) {
-      setCourse((c) => ({
-        ...c,
-        ...(state.activeCourse ?? {}),
-      }));
-    }
-
-    return () => setCourse(INITIAL_COURSE_STATE);
-  }, [state.activeCourse, state.buildingNewCourse]);
 
   const handleMetadataChange = (
     input: MetadataFieldType,
@@ -219,7 +256,7 @@ const CourseBuilder = () => {
               <FormField
                 key={field.name}
                 field={field}
-                value={course.metadata[field.name]}
+                value={course.metadata[field.name] ?? ""}
                 onChange={(e) => handleMetadataChange(field, e)}
                 mediaUploadUrl=""
               />
@@ -228,7 +265,7 @@ const CourseBuilder = () => {
             <FormField
               key={"visibility"}
               field={VISIBILITY_FIELD}
-              value={course.visibility}
+              value={course.visibility ?? TrainingVisibility.HIDDEN}
               onChange={handleChange}
               mediaUploadUrl=""
             />

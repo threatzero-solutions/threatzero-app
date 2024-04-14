@@ -21,7 +21,7 @@ const FirstLinkRedirect: React.FC = () => {
           }
 
           return true;
-        })[0]?.href
+        })[0]?.href ?? "/"
       );
     }
   }, [navigate, state.mainNavigationItems]);
