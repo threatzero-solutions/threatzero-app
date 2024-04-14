@@ -8,10 +8,10 @@ const ThreatAssessmentDashboard: React.FC = () => {
       <p>
         Threat assessments can now be viewed at{" "}
         <Link
-          to="/threat-management/threat-assessments"
+          to="/safety-management/threat-assessments"
           className="text-secondary-600 hover:text-secondary-700 transition-colors"
         >
-          Threat Management &gt; Threat Assessments
+          Safety Management &gt; Threat Assessments
         </Link>
         .
       </p>

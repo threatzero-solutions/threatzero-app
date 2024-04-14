@@ -11,10 +11,10 @@ const AdministrativeReportsDashboard: React.FC = () => {
       <p>
         Safety concerns can now be viewed at{" "}
         <Link
-          to="/threat-management/safety-concerns"
+          to="/safety-management/safety-concerns"
           className="text-secondary-600 hover:text-secondary-700 transition-colors"
         >
-          Threat Management &gt; Safety Concerns
+          Safety Management &gt; Safety Concerns
         </Link>
         .
       </p>

@@ -6,7 +6,7 @@ import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
 import { useImmer } from "use-immer";
 import { POCFile } from "../../../types/entities";
-import { getPOCFiles } from "../../../queries/threat-management";
+import { getPOCFiles } from "../../../queries/safety-management";
 
 const POCFilesDashboard: React.FC = () => {
   const [editPOCFileSliderOpen, setEditPOCFileSliderOpen] = useState(false);

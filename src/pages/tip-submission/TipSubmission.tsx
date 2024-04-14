@@ -27,7 +27,7 @@ import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 import EditableCell from "../../components/layouts/EditableCell";
-import POCFilesButtonCompact from "../threat-management/poc-files/components/POCFilesButtonCompact";
+import POCFilesButtonCompact from "../safety-management/poc-files/components/POCFilesButtonCompact";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 

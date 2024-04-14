@@ -20,8 +20,8 @@ import { PropsWithChildren, useContext, useEffect, useState } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
 import TrainingItem from "./pages/training-library/TrainingItem";
 import ThreatAssessmentDashboardOld from "./pages/threat-assessments/ThreatAssessmentDashboard";
-import ThreatAssessmentDashboard from "./pages/threat-management/threat-assessments/ThreatAssessmentDashboard";
-import ThreatAssessmentForm from "./pages/threat-management/threat-assessments/ThreatAssessmentForm";
+import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
+import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
 import { FormsContextProvider } from "./contexts/forms/forms-context";
 import { TrainingContextProvider } from "./contexts/training/training-context";
@@ -48,10 +48,11 @@ import ErrorPage from "./pages/ErrorPage";
 import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
 import HelpCenter from "./pages/HelpCenter";
 import { AxiosError } from "axios";
-import ThreatManagementRoot from "./pages/threat-management/ThreatManagementRoot";
-import SafetyConcernsDashboard from "./pages/threat-management/safety-concerns/SafetyConcernsDashboard";
-import POCFilesDashboard from "./pages/threat-management/poc-files/POCFilesDashboard";
+import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
+import POCFilesDashboard from "./pages/safety-management/poc-files/POCFilesDashboard";
 import { ResourceItemCategories } from "./types/entities";
+import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
+import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -239,9 +240,9 @@ export const router = createBrowserRouter(
                   ],
                 },
                 {
-                  path: "threat-management",
-                  handle: { title: "Threat Management" },
-                  element: <ThreatManagementRoot />,
+                  path: "safety-management",
+                  handle: { title: "Safety Management" },
+                  element: <SafetyManagementRoot />,
                   children: [
                     {
                       path: "poc-files",
@@ -279,6 +280,11 @@ export const router = createBrowserRouter(
                           element: <ThreatAssessmentForm />,
                         },
                       ],
+                    },
+                    {
+                      path: "violent-incident-reports",
+                      handle: { title: "Violent Incident Reports" },
+                      element: <ViolentIncidentReportsDashboard />,
                     },
                     {
                       path: "*?",

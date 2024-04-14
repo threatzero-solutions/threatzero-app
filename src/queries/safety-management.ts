@@ -3,4 +3,4 @@ import { POCFile } from "../types/entities";
 import { findMany } from "./utils";
 
 export const getPOCFiles = (query: ItemFilterQueryParams = {}) =>
-  findMany<POCFile>("/threat-management/poc-files/", query);
+  findMany<POCFile>("/safety-management/poc-files/", query);

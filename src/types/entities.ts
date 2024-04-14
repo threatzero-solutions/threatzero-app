@@ -248,7 +248,7 @@ export interface Note extends Base {
   user: UserRepresentation | null;
 }
 
-// ------------------ THREAT MANAGEMENT ------------------
+// ------------------ SAFETY MANAGEMENT ------------------
 
 export interface POCFile extends Base {
   pocFirstName: string;

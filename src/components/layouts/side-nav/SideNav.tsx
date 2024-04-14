@@ -16,7 +16,7 @@ import { adminPanelPermissionOptions } from "../../../pages/admin-panel/AdminPan
 import { NavLink } from "react-router-dom";
 import { classNames } from "../../../utils/core";
 import { resourcePermissionsOptions } from "../../resources/ResourcePage";
-import { threatManagementPermissionOptions } from "../../../pages/threat-management/ThreatManagementRoot";
+import { safetyManagementPermissionOptions } from "../../../pages/safety-management/SafetyManagementRoot";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
   {
@@ -39,9 +39,26 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     permissionOptions: threatAssessmentPermissionsOptions,
   },
   {
-    name: "Threat Management",
-    href: "/threat-management",
-    permissionOptions: threatManagementPermissionOptions,
+    name: "Safety Management",
+    permissionOptions: safetyManagementPermissionOptions,
+    children: [
+      {
+        name: "POC Files",
+        href: "/safety-management/poc-files",
+      },
+      {
+        name: "Threat Assessments",
+        href: "/safety-management/threat-assessments",
+      },
+      {
+        name: "Safety Concerns",
+        href: "/safety-management/safety-concerns",
+      },
+      {
+        name: "Violent Incident Reports",
+        href: "/safety-management/violent-incident-reports",
+      },
+    ],
   },
   {
     name: "Additional Resources",
