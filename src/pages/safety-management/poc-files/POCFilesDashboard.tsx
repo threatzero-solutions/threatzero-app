@@ -3,19 +3,16 @@ import { useState } from "react";
 import DataTable from "../../../components/layouts/DataTable";
 import SlideOver from "../../../components/layouts/SlideOver";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { useDebounceValue } from "usehooks-ts";
 import { useImmer } from "use-immer";
 import { POCFile } from "../../../types/entities";
 import { getPOCFiles } from "../../../queries/safety-management";
 
 const POCFilesDashboard: React.FC = () => {
   const [editPOCFileSliderOpen, setEditPOCFileSliderOpen] = useState(false);
-  const [selectedPOCFile, setSelectedPOCFile] = useState<
-    Partial<POCFile> | undefined
-  >();
+  const [_, setSelectedPOCFile] = useState<Partial<POCFile> | undefined>();
 
   const [pocFilesQuery, setPocFilesQuery] = useImmer<ItemFilterQueryParams>({});
-  const [debouncedPocFilesQuery] = useDebounceValue(pocFilesQuery, 300);
+  // const [debouncedPocFilesQuery] = useDebounceValue(pocFilesQuery, 300);
 
   const { data: pocFiles, isLoading: pocFilesLoading } = useQuery({
     queryKey: ["pocFiles", pocFilesQuery] as const,
