@@ -48,7 +48,7 @@ const TipSubmission: React.FC = () => {
   );
 
   const canReadTip = useMemo(
-    () => hasPermissions([READ.SAFETY_MANAGEMENT_RESOURCES]),
+    () => hasPermissions([READ.TIPS]),
     [hasPermissions]
   );
 

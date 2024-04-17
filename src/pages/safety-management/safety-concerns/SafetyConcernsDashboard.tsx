@@ -284,7 +284,7 @@ const SafetyConcernsDashboard: React.FC = () => {
 };
 
 export const safetyConcernPermissionsOptions = {
-  permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
+  permissions: [READ.TIPS],
 };
 
 export default withRequirePermissions(

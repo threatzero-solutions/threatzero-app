@@ -11,7 +11,11 @@ const ThreatManagementRoot: React.FC = () => {
 };
 
 export const safetyManagementPermissionOptions = {
-  permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
+  permissions: [
+    READ.TIPS,
+    READ.THREAT_ASSESSMENTS,
+    READ.VIOLENT_INCIDENT_REPORTS,
+  ],
 };
 
 export default withRequirePermissions(

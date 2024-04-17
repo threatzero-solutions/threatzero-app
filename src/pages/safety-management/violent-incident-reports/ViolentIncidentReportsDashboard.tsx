@@ -279,7 +279,7 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
 };
 
 export const violentIncidentReportPermissionsOptions = {
-  permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
+  permissions: [READ.VIOLENT_INCIDENT_REPORTS],
 };
 
 export default withRequirePermissions(
