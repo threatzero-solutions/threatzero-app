@@ -1,11 +1,11 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  addAssessmentNote,
-  assessmentToPdf,
-  getAssessmentNotes,
-  getThreatAssessment,
-  getThreatAssessmentForm,
-  saveThreatAssessment,
+  addViolentIncidentReportNote,
+  getViolentIncidentReportForm,
+  getViolentIncidentReportNotes,
+  getViolentIncidentReportSubmission,
+  saveViolentIncidentReport,
+  violentIncidentReportToPdf,
 } from "../../../queries/safety-management";
 import {
   Link,
@@ -14,16 +14,16 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import {
-  AssessmentStatus,
   FormState,
   FormSubmission,
+  ViolentIncidentReportStatus,
 } from "../../../types/entities";
 import Form from "../../../components/forms/Form";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import StatusPill from "./components/StatusPill";
 import { CoreContext } from "../../../contexts/core/core-context";
 import { LEVEL, WRITE } from "../../../constants/permissions";
-import { THREAT_ASSESSMENT_FORM_SLUG } from "../../../constants/forms";
+import { VIOLENT_INCIDENT_REPORT_FORM_SLUG } from "../../../constants/forms";
 import BackButton from "../../../components/layouts/BackButton";
 import Dropdown, { DropdownAction } from "../../../components/layouts/Dropdown";
 import SlideOver from "../../../components/layouts/SlideOver";
@@ -32,9 +32,9 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { API_BASE_URL } from "../../../contexts/core/constants";
 import EditableCell from "../../../components/layouts/EditableCell";
 
-const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
+const MEDIA_UPLOAD_URL = `${API_BASE_URL}/violent-incident-reports/submissions/presigned-upload-urls`;
 
-const ThreatAssessmentForm: React.FC = () => {
+const ViolentIncidentReportForm: React.FC = () => {
   const [manageNotesOpen, setManageNotesOpen] = useState(false);
 
   const params = useParams();
@@ -60,94 +60,108 @@ const ThreatAssessmentForm: React.FC = () => {
     () => hasPermissions([LEVEL.ADMIN, WRITE.FORMS]),
     [hasPermissions]
   );
-  const canAlterAssessment = useMemo(
-    () => hasPermissions([WRITE.THREAT_ASSESSMENTS]),
+  const canAlterViolentIncidentReport = useMemo(
+    () => hasPermissions([WRITE.VIOLENT_INCIDENT_REPORTS]),
     [hasPermissions]
   );
 
-  const { data: assessment, refetch: refetchAssessment } = useQuery({
-    queryKey: ["assessment", params.assessmentId],
-    queryFn: ({ queryKey }) => getThreatAssessment(queryKey[1]),
-    enabled: !!params.assessmentId,
-  });
+  const { data: violentIncidentReport, refetch: refetchViolentIncidentReport } =
+    useQuery({
+      queryKey: ["violent-incident-report", params.reportId],
+      queryFn: ({ queryKey }) =>
+        getViolentIncidentReportSubmission(queryKey[1]),
+      enabled: !!params.reportId,
+    });
 
   const { data: form, isLoading: formLoading } = useQuery({
-    queryKey: ["threat-assessment-form", assessment?.submission.formId],
+    queryKey: [
+      "violent-incident-report-form",
+      violentIncidentReport?.submission.formId,
+    ],
     queryFn: ({ queryKey }) =>
-      getThreatAssessmentForm({ id: queryKey[1] ?? undefined }),
-    enabled: !params.assessmentId || !!assessment,
+      getViolentIncidentReportForm({ id: queryKey[1] ?? undefined }),
+    enabled: !params.reportId || !!violentIncidentReport,
   });
 
   const { data: notes } = useQuery({
-    queryKey: ["assessment-notes", params.assessmentId],
-    queryFn: ({ queryKey }) => getAssessmentNotes(queryKey[1], { limit: 50 }),
-    enabled: !!params.assessmentId,
+    queryKey: ["violent-incident-report-notes", params.reportId],
+    queryFn: ({ queryKey }) =>
+      getViolentIncidentReportNotes(queryKey[1], { limit: 50 }),
+    enabled: !!params.reportId,
   });
 
   useEffect(() => {
-    if (params.assessmentId === undefined) {
+    if (params.reportId === undefined) {
       setIsEditing(true);
     }
-  }, [params.assessmentId, setIsEditing]);
+  }, [params.reportId, setIsEditing]);
 
-  const assessmentMutation = useMutation({
-    mutationFn: saveThreatAssessment,
+  const violentIncidentReportMutation = useMutation({
+    mutationFn: saveViolentIncidentReport,
     onSuccess: (data) => {
-      refetchAssessment();
-      if (!params.assessmentId) {
-        navigate(`/threat-assessments/${data.id}?edit=true`);
+      refetchViolentIncidentReport();
+      if (!params.reportId) {
+        navigate(`/violent-incident-reports/${data.id}?edit=true`);
       }
     },
   });
 
   const changeStatus = useCallback(
-    (status: AssessmentStatus) => {
-      const m = assessmentMutation.mutate;
+    (status: ViolentIncidentReportStatus) => {
+      const m = violentIncidentReportMutation.mutate;
       m({
-        id: params.assessmentId,
+        id: params.reportId,
         status,
       });
     },
-    [assessmentMutation.mutate, params.assessmentId]
+    [violentIncidentReportMutation.mutate, params.reportId]
   );
 
-  const assessmentActions: DropdownAction[] = useMemo(
+  const violentIncidentReportActions: DropdownAction[] = useMemo(
     () => [
       {
         id: "edit",
         value: "Edit",
         action: () => setIsEditing(true),
-        hidden: !canAlterAssessment || isEditing,
+        hidden: !canAlterViolentIncidentReport || isEditing,
       },
       {
         id: "pdf",
         value: "Download as PDF",
         action: () => {
-          assessmentToPdf(assessment?.id).then((response) => {
-            const a = document.createElement("a");
-            a.setAttribute(
-              "href",
-              window.URL.createObjectURL(new Blob([response]))
-            );
-            a.setAttribute("download", "assessment.pdf");
+          violentIncidentReportToPdf(violentIncidentReport?.id).then(
+            (response) => {
+              const a = document.createElement("a");
+              a.setAttribute(
+                "href",
+                window.URL.createObjectURL(new Blob([response]))
+              );
+              a.setAttribute("download", "violent-incident-report.pdf");
 
-            document.body.append(a);
+              document.body.append(a);
 
-            a.click();
+              a.click();
 
-            a.remove();
-          });
+              a.remove();
+            }
+          );
         },
-        hidden: !assessment,
+        hidden: !violentIncidentReport,
       },
-      ...Object.entries(AssessmentStatus).map(([key, value]) => ({
+      ...Object.entries(ViolentIncidentReportStatus).map(([key, value]) => ({
         id: `status-${key}`,
         value: <StatusPill status={value} />,
         action: () => changeStatus(value),
-        hidden: assessment?.status === value,
+        hidden: violentIncidentReport?.status === value,
       })),
     ],
-    [changeStatus, assessment, canAlterAssessment, isEditing, setIsEditing]
+    [
+      changeStatus,
+      violentIncidentReport,
+      canAlterViolentIncidentReport,
+      isEditing,
+      setIsEditing,
+    ]
   );
 
   const handleSubmit = (
@@ -156,8 +170,8 @@ const ThreatAssessmentForm: React.FC = () => {
   ) => {
     event.preventDefault();
 
-    assessmentMutation.mutate({
-      id: params.assessmentId,
+    violentIncidentReportMutation.mutate({
+      id: params.reportId,
       submission: submission as FormSubmission,
     });
   };
@@ -165,10 +179,10 @@ const ThreatAssessmentForm: React.FC = () => {
   return (
     <>
       <BackButton defaultTo={"../"} valueOnDefault="Back to Dashboard" />
-      {assessment && (
+      {violentIncidentReport && (
         <div className="flex justify-between items-end mb-4 sticky top-0 border-b bg-gray-50 border-gray-200 py-5 z-20">
           <Dropdown
-            actions={assessmentActions}
+            actions={violentIncidentReportActions}
             value="Actions"
             openTo="right"
           />
@@ -178,15 +192,15 @@ const ThreatAssessmentForm: React.FC = () => {
               <span className="font-medium">Tag:</span>
               <span className="italic">
                 <EditableCell
-                  value={assessment.tag}
+                  value={violentIncidentReport.tag}
                   onSave={(tag) =>
-                    assessmentMutation.mutate({
-                      id: assessment.id,
+                    violentIncidentReportMutation.mutate({
+                      id: violentIncidentReport.id,
                       tag,
                     })
                   }
                   emptyValue="—"
-                  readOnly={!canAlterAssessment}
+                  readOnly={!canAlterViolentIncidentReport}
                   alwaysShowEdit
                 />
               </span>
@@ -194,11 +208,11 @@ const ThreatAssessmentForm: React.FC = () => {
             {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
               PoC files:
               <POCFilesButtonCompact
-                pocFiles={assessment.pocFiles}
+                pocFiles={violentIncidentReport.pocFiles}
                 className="text-gray-500"
               />
             </span> */}
-            <StatusPill status={assessment.status} />
+            <StatusPill status={violentIncidentReport.status} />
             <button
               type="button"
               onClick={() => setManageNotesOpen(true)}
@@ -213,16 +227,18 @@ const ThreatAssessmentForm: React.FC = () => {
         <div className="w-full flex flex-col items-center gap-4">
           <p>
             {form && canAlterForm
-              ? "No threat assessment form has been published."
-              : "No threat assessment form available."}
+              ? "No violent incident report form has been published."
+              : "No violent incident report form available."}
           </p>
           {canAlterForm && (
-            <Link to={`/admin-panel/forms/${THREAT_ASSESSMENT_FORM_SLUG}`}>
+            <Link
+              to={`/admin-panel/forms/${VIOLENT_INCIDENT_REPORT_FORM_SLUG}`}
+            >
               <button
                 type="button"
                 className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
               >
-                {form ? "Edit Draft" : "+ Create Threat Assessment Form"}
+                {form ? "Edit Draft" : "+ Create Violent Incident Report Form"}
               </button>
             </Link>
           )}
@@ -232,8 +248,8 @@ const ThreatAssessmentForm: React.FC = () => {
           form={form}
           isLoading={formLoading}
           onSubmit={handleSubmit}
-          submission={assessment?.submission}
-          readOnly={!canAlterAssessment || !isEditing}
+          submission={violentIncidentReport?.submission}
+          readOnly={!canAlterViolentIncidentReport || !isEditing}
           collapsedSteps={true}
           actions={[
             {
@@ -247,7 +263,7 @@ const ThreatAssessmentForm: React.FC = () => {
               ),
               autoExecute: true,
               autoExecuteProgressText: "Auto-saving...",
-              autoExecuteLoading: assessmentMutation.isPending,
+              autoExecuteLoading: violentIncidentReportMutation.isPending,
             },
           ]}
           mediaUploadUrl={MEDIA_UPLOAD_URL}
@@ -256,8 +272,8 @@ const ThreatAssessmentForm: React.FC = () => {
       <SlideOver open={manageNotesOpen} setOpen={setManageNotesOpen}>
         <ManageNotes
           setOpen={setManageNotesOpen}
-          addNote={(n) => addAssessmentNote(params.assessmentId, n)}
-          queryKey={["assessment-notes", params.assessmentId]}
+          addNote={(n) => addViolentIncidentReportNote(params.reportId, n)}
+          queryKey={["violet-incident-report-notes", params.reportId]}
           notes={notes?.results}
         />
       </SlideOver>
@@ -265,4 +281,4 @@ const ThreatAssessmentForm: React.FC = () => {
   );
 };
 
-export default ThreatAssessmentForm;
+export default ViolentIncidentReportForm;

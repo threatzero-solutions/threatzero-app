@@ -20,7 +20,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
 };
 
 export const threatAssessmentPermissionsOptions = {
-  permissions: [READ.THREAT_ASSESSMENTS],
+  permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
 };
 
 export default withRequirePermissions(

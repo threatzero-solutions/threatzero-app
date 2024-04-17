@@ -24,7 +24,7 @@ const AdministrativeReportsDashboard: React.FC = () => {
 
 export const administrativeReportsDashboardPermissionsOptions: RequirePermissionsOptions =
   {
-    permissions: [READ.TIPS],
+    permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
     type: "all",
   };
 

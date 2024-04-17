@@ -7,7 +7,7 @@ import {
   getTipSubmission,
   saveTip,
   submitTip,
-} from "../../queries/tips";
+} from "../../queries/safety-management";
 import Form from "../../components/forms/Form";
 import { FormState, FormSubmission, TipStatus } from "../../types/entities";
 import {
@@ -27,7 +27,6 @@ import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 import EditableCell from "../../components/layouts/EditableCell";
-import POCFilesButtonCompact from "../safety-management/poc-files/components/POCFilesButtonCompact";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
@@ -36,7 +35,7 @@ const TipSubmission: React.FC = () => {
 
   const { data: form, isLoading: formLoading } = useQuery({
     queryKey: ["tip-form"],
-    queryFn: getTipForm,
+    queryFn: () => getTipForm(),
   });
   const [searchParams] = useSearchParams();
   const params = useParams();
@@ -49,7 +48,7 @@ const TipSubmission: React.FC = () => {
   );
 
   const canReadTip = useMemo(
-    () => hasPermissions([READ.TIPS]),
+    () => hasPermissions([READ.SAFETY_MANAGEMENT_RESOURCES]),
     [hasPermissions]
   );
 
@@ -166,13 +165,13 @@ const TipSubmission: React.FC = () => {
                 />
               </span>
             </span>
-            <span className="inline-flex items-center gap-1 text-sm font-medium">
+            {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
               PoC files:
               <POCFilesButtonCompact
                 pocFiles={tip.pocFiles}
                 className="text-gray-500"
               />
-            </span>
+            </span> */}
             <StatusPill status={tip.status} />
             <button
               type="button"

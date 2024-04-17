@@ -49,10 +49,10 @@ import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
 import HelpCenter from "./pages/HelpCenter";
 import { AxiosError } from "axios";
 import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
-import POCFilesDashboard from "./pages/safety-management/poc-files/POCFilesDashboard";
 import { ResourceItemCategories } from "./types/entities";
 import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
 import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
+import ViolentIncidentReportForm from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportForm";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -244,11 +244,11 @@ export const router = createBrowserRouter(
                   handle: { title: "Safety Management" },
                   element: <SafetyManagementRoot />,
                   children: [
-                    {
-                      path: "poc-files",
-                      handle: { title: "POC Files" },
-                      element: <POCFilesDashboard />,
-                    },
+                    // {
+                    //   path: "poc-files",
+                    //   handle: { title: "POC Files" },
+                    //   element: <POCFilesDashboard />,
+                    // },
                     {
                       path: "safety-concerns",
                       handle: { title: "Administrative Reports" },
@@ -284,12 +284,25 @@ export const router = createBrowserRouter(
                     {
                       path: "violent-incident-reports",
                       handle: { title: "Violent Incident Reports" },
-                      element: <ViolentIncidentReportsDashboard />,
+                      children: [
+                        {
+                          path: "",
+                          element: <ViolentIncidentReportsDashboard />,
+                        },
+                        {
+                          path: "new",
+                          element: <ViolentIncidentReportForm />,
+                        },
+                        {
+                          path: ":reportId",
+                          element: <ViolentIncidentReportForm />,
+                        },
+                      ],
                     },
-                    {
-                      path: "*?",
-                      loader: () => redirect("poc-files"),
-                    },
+                    // {
+                    //   path: "*?",
+                    //   loader: () => redirect("poc-files"),
+                    // },
                   ],
                 },
                 {

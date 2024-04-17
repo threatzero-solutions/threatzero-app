@@ -1,14 +1,14 @@
 import { useContext, useMemo, useState } from "react";
 import { LEVEL, READ, WRITE } from "../../../constants/permissions";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
-import { classNames, fromDaysKey, fromStatus } from "../../../utils/core";
+import { fromDaysKey, fromStatus } from "../../../utils/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  ThreatAssessmentFilterOptions,
+  SafetyManagementResourceFilterOptions,
   getThreatAssessmentStats,
   getThreatAssessments,
   saveThreatAssessment,
-} from "../../../queries/threat-assessments";
+} from "../../../queries/safety-management";
 import { AssessmentStatus } from "../../../types/entities";
 import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
@@ -19,11 +19,9 @@ import { getUnits } from "../../../queries/organizations";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
 import { CoreContext } from "../../../contexts/core/core-context";
 import EditableCell from "../../../components/layouts/EditableCell";
-import POCFilesButtonCompact from "../poc-files/components/POCFilesButtonCompact";
+import StatsDisplay from "../../../components/StatsDisplay";
 
 dayjs.extend(relativeTime);
-
-const DEFAULT_PAGE_SIZE = 10;
 
 const ThreatAssessmentDashboard: React.FC = () => {
   const location = useLocation();
@@ -35,6 +33,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
   } = useItemFilterQuery({
     order: { createdOn: "DESC" },
   });
+
   const {
     data: assessments,
     isLoading: assessmentsLoading,
@@ -42,14 +41,24 @@ const ThreatAssessmentDashboard: React.FC = () => {
   } = useQuery({
     queryKey: ["threat-assessments", tableFilterOptions],
     queryFn: ({ queryKey }) =>
-      getThreatAssessments(queryKey[1] as ThreatAssessmentFilterOptions),
+      getThreatAssessments(
+        queryKey[1] as SafetyManagementResourceFilterOptions
+      ),
   });
-  const [statsFilterOptions] = useState<ThreatAssessmentFilterOptions>({});
-  const { data: assessmentStats } = useQuery({
-    queryKey: ["threat-assessment-stats", statsFilterOptions],
-    queryFn: ({ queryKey }) =>
-      getThreatAssessmentStats(queryKey[1] as ThreatAssessmentFilterOptions),
-  });
+
+  const [statsFilterOptions] = useState<SafetyManagementResourceFilterOptions>(
+    {}
+  );
+
+  const { data: assessmentStats, isLoading: assessmentStatsLoading } = useQuery(
+    {
+      queryKey: ["threat-assessment-stats", statsFilterOptions],
+      queryFn: ({ queryKey }) =>
+        getThreatAssessmentStats(
+          queryKey[1] as SafetyManagementResourceFilterOptions
+        ),
+    }
+  );
 
   const saveAssessmentMutation = useMutation({
     mutationFn: saveThreatAssessment,
@@ -76,83 +85,48 @@ const ThreatAssessmentDashboard: React.FC = () => {
 
   return (
     <div className={"space-y-12"}>
+      <h3 className="text-2xl font-semibold leading-6 text-gray-900">
+        Threat Assessments
+      </h3>
+
       {/* STATS */}
-      {assessmentStats ? (
-        <div>
-          <h3 className="text-base font-semibold leading-6 text-gray-900 mb-4">
-            New Assessments
-          </h3>
-          <dl className="mx-auto grid grid-cols-1 gap-px bg-gray-900/5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 shadow-md">
-            {Object.entries(assessmentStats.subtotals.newSince).map(
-              ([key, subtotal]) => (
-                <div
-                  key={key}
-                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-10 sm:px-6 xl:px-8"
-                >
-                  <dt className="text-sm font-medium leading-6 text-gray-500">
-                    {fromDaysKey(key)}
-                  </dt>
-                  <dd
-                    className={classNames(
-                      "text-gray-700",
-                      "text-xs font-medium"
-                    )}
-                  >
-                    {((subtotal / assessmentStats.total) * 100).toFixed(2)}%
-                  </dd>
-                  <dd className="w-full flex-none text-3xl font-medium leading-10 tracking-tight text-gray-900">
-                    {subtotal}
-                  </dd>
-                </div>
-              )
-            )}
-          </dl>
-        </div>
-      ) : (
-        <div className="w-full">
-          <div className="animate-pulse flex-1">
-            <div className="h-36 bg-slate-200 rounded" />
-          </div>
-        </div>
-      )}
-      {assessmentStats ? (
-        <div>
-          <h3 className="text-base font-semibold leading-6 text-gray-900 mb-4">
-            Status Totals
-          </h3>
-          <dl className="mx-auto grid grid-cols-1 gap-px bg-gray-900/5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 shadow-md">
-            {Object.entries(assessmentStats.subtotals.statuses).map(
-              ([key, subtotal]) => (
-                <div
-                  key={key}
-                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-10 sm:px-6 xl:px-8"
-                >
-                  <dt className="text-sm font-medium leading-6 text-gray-500">
-                    <StatusPill status={key as AssessmentStatus} />
-                  </dt>
-                  <dd
-                    className={classNames(
-                      "text-gray-700",
-                      "text-xs font-medium"
-                    )}
-                  >
-                    {((subtotal / assessmentStats.total) * 100).toFixed(2)}%
-                  </dd>
-                  <dd className="w-full flex-none text-3xl font-medium leading-10 tracking-tight text-gray-900">
-                    {subtotal}
-                  </dd>
-                </div>
-              )
-            )}
-          </dl>
-        </div>
-      ) : (
-        <div className="w-full">
-          <div className="animate-pulse flex-1">
-            <div className="h-36 bg-slate-200 rounded" />
-          </div>
-        </div>
-      )}
+      <StatsDisplay
+        heading="New Since"
+        loading={assessmentStatsLoading}
+        stats={
+          assessmentStats &&
+          Object.entries(assessmentStats.subtotals.newSince).map(
+            ([key, subtotal]) => ({
+              key: key,
+              name: fromDaysKey(key),
+              stat: subtotal,
+              detail: `${(
+                (subtotal / (assessmentStats.total || 1)) *
+                100
+              ).toFixed(2)}%`,
+            })
+          )
+        }
+      />
+
+      <StatsDisplay
+        heading="Totals by Status"
+        loading={assessmentStatsLoading}
+        stats={
+          assessmentStats &&
+          Object.entries(assessmentStats.subtotals.statuses).map(
+            ([key, subtotal]) => ({
+              key: key,
+              name: <StatusPill status={key as AssessmentStatus} />,
+              stat: subtotal,
+              detail: `${(
+                (subtotal / (assessmentStats.total || 1)) *
+                100
+              ).toFixed(2)}%`,
+            })
+          )
+        }
+      />
 
       {/* VIEW ASSESSMENTS */}
       <DataTable
@@ -179,11 +153,11 @@ const ThreatAssessmentDashboard: React.FC = () => {
               key: "unit.name",
               hidden: !hasOrganizationOrAdminLevel,
             },
-            {
-              label: "Files",
-              key: "pocFiles",
-              noSort: true,
-            },
+            // {
+            //   label: "Files",
+            //   key: "pocFiles",
+            //   noSort: true,
+            // },
             {
               label: <span className="sr-only">View</span>,
               key: "view",
@@ -211,9 +185,9 @@ const ThreatAssessmentDashboard: React.FC = () => {
               createdOn: dayjs(assessment.createdOn).format("MMM D, YYYY"),
               updatedOn: dayjs(assessment.updatedOn).fromNow(),
               ["unit.name"]: assessment.unit?.name ?? assessment.unit?.slug,
-              pocFiles: (
-                <POCFilesButtonCompact pocFiles={assessment.pocFiles} />
-              ),
+              // pocFiles: (
+              //   <POCFilesButtonCompact pocFiles={assessment.pocFiles} />
+              // ),
               view: (
                 <Link
                   to={`./${assessment.id}`}
@@ -251,7 +225,6 @@ const ThreatAssessmentDashboard: React.FC = () => {
         }}
         paginationOptions={{
           currentOffset: assessments?.offset ?? 0,
-          pageSize: DEFAULT_PAGE_SIZE,
           total: assessments?.count ?? 0,
           limit: assessments?.limit ?? 1,
 
@@ -306,7 +279,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
 };
 
 export const threatAssessmentPermissionsOptions = {
-  permissions: [READ.THREAT_ASSESSMENTS],
+  permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
 };
 
 export default withRequirePermissions(

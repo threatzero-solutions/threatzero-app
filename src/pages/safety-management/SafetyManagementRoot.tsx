@@ -1,4 +1,4 @@
-import { READ, WRITE } from "../../constants/permissions";
+import { READ } from "../../constants/permissions";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { Outlet } from "react-router-dom";
 
@@ -11,8 +11,7 @@ const ThreatManagementRoot: React.FC = () => {
 };
 
 export const safetyManagementPermissionOptions = {
-  permissions: [READ.THREAT_ASSESSMENTS, WRITE.THREAT_ASSESSMENTS],
-  type: "all" as "all",
+  permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
 };
 
 export default withRequirePermissions(

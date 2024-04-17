@@ -1,121 +1,288 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useContext, useMemo, useState } from "react";
 import DataTable from "../../../components/layouts/DataTable";
-import SlideOver from "../../../components/layouts/SlideOver";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { useDebounceValue } from "usehooks-ts";
-import { useImmer } from "use-immer";
-import { POCFile } from "../../../types/entities";
-import { getPOCFiles } from "../../../queries/safety-management";
+import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import { ViolentIncidentReportStatus } from "../../../types/entities";
+import {
+  SafetyManagementResourceFilterOptions,
+  getViolentIncidentReportSubmissionStats,
+  getViolentIncidentReports,
+  saveViolentIncidentReport,
+} from "../../../queries/safety-management";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { Link, useLocation } from "react-router-dom";
+import { CoreContext } from "../../../contexts/core/core-context";
+import { LEVEL, READ, WRITE } from "../../../constants/permissions";
+import { getUnits } from "../../../queries/organizations";
+import StatsDisplay from "../../../components/StatsDisplay";
+import { fromDaysKey, fromStatus } from "../../../utils/core";
+import StatusPill from "./components/StatusPill";
+import EditableCell from "../../../components/layouts/EditableCell";
+import { withRequirePermissions } from "../../../guards/RequirePermissions";
+
+dayjs.extend(relativeTime);
 
 const ViolentIncidentReportsDashboard: React.FC = () => {
-  const [editPOCFileSliderOpen, setEditPOCFileSliderOpen] = useState(false);
-  const [selectedPOCFile, setSelectedPOCFile] = useState<
-    Partial<POCFile> | undefined
-  >();
+  const location = useLocation();
+  const { hasPermissions } = useContext(CoreContext);
 
-  const [pocFilesQuery, setPocFilesQuery] = useImmer<ItemFilterQueryParams>({});
-  const [debouncedPocFilesQuery] = useDebounceValue(pocFilesQuery, 300);
-
-  const { data: pocFiles, isLoading: pocFilesLoading } = useQuery({
-    queryKey: ["pocFiles", pocFilesQuery] as const,
-    queryFn: ({ queryKey }) => getPOCFiles(queryKey[1]),
+  const {
+    itemFilterOptions: tableFilterOptions,
+    setItemFilterOptions: setTableFilterOptions,
+  } = useItemFilterQuery({
+    order: { createdOn: "DESC" },
   });
 
-  const handleEditPOCFile = (pocFile?: POCFile) => {
-    setSelectedPOCFile(pocFile);
-    setEditPOCFileSliderOpen(true);
-  };
+  const {
+    data: violentIncidentReports,
+    isLoading: violentIncidentReportsLoading,
+    refetch: refetchViolentIncidentReports,
+  } = useQuery({
+    queryKey: ["violent-incident-reports", tableFilterOptions],
+    queryFn: ({ queryKey }) =>
+      getViolentIncidentReports(
+        queryKey[1] as SafetyManagementResourceFilterOptions
+      ),
+  });
+
+  const [statsFilterOptions] = useState<SafetyManagementResourceFilterOptions>(
+    {}
+  );
+
+  const {
+    data: violentIncidentReportStats,
+    isLoading: violentIncidentReportStatsLoading,
+  } = useQuery({
+    queryKey: ["violent-incident-report-stats", statsFilterOptions],
+    queryFn: ({ queryKey }) =>
+      getViolentIncidentReportSubmissionStats(
+        queryKey[1] as SafetyManagementResourceFilterOptions
+      ),
+  });
+
+  const saveViolentIncidentReportMutation = useMutation({
+    mutationFn: saveViolentIncidentReport,
+    onSuccess: () => {
+      refetchViolentIncidentReports();
+    },
+  });
+
+  const canAlterViolentIncidentReports = useMemo(
+    () => hasPermissions([WRITE.VIOLENT_INCIDENT_REPORTS]),
+    [hasPermissions]
+  );
+
+  const hasOrganizationOrAdminLevel = useMemo(
+    () => hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]),
+    [hasPermissions]
+  );
+
+  const { data: units } = useQuery({
+    queryKey: ["units"],
+    queryFn: () => getUnits({ limit: 100 }),
+    enabled: hasOrganizationOrAdminLevel,
+  });
 
   return (
-    <>
+    <div className={"space-y-12"}>
+      <h3 className="text-2xl font-semibold leading-6 text-gray-900">
+        Violent Incident Reports
+      </h3>
+
+      {/* STATS */}
+      <StatsDisplay
+        heading="New Since"
+        loading={violentIncidentReportStatsLoading}
+        stats={
+          violentIncidentReportStats &&
+          Object.entries(violentIncidentReportStats.subtotals.newSince).map(
+            ([key, subtotal]) => ({
+              key: key,
+              name: fromDaysKey(key),
+              stat: subtotal,
+              detail: `${(
+                (subtotal / (violentIncidentReportStats.total || 1)) *
+                100
+              ).toFixed(2)}%`,
+            })
+          )
+        }
+      />
+
+      <StatsDisplay
+        heading="Totals by Status"
+        loading={violentIncidentReportStatsLoading}
+        stats={
+          violentIncidentReportStats &&
+          Object.entries(violentIncidentReportStats.subtotals.statuses).map(
+            ([key, subtotal]) => ({
+              key: key,
+              name: <StatusPill status={key as ViolentIncidentReportStatus} />,
+              stat: subtotal,
+              detail: `${(
+                (subtotal / (violentIncidentReportStats.total || 1)) *
+                100
+              ).toFixed(2)}%`,
+            })
+          )
+        }
+      />
       <DataTable
         data={{
           headers: [
             {
-              label: "Person of Concern",
-              key: "name",
+              label: "Status",
+              key: "status",
+            },
+            {
+              label: "Tag",
+              key: "tag",
+            },
+            {
+              label: "Created On",
+              key: "createdOn",
+            },
+            {
+              label: "Last Updated",
+              key: "updatedOn",
             },
             {
               label: "Unit",
               key: "unit.name",
+              hidden: !hasOrganizationOrAdminLevel,
             },
+            // {
+            //   label: "Files",
+            //   key: "pocFiles",
+            //   noSort: true,
+            // },
             {
-              label: <span className="sr-only">Edit</span>,
-              key: "edit",
+              label: <span className="sr-only">View</span>,
+              key: "view",
               align: "right",
               noSort: true,
             },
           ],
-          rows: (pocFiles?.results ?? []).map((pocFile) => ({
-            id: pocFile.id,
-            name: `${pocFile.pocFirstName} ${pocFile.pocLastName}`,
-            ["unit.name"]: pocFile.unit?.name ?? "—",
-            edit: (
-              <button
-                type="button"
+          rows: (violentIncidentReports?.results ?? []).map((report) => ({
+            id: report.id,
+            status: <StatusPill status={report.status} />,
+            tag: (
+              <EditableCell
+                value={report.tag}
+                onSave={(tag) =>
+                  saveViolentIncidentReportMutation.mutate({
+                    id: report.id,
+                    tag,
+                  })
+                }
+                emptyValue="—"
+                readOnly={!canAlterViolentIncidentReports}
+              />
+            ),
+            createdOn: dayjs(report.createdOn).format("MMM D, YYYY"),
+            updatedOn: dayjs(report.updatedOn).fromNow(),
+            ["unit.name"]: report.unit?.name ?? report.unit?.slug,
+            // pocFiles: <POCFilesButtonCompact pocFiles={report.pocFiles} />,
+            view: (
+              <Link
+                to={`./${report.id}`}
+                state={{ from: location }}
                 className="text-secondary-600 hover:text-secondary-900 font-medium"
-                onClick={() => handleEditPOCFile(pocFile)}
               >
                 View
-                <span className="sr-only">, {pocFile.id}</span>
-              </button>
+                <span className="sr-only">, {report.id}</span>
+              </Link>
             ),
           })),
         }}
-        isLoading={pocFilesLoading}
-        title="Violent Incident Reports"
+        isLoading={violentIncidentReportsLoading}
+        notFoundDetail="No violent incident reports found."
+        title="All Violent Incident Reports"
         subtitle="View, add or edit violent incident reports."
+        action={
+          <Link to={"./new"}>
+            <button
+              type="button"
+              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            >
+              + Report Violent Incident
+            </button>
+          </Link>
+        }
         orderOptions={{
-          order: pocFilesQuery.order,
+          order: tableFilterOptions.order,
           setOrder: (k, v) => {
-            setPocFilesQuery((q) => {
+            setTableFilterOptions((q) => {
               q.order = { [k]: v };
               q.offset = 0;
             });
           },
         }}
         paginationOptions={{
-          currentOffset: pocFiles?.offset,
-          total: pocFiles?.count,
-          limit: pocFiles?.limit,
+          currentOffset: violentIncidentReports?.offset,
+          total: violentIncidentReports?.count,
+          limit: violentIncidentReports?.limit,
           setOffset: (offset) =>
-            setPocFilesQuery((q) => {
+            setTableFilterOptions((q) => {
               q.offset = offset;
             }),
         }}
         searchOptions={{
-          searchQuery: pocFilesQuery.search ?? "",
+          searchQuery: tableFilterOptions.search ?? "",
           setSearchQuery: (search) => {
-            setPocFilesQuery((q) => {
+            setTableFilterOptions((q) => {
               q.search = search;
               q.offset = 0;
             });
           },
         }}
-        notFoundDetail="No violent incident reports found."
-        action={
-          <button
-            type="button"
-            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-            onClick={() => handleEditPOCFile()}
-          >
-            + Report Violent Incident
-          </button>
-        }
+        filterOptions={{
+          filters: [
+            {
+              key: "status",
+              label: "Status",
+              value: tableFilterOptions.status
+                ? `${tableFilterOptions.status}`
+                : undefined,
+              options: Object.values(ViolentIncidentReportStatus).map(
+                (status) => ({
+                  value: status,
+                  label: fromStatus(status),
+                })
+              ),
+            },
+            {
+              key: "unitSlug",
+              label: "Unit",
+              value: tableFilterOptions.unitSlug
+                ? `${tableFilterOptions.unitSlug}`
+                : undefined,
+              // TODO: Dynamically get all units.
+              options: units?.results.map((unit) => ({
+                value: unit.slug,
+                label: unit.name,
+              })) ?? [{ value: undefined, label: "All schools" }],
+              hidden: !hasOrganizationOrAdminLevel,
+            },
+          ],
+          setFilter: (key, value) =>
+            setTableFilterOptions((options) => ({
+              ...options,
+              [key]: options[key] === value ? undefined : value,
+              offset: 0,
+            })),
+        }}
       />
-      <SlideOver
-        open={editPOCFileSliderOpen}
-        setOpen={setEditPOCFileSliderOpen}
-      >
-        {/* <EditPOCFile
-          setOpen={setEditPOCFileSliderOpen}
-          organization={selectedPOCFile}
-        /> */}
-        <></>
-      </SlideOver>
-    </>
+    </div>
   );
 };
 
-export default ViolentIncidentReportsDashboard;
+export const violentIncidentReportPermissionsOptions = {
+  permissions: [READ.SAFETY_MANAGEMENT_RESOURCES],
+};
+
+export default withRequirePermissions(
+  ViolentIncidentReportsDashboard,
+  violentIncidentReportPermissionsOptions
+);
