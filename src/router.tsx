@@ -19,8 +19,9 @@ import {
 import { PropsWithChildren, useContext, useEffect, useState } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
 import TrainingItem from "./pages/training-library/TrainingItem";
-import ThreatAssessmentDashboard from "./pages/threat-assessments/ThreatAssessmentDashboard";
-import ThreatAssessmentForm from "./pages/threat-assessments/ThreatAssessmentForm";
+import ThreatAssessmentDashboardOld from "./pages/threat-assessments/ThreatAssessmentDashboard";
+import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
+import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
 import { FormsContextProvider } from "./contexts/forms/forms-context";
 import { TrainingContextProvider } from "./contexts/training/training-context";
@@ -47,7 +48,11 @@ import ErrorPage from "./pages/ErrorPage";
 import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
 import HelpCenter from "./pages/HelpCenter";
 import { AxiosError } from "axios";
+import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
 import { ResourceItemCategories } from "./types/entities";
+import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
+import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
+import ViolentIncidentReportForm from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportForm";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -230,16 +235,74 @@ export const router = createBrowserRouter(
                   children: [
                     {
                       path: "",
-                      element: <ThreatAssessmentDashboard />,
+                      element: <ThreatAssessmentDashboardOld />,
+                    },
+                  ],
+                },
+                {
+                  path: "safety-management",
+                  handle: { title: "Safety Management" },
+                  element: <SafetyManagementRoot />,
+                  children: [
+                    // {
+                    //   path: "poc-files",
+                    //   handle: { title: "POC Files" },
+                    //   element: <POCFilesDashboard />,
+                    // },
+                    {
+                      path: "safety-concerns",
+                      handle: { title: "Administrative Reports" },
+                      children: [
+                        {
+                          path: "",
+                          element: <SafetyConcernsDashboard />,
+                        },
+                        {
+                          path: ":tipId",
+                          element: <TipSubmission />,
+                        },
+                      ],
                     },
                     {
-                      path: "new",
-                      element: <ThreatAssessmentForm />,
+                      path: "threat-assessments",
+                      handle: { title: "Threat Assessments" },
+                      children: [
+                        {
+                          path: "",
+                          element: <ThreatAssessmentDashboard />,
+                        },
+                        {
+                          path: "new",
+                          element: <ThreatAssessmentForm />,
+                        },
+                        {
+                          path: ":assessmentId",
+                          element: <ThreatAssessmentForm />,
+                        },
+                      ],
                     },
                     {
-                      path: ":assessmentId",
-                      element: <ThreatAssessmentForm />,
+                      path: "violent-incident-reports",
+                      handle: { title: "Violent Incident Reports" },
+                      children: [
+                        {
+                          path: "",
+                          element: <ViolentIncidentReportsDashboard />,
+                        },
+                        {
+                          path: "new",
+                          element: <ViolentIncidentReportForm />,
+                        },
+                        {
+                          path: ":reportId",
+                          element: <ViolentIncidentReportForm />,
+                        },
+                      ],
                     },
+                    // {
+                    //   path: "*?",
+                    //   loader: () => redirect("poc-files"),
+                    // },
                   ],
                 },
                 {

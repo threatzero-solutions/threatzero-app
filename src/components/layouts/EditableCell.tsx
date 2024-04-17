@@ -72,6 +72,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
             "flex items-center gap-2 group text-left hover:opacity-80 transition-opacity",
             readOnly ? "" : "cursor-pointer"
           )}
+          title={readOnly ? "" : "Click to edit"}
         >
           <span>{value ?? emptyValue}</span>
           <PencilIcon

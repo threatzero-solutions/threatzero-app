@@ -16,6 +16,9 @@ import { adminPanelPermissionOptions } from "../../../pages/admin-panel/AdminPan
 import { NavLink } from "react-router-dom";
 import { classNames } from "../../../utils/core";
 import { resourcePermissionsOptions } from "../../resources/ResourcePage";
+import { safetyManagementPermissionOptions } from "../../../pages/safety-management/SafetyManagementRoot";
+import { violentIncidentReportPermissionsOptions } from "../../../pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
+import { safetyConcernPermissionsOptions } from "../../../pages/safety-management/safety-concerns/SafetyConcernsDashboard";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
   {
@@ -36,6 +39,31 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     name: "Threat Assessments",
     href: "/threat-assessments",
     permissionOptions: threatAssessmentPermissionsOptions,
+  },
+  {
+    name: "Safety Management",
+    permissionOptions: safetyManagementPermissionOptions,
+    children: [
+      // {
+      //   name: "POC Files",
+      //   href: "/safety-management/poc-files",
+      // },
+      {
+        name: "Threat Assessments",
+        href: "/safety-management/threat-assessments",
+        permissionOptions: threatAssessmentPermissionsOptions,
+      },
+      {
+        name: "Safety Concerns",
+        href: "/safety-management/safety-concerns",
+        permissionOptions: safetyConcernPermissionsOptions,
+      },
+      {
+        name: "Violent Incident Reports",
+        href: "/safety-management/violent-incident-reports",
+        permissionOptions: violentIncidentReportPermissionsOptions,
+      },
+    ],
   },
   {
     name: "Additional Resources",

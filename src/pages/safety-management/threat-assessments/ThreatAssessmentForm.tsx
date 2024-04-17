@@ -6,7 +6,7 @@ import {
   getThreatAssessment,
   getThreatAssessmentForm,
   saveThreatAssessment,
-} from "../../queries/threat-assessments";
+} from "../../../queries/safety-management";
 import {
   Link,
   useNavigate,
@@ -17,20 +17,20 @@ import {
   AssessmentStatus,
   FormState,
   FormSubmission,
-} from "../../types/entities";
-import Form from "../../components/forms/Form";
+} from "../../../types/entities";
+import Form from "../../../components/forms/Form";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import StatusPill from "./components/StatusPill";
-import { CoreContext } from "../../contexts/core/core-context";
-import { LEVEL, WRITE } from "../../constants/permissions";
-import { THREAT_ASSESSMENT_FORM_SLUG } from "../../constants/forms";
-import BackButton from "../../components/layouts/BackButton";
-import Dropdown, { DropdownAction } from "../../components/layouts/Dropdown";
-import SlideOver from "../../components/layouts/SlideOver";
-import ManageNotes from "../../components/notes/ManageNotes";
+import { CoreContext } from "../../../contexts/core/core-context";
+import { LEVEL, WRITE } from "../../../constants/permissions";
+import { THREAT_ASSESSMENT_FORM_SLUG } from "../../../constants/forms";
+import BackButton from "../../../components/layouts/BackButton";
+import Dropdown, { DropdownAction } from "../../../components/layouts/Dropdown";
+import SlideOver from "../../../components/layouts/SlideOver";
+import ManageNotes from "../../../components/notes/ManageNotes";
 import { CheckIcon } from "@heroicons/react/20/solid";
-import { API_BASE_URL } from "../../contexts/core/constants";
-import EditableCell from "../../components/layouts/EditableCell";
+import { API_BASE_URL } from "../../../contexts/core/constants";
+import EditableCell from "../../../components/layouts/EditableCell";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
 
@@ -191,6 +191,13 @@ const ThreatAssessmentForm: React.FC = () => {
                 />
               </span>
             </span>
+            {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
+              PoC files:
+              <POCFilesButtonCompact
+                pocFiles={assessment.pocFiles}
+                className="text-gray-500"
+              />
+            </span> */}
             <StatusPill status={assessment.status} />
             <button
               type="button"

@@ -7,7 +7,7 @@ import {
   getTipSubmission,
   saveTip,
   submitTip,
-} from "../../queries/tips";
+} from "../../queries/safety-management";
 import Form from "../../components/forms/Form";
 import { FormState, FormSubmission, TipStatus } from "../../types/entities";
 import {
@@ -35,7 +35,7 @@ const TipSubmission: React.FC = () => {
 
   const { data: form, isLoading: formLoading } = useQuery({
     queryKey: ["tip-form"],
-    queryFn: getTipForm,
+    queryFn: () => getTipForm(),
   });
   const [searchParams] = useSearchParams();
   const params = useParams();
@@ -165,6 +165,13 @@ const TipSubmission: React.FC = () => {
                 />
               </span>
             </span>
+            {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
+              PoC files:
+              <POCFilesButtonCompact
+                pocFiles={tip.pocFiles}
+                className="text-gray-500"
+              />
+            </span> */}
             <StatusPill status={tip.status} />
             <button
               type="button"
