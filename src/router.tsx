@@ -19,7 +19,6 @@ import {
 import { PropsWithChildren, useContext, useEffect, useState } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
 import TrainingItem from "./pages/training-library/TrainingItem";
-import ThreatAssessmentDashboardOld from "./pages/threat-assessments/ThreatAssessmentDashboard";
 import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
 import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
@@ -28,7 +27,7 @@ import { TrainingContextProvider } from "./contexts/training/training-context";
 import CourseBuilder from "./pages/training-library/CourseBuilder";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
 import PublicLayout from "./components/layouts/PublicLayout";
-import AdministrativeReportsDashboard from "./pages/administrative-reports/AdministrativeReportsDashboard";
+import MyDashboard from "./pages/my-dashboard/MyDashboard";
 import ViewTrainingSection from "./pages/training-library/ViewTrainingSection";
 import Page404 from "./pages/Page404";
 import FirstLinkRedirect from "./components/layouts/side-nav/FirstLinkRedirect";
@@ -89,7 +88,9 @@ const Contexts: React.FC<PropsWithChildren> = ({ children }) => {
     <ErrorContextProvider>
       <QueryContext>
         <CoreContextProvider>
-          <FormsContextProvider>{children}</FormsContextProvider>
+          <FormsContextProvider>
+            <TrainingContextProvider>{children}</TrainingContextProvider>
+          </FormsContextProvider>
         </CoreContextProvider>
       </QueryContext>
     </ErrorContextProvider>
@@ -162,12 +163,12 @@ export const router = createBrowserRouter(
               element: <Dashboard />,
               children: [
                 {
-                  path: "administrative-reports",
-                  handle: { title: "Administrative Reports" },
+                  path: "dashboard",
+                  handle: { title: "My Dashboard" },
                   children: [
                     {
                       path: "",
-                      element: <AdministrativeReportsDashboard />,
+                      element: <MyDashboard />,
                     },
                     {
                       path: "safety-concerns/:tipId",
@@ -177,11 +178,6 @@ export const router = createBrowserRouter(
                 },
                 {
                   path: "training",
-                  element: (
-                    <TrainingContextProvider>
-                      <Outlet />
-                    </TrainingContextProvider>
-                  ),
                   children: [
                     {
                       path: "library",
@@ -226,16 +222,6 @@ export const router = createBrowserRouter(
                         redirect(
                           `../../administrative-reports/safety-concerns/${params.tipId}`
                         ),
-                    },
-                  ],
-                },
-                {
-                  path: "threat-assessments",
-                  handle: { title: "Threat Assessments" },
-                  children: [
-                    {
-                      path: "",
-                      element: <ThreatAssessmentDashboardOld />,
                     },
                   ],
                 },

@@ -1,11 +1,10 @@
 import { useContext, useMemo, Fragment } from "react";
-import TrainingSectionTile from "./components/TrainingSectionTile";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import { TrainingContext } from "../../contexts/training/training-context";
 import { CoreContext } from "../../contexts/core/core-context";
-import { getAvailableSection, trainingSectionSort } from "../../utils/training";
+import { trainingSectionSort } from "../../utils/training";
 import TrainingSections from "./components/TrainingSections";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
@@ -13,6 +12,7 @@ import { classNames } from "../../utils/core";
 import { EyeSlashIcon, FolderOpenIcon } from "@heroicons/react/20/solid";
 import PillBadge from "../../components/PillBadge";
 import { TrainingVisibility } from "../../types/entities";
+import FeaturedSection from "./components/FeaturedSection";
 
 interface NewCourseOptions {
   duplicateCourseId?: string;
@@ -35,16 +35,6 @@ const TrainingLibrary: React.FC = () => {
 
     return state.activeCourse.sections.sort(trainingSectionSort);
   }, [state.activeCourse?.sections]);
-
-  const featuredSection = useMemo(() => {
-    if (!sections?.length) {
-      return;
-    }
-
-    const currentSection = getAvailableSection(sections);
-
-    return currentSection ?? sections[0];
-  }, [sections?.[0]]);
 
   const handleNewCourse = (options: NewCourseOptions = {}) => {
     dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: true });
@@ -197,26 +187,10 @@ const TrainingLibrary: React.FC = () => {
         </div>
       ) : (
         <>
-          {featuredSection ? (
-            <div className="bg-gradient-to-b from-gray-100 to-gray-200 rounded-lg p-4 -mx-4 shadow-xl">
-              <h2 className="text-xl text-transparent w-min bg-clip-text bg-gradient-to-r from-primary-400 to-primary-700 flex items-center">
-                {/* <StarIcon className="h-4 w-4 mr-1" /> */}
-                <span className="whitespace-nowrap">&#9733; Featured</span>
-              </h2>
-              <div role="grid" className="mt-3 grid grid-cols-1 gap-5 sm:gap-6">
-                <TrainingSectionTile section={featuredSection} />
-              </div>
-            </div>
-          ) : (
-            state.activeCourse === undefined && (
-              <div className="w-full">
-                <div className="animate-pulse flex-1">
-                  <div className="h-6 bg-slate-200 rounded" />
-                  <div className="h-64 bg-slate-200 rounded mt-3" />
-                </div>
-              </div>
-            )
-          )}
+          <FeaturedSection
+            sections={sections}
+            loading={state.activeCourse === undefined}
+          />
           <h2 className="mt-12 text-xl text-gray-700">All Content</h2>
           <TrainingSections sections={sections} />
         </>

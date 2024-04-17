@@ -1,8 +1,8 @@
-import { useLocation, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { emitVideoEvent, getTrainingItem } from "../../queries/training";
 import { useQuery } from "@tanstack/react-query";
 import VimeoPlayer from "react-player/vimeo";
-import BackButtonLink from "../../components/layouts/BackButtonLink";
+import BackButton from "../../components/layouts/BackButton";
 import { useCallback, useContext, useMemo } from "react";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { READ } from "../../constants/permissions";
@@ -21,7 +21,6 @@ const TrainingItem: React.FC = () => {
   const { itemId } = useParams();
   const [searchParams] = useSearchParams();
   const { state } = useContext(TrainingContext);
-  const location = useLocation();
 
   const sectionId = useMemo(() => {
     const sId = searchParams.get("sectionId");
@@ -66,13 +65,7 @@ const TrainingItem: React.FC = () => {
 
   return (
     <div>
-      <BackButtonLink
-        to={
-          location.state?.pathname
-            ? (location.state as Location)
-            : "/training/library"
-        }
-      />
+      <BackButton defaultTo={"/training/library"} />
       {item ? (
         <>
           {item.prerequisitesFulfilled ? (

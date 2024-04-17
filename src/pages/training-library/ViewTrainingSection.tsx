@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getTrainingSection } from "../../queries/training";
 import { useQuery } from "@tanstack/react-query";
 import BackButtonLink from "../../components/layouts/BackButtonLink";
@@ -11,6 +11,7 @@ import { useEffect } from "react";
 const ViewTrainingSection: React.FC = () => {
   const { sectionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: section } = useQuery({
     queryKey: ["traning-section", sectionId],
@@ -25,7 +26,7 @@ const ViewTrainingSection: React.FC = () => {
 
     if (section.items.length === 1) {
       const url = `/training/library/items/${section.items[0].item.id}?sectionId=${section.id}`;
-      navigate(url, { replace: true, state: null });
+      navigate(url, { replace: true, state: location.state });
     }
   });
 

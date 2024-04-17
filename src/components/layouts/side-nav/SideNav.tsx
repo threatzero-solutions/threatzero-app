@@ -9,9 +9,7 @@ import UserMenu from "../../UserMenu";
 import SideNavLink from "./SideNavLink";
 import { NavigationItem } from "../../../types/core";
 import { trainingLibraryPermissionsOptions } from "../../../pages/training-library/TrainingLibrary";
-import { threatAssessmentPermissionsOptions } from "../../../pages/threat-assessments/ThreatAssessmentDashboard";
 import { CoreContext } from "../../../contexts/core/core-context";
-import { administrativeReportsDashboardPermissionsOptions } from "../../../pages/administrative-reports/AdministrativeReportsDashboard";
 import { adminPanelPermissionOptions } from "../../../pages/admin-panel/AdminPanel";
 import { NavLink } from "react-router-dom";
 import { classNames } from "../../../utils/core";
@@ -19,12 +17,12 @@ import { resourcePermissionsOptions } from "../../resources/ResourcePage";
 import { safetyManagementPermissionOptions } from "../../../pages/safety-management/SafetyManagementRoot";
 import { violentIncidentReportPermissionsOptions } from "../../../pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
 import { safetyConcernPermissionsOptions } from "../../../pages/safety-management/safety-concerns/SafetyConcernsDashboard";
+import { threatAssessmentPermissionsOptions } from "../../../pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
   {
-    name: "Administrative Reports",
-    href: "/administrative-reports",
-    permissionOptions: administrativeReportsDashboardPermissionsOptions,
+    name: "My Dashboard",
+    href: "/dashboard",
   },
   {
     name: "Training Library",
@@ -34,11 +32,6 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
   {
     name: "Share a Safety Concern",
     href: "/safety-concerns",
-  },
-  {
-    name: "Threat Assessments",
-    href: "/threat-assessments",
-    permissionOptions: threatAssessmentPermissionsOptions,
   },
   {
     name: "Safety Management",
