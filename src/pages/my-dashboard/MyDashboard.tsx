@@ -7,6 +7,7 @@ import {
   getOrganizationBySlug,
   getUnitBySlug,
 } from "../../queries/organizations";
+import { stripPhoneNumber } from "../../utils/core";
 
 const MyDashboard: React.FC = () => {
   const { state } = useContext(TrainingContext);
@@ -63,7 +64,7 @@ const MyDashboard: React.FC = () => {
                   {mySafetyContact.email}
                 </a>
                 <a
-                  href={`tel:${mySafetyContact.phone}`}
+                  href={`tel:${stripPhoneNumber(mySafetyContact.phone)}`}
                   className="text-secondary-600 hover:text-secondary-500 transition-colors"
                 >
                   {mySafetyContact.phone}

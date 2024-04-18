@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Field, FieldType, SafetyContact } from "../../types/entities";
-import { orderSort } from "../../utils/core";
+import { formatPhoneNumber, orderSort } from "../../utils/core";
 import FormInput from "../forms/inputs/FormInput";
 import SlideOverHeading from "../layouts/slide-over/SlideOverHeading";
 
@@ -55,10 +55,19 @@ const EditSafetyContact: React.FC<EditSafetyContactProps> = ({
   >(safetyContact ?? {});
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setTempSafetyContact((v) => ({
-      ...v,
-      [e.target.name]: e.target.value,
-    }));
+    setTempSafetyContact((v) => {
+      const name = e.target.name;
+      let newValue = e.target.value;
+
+      if (name === "phone") {
+        newValue = formatPhoneNumber(newValue);
+      }
+
+      return {
+        ...v,
+        [name]: newValue,
+      };
+    });
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
