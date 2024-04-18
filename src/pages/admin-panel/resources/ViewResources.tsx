@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import DataTable from "../../../components/layouts/DataTable";
-import SlideOver from "../../../components/layouts/SlideOver";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import EditResource from "./EditResource";
 import {
   GetResourceItemOptions,

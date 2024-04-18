@@ -7,7 +7,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import TrainingItemTile from "./TrainingItemTile";
 import AddNew from "../../../components/forms/builder/AddNew";
 import { TrainingItem, TrainingSectionItem } from "../../../types/entities";
-import SlideOver from "../../../components/layouts/SlideOver";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import EditTrainingItem from "./edit-training-item/EditTrainingItem";
 import FilterBar from "../../../components/layouts/FilterBar";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";

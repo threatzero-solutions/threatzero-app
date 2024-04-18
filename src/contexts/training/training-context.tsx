@@ -12,7 +12,7 @@ import {
   TrainingCourse,
   TrainingSection,
 } from "../../types/entities";
-import SlideOver from "../../components/layouts/SlideOver";
+import SlideOver from "../../components/layouts/slide-over/SlideOver";
 import ViewCourses from "../../pages/training-library/components/ViewCourses";
 import ViewTrainingAudiences from "../../pages/training-library/components/ViewTrainingAudiences";
 import { useQuery } from "@tanstack/react-query";

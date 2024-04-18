@@ -5,7 +5,7 @@ import {
   getLocations,
 } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
-import SlideOver from "../../../../components/layouts/SlideOver";
+import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditLocation from "./EditLocation";
 import { Location } from "../../../../types/entities";
 import { Link } from "react-router-dom";

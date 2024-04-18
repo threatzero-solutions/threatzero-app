@@ -22,7 +22,7 @@ import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import { CoreContext } from "../../contexts/core/core-context";
 import Dropdown, { DropdownAction } from "../../components/layouts/Dropdown";
 import StatusPill from "./components/StatusPill";
-import SlideOver from "../../components/layouts/SlideOver";
+import SlideOver from "../../components/layouts/slide-over/SlideOver";
 import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";

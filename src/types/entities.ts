@@ -18,6 +18,8 @@ export interface OrganizationBase extends Base {
   slug: string;
   name: string;
   address: string | null;
+  safetyContact?: SafetyContact;
+  workplaceViolencePreventionPlan?: WorkplaceViolencePreventionPlan;
 }
 
 /** Represents an organization (ie district, company, etc.) */
@@ -249,6 +251,18 @@ export interface Note extends Base {
 }
 
 // ------------------ SAFETY MANAGEMENT ------------------
+
+export interface SafetyContact extends Base {
+  name: string;
+  email: string;
+  phone: string;
+  title?: string;
+}
+
+export interface WorkplaceViolencePreventionPlan extends Base {
+  pdfS3Key: string;
+  pdfUrl?: string;
+}
 
 interface SafetyResourceBase extends Base {
   tag?: string;

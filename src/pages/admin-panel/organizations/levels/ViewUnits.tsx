@@ -3,7 +3,7 @@ import { useState } from "react";
 import { getUnits } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
 import { Unit } from "../../../../types/entities";
-import SlideOver from "../../../../components/layouts/SlideOver";
+import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditUnit from "./EditUnit";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";

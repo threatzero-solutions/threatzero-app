@@ -1,6 +1,6 @@
-import { Outlet } from 'react-router-dom';
-import SideNav from '../../components/layouts/side-nav/SideNav';
-import Footer from '../../components/layouts/Footer';
+import { Outlet } from "react-router-dom";
+import SideNav from "../../components/layouts/side-nav/SideNav";
+import Footer from "../../components/layouts/Footer";
 
 const Dashboard: React.FC = () => {
   return (

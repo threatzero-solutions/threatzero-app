@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import PillBadge from "../../../components/PillBadge";
 import { TrainingContext } from "../../../contexts/training/training-context";
 import { classNames, humanizeSlug } from "../../../utils/core";
-import SlideOver from "../../../components/layouts/SlideOver";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import ViewTrainingAudiences from "./ViewTrainingAudiences";
 import { SimpleChangeEvent } from "../../../types/core";
 

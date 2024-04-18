@@ -26,7 +26,7 @@ import { LEVEL, WRITE } from "../../../constants/permissions";
 import { THREAT_ASSESSMENT_FORM_SLUG } from "../../../constants/forms";
 import BackButton from "../../../components/layouts/BackButton";
 import Dropdown, { DropdownAction } from "../../../components/layouts/Dropdown";
-import SlideOver from "../../../components/layouts/SlideOver";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import ManageNotes from "../../../components/notes/ManageNotes";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { API_BASE_URL } from "../../../contexts/core/constants";

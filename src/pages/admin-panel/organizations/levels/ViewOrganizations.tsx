@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getOrganizations } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
-import SlideOver from "../../../../components/layouts/SlideOver";
+import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditOrganization from "./EditOrganization";
 import { Organization } from "../../../../types/entities";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
