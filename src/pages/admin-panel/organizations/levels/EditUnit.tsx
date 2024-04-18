@@ -162,7 +162,12 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
     }
 
     setUnit((u) => {
-      u[event.target.name as keyof Omit<Unit, "organization">] = value;
+      u[
+        event.target.name as keyof Omit<
+          Unit,
+          "organization" | "safetyContact" | "workplaceViolencePreventionPlan"
+        >
+      ] = value;
 
       if (createNewSlug.current && event.target.name === "name") {
         u.slug = slugify(value);
