@@ -39,7 +39,7 @@ const MyDashboard: React.FC = () => {
         </h3>
         {keycloak?.tokenParsed?.given_name && (
           <h4 className="text-lg font-medium leading-6 text-primary-500">
-            Welcome, {keycloak?.tokenParsed?.family_name}
+            Welcome, {keycloak?.tokenParsed?.given_name}
           </h4>
         )}
       </div>
@@ -49,21 +49,19 @@ const MyDashboard: React.FC = () => {
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
             My Safety Contact
           </h3>
-          <p className="mt-1 text-gray-500">
+          <p className="mt-1 text-gray-500 flex flex-col">
             {mySafetyContact ? (
               <>
                 <span className="text-lg">
                   {mySafetyContact.name}
                   {mySafetyContact.title ? ` - ${mySafetyContact.title}` : ""}
                 </span>
-                <br />
                 <a
                   href={`mailto:${mySafetyContact.email}`}
                   className="text-secondary-600 hover:text-secondary-500 transition-colors"
                 >
                   {mySafetyContact.email}
                 </a>
-                <br />
                 <a
                   href={`tel:${mySafetyContact.phone}`}
                   className="text-secondary-600 hover:text-secondary-500 transition-colors"
