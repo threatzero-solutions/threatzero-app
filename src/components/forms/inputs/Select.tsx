@@ -37,9 +37,9 @@ const Select: React.FC<SelectProps> = ({ options, ...attrs }) => {
     attrs.onChange?.({
       ...new Event("change"),
       target: {
+        ...attrs,
         name: name ?? "",
         value: v,
-        ...attrs,
         getAttribute: (key: keyof typeof attrs) => attrs[key],
       },
     } as any);
