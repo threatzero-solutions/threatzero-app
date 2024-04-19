@@ -14,20 +14,23 @@ const MyDashboard: React.FC = () => {
 
   const { keycloak } = useAuth();
 
-  const { data: myOrganization } = useQuery({
+  const { data: myOrganization, isLoading: organizationLoading } = useQuery({
     queryKey: ["organizations", keycloak!.tokenParsed!.organization] as const,
     queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[1]),
     enabled: !!keycloak?.tokenParsed?.organization,
   });
 
-  const { data: myUnit } = useQuery({
+  const { data: myUnit, isLoading: unitLoading } = useQuery({
     queryKey: ["units", keycloak!.tokenParsed!.unit] as const,
     queryFn: ({ queryKey }) => getUnitBySlug(queryKey[1]),
     enabled: !!keycloak?.tokenParsed?.unit,
   });
 
+  const orgsLoading = organizationLoading || unitLoading;
+
   const mySafetyContact =
     myUnit?.safetyContact ?? myOrganization?.safetyContact;
+
   const myWVPPlan =
     myUnit?.workplaceViolencePreventionPlan ??
     myOrganization?.workplaceViolencePreventionPlan;
@@ -51,7 +54,13 @@ const MyDashboard: React.FC = () => {
             My Safety Contact
           </h3>
           <p className="mt-1 text-gray-500 flex flex-col">
-            {mySafetyContact ? (
+            {orgsLoading ? (
+              <div className="space-y-2">
+                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
+                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
+                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
+              </div>
+            ) : mySafetyContact ? (
               <>
                 <span className="text-lg">
                   {mySafetyContact.name}
@@ -81,7 +90,11 @@ const MyDashboard: React.FC = () => {
             My Workplace Violence Prevention Plan
           </h3>
           <p className="mt-1 text-gray-500">
-            {myWVPPlan ? (
+            {orgsLoading ? (
+              <>
+                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
+              </>
+            ) : myWVPPlan ? (
               <a
                 href={myWVPPlan.pdfUrl}
                 target="_blank"
