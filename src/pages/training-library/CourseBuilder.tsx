@@ -136,6 +136,10 @@ const CourseBuilder = () => {
           presentableBy: courseToDuplicate.presentableBy,
           sections: courseToDuplicate.sections.map((s) => {
             Reflect.deleteProperty(s, "id");
+            s.items?.map((i) => {
+              Reflect.deleteProperty(i, "id");
+              return i;
+            });
             return s;
           }),
         });
