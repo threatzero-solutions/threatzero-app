@@ -1,8 +1,8 @@
-import dayjs from 'dayjs';
-import { TrainingSection } from '../types/entities';
+import dayjs from "dayjs";
+import { TrainingSection } from "../types/entities";
 
 export const trainingSectionSort = (a: TrainingSection, b: TrainingSection) => {
-  const diff = dayjs(a.availableOn).diff(b.availableOn, 'day');
+  const diff = dayjs(a.availableOn).diff(b.availableOn, "day");
   if (diff !== 0) {
     return diff;
   }
@@ -10,9 +10,16 @@ export const trainingSectionSort = (a: TrainingSection, b: TrainingSection) => {
   return a.order - b.order;
 };
 
-export const isSectionAvailable = (section: TrainingSection) =>
-  dayjs().isAfter(section.availableOn) &&
-  (!section.expiresOn || dayjs().isBefore(section.expiresOn));
+export const isSectionAvailable = (section: TrainingSection) => {
+  const today = dayjs();
+  return (
+    (today.isSame(section.availableOn, "day") ||
+      today.isAfter(section.availableOn, "day")) &&
+    (!section.expiresOn ||
+      today.isBefore(section.expiresOn, "day") ||
+      today.isSame(section.expiresOn, "day"))
+  );
+};
 
 export const getAvailableSection = (sections: TrainingSection[]) =>
   sections.find(isSectionAvailable);
