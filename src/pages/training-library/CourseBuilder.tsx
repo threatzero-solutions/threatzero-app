@@ -134,7 +134,10 @@ const CourseBuilder = () => {
           visibility: TrainingVisibility.HIDDEN,
           audiences: courseToDuplicate.audiences,
           presentableBy: courseToDuplicate.presentableBy,
-          sections: courseToDuplicate.sections,
+          sections: courseToDuplicate.sections.map((s) => {
+            Reflect.deleteProperty(s, "id");
+            return s;
+          }),
         });
       }
     } else if (!state.buildingNewCourse) {
