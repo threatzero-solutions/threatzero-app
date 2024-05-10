@@ -27,7 +27,7 @@ const DEFAULT_PAGE_SIZE = 10;
 
 const AdministrativeReportsDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions } = useContext(CoreContext);
+  const { hasPermissions, accessTokenClaims } = useContext(CoreContext);
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -66,7 +66,9 @@ const AdministrativeReportsDashboard: React.FC = () => {
   );
 
   const hasOrganizationOrAdminLevel = useMemo(
-    () => hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]),
+    () =>
+      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]) ||
+      !!accessTokenClaims?.peer_units?.length,
     [hasPermissions]
   );
 
