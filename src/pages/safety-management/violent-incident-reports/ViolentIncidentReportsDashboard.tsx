@@ -25,7 +25,7 @@ dayjs.extend(relativeTime);
 
 const ViolentIncidentReportsDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions } = useContext(CoreContext);
+  const { hasPermissions, accessTokenClaims } = useContext(CoreContext);
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -74,7 +74,9 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
   );
 
   const hasOrganizationOrAdminLevel = useMemo(
-    () => hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]),
+    () =>
+      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]) ||
+      !!accessTokenClaims?.peer_units?.length,
     [hasPermissions]
   );
 
