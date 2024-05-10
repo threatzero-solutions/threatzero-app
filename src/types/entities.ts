@@ -11,6 +11,14 @@ export interface Paginated<T> {
   limit: number;
 }
 
+// ------------------ LANGUAGES ------------------
+
+export interface Language extends Base {
+  code: string;
+  name: string;
+  nativeName: string;
+}
+
 // ------------------ ORGANIZATIONS ------------------
 
 export interface OrganizationBase extends Base {
@@ -158,6 +166,7 @@ export interface Form extends Base {
   groups?: FieldGroup[];
   state: FormState;
   version: number;
+  language: Language;
 }
 
 export enum FieldType {

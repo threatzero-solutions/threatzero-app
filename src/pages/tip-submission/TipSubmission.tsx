@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addTipNote,
   getTipForm,
+  getTipForms,
   getTipNotes,
   getTipSubmission,
   saveTip,
@@ -37,12 +38,18 @@ const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls
 
 const TipSubmission: React.FC = () => {
   const [manageNotesOpen, setManageNotesOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: form, isLoading: formLoading } = useQuery({
-    queryKey: ["tip-form"],
-    queryFn: () => getTipForm(),
+    queryKey: ["tip-form", searchParams.get("language") ?? "en"],
+    queryFn: ({ queryKey }) => getTipForm({ language_code: queryKey[1] }),
   });
-  const [searchParams] = useSearchParams();
+
+  const { data: forms } = useQuery({
+    queryKey: ["tip-forms"],
+    queryFn: () => getTipForms(),
+  });
+
   const params = useParams();
   const { hasPermissions } = useContext(CoreContext);
   const navigate = useNavigate();
@@ -224,6 +231,10 @@ const TipSubmission: React.FC = () => {
               ? `?locationId=${searchParams.get("loc_id")}`
               : ""
           }`}
+          languages={forms?.map((f) => f.language)}
+          setLanguage={(l) =>
+            setSearchParams((p) => ({ ...p, language: l.code }))
+          }
         />
       )}
       <SlideOver open={manageNotesOpen} setOpen={setManageNotesOpen}>

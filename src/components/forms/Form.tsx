@@ -16,6 +16,7 @@ import {
   Form as FormEntity,
   FormState,
   FormSubmission,
+  Language,
 } from "../../types/entities";
 import FormField from "./FormField";
 import { FormsContext } from "../../contexts/forms/forms-context";
@@ -32,6 +33,8 @@ import { produce } from "immer";
 import Steps from "./Steps";
 import React from "react";
 import { ErrorContext } from "../../contexts/error/error-context";
+import SlideOver from "../layouts/slide-over/SlideOver";
+import SelectLanguage from "../languages/SelectLanguage";
 
 export interface FormAction {
   id: string;
@@ -63,6 +66,9 @@ interface FormProps {
   isBuilding?: boolean;
   isLoading?: boolean;
   versions?: number[];
+  languages?: Language[];
+
+  setLanguage?: (language: Language) => void;
 
   background?: string;
 
@@ -81,6 +87,8 @@ const Form: React.FC<FormProps> = ({
   isBuilding: isBuildingProp,
   isLoading,
   versions,
+  languages,
+  setLanguage,
   collapsedSteps,
   background = "bg-gray-50",
   mediaUploadUrl,
@@ -95,6 +103,8 @@ const Form: React.FC<FormProps> = ({
   }>({});
   const [fieldResponsesLoaded, setFieldResponsesLoaded] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [selectLanguageSliderOpen, setSelectLanguageSliderOpen] =
+    useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const currentGroupIdx = useMemo(
@@ -258,7 +268,7 @@ const Form: React.FC<FormProps> = ({
     mutationFn: saveForm,
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["form", data.slug, data.id],
+        queryKey: ["form", data.slug],
       });
     },
   });
@@ -276,6 +286,9 @@ const Form: React.FC<FormProps> = ({
     mutationFn: deleteForm,
     onSuccess: () => {
       setSearchParams((p) => {
+        if (versions?.length === 1) {
+          p.delete("language");
+        }
         p.delete("v");
         return p;
       });
@@ -289,14 +302,14 @@ const Form: React.FC<FormProps> = ({
     },
   });
 
-  const handleNewVersion = () => {
+  const handleNewVersion = (language: Language) => {
     if (!published) return;
 
     if (!versions?.includes(0)) {
-      newDraftMutation.mutate(form.id);
+      newDraftMutation.mutate({ formId: form.id, languageId: language.id });
     }
 
-    setSearchParams((p) => ({ ...p, v: null }));
+    setSearchParams((p) => ({ ...p, v: 0, language: language.code }));
   };
 
   const handlePublish = () => {
@@ -370,26 +383,48 @@ const Form: React.FC<FormProps> = ({
                 </button>
               </div>
               <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    published
-                      ? handleNewVersion()
-                      : saveFormMutation.mutate(form)
-                  }
-                  className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  {published
-                    ? versions?.includes(0)
-                      ? "Go to Draft"
-                      : "+ New Version"
-                    : "Save Draft"}
-                </button>
+                <span className="text-sm inline-flex items-center font-bold">
+                  {form.language
+                    ? `${form.language.name} (${form.language.code})`
+                    : "English (en)"}
+                </span>
+                {languages && (
+                  <Dropdown
+                    value="Languages"
+                    actions={[
+                      ...languages.map((l) => ({
+                        id: l.id,
+                        value: (
+                          <span
+                            className={
+                              form.language?.id === l.id ? "font-bold" : ""
+                            }
+                          >
+                            {l.name} ({l.code})
+                          </span>
+                        ),
+                        disabled: l.id === form.language?.id,
+                        action: () =>
+                          setSearchParams((p) => ({
+                            ...p,
+                            language: l?.code ?? "",
+                          })),
+                      })),
+                      {
+                        id: "new",
+                        value: "+ Add Language",
+                        action: () => setSelectLanguageSliderOpen(true),
+                      },
+                    ]}
+                  />
+                )}
                 {!published && (
                   <button
                     type="button"
                     onClick={() => deleteDraftMutation.mutate(form.id)}
-                    disabled={versions?.length === 1}
+                    disabled={
+                      form.language?.code === "en" && versions?.length === 1
+                    }
                     className="inline-flex items-center rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-400 disabled:opacity-50 disabled:pointer-events-none"
                   >
                     <TrashIcon
@@ -421,15 +456,35 @@ const Form: React.FC<FormProps> = ({
                 </button>
                 {versions && (
                   <Dropdown
-                    actions={versions.map((v) => ({
-                      id: `v${v}`,
-                      value: v ? (
-                        <PillBadge color="indigo" displayValue={`v${v}`} />
-                      ) : (
-                        <PillBadge color="gray" displayValue={<i>Draft</i>} />
-                      ),
-                      action: () => setSearchParams((p) => ({ ...p, v })),
-                    }))}
+                    value="Versions"
+                    actions={[
+                      ...versions.map((v) => ({
+                        id: `v${v}`,
+                        value: v ? (
+                          <PillBadge color="indigo" displayValue={`v${v}`} />
+                        ) : (
+                          <PillBadge color="gray" displayValue={<i>Draft</i>} />
+                        ),
+                        action: () =>
+                          setSearchParams((p) => ({
+                            ...p,
+                            v,
+                            language: form.language?.code,
+                          })),
+                      })),
+                      {
+                        id: "new",
+                        value: published
+                          ? versions?.includes(0)
+                            ? "Go to Draft"
+                            : "+ New Version"
+                          : "Save Draft",
+                        action: () =>
+                          published
+                            ? handleNewVersion(form.language!)
+                            : saveFormMutation.mutate(form),
+                      },
+                    ]}
                   />
                 )}
               </div>
@@ -437,6 +492,34 @@ const Form: React.FC<FormProps> = ({
           )}
           <div className="space-y-12">
             <div className="py-4">
+              <div className="flex w-full justify-end mb-4">
+                <div className="flex gap-3">
+                  <span className="text-sm inline-flex items-center font-bold">
+                    {form.language ? form.language.nativeName : "English"}
+                  </span>
+                  {languages && languages.length && setLanguage && (
+                    <Dropdown
+                      value="Languages"
+                      actions={[
+                        ...languages.map((l) => ({
+                          id: l.id,
+                          value: (
+                            <span
+                              className={
+                                form.language?.id === l.id ? "font-bold" : ""
+                              }
+                            >
+                              {l.nativeName} ({l.name})
+                            </span>
+                          ),
+                          disabled: l.id === form.language?.id,
+                          action: () => setLanguage(l),
+                        })),
+                      ]}
+                    />
+                  )}
+                </div>
+              </div>
               {form.title ? (
                 <h1
                   className="text-2xl font-semibold leading-7 text-gray-900"
@@ -652,6 +735,15 @@ const Form: React.FC<FormProps> = ({
           </div>
         </div>
       )}
+      <SlideOver
+        open={selectLanguageSliderOpen}
+        setOpen={setSelectLanguageSliderOpen}
+      >
+        <SelectLanguage
+          setOpen={setSelectLanguageSliderOpen}
+          setLanguage={(language) => handleNewVersion(language)}
+        />
+      </SlideOver>
     </>
   );
 };

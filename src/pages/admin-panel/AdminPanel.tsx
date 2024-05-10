@@ -7,6 +7,7 @@ const navigation = [
   { name: "Organizations", to: "organizations" },
   { name: "Forms", to: "forms" },
   { name: "Resources", to: "resources" },
+  { name: "Languages", to: "languages" },
   { name: "Users", to: "users" },
 ];
 

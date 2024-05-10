@@ -25,10 +25,19 @@ export const saveForm = async (form: Partial<Form>) => {
   return save<Form>("/forms/", form);
 };
 
-export const newDraftForm = async (formId?: string) =>
+export const newDraftForm = async ({
+  formId,
+  languageId,
+}: {
+  formId?: string;
+  languageId?: string;
+}) =>
   formId
     ? axios
-        .post<Form>(`${API_BASE_URL}/forms/${formId}/new-draft`)
+        .post<Form>(
+          `${API_BASE_URL}/forms/${formId}/new-draft?languageId=${languageId}`,
+          {}
+        )
         .then((res) => res.data)
     : Promise.reject(new Error("Form ID must not be empty."));
 

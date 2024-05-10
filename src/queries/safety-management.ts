@@ -37,6 +37,7 @@ export const getResourceForm =
     options: {
       version?: string;
       id?: string;
+      language_code?: string;
     } = {}
   ) =>
     axios
@@ -52,6 +53,11 @@ export const getResourceForm =
         }
         throw e;
       });
+
+export const getResourceForms = (resourceName: string) => () =>
+  axios
+    .get<Form[]>(`${API_BASE_URL}/${resourceName}/forms/`)
+    .then((res) => res.data);
 
 export const getResourceAsPDF = (resourceName: string) => (id?: string) =>
   id
@@ -108,6 +114,8 @@ export const getTipSubmission = (id?: string) =>
   findOne<Tip>("/tips/submissions/", id);
 
 export const getTipForm = getResourceForm("tips");
+
+export const getTipForms = getResourceForms("tips");
 
 export const getTipNotes = (id?: string, query: ItemFilterQueryParams = {}) =>
   findMany<Note>(`/tips/submissions/${id}/notes/`, query);

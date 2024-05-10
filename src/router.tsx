@@ -52,6 +52,7 @@ import { ResourceItemCategories } from "./types/entities";
 import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
 import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
 import ViolentIncidentReportForm from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportForm";
+import { ViewLanguages } from "./pages/admin-panel/languages/ViewLanguages";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -319,6 +320,11 @@ export const router = createBrowserRouter(
                       path: "resources",
                       handle: { title: "Resources" },
                       element: <ViewResources />,
+                    },
+                    {
+                      path: "languages",
+                      handle: { title: "Languages" },
+                      element: <ViewLanguages />,
                     },
                     {
                       path: "users",
