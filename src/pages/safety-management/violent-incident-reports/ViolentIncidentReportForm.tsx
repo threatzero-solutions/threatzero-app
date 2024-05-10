@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addViolentIncidentReportNote,
   getViolentIncidentReportForm,
@@ -65,13 +65,13 @@ const ViolentIncidentReportForm: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: violentIncidentReport, refetch: refetchViolentIncidentReport } =
-    useQuery({
-      queryKey: ["violent-incident-report", params.reportId],
-      queryFn: ({ queryKey }) =>
-        getViolentIncidentReportSubmission(queryKey[1]),
-      enabled: !!params.reportId,
-    });
+  const queryClient = useQueryClient();
+
+  const { data: violentIncidentReport } = useQuery({
+    queryKey: ["violent-incident-report", params.reportId],
+    queryFn: ({ queryKey }) => getViolentIncidentReportSubmission(queryKey[1]),
+    enabled: !!params.reportId,
+  });
 
   const { data: form, isLoading: formLoading } = useQuery({
     queryKey: [
@@ -99,9 +99,12 @@ const ViolentIncidentReportForm: React.FC = () => {
   const violentIncidentReportMutation = useMutation({
     mutationFn: saveViolentIncidentReport,
     onSuccess: (data) => {
-      refetchViolentIncidentReport();
+      queryClient.invalidateQueries({
+        queryKey: ["assessment", params.assessmentId],
+      });
+
       if (!params.reportId) {
-        navigate(`/violent-incident-reports/${data.id}?edit=true`);
+        navigate(`../${data.id}?edit=true`);
       }
     },
   });
@@ -172,7 +175,12 @@ const ViolentIncidentReportForm: React.FC = () => {
 
     violentIncidentReportMutation.mutate({
       id: params.reportId,
-      submission: submission as FormSubmission,
+      submission: {
+        ...submission,
+        form: {
+          id: form?.id,
+        },
+      },
     });
   };
 

@@ -1,6 +1,5 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  SubmitTipInput,
   addTipNote,
   getTipForm,
   getTipNotes,
@@ -9,7 +8,12 @@ import {
   submitTip,
 } from "../../queries/safety-management";
 import Form from "../../components/forms/Form";
-import { FormState, FormSubmission, TipStatus } from "../../types/entities";
+import {
+  FormState,
+  FormSubmission,
+  Tip,
+  TipStatus,
+} from "../../types/entities";
 import {
   Link,
   useNavigate,
@@ -27,6 +31,7 @@ import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 import EditableCell from "../../components/layouts/EditableCell";
+import { DeepPartial } from "../../types/core";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
@@ -57,7 +62,9 @@ const TipSubmission: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: tip, refetch: refetchTip } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: tip } = useQuery({
     queryKey: ["tip", params.tipId],
     queryFn: ({ queryKey }) =>
       getTipSubmission(queryKey[1] as string).catch(() => null),
@@ -71,7 +78,7 @@ const TipSubmission: React.FC = () => {
   });
 
   const submitTipMutation = useMutation({
-    mutationFn: (value: { tip: SubmitTipInput; locationId?: string }) =>
+    mutationFn: (value: { tip: DeepPartial<Tip>; locationId?: string }) =>
       submitTip(value.tip, value.locationId),
     onSuccess: () => {
       navigate("./success");
@@ -81,7 +88,7 @@ const TipSubmission: React.FC = () => {
   const saveTipMutation = useMutation({
     mutationFn: saveTip,
     onSuccess: () => {
-      refetchTip();
+      queryClient.invalidateQueries({ queryKey: ["tip", params.tipId] });
     },
   });
 
@@ -134,7 +141,12 @@ const TipSubmission: React.FC = () => {
     // TODO: Submit form, but also handle file uploads somehow.
     submitTipMutation.mutate({
       tip: {
-        submission,
+        submission: {
+          ...submission,
+          form: {
+            id: form?.id,
+          },
+        },
       },
       locationId: locationId ?? undefined,
     });

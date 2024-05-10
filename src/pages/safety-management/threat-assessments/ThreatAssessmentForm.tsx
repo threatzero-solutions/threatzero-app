@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addAssessmentNote,
   assessmentToPdf,
@@ -65,7 +65,9 @@ const ThreatAssessmentForm: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: assessment, refetch: refetchAssessment } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: assessment } = useQuery({
     queryKey: ["assessment", params.assessmentId],
     queryFn: ({ queryKey }) => getThreatAssessment(queryKey[1]),
     enabled: !!params.assessmentId,
@@ -93,9 +95,12 @@ const ThreatAssessmentForm: React.FC = () => {
   const assessmentMutation = useMutation({
     mutationFn: saveThreatAssessment,
     onSuccess: (data) => {
-      refetchAssessment();
+      queryClient.invalidateQueries({
+        queryKey: ["assessment", params.assessmentId],
+      });
+
       if (!params.assessmentId) {
-        navigate(`/threat-assessments/${data.id}?edit=true`);
+        navigate(`../${data.id}?edit=true`);
       }
     },
   });
@@ -158,7 +163,12 @@ const ThreatAssessmentForm: React.FC = () => {
 
     assessmentMutation.mutate({
       id: params.assessmentId,
-      submission: submission as FormSubmission,
+      submission: {
+        ...submission,
+        form: {
+          id: form?.id,
+        },
+      },
     });
   };
 

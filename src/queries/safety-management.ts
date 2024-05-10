@@ -4,7 +4,6 @@ import { SafetyManagementResourceStats } from "../types/api";
 import {
   AssessmentStatus,
   Form,
-  FormSubmission,
   Note,
   POCFile,
   ThreatAssessment,
@@ -22,6 +21,7 @@ import {
   updateOne,
 } from "./utils";
 import { API_BASE_URL } from "../contexts/core/constants";
+import { DeepPartial } from "../types/core";
 
 // General
 
@@ -153,7 +153,7 @@ export const violentIncidentReportToPdf = getResourceAsPDF(
 
 // Threat Assessments
 export const saveThreatAssessment = async (
-  assessment: Partial<ThreatAssessment>
+  assessment: DeepPartial<ThreatAssessment>
 ) => save<ThreatAssessment>(`/assessments/submissions/`, assessment);
 
 export const addAssessmentNote = async (
@@ -165,10 +165,7 @@ export const addAssessmentNote = async (
     : Promise.reject(new Error("Threat assessment ID must not be empty."));
 
 // Safety concerns
-export type SubmitTipInput =
-  | Partial<Tip>
-  | { submission: Partial<FormSubmission> };
-export const submitTip = async (tip: SubmitTipInput, locationId?: string) =>
+export const submitTip = async (tip: DeepPartial<Tip>, locationId?: string) =>
   insertOne<Tip>("/tips/submit", tip as Partial<Tip>, {
     params: {
       locationId,
@@ -187,7 +184,7 @@ export const addTipNote = (tipId: string | undefined, note: Partial<Note>) =>
 
 // Violent Incident Reports
 export const saveViolentIncidentReport = async (
-  report: Partial<ViolentIncidentReport>
+  report: DeepPartial<ViolentIncidentReport>
 ) =>
   save<ViolentIncidentReport>(`/violent-incident-reports/submissions/`, report);
 
