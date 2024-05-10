@@ -32,10 +32,6 @@ const FormBuilder: React.FC = () => {
         ) ?? formsByLanguage[0];
 
       if (!f && searchParams.has("language")) {
-        setSearchParams((p) => {
-          p.delete("language");
-          return p;
-        });
         return undefined;
       }
 
@@ -43,7 +39,7 @@ const FormBuilder: React.FC = () => {
     }
 
     return null;
-  }, [allForms, searchParams]);
+  }, [allForms, searchParams, isLoadingAllForms]);
 
   const queryClient = useQueryClient();
   const { data: form, isLoading: isLoadingSelectedForm } = useQuery({
