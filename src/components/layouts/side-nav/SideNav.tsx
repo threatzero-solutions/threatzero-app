@@ -116,18 +116,34 @@ export default function SideNav() {
     if (!interceptorReady) {
       return;
     }
+
+    const filterByPermission = (item: NavigationItem) => {
+      if (!item.permissionOptions) {
+        return true;
+      }
+
+      return hasPermissions(
+        item.permissionOptions.permissions,
+        item.permissionOptions.type
+      );
+    };
+
+    const filterChildrenMap = (item: NavigationItem): NavigationItem => {
+      if (!item.children) {
+        return item;
+      }
+      return {
+        ...item,
+        children: item.children
+          .filter(filterByPermission)
+          .map(filterChildrenMap),
+      };
+    };
+
     dispatch({
       type: "SET_MAIN_NAVIGATION_ITEMS",
-      payload: INITIAL_NAVIGATION.filter((item) => {
-        if (!item.permissionOptions) {
-          return true;
-        }
-
-        return hasPermissions(
-          item.permissionOptions.permissions,
-          item.permissionOptions.type
-        );
-      }),
+      payload:
+        INITIAL_NAVIGATION.filter(filterByPermission).map(filterChildrenMap),
     });
   }, [interceptorReady, hasPermissions, dispatch]);
 
