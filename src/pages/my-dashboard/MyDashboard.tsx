@@ -31,9 +31,10 @@ const MyDashboard: React.FC = () => {
   const mySafetyContact =
     myUnit?.safetyContact ?? myOrganization?.safetyContact;
 
-  const myWVPPlan =
-    myUnit?.workplaceViolencePreventionPlan ??
-    myOrganization?.workplaceViolencePreventionPlan;
+  const myPoliciesAndProcedures = [
+    ...(myUnit?.policiesAndProcedures ?? []),
+    ...(myOrganization?.policiesAndProcedures ?? []),
+  ];
 
   return (
     <div className={"space-y-12"}>
@@ -48,10 +49,10 @@ const MyDashboard: React.FC = () => {
         )}
       </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {/* My Safety Contact */}
+        {/* Safety Contact */}
         <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
-            My Safety Contact
+            Safety Contact
           </h3>
           <p className="mt-1 text-gray-500 flex flex-col">
             {orgsLoading ? (
@@ -84,27 +85,29 @@ const MyDashboard: React.FC = () => {
             )}
           </p>
         </div>
-        {/* My WVP Plan */}
+        {/* Policies & Procedures */}
         <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
-            My Workplace Violence Prevention Plan
+            Policies & Procedures
           </h3>
-          <p className="mt-1 text-gray-500">
+          <p className="mt-1 text-gray-500 inline-flex flex-col">
             {orgsLoading ? (
               <>
                 <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
               </>
-            ) : myWVPPlan ? (
-              <a
-                href={myWVPPlan.pdfUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-secondary-600 hover:text-secondary-500 transition-colors"
-              >
-                View Plan (.pdf) &rarr;
-              </a>
+            ) : myPoliciesAndProcedures.length ? (
+              myPoliciesAndProcedures.map((organizationPolicyFile) => (
+                <a
+                  href={organizationPolicyFile.pdfUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-secondary-600 hover:text-secondary-500 transition-colors"
+                >
+                  {organizationPolicyFile.name} (.pdf) &rarr;
+                </a>
+              ))
             ) : (
-              "Workplace Violence Prevention Plan not found."
+              "Your organization currently has posted no policies or procedures."
             )}
           </p>
         </div>

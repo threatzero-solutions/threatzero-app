@@ -27,7 +27,7 @@ export interface OrganizationBase extends Base {
   name: string;
   address: string | null;
   safetyContact?: SafetyContact;
-  workplaceViolencePreventionPlan?: WorkplaceViolencePreventionPlan;
+  policiesAndProcedures: OrganizationPolicyFile[];
 }
 
 /** Represents an organization (ie district, company, etc.) */
@@ -268,7 +268,8 @@ export interface SafetyContact extends Base {
   title?: string;
 }
 
-export interface WorkplaceViolencePreventionPlan extends Base {
+export interface OrganizationPolicyFile extends Base {
+  name: string;
   pdfS3Key: string;
   pdfUrl?: string;
 }

@@ -122,7 +122,7 @@ export const getTipNotes = (id?: string, query: ItemFilterQueryParams = {}) =>
 
 export const tipToPdf = getResourceAsPDF("tips");
 
-// Violent Incident Reports
+// Violent Incident Log
 
 export const getViolentIncidentReports = (
   query: SafetyManagementResourceFilterOptions = {}
@@ -190,7 +190,7 @@ export const addTipNote = (tipId: string | undefined, note: Partial<Note>) =>
     ? insertOne<Note>(`/tips/submissions/${tipId}/notes`, note)
     : Promise.reject(new Error("Tip ID must not be empty."));
 
-// Violent Incident Reports
+// Violent Incident Log
 export const saveViolentIncidentReport = async (
   report: DeepPartial<ViolentIncidentReport>
 ) =>
@@ -205,6 +205,4 @@ export const addViolentIncidentReportNote = async (
         `/violent-incident-reports/submissions/${reportId}/notes`,
         note
       )
-    : Promise.reject(
-        new Error("Violent Incident Report ID must not be empty.")
-      );
+    : Promise.reject(new Error("Violent Incident Log ID must not be empty."));

@@ -270,7 +270,7 @@ export const router = createBrowserRouter(
                     },
                     {
                       path: "violent-incident-reports",
-                      handle: { title: "Violent Incident Reports" },
+                      handle: { title: "Violent Incident Log" },
                       children: [
                         {
                           path: "",

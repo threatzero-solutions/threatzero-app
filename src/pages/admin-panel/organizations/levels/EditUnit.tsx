@@ -165,7 +165,7 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
       u[
         event.target.name as keyof Omit<
           Unit,
-          "organization" | "safetyContact" | "workplaceViolencePreventionPlan"
+          "organization" | "safetyContact" | "policiesAndProcedures"
         >
       ] = value;
 

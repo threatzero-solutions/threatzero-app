@@ -1,16 +1,20 @@
 import { ChangeEvent, FormEvent, useState } from "react";
-import {
-  Field,
-  FieldType,
-  WorkplaceViolencePreventionPlan,
-} from "../../types/entities";
+import { Field, FieldType, OrganizationPolicyFile } from "../../types/entities";
 import FormInput from "../forms/inputs/FormInput";
 import { orderSort } from "../../utils/core";
 import SlideOverHeading from "../layouts/slide-over/SlideOverHeading";
 
 const INPUT_DATA: Array<
-  Partial<Field> & { name: keyof WorkplaceViolencePreventionPlan }
+  Partial<Field> & { name: keyof OrganizationPolicyFile }
 > = [
+  {
+    name: "name",
+    label: "Name",
+    helpText: "Name for this policy or procedure.",
+    type: FieldType.TEXT,
+    required: true,
+    order: 0,
+  },
   {
     name: "pdfS3Key",
     label: "PDF S3 Key",
@@ -21,23 +25,25 @@ const INPUT_DATA: Array<
   },
 ];
 
-interface EditWVPPlanProps {
-  wvpPlan?: Partial<WorkplaceViolencePreventionPlan>;
-  setWvpPlan: (wvpPlan: Partial<WorkplaceViolencePreventionPlan>) => void;
+interface EditOrganizationPolicyFileProps {
+  organizationPolicyFile?: Partial<OrganizationPolicyFile>;
+  setOrganizationPolicyFile: (
+    organizationPolicyFile: Partial<OrganizationPolicyFile>
+  ) => void;
   setOpen: (open: boolean) => void;
 }
 
-const EditWVPPlan: React.FC<EditWVPPlanProps> = ({
-  wvpPlan,
-  setWvpPlan,
+const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
+  organizationPolicyFile,
+  setOrganizationPolicyFile,
   setOpen,
 }) => {
-  const [tempWvpPlan, setTempWvpPlan] = useState<
-    Partial<WorkplaceViolencePreventionPlan>
-  >(wvpPlan ?? {});
+  const [tempOrganizationPolicyFile, setTempOrganizationPolicyFile] = useState<
+    Partial<OrganizationPolicyFile>
+  >(organizationPolicyFile ?? {});
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setTempWvpPlan((v) => ({
+    setTempOrganizationPolicyFile((v) => ({
       ...v,
       [e.target.name]: e.target.value,
     }));
@@ -47,15 +53,19 @@ const EditWVPPlan: React.FC<EditWVPPlanProps> = ({
     event.preventDefault();
     event.stopPropagation();
 
-    setWvpPlan(tempWvpPlan);
+    setOrganizationPolicyFile(tempOrganizationPolicyFile);
     setOpen(false);
   };
   return (
     <form className="flex h-full flex-col" onSubmit={handleSubmit}>
       <div className="flex-1">
         <SlideOverHeading
-          title={wvpPlan ? "Add WVP Plan" : "Edit WVP Plan"}
-          description="Manage this organization's Workplace Violence Prevention Plan."
+          title={
+            organizationPolicyFile
+              ? "Add Policy or Procedure"
+              : "Edit Policy or Procedure"
+          }
+          description="Manage this organization policy or procedure."
           setOpen={setOpen}
         />
 
@@ -79,8 +89,8 @@ const EditWVPPlan: React.FC<EditWVPPlanProps> = ({
                   field={input}
                   onChange={handleChange}
                   value={
-                    tempWvpPlan[
-                      input.name as keyof WorkplaceViolencePreventionPlan
+                    tempOrganizationPolicyFile[
+                      input.name as keyof OrganizationPolicyFile
                     ] ?? ""
                   }
                 />
@@ -116,4 +126,4 @@ const EditWVPPlan: React.FC<EditWVPPlanProps> = ({
   );
 };
 
-export default EditWVPPlan;
+export default EditOrganizationPolicyFile;

@@ -42,17 +42,17 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
       //   href: "/safety-management/poc-files",
       // },
       {
-        name: "Threat Assessments",
-        href: "/safety-management/threat-assessments",
-        permissionOptions: threatAssessmentPermissionsOptions,
-      },
-      {
         name: "Safety Concerns",
         href: "/safety-management/safety-concerns",
         permissionOptions: safetyConcernPermissionsOptions,
       },
       {
-        name: "Violent Incident Reports",
+        name: "Threat Assessments",
+        href: "/safety-management/threat-assessments",
+        permissionOptions: threatAssessmentPermissionsOptions,
+      },
+      {
+        name: "Violent Incident Log",
         href: "/safety-management/violent-incident-reports",
         permissionOptions: violentIncidentReportPermissionsOptions,
       },

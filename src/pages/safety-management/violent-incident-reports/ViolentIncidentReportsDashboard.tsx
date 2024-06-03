@@ -89,7 +89,7 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
   return (
     <div className={"space-y-12"}>
       <h3 className="text-2xl font-semibold leading-6 text-gray-900">
-        Violent Incident Reports
+        Violent Incident Log
       </h3>
 
       {/* STATS */}
@@ -199,8 +199,8 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
           })),
         }}
         isLoading={violentIncidentReportsLoading}
-        notFoundDetail="No violent incident reports found."
-        title="All Violent Incident Reports"
+        notFoundDetail="Violent incident log empty."
+        title="Violent Incident Log"
         subtitle="View, add or edit violent incident reports."
         action={
           <Link to={"./new"}>

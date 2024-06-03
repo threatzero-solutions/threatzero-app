@@ -15,7 +15,7 @@ import { DeepPartial } from "../../../../types/core";
 import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
 import PillBadge from "../../../../components/PillBadge";
 import SafetyContactInput from "../../../../components/safety-management/SafetyContactInput";
-import WVPPlanInput from "../../../../components/safety-management/WVPPlanInput";
+import PolicyProcedureInput from "../../../../components/safety-management/PolicyProcedureInput";
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
@@ -69,8 +69,8 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
     order: 6,
   },
   {
-    name: "workplaceViolencePreventionPlan",
-    label: "Workplace Violence Prevention Plan",
+    name: "policiesAndProcedures",
+    label: "Policies & Procedures",
     type: FieldType.TEXT,
     elementProperties: {
       readOnly: true,
@@ -178,7 +178,10 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
 
     setOrganization((o) => {
       o[
-        event.target.name as keyof Omit<Organization, "courses" | "resources">
+        event.target.name as keyof Omit<
+          Organization,
+          "courses" | "resources" | "policiesAndProcedures"
+        >
       ] = value;
 
       if (createNewSlug.current && event.target.name === "name") {
@@ -247,13 +250,13 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
                       }))
                     }
                   />
-                ) : input.name === "workplaceViolencePreventionPlan" ? (
-                  <WVPPlanInput
-                    value={organization.workplaceViolencePreventionPlan}
+                ) : input.name === "policiesAndProcedures" ? (
+                  <PolicyProcedureInput
+                    value={organization.policiesAndProcedures}
                     onChange={(e) =>
                       setOrganization((o) => ({
                         ...o,
-                        workplaceViolencePreventionPlan: e.target?.value,
+                        policiesAndProcedures: e.target?.value ?? [],
                       }))
                     }
                   />
