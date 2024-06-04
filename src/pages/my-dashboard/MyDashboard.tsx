@@ -56,11 +56,14 @@ const MyDashboard: React.FC = () => {
           </h3>
           <p className="mt-1 text-gray-500 flex flex-col">
             {orgsLoading ? (
-              <div className="space-y-2">
-                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
-                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
-                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
-              </div>
+              new Array(3)
+                .fill(0)
+                .map((_, i) => (
+                  <span
+                    key={i}
+                    className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full mb-1"
+                  />
+                ))
             ) : mySafetyContact ? (
               <>
                 <span className="text-lg">
@@ -90,25 +93,29 @@ const MyDashboard: React.FC = () => {
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
             Policies & Procedures
           </h3>
-          <p className="mt-1 text-gray-500 inline-flex flex-col">
-            {orgsLoading ? (
-              <>
-                <div className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full" />
-              </>
-            ) : myPoliciesAndProcedures.length ? (
-              myPoliciesAndProcedures.map((organizationPolicyFile) => (
-                <a
-                  href={organizationPolicyFile.pdfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-secondary-600 hover:text-secondary-500 transition-colors"
-                >
-                  {organizationPolicyFile.name} (.pdf) &rarr;
-                </a>
-              ))
-            ) : (
-              "Your organization currently has posted no policies or procedures."
-            )}
+          <p className="mt-1 text-gray-500 flex flex-col">
+            {orgsLoading
+              ? new Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <span
+                      key={i}
+                      className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full mb-2"
+                    />
+                  ))
+              : myPoliciesAndProcedures.length
+              ? myPoliciesAndProcedures.map((organizationPolicyFile) => (
+                  <a
+                    key={organizationPolicyFile.id}
+                    href={organizationPolicyFile.pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-secondary-600 hover:text-secondary-500 transition-colors"
+                  >
+                    {organizationPolicyFile.name} (.pdf) &rarr;
+                  </a>
+                ))
+              : "Your organization currently has posted no policies or procedures."}
           </p>
         </div>
       </div>

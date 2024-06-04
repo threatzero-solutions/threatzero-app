@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SimpleChangeEvent } from "../../types/core";
 import { OrganizationPolicyFile } from "../../types/entities";
 import SlideOver from "../layouts/slide-over/SlideOver";
@@ -29,10 +29,22 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
     onChange?.({
       target: {
         name: name ?? "policyAndProcedures",
-        value: updatedValue,
+        value: updatedValue.map((v) => ({
+          ...v,
+          id: v.id?.startsWith("TEMP-ID-") ? undefined : v.id,
+        })),
       },
     });
   };
+
+  const localValue = useMemo(
+    () =>
+      (value ?? []).map((v) => ({
+        ...v,
+        id: v.id ?? "TEMP-ID-" + Math.random(),
+      })),
+    [value]
+  );
 
   const handleNewOrganizationPolicyFile = () => {
     setActiveOrganizationPolicyFile(undefined);
@@ -49,9 +61,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
   const handleRemoveOrganizationPolicyFile = (
     organizationPolicyFile: Partial<OrganizationPolicyFile>
   ) => {
-    handleChange(
-      (value ?? []).filter((v) => v.id !== organizationPolicyFile.id)
-    );
+    handleChange(localValue.filter((v) => v.id !== organizationPolicyFile.id));
   };
 
   const handleSaveOrganizationPolicyFile = (
@@ -60,32 +70,26 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
     setPolicyProcedureSliderOpen(false);
 
     const newValue = organizationPolicyFile.id
-      ? (value ?? []).map((v) => {
+      ? localValue.map((v) => {
           if (v.id === organizationPolicyFile.id) {
             return organizationPolicyFile;
           }
           return v;
         })
       : [
-          ...(value ?? []),
+          ...localValue,
           { ...organizationPolicyFile, id: "TEMP-ID-" + Math.random() },
         ];
 
-    handleChange(
-      newValue.map((v) => ({
-        ...v,
-        id: v.id?.startsWith("TEMP-ID-") ? undefined : v.id,
-      }))
-    );
+    handleChange(newValue);
   };
 
   return (
     <>
       <div className="flex flex-col gap-2">
-        {value?.map((v) => (
-          <div className="relative w-full">
+        {localValue.map((v) => (
+          <div className="relative w-full" key={v.id}>
             <Input
-              key={v.id}
               className="w-full pr-10"
               value={v.name ?? v.pdfS3Key ?? ""}
               readOnly
