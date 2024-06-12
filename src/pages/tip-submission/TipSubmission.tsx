@@ -40,16 +40,6 @@ const TipSubmission: React.FC = () => {
   const [manageNotesOpen, setManageNotesOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: form, isLoading: formLoading } = useQuery({
-    queryKey: ["tip-form", searchParams.get("language") ?? "en"],
-    queryFn: ({ queryKey }) => getTipForm({ language_code: queryKey[1] }),
-  });
-
-  const { data: forms } = useQuery({
-    queryKey: ["tip-forms"],
-    queryFn: () => getTipForms(),
-  });
-
   const params = useParams();
   const { hasPermissions } = useContext(CoreContext);
   const navigate = useNavigate();
@@ -71,11 +61,30 @@ const TipSubmission: React.FC = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: tip } = useQuery({
+  const { data: tip, isLoading: tipLoading } = useQuery({
     queryKey: ["tip", params.tipId],
     queryFn: ({ queryKey }) =>
       getTipSubmission(queryKey[1] as string).catch(() => null),
     enabled: canReadTip,
+  });
+
+  const { data: form, isLoading: formLoading } = useQuery({
+    queryKey: [
+      "tip-form",
+      searchParams.get("language") ?? "en",
+      tip?.submission?.formId ?? undefined,
+    ] as const,
+    queryFn: ({ queryKey }) =>
+      getTipForm({
+        language_code: queryKey[2] ? undefined : queryKey[1],
+        id: queryKey[2],
+      }),
+    enabled: !tipLoading,
+  });
+
+  const { data: forms } = useQuery({
+    queryKey: ["tip-forms"],
+    queryFn: () => getTipForms(),
   });
 
   const { data: notes } = useQuery({
@@ -140,7 +149,7 @@ const TipSubmission: React.FC = () => {
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
-    submission: Partial<FormSubmission>
+    submission: DeepPartial<FormSubmission>
   ) => {
     event.preventDefault();
 

@@ -31,6 +31,7 @@ import ManageNotes from "../../../components/notes/ManageNotes";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { API_BASE_URL } from "../../../contexts/core/constants";
 import EditableCell from "../../../components/layouts/EditableCell";
+import { DeepPartial } from "../../../types/core";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/violent-incident-reports/submissions/presigned-upload-urls`;
 
@@ -169,7 +170,7 @@ const ViolentIncidentReportForm: React.FC = () => {
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
-    submission: Partial<FormSubmission>
+    submission: DeepPartial<FormSubmission>
   ) => {
     event.preventDefault();
 

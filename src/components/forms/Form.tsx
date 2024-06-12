@@ -35,6 +35,7 @@ import React from "react";
 import { ErrorContext } from "../../contexts/error/error-context";
 import SlideOver from "../layouts/slide-over/SlideOver";
 import SelectLanguage from "../languages/SelectLanguage";
+import { DeepPartial } from "../../types/core";
 
 export interface FormAction {
   id: string;
@@ -56,7 +57,7 @@ interface FormProps {
   form?: Partial<FormEntity>;
   onSubmit?: (
     event: React.FormEvent<HTMLFormElement>,
-    submission: Partial<FormSubmission>
+    submission: DeepPartial<FormSubmission>
   ) => Promise<void> | void;
   actions?: FormAction[];
   submission?: FormSubmission;
@@ -332,7 +333,9 @@ const Form: React.FC<FormProps> = ({
       try {
         await onSubmit(event, {
           id: submission?.id,
-          form: form.id as unknown as FormEntity,
+          form: {
+            id: form.id,
+          },
           fieldResponses: Object.values(fieldResponses),
         });
       } catch (e) {
@@ -391,6 +394,7 @@ const Form: React.FC<FormProps> = ({
                 {languages && (
                   <Dropdown
                     value="Languages"
+                    disabled={!!submission}
                     actions={[
                       ...languages.map((l) => ({
                         id: l.id,
@@ -403,7 +407,7 @@ const Form: React.FC<FormProps> = ({
                             {l.name} ({l.code})
                           </span>
                         ),
-                        disabled: l.id === form.language?.id,
+                        disabled: !!submission || l.id === form.language?.id,
                         action: () =>
                           setSearchParams((p) => ({
                             ...p,
@@ -497,27 +501,30 @@ const Form: React.FC<FormProps> = ({
                   <span className="text-sm inline-flex items-center font-bold">
                     {form.language ? form.language.nativeName : "English"}
                   </span>
-                  {languages && languages.length && setLanguage && (
-                    <Dropdown
-                      value="Languages"
-                      actions={[
-                        ...languages.map((l) => ({
-                          id: l.id,
-                          value: (
-                            <span
-                              className={
-                                form.language?.id === l.id ? "font-bold" : ""
-                              }
-                            >
-                              {l.nativeName} ({l.name})
-                            </span>
-                          ),
-                          disabled: l.id === form.language?.id,
-                          action: () => setLanguage(l),
-                        })),
-                      ]}
-                    />
-                  )}
+                  {!submission &&
+                    languages &&
+                    languages.length &&
+                    setLanguage && (
+                      <Dropdown
+                        value="Languages"
+                        actions={[
+                          ...languages.map((l) => ({
+                            id: l.id,
+                            value: (
+                              <span
+                                className={
+                                  form.language?.id === l.id ? "font-bold" : ""
+                                }
+                              >
+                                {l.nativeName} ({l.name})
+                              </span>
+                            ),
+                            disabled: l.id === form.language?.id,
+                            action: () => setLanguage(l),
+                          })),
+                        ]}
+                      />
+                    )}
                 </div>
               </div>
               {form.title ? (
