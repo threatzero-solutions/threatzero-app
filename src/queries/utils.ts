@@ -4,15 +4,25 @@ import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { Paginated } from "../types/entities";
 import { DeepPartial } from "../types/core";
 
-export const findOneOrFail = <T>(path: string, id?: string) =>
+export const findOneOrFail = <T>(
+  path: string,
+  id?: string,
+  options?: AxiosRequestConfig
+) =>
   id
     ? axios
-        .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id}`)
+        .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id}`, {
+          ...options,
+        })
         .then((res) => res.data)
     : Promise.reject(new Error("ID must not be empty."));
 
-export const findOne = <T>(path: string, id?: string) =>
-  findOneOrFail<T>(path, id).catch((e) => {
+export const findOne = <T>(
+  path: string,
+  id?: string,
+  options?: AxiosRequestConfig
+) =>
+  findOneOrFail<T>(path, id, options).catch((e) => {
     if (e instanceof AxiosError && e.response?.status === 404) {
       return null;
     }

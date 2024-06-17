@@ -98,7 +98,7 @@ const Contexts: React.FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-const Root: React.FC = () => {
+const useTitles = () => {
   const matches = useMatches();
   const titles = matches
     .map((match) => (match.handle as { title?: string })?.title)
@@ -107,6 +107,11 @@ const Root: React.FC = () => {
   useEffect(() => {
     document.title = [...titles, "ThreatZero"].join(" | ");
   }, [titles]);
+  return titles;
+};
+
+const Root: React.FC = () => {
+  useTitles();
 
   return (
     <AuthProvider>
@@ -117,23 +122,29 @@ const Root: React.FC = () => {
   );
 };
 
+const PublicRoot: React.FC = () => {
+  useTitles();
+
+  return (
+    <ErrorContextProvider>
+      <QueryContext>
+        <FormsContextProvider>
+          <PublicLayout>
+            <Outlet />
+          </PublicLayout>
+        </FormsContextProvider>
+      </QueryContext>
+    </ErrorContextProvider>
+  );
+};
+
 export const router = createBrowserRouter(
   [
     {
       path: "/sos",
       handle: { title: "S.O.S." },
+      element: <PublicRoot />,
       errorElement: <ErrorPage />,
-      element: (
-        <ErrorContextProvider>
-          <QueryContext>
-            <FormsContextProvider>
-              <PublicLayout>
-                <Outlet />
-              </PublicLayout>
-            </FormsContextProvider>
-          </QueryContext>
-        </ErrorContextProvider>
-      ),
       children: [
         {
           path: "",
@@ -143,6 +154,18 @@ export const router = createBrowserRouter(
           path: "success",
           handle: { title: "S.O.S. - Thank you!" },
           element: <SuccessfulSubmission />,
+        },
+      ],
+    },
+    {
+      path: "/watch-training/:itemId",
+      handle: { title: "Watch Training" },
+      element: <PublicRoot />,
+      errorElement: <ErrorPage />,
+      children: [
+        {
+          path: "",
+          element: <TrainingItem />,
         },
       ],
     },

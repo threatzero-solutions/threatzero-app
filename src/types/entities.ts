@@ -414,3 +414,10 @@ export interface ResourceItem extends Base {
   category: ResourceItemCategory;
   organizations: Organization[];
 }
+
+// USERS
+
+export interface OpaqueToken extends Base {
+  key: string;
+  value: Record<string, any>;
+}
