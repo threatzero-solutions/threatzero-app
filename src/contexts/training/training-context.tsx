@@ -2,7 +2,6 @@ import React, {
   createContext,
   Dispatch,
   PropsWithChildren,
-  useContext,
   useEffect,
   useReducer,
   useState,
@@ -21,8 +20,8 @@ import EditTrainingSection from "../../pages/training-library/components/EditTra
 import ManageItems from "../../pages/training-library/components/ManageItems";
 import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
 import { useSearchParams } from "react-router-dom";
-import { CoreContext } from "../core/core-context";
 import { useLocalStorage } from "usehooks-ts";
+import { useAuth, withAuthenticationRequired } from "../AuthProvider";
 
 export interface TrainingState {
   buildingNewCourse: boolean;
@@ -164,112 +163,113 @@ const SLIDE_OVER_DATA: {
   },
 ];
 
-export const TrainingContextProvider: React.FC<PropsWithChildren> = ({
-  children,
-}) => {
-  const [activeCourseId, setActiveCourseId] = useLocalStorage<string | null>(
-    "training_activeCourseId",
-    null
-  );
-  const [sectionEditing, setSectionEditing] =
-    useState<Partial<TrainingSection>>();
+export const TrainingContextProvider: React.FC<PropsWithChildren> =
+  withAuthenticationRequired(({ children }) => {
+    const [activeCourseId, setActiveCourseId] = useLocalStorage<string | null>(
+      "training_activeCourseId",
+      null
+    );
+    const [sectionEditing, setSectionEditing] =
+      useState<Partial<TrainingSection>>();
 
-  const [state, dispatch] = useReducer(trainingReducer, INITIAL_STATE);
-  const [searchParams] = useSearchParams();
+    const [state, dispatch] = useReducer(trainingReducer, INITIAL_STATE);
+    const [searchParams] = useSearchParams();
 
-  const { accessTokenClaims } = useContext(CoreContext);
+    const { accessTokenClaims } = useAuth();
 
-  const { data: courses } = useQuery({
-    queryKey: ["training-courses"],
-    queryFn: () => getTrainingCourses({ limit: 100 }),
-  });
-
-  useEffect(() => {
-    dispatch({
-      type: "SET_COURSES",
-      payload: courses?.results,
+    const { data: courses } = useQuery({
+      queryKey: ["training-courses"],
+      queryFn: () => getTrainingCourses({ limit: 100 }),
     });
-  }, [courses?.results]);
 
-  const { data: lastActiveCourse } = useQuery({
-    queryKey: ["training-courses", activeCourseId],
-    queryFn: () =>
-      getTrainingCourse(activeCourseId ?? undefined).then((c) => {
-        if (!c) {
-          setActiveCourseId(null);
-        }
-        return c;
-      }),
-    enabled: !!activeCourseId,
-  });
+    useEffect(() => {
+      dispatch({
+        type: "SET_COURSES",
+        payload: courses?.results,
+      });
+    }, [courses?.results]);
 
-  useEffect(() => {
-    if (searchParams.has("courseId")) {
-      setActiveCourseId(searchParams.get("courseId"));
-      dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
-    }
-  }, [searchParams, setActiveCourseId]);
-
-  useEffect(() => {
-    dispatch({
-      type: "SET_ACTIVE_COURSE",
-      payload: activeCourseId === null ? null : lastActiveCourse,
+    const { data: lastActiveCourse } = useQuery({
+      queryKey: ["training-courses", activeCourseId],
+      queryFn: () =>
+        getTrainingCourse(activeCourseId ?? undefined).then((c) => {
+          if (!c) {
+            setActiveCourseId(null);
+          }
+          return c;
+        }),
+      enabled: !!activeCourseId,
     });
-  }, [lastActiveCourse, activeCourseId]);
 
-  useEffect(() => {
-    if (activeCourseId !== null) {
-      return;
-    }
+    useEffect(() => {
+      if (searchParams.has("courseId")) {
+        setActiveCourseId(searchParams.get("courseId"));
+        dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
+      }
+    }, [searchParams, setActiveCourseId]);
 
-    // If course not preselected, pick the first course matching one of the user's audiences.
-    // Note: Users will most often only have a single audience.
-    const userAudiences = accessTokenClaims?.audiences;
-    if (Array.isArray(userAudiences) && userAudiences.length > 0) {
-      const c = courses?.results.find((c) =>
-        c.audiences.some((a) => userAudiences.includes(a.slug))
-      );
-      if (c?.id) {
-        setActiveCourseId(c.id);
+    useEffect(() => {
+      dispatch({
+        type: "SET_ACTIVE_COURSE",
+        payload: activeCourseId === null ? null : lastActiveCourse,
+      });
+    }, [lastActiveCourse, activeCourseId]);
+
+    useEffect(() => {
+      if (activeCourseId !== null) {
         return;
       }
-    }
 
-    setActiveCourseId(courses?.results[0]?.id ?? null);
-  }, [
-    courses,
-    accessTokenClaims,
-    activeCourseId,
-    courses?.results[0]?.id,
-    setActiveCourseId,
-  ]);
+      // If course not preselected, pick the first course matching one of the user's audiences.
+      // Note: Users will most often only have a single audience.
+      const userAudiences = accessTokenClaims?.audiences;
+      if (Array.isArray(userAudiences) && userAudiences.length > 0) {
+        const c = courses?.results.find((c) =>
+          c.audiences.some((a) => userAudiences.includes(a.slug))
+        );
+        if (c?.id) {
+          setActiveCourseId(c.id);
+          return;
+        }
+      }
 
-  const setActiveCourse = (courseId?: string | null) => {
-    setActiveCourseId(courseId ?? null);
-  };
+      setActiveCourseId(courses?.results[0]?.id ?? null);
+    }, [
+      courses,
+      accessTokenClaims,
+      activeCourseId,
+      courses?.results[0]?.id,
+      setActiveCourseId,
+    ]);
 
-  return (
-    <TrainingContext.Provider
-      value={{
-        state,
-        dispatch,
-        sectionEditing,
-        setSectionEditing,
-        setActiveCourse,
-      }}
-    >
-      {children}
-      {SLIDE_OVER_DATA.map(({ name, dispatchType, Component }) => (
-        <SlideOver
-          key={`${name}-${dispatchType}`}
-          open={!!state[name]}
-          setOpen={(open) => dispatch({ type: dispatchType, payload: open })}
-        >
-          <Component
+    const setActiveCourse = (courseId?: string | null) => {
+      setActiveCourseId(courseId ?? null);
+    };
+
+    return (
+      <TrainingContext.Provider
+        value={{
+          state,
+          dispatch,
+          sectionEditing,
+          setSectionEditing,
+          setActiveCourse,
+        }}
+      >
+        {children}
+        {SLIDE_OVER_DATA.map(({ name, dispatchType, Component }) => (
+          <SlideOver
+            key={`${name}-${dispatchType}`}
+            open={!!state[name]}
             setOpen={(open) => dispatch({ type: dispatchType, payload: open })}
-          />
-        </SlideOver>
-      ))}
-    </TrainingContext.Provider>
-  );
-};
+          >
+            <Component
+              setOpen={(open) =>
+                dispatch({ type: dispatchType, payload: open })
+              }
+            />
+          </SlideOver>
+        ))}
+      </TrainingContext.Provider>
+    );
+  });

@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import DataTable from "../../../components/layouts/DataTable";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
 import { ViolentIncidentReportStatus } from "../../../types/entities";
@@ -12,7 +12,6 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Link, useLocation } from "react-router-dom";
-import { CoreContext } from "../../../contexts/core/core-context";
 import { LEVEL, READ, WRITE } from "../../../constants/permissions";
 import { getUnits } from "../../../queries/organizations";
 import StatsDisplay from "../../../components/StatsDisplay";
@@ -20,12 +19,13 @@ import { fromDaysKey, fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
 import EditableCell from "../../../components/layouts/EditableCell";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 dayjs.extend(relativeTime);
 
 const ViolentIncidentReportsDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useContext(CoreContext);
+  const { hasPermissions, accessTokenClaims } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,

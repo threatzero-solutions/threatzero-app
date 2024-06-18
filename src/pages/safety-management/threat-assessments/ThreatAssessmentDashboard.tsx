@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LEVEL, READ, WRITE } from "../../../constants/permissions";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
@@ -17,15 +17,15 @@ import StatusPill from "./components/StatusPill";
 import DataTable from "../../../components/layouts/DataTable";
 import { getUnits } from "../../../queries/organizations";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
-import { CoreContext } from "../../../contexts/core/core-context";
 import EditableCell from "../../../components/layouts/EditableCell";
 import StatsDisplay from "../../../components/StatsDisplay";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 dayjs.extend(relativeTime);
 
 const ThreatAssessmentDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useContext(CoreContext);
+  const { hasPermissions, accessTokenClaims } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,

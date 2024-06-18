@@ -18,6 +18,7 @@ import { safetyManagementPermissionOptions } from "../../../pages/safety-managem
 import { violentIncidentReportPermissionsOptions } from "../../../pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
 import { safetyConcernPermissionsOptions } from "../../../pages/safety-management/safety-concerns/SafetyConcernsDashboard";
 import { threatAssessmentPermissionsOptions } from "../../../pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
   {
@@ -109,8 +110,8 @@ const HelpCenterLink: React.FC = () => {
 export default function SideNav() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const { hasPermissions, interceptorReady, dispatch, state } =
-    useContext(CoreContext);
+  const { dispatch, state } = useContext(CoreContext);
+  const { hasPermissions, interceptorReady } = useAuth();
 
   useEffect(() => {
     if (!interceptorReady) {

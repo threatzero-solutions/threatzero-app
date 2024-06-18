@@ -21,10 +21,9 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TIP_SUBMISSION_FORM_SLUG } from "../../constants/forms";
 import { LEVEL, READ, WRITE } from "../../constants/permissions";
-import { CoreContext } from "../../contexts/core/core-context";
 import Dropdown, { DropdownAction } from "../../components/layouts/Dropdown";
 import StatusPill from "./components/StatusPill";
 import SlideOver from "../../components/layouts/slide-over/SlideOver";
@@ -33,6 +32,7 @@ import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 import EditableCell from "../../components/layouts/EditableCell";
 import { DeepPartial } from "../../types/core";
+import { useAuth } from "../../contexts/AuthProvider";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
@@ -41,7 +41,7 @@ const TipSubmission: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const params = useParams();
-  const { hasPermissions } = useContext(CoreContext);
+  const { hasPermissions } = useAuth();
   const navigate = useNavigate();
 
   const canAlterForm = useMemo(

@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LEVEL, READ, WRITE } from "../../../constants/permissions";
 import {
   SafetyManagementResourceFilterOptions,
@@ -16,15 +16,15 @@ import StatusPill from "../../tip-submission/components/StatusPill";
 import { getLocations, getUnits } from "../../../queries/organizations";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
 import EditableCell from "../../../components/layouts/EditableCell";
-import { CoreContext } from "../../../contexts/core/core-context";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 const DEFAULT_PAGE_SIZE = 10;
 
 const SafetyConcernsDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useContext(CoreContext);
+  const { hasPermissions, accessTokenClaims } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,

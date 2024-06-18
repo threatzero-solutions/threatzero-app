@@ -19,9 +19,8 @@ import {
   FormSubmission,
 } from "../../../types/entities";
 import Form from "../../../components/forms/Form";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import StatusPill from "./components/StatusPill";
-import { CoreContext } from "../../../contexts/core/core-context";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import { THREAT_ASSESSMENT_FORM_SLUG } from "../../../constants/forms";
 import BackButton from "../../../components/layouts/BackButton";
@@ -32,6 +31,7 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { API_BASE_URL } from "../../../contexts/core/constants";
 import EditableCell from "../../../components/layouts/EditableCell";
 import { DeepPartial } from "../../../types/core";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
 
@@ -41,7 +41,7 @@ const ThreatAssessmentForm: React.FC = () => {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { hasPermissions } = useContext(CoreContext);
+  const { hasPermissions } = useAuth();
 
   const isEditing = useMemo(() => searchParams.has("edit"), [searchParams]);
   const setIsEditing = useCallback(

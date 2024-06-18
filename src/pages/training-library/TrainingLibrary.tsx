@@ -3,7 +3,6 @@ import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import { TrainingContext } from "../../contexts/training/training-context";
-import { CoreContext } from "../../contexts/core/core-context";
 import { trainingSectionSort } from "../../utils/training";
 import TrainingSections from "./components/TrainingSections";
 import { Link, useNavigate } from "react-router-dom";
@@ -13,6 +12,7 @@ import { EyeSlashIcon, FolderOpenIcon } from "@heroicons/react/20/solid";
 import PillBadge from "../../components/PillBadge";
 import { TrainingVisibility } from "../../types/entities";
 import FeaturedSection from "./components/FeaturedSection";
+import { useAuth } from "../../contexts/AuthProvider";
 
 interface NewCourseOptions {
   duplicateCourseId?: string;
@@ -20,7 +20,7 @@ interface NewCourseOptions {
 
 const TrainingLibrary: React.FC = () => {
   const { state, dispatch, setActiveCourse } = useContext(TrainingContext);
-  const { hasPermissions } = useContext(CoreContext);
+  const { hasPermissions } = useAuth();
   const navigate = useNavigate();
 
   const isTrainingAdmin = useMemo(
