@@ -20,6 +20,10 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useResolvedPath } from "react-router-dom";
 import { OpaqueToken } from "../../../types/entities";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import { useContext, useState } from "react";
+import ManageTrainingToken from "./training-tokens/ManageTrainingToken";
+import { CoreContext } from "../../../contexts/core/core-context";
 
 dayjs.extend(relativeTime);
 
@@ -41,8 +45,14 @@ const UsersDashboard: React.FC = () => {
   // 	const refreshJob = (id: string) => {
   // 		console.debug("refreshing job", id);
   // 	};
+  const [manageTrainingTokenSliderOpen, setManageTrainingTokenSliderOpen] =
+    useState(false);
+  const [selectedTrainingToken, setSelectedTrainingToken] =
+    useState<OpaqueToken>();
 
-  const basePath = useResolvedPath("..");
+  const watchTrainingPath = useResolvedPath("/watch-training/");
+
+  const { setSuccess } = useContext(CoreContext);
 
   const [itemFilterOptions, setItemFilterOptions] =
     useImmer<ItemFilterQueryParams>({});
@@ -53,12 +63,24 @@ const UsersDashboard: React.FC = () => {
   });
 
   const copyTrainingUrl = (token: OpaqueToken) => {
-    const url = `${window.location.origin}${basePath.pathname}/watch-training/${token.value.trainingItemId}?watchId=${token.key}`;
+    const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
     navigator.clipboard.writeText(url);
+    setSuccess("Copied training link to clipboard");
+
+    setTimeout(() => {
+      setSuccess(null);
+    }, 5000);
   };
 
   const viewValue = (token: OpaqueToken) => {
-    alert(JSON.stringify(token.value, null, 2));
+    setSelectedTrainingToken(token);
+    setManageTrainingTokenSliderOpen(true);
+  };
+
+  const handleCreateTrainingToken = () => {
+    console.debug("cheese!");
+    setSelectedTrainingToken(undefined);
+    setManageTrainingTokenSliderOpen(true);
   };
 
   return (
@@ -130,6 +152,15 @@ const UsersDashboard: React.FC = () => {
         isLoading={trainingTokensLoading}
         title="Training Tokens"
         subtitle="View and manage tokens used to provide special access to training materials."
+        action={
+          <button
+            type="button"
+            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            onClick={() => handleCreateTrainingToken()}
+          >
+            + New Training Token
+          </button>
+        }
         orderOptions={{
           order: itemFilterOptions.order,
           setOrder: (k, v) => {
@@ -149,6 +180,17 @@ const UsersDashboard: React.FC = () => {
             }),
         }}
       />
+
+      <SlideOver
+        open={manageTrainingTokenSliderOpen}
+        setOpen={setManageTrainingTokenSliderOpen}
+      >
+        <ManageTrainingToken
+          setOpen={setManageTrainingTokenSliderOpen}
+          trainingToken={selectedTrainingToken}
+          readOnly={!!selectedTrainingToken}
+        />
+      </SlideOver>
 
       {/* <div className="overflow-hidden bg-white shadow sm:rounded-lg mb-8">
 				<div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">

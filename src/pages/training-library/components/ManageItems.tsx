@@ -1,12 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTrainingItems } from "../../../queries/training";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { TrainingContext } from "../../../contexts/training/training-context";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import TrainingItemTile from "./TrainingItemTile";
 import AddNew from "../../../components/forms/builder/AddNew";
-import { TrainingItem, TrainingSectionItem } from "../../../types/entities";
+import { TrainingItem } from "../../../types/entities";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import EditTrainingItem from "./edit-training-item/EditTrainingItem";
 import FilterBar from "../../../components/layouts/FilterBar";
@@ -17,31 +16,39 @@ import { useDebounceValue } from "usehooks-ts";
 
 interface ManageItemsProps {
   setOpen: (open: boolean) => void;
-  isEditingSection?: boolean;
+  isSelecting?: boolean;
+  multiple?: boolean;
+  excludeSelected?: boolean;
+  onConfirmSelection?: (selection: Partial<TrainingItem>[]) => void;
+  existingItemSelection?: Partial<TrainingItem>[];
 }
 
 const ManageItems: React.FC<ManageItemsProps> = ({
   setOpen: setOpenSlider,
-  isEditingSection,
+  isSelecting,
+  multiple,
+  excludeSelected,
+  onConfirmSelection,
+  existingItemSelection,
 }) => {
   const [isManagingItems, setIsManagingItems] = useState(false);
   const [editItemSliderOpen, setEditItemSliderOpen] = useState(false);
   const [itemEditing, setItemEditing] = useState<Partial<TrainingItem>>();
-  const [selection, setSelection] = useState<Partial<TrainingItem>[]>([]);
-
-  const { sectionEditing, setSectionEditing } = useContext(TrainingContext);
+  const [selection, setSelection] = useState<Partial<TrainingItem>[]>(
+    excludeSelected ? [] : existingItemSelection ?? []
+  );
 
   const selectedIds = useMemo(() => selection.map((i) => i.id), [selection]);
 
   const setOpen = useCallback(
     (open: boolean) => {
-      if (!open && isEditingSection && isManagingItems) {
+      if (!open && isSelecting && isManagingItems) {
         setIsManagingItems(false);
         return;
       }
       setOpenSlider(open);
     },
-    [setOpenSlider, isEditingSection, isManagingItems]
+    [setOpenSlider, isSelecting, isManagingItems]
   );
 
   const [itemFilterOptions, setItemFilterOptions] =
@@ -55,47 +62,40 @@ const ManageItems: React.FC<ManageItemsProps> = ({
 
   const items = useMemo(
     () =>
-      isManagingItems
-        ? itemsData?.results
-        : itemsData?.results.filter(
-            (i) => !sectionEditing?.items?.find((_i) => _i.item.id === i.id)
-          ),
-    [itemsData, sectionEditing, isManagingItems]
+      isSelecting && excludeSelected
+        ? itemsData?.results.filter(
+            (i) => !existingItemSelection?.find((_i) => _i.id === i.id)
+          )
+        : itemsData?.results,
+    [itemsData, existingItemSelection, isManagingItems]
   );
 
   useEffect(() => {
-    setIsManagingItems(!isEditingSection);
-  }, [isEditingSection]);
+    setIsManagingItems(!isSelecting);
+  }, [isSelecting]);
 
   const handleSelectItem = (item?: Partial<TrainingItem>) => {
     if (!item) return;
 
     setSelection((s) => {
       if (s.find((i) => i.id === item.id)) {
+        if (!multiple) {
+          return [];
+        }
+
         return s.filter((i) => i.id !== item.id);
       }
+
+      if (!multiple) {
+        return [item];
+      }
+
       return [...s, item];
     });
   };
 
   const handleConfirmSelection = () => {
-    setSectionEditing((s) => {
-      const items = [
-        ...(s?.items ?? []),
-        ...selection.map(
-          (i, idx) =>
-            ({
-              item: i,
-              order: idx + (s?.items?.length ?? 0),
-            } as TrainingSectionItem)
-        ),
-      ];
-
-      return {
-        ...(s ?? {}),
-        items,
-      };
-    });
+    onConfirmSelection?.(selection);
     setOpen(false);
   };
 
@@ -219,9 +219,12 @@ const ManageItems: React.FC<ManageItemsProps> = ({
               <button
                 type="button"
                 onClick={() => handleConfirmSelection()}
-                className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:pointer-events-none"
+                disabled={selection.length === 0}
               >
-                Add Selection ({selection.length})
+                {multiple
+                  ? `Add Selection (${selection.length})`
+                  : "Select Item"}
               </button>
             )}
           </div>

@@ -61,7 +61,13 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
     console.error(error);
     if (error instanceof AxiosError && error.response?.status) {
       if (error.response.status >= 400 && error.response.status < 500) {
-        setError(error.response?.data?.message ?? error.message ?? `${error}`);
+        const errMsgRaw =
+          error.response?.data?.message ?? error.message ?? error;
+        const errMsg =
+          typeof errMsgRaw === "object"
+            ? JSON.stringify(errMsgRaw, null, 2)
+            : `${errMsgRaw}`;
+        setError(errMsg);
       }
     } else {
       setError("Oops! Something went wrong.");

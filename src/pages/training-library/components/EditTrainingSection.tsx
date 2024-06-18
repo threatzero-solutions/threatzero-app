@@ -16,6 +16,7 @@ import {
   TrainingMetadata,
   TrainingRepeats,
   TrainingSection,
+  TrainingSectionItem,
   TrainingVisibility,
 } from "../../../types/entities";
 import { orderSort } from "../../../utils/core";
@@ -220,6 +221,27 @@ const EditTrainingSection: React.FC = () => {
 
   const handleDelete = () => {
     deleteSectionMutation.mutate();
+  };
+
+  const handleSetItemSelection = (selection: Partial<TrainingItem>[]) => {
+    setSection((s) => {
+      const items = [
+        ...(s?.items ?? []),
+        ...selection.map(
+          (i, idx) =>
+            ({
+              item: i,
+              order: idx + (s?.items?.length ?? 0),
+            } as TrainingSectionItem)
+        ),
+      ];
+
+      return {
+        ...(s ?? {}),
+        items,
+      };
+    });
+    setOpen(false);
   };
 
   const handleRemoveItem = (item?: Partial<TrainingItem>) => {
@@ -431,7 +453,14 @@ const EditTrainingSection: React.FC = () => {
         </div>
       </form>
       <SlideOver open={selectItemsOpen} setOpen={setSelectItemsOpen}>
-        <ManageItems setOpen={setSelectItemsOpen} isEditingSection={true} />
+        <ManageItems
+          setOpen={setSelectItemsOpen}
+          isSelecting={true}
+          multiple={true}
+          excludeSelected={true}
+          onConfirmSelection={handleSetItemSelection}
+          existingItemSelection={section?.items?.map((i) => i.item)}
+        />
       </SlideOver>
     </>
   );
