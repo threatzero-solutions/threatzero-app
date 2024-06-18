@@ -498,12 +498,14 @@ const Form: React.FC<FormProps> = ({
             <div className="py-4">
               <div className="flex w-full justify-end mb-4">
                 <div className="flex gap-3">
-                  <span className="text-sm inline-flex items-center font-bold">
-                    {form.language ? form.language.nativeName : "English"}
-                  </span>
+                  {languages && languages.length > 1 && (
+                    <span className="text-sm inline-flex items-center font-bold">
+                      {form.language ? form.language.nativeName : "English"}
+                    </span>
+                  )}
                   {!submission &&
                     languages &&
-                    languages.length &&
+                    languages.length > 1 &&
                     setLanguage && (
                       <Dropdown
                         value="Languages"
