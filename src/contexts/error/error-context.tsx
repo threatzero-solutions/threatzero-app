@@ -1,6 +1,6 @@
 import { createContext, Dispatch, PropsWithChildren } from "react";
 import { ImmerReducer, useImmerReducer } from "use-immer";
-import ErrorNotice from "../../components/layouts/ErrorNotice";
+import ErrorNotice from "../../components/layouts/notices/ErrorNotice";
 import { createPortal } from "react-dom";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorPage from "../../pages/ErrorPage";

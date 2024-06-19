@@ -1,15 +1,15 @@
-import { useLocation, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { emitVideoEvent, getTrainingItem } from "../../queries/training";
 import { useQuery } from "@tanstack/react-query";
 import VimeoPlayer from "react-player/vimeo";
-import BackButtonLink from "../../components/layouts/BackButtonLink";
+import BackButton from "../../components/layouts/BackButton";
 import { useCallback, useContext, useMemo } from "react";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
 import { READ } from "../../constants/permissions";
 import { TrainingContext } from "../../contexts/training/training-context";
 import TrainingItemTile from "./components/TrainingItemTile";
 import { Video, VideoEventType } from "../../types/entities";
 import { ErrorBoundary } from "react-error-boundary";
+import { useAuth } from "../../contexts/AuthProvider";
 
 const VideoUnavailable: React.FC = () => (
   <div className="w-full h-full flex justify-center items-center bg-gray-900">
@@ -21,7 +21,8 @@ const TrainingItem: React.FC = () => {
   const { itemId } = useParams();
   const [searchParams] = useSearchParams();
   const { state } = useContext(TrainingContext);
-  const location = useLocation();
+
+  const { authenticated } = useAuth();
 
   const sectionId = useMemo(() => {
     const sId = searchParams.get("sectionId");
@@ -36,22 +37,29 @@ const TrainingItem: React.FC = () => {
     }
   }, [searchParams, state.activeCourse, itemId]);
 
+  const watchId = useMemo(() => {
+    return searchParams.get("watchId");
+  }, [searchParams]);
+
   const emitItemVideoEvent = useCallback(
     ({ type, data }: { type: VideoEventType; data?: unknown }) =>
-      emitVideoEvent({
-        type,
-        eventData: data ?? {},
-        timestamp: new Date().toISOString(),
-        url: window.location.href,
-        itemId: itemId,
-        sectionId: sectionId,
-      }),
+      emitVideoEvent(
+        {
+          type,
+          eventData: data ?? {},
+          timestamp: new Date().toISOString(),
+          url: window.location.href,
+          itemId: itemId,
+          sectionId: sectionId,
+        },
+        watchId
+      ),
     [itemId, sectionId]
   );
 
   const { data: item } = useQuery({
-    queryKey: ["item", itemId],
-    queryFn: ({ queryKey }) => getTrainingItem(queryKey[1]),
+    queryKey: ["item", itemId, watchId] as const,
+    queryFn: ({ queryKey }) => getTrainingItem(queryKey[1], queryKey[2]),
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
@@ -66,13 +74,7 @@ const TrainingItem: React.FC = () => {
 
   return (
     <div>
-      <BackButtonLink
-        to={
-          location.state?.pathname
-            ? (location.state as Location)
-            : "/training/library"
-        }
-      />
+      {authenticated && <BackButton defaultTo={"/training/library"} />}
       {item ? (
         <>
           {item.prerequisitesFulfilled ? (
@@ -195,7 +197,4 @@ export const trainingItemPermissionsOptions = {
   permissions: [READ.COURSES],
 };
 
-export default withRequirePermissions(
-  TrainingItem,
-  trainingItemPermissionsOptions
-);
+export default TrainingItem;

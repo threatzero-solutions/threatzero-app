@@ -9,19 +9,21 @@ import UserMenu from "../../UserMenu";
 import SideNavLink from "./SideNavLink";
 import { NavigationItem } from "../../../types/core";
 import { trainingLibraryPermissionsOptions } from "../../../pages/training-library/TrainingLibrary";
-import { threatAssessmentPermissionsOptions } from "../../../pages/threat-assessments/ThreatAssessmentDashboard";
 import { CoreContext } from "../../../contexts/core/core-context";
-import { administrativeReportsDashboardPermissionsOptions } from "../../../pages/administrative-reports/AdministrativeReportsDashboard";
 import { adminPanelPermissionOptions } from "../../../pages/admin-panel/AdminPanel";
 import { NavLink } from "react-router-dom";
 import { classNames } from "../../../utils/core";
 import { resourcePermissionsOptions } from "../../resources/ResourcePage";
+import { safetyManagementPermissionOptions } from "../../../pages/safety-management/SafetyManagementRoot";
+import { violentIncidentReportPermissionsOptions } from "../../../pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
+import { safetyConcernPermissionsOptions } from "../../../pages/safety-management/safety-concerns/SafetyConcernsDashboard";
+import { threatAssessmentPermissionsOptions } from "../../../pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
   {
-    name: "Administrative Reports",
-    href: "/administrative-reports",
-    permissionOptions: administrativeReportsDashboardPermissionsOptions,
+    name: "My Dashboard",
+    href: "/dashboard",
   },
   {
     name: "Training Library",
@@ -33,9 +35,29 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     href: "/safety-concerns",
   },
   {
-    name: "Threat Assessments",
-    href: "/threat-assessments",
-    permissionOptions: threatAssessmentPermissionsOptions,
+    name: "Safety Management",
+    permissionOptions: safetyManagementPermissionOptions,
+    children: [
+      // {
+      //   name: "POC Files",
+      //   href: "/safety-management/poc-files",
+      // },
+      {
+        name: "Safety Concerns",
+        href: "/safety-management/safety-concerns",
+        permissionOptions: safetyConcernPermissionsOptions,
+      },
+      {
+        name: "Threat Assessments",
+        href: "/safety-management/threat-assessments",
+        permissionOptions: threatAssessmentPermissionsOptions,
+      },
+      {
+        name: "Violent Incident Log",
+        href: "/safety-management/violent-incident-reports",
+        permissionOptions: violentIncidentReportPermissionsOptions,
+      },
+    ],
   },
   {
     name: "Additional Resources",
@@ -88,25 +110,41 @@ const HelpCenterLink: React.FC = () => {
 export default function SideNav() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const { hasPermissions, interceptorReady, dispatch, state } =
-    useContext(CoreContext);
+  const { dispatch, state } = useContext(CoreContext);
+  const { hasPermissions, interceptorReady } = useAuth();
 
   useEffect(() => {
     if (!interceptorReady) {
       return;
     }
+
+    const filterByPermission = (item: NavigationItem) => {
+      if (!item.permissionOptions) {
+        return true;
+      }
+
+      return hasPermissions(
+        item.permissionOptions.permissions,
+        item.permissionOptions.type
+      );
+    };
+
+    const filterChildrenMap = (item: NavigationItem): NavigationItem => {
+      if (!item.children) {
+        return item;
+      }
+      return {
+        ...item,
+        children: item.children
+          .filter(filterByPermission)
+          .map(filterChildrenMap),
+      };
+    };
+
     dispatch({
       type: "SET_MAIN_NAVIGATION_ITEMS",
-      payload: INITIAL_NAVIGATION.filter((item) => {
-        if (!item.permissionOptions) {
-          return true;
-        }
-
-        return hasPermissions(
-          item.permissionOptions.permissions,
-          item.permissionOptions.type
-        );
-      }),
+      payload:
+        INITIAL_NAVIGATION.filter(filterByPermission).map(filterChildrenMap),
     });
   }, [interceptorReady, hasPermissions, dispatch]);
 

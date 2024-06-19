@@ -1,6 +1,6 @@
-import PillBadge from '../../../components/PillBadge';
-import { AssessmentStatus } from '../../../types/entities';
-import { fromStatus } from '../../../utils/core';
+import PillBadge from "../../../../components/PillBadge";
+import { AssessmentStatus } from "../../../../types/entities";
+import { fromStatus } from "../../../../utils/core";
 
 interface StatusPillProps {
   status: AssessmentStatus;
@@ -9,13 +9,13 @@ interface StatusPillProps {
 const getColorFromStatus = (status: AssessmentStatus) => {
   switch (status) {
     case AssessmentStatus.IN_PROGRESS:
-      return 'yellow';
+      return "yellow";
     case AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING:
-      return 'blue';
+      return "blue";
     case AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE:
-      return 'green';
+      return "green";
     default:
-      return 'gray';
+      return "gray";
   }
 };
 

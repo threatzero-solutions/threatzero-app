@@ -11,8 +11,14 @@ export const getOrganizations = (query?: ItemFilterQueryParams) =>
 export const getOrganization = (id?: string) =>
   findOneOrFail<Organization>("/organizations/organizations/", id);
 
+export const getOrganizationBySlug = (slug?: string) =>
+  getOrganizations({ slug }).then((res) => res.results[0]);
+
 export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);
+
+export const getUnitBySlug = (slug?: string) =>
+  getUnits({ slug }).then((res) => res.results[0]);
 
 export const getLocations = (query?: ItemFilterQueryParams) =>
   findMany<Location>("/organizations/locations/", query);

@@ -92,3 +92,54 @@ export const camelToSnake = (str: string) =>
 
 export const snakeToCamel = (str: string) =>
   str.replace(/(_\w)/g, (match) => match[1].toUpperCase());
+
+const PHONE_NUMBER_FORMATTING_REGEX =
+  /^(?<ccp>\+?)(?<cc>(?<=\+)1)?\s*\(?(?<ac>\d{1,3})?\)?\s*(?<p1>\d{1,3})?\s*-?\s*(?<p2>\d{1,4})?.*$/;
+export const formatPhoneNumber = (phoneNumber: string) => {
+  phoneNumber = phoneNumber
+    .trim()
+    .replace(/[^+\d\s]/g, "")
+    .replace(/\s\s/g, " ");
+
+  const match = phoneNumber.match(PHONE_NUMBER_FORMATTING_REGEX);
+
+  if (!match || !match.groups) {
+    return phoneNumber;
+  }
+
+  const { ccp, cc, ac, p1, p2 } = match.groups;
+
+  let formattedPhoneNumber = "";
+
+  if (ccp && !cc) {
+    formattedPhoneNumber += "+";
+  }
+
+  if (cc) {
+    formattedPhoneNumber += `+${cc}`;
+  }
+
+  if (ac) {
+    if (cc) {
+      formattedPhoneNumber += " ";
+    } else {
+      formattedPhoneNumber = "";
+    }
+
+    formattedPhoneNumber += `(${ac}`;
+  }
+
+  if (p1) {
+    formattedPhoneNumber += `) ${p1}`;
+  }
+
+  if (p2) {
+    formattedPhoneNumber += `-${p2}`;
+  }
+
+  return formattedPhoneNumber;
+};
+
+export const stripPhoneNumber = (phoneNumber: string) => {
+  return phoneNumber.replace(/[^+\d]/g, "");
+};

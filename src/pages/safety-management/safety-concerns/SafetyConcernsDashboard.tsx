@@ -1,33 +1,30 @@
-import { useContext, useMemo, useState } from "react";
-import { LEVEL, READ, WRITE } from "../../constants/permissions";
+import { useMemo, useState } from "react";
+import { LEVEL, READ, WRITE } from "../../../constants/permissions";
 import {
-  RequirePermissionsOptions,
-  withRequirePermissions,
-} from "../../guards/RequirePermissions";
-import {
-  TipSubmissionFilterOptions,
+  SafetyManagementResourceFilterOptions,
   getTipSubmissionStats,
   getTipSubmissions,
   saveTip,
-} from "../../queries/tips";
+} from "../../../queries/safety-management";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { classNames, fromDaysKey, fromStatus } from "../../utils/core";
-import { TipStatus } from "../../types/entities";
-import DataTable from "../../components/layouts/DataTable";
+import { fromDaysKey, fromStatus } from "../../../utils/core";
+import { TipStatus } from "../../../types/entities";
+import DataTable from "../../../components/layouts/DataTable";
 import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
-import StatusPill from "../tip-submission/components/StatusPill";
-import { getLocations, getUnits } from "../../queries/organizations";
-import { useItemFilterQuery } from "../../hooks/use-item-filter-query";
-import EditableCell from "../../components/layouts/EditableCell";
-import { CoreContext } from "../../contexts/core/core-context";
+import StatusPill from "../../tip-submission/components/StatusPill";
+import { getLocations, getUnits } from "../../../queries/organizations";
+import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import EditableCell from "../../../components/layouts/EditableCell";
+import StatsDisplay from "../../../components/StatsDisplay";
+import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 const DEFAULT_PAGE_SIZE = 10;
-// const AUDIENCE_COLORS = ["#050505", "#004FFF", "#31AFD4", "#902D41", "#FF007F"];
 
-const AdministrativeReportsDashboard: React.FC = () => {
+const SafetyConcernsDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useContext(CoreContext);
+  const { hasPermissions, accessTokenClaims } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -46,11 +43,15 @@ const AdministrativeReportsDashboard: React.FC = () => {
     queryFn: ({ queryKey }) => getTipSubmissions(queryKey[1]),
   });
 
-  const [tipFilterOptions] = useState<TipSubmissionFilterOptions>({});
-  const { data: tipStats } = useQuery({
+  const [tipFilterOptions] = useState<SafetyManagementResourceFilterOptions>(
+    {}
+  );
+  const { data: tipStats, isLoading: tipStatsLoading } = useQuery({
     queryKey: ["tip-submission-stats", tipFilterOptions],
     queryFn: ({ queryKey }) =>
-      getTipSubmissionStats(queryKey[1] as TipSubmissionFilterOptions),
+      getTipSubmissionStats(
+        queryKey[1] as SafetyManagementResourceFilterOptions
+      ),
   });
 
   const saveTipMutation = useMutation({
@@ -85,83 +86,46 @@ const AdministrativeReportsDashboard: React.FC = () => {
 
   return (
     <div className={"space-y-12"}>
+      <h3 className="text-2xl font-semibold leading-6 text-gray-900">
+        Safety Concerns
+      </h3>
+
       {/* STATS */}
-      {tipStats ? (
-        <div>
-          <h3 className="text-2xl font-semibold leading-6 text-gray-900 mb-4">
-            Safety Concerns
-          </h3>
-          <dl className="mx-auto grid grid-cols-1 gap-px bg-gray-900/5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 shadow-md">
-            {Object.entries(tipStats.subtotals.newSince).map(
-              ([key, subtotal]) => (
-                <div
-                  key={key}
-                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-10 sm:px-6 xl:px-8"
-                >
-                  <dt className="text-sm font-medium leading-6 text-gray-500">
-                    New {fromDaysKey(key)}
-                  </dt>
-                  <dd
-                    className={classNames(
-                      "text-gray-700",
-                      "text-xs font-medium"
-                    )}
-                  >
-                    {((subtotal / tipStats.total) * 100).toFixed(2)}%
-                  </dd>
-                  <dd className="w-full flex-none text-3xl font-medium leading-10 tracking-tight text-gray-900">
-                    {subtotal}
-                  </dd>
-                </div>
-              )
-            )}
-          </dl>
-        </div>
-      ) : (
-        <div className="w-full">
-          <div className="animate-pulse flex-1">
-            <div className="h-36 bg-slate-200 rounded" />
-          </div>
-        </div>
-      )}
-      {tipStats ? (
-        <div>
-          <h3 className="text-base font-semibold leading-6 text-gray-900 mb-4">
-            Totals by Status
-          </h3>
-          <dl className="mx-auto grid grid-cols-1 gap-px bg-gray-900/5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 shadow-md">
-            {Object.entries(tipStats.subtotals.statuses).map(
-              ([key, subtotal]) => (
-                <div
-                  key={key}
-                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-10 sm:px-6 xl:px-8"
-                >
-                  <dt className="text-sm font-medium leading-6 text-gray-500">
-                    <StatusPill status={key as TipStatus} />
-                  </dt>
-                  <dd
-                    className={classNames(
-                      "text-gray-700",
-                      "text-xs font-medium"
-                    )}
-                  >
-                    {((subtotal / (tipStats.total ?? 1)) * 100).toFixed(2)}%
-                  </dd>
-                  <dd className="w-full flex-none text-3xl font-medium leading-10 tracking-tight text-gray-900">
-                    {subtotal}
-                  </dd>
-                </div>
-              )
-            )}
-          </dl>
-        </div>
-      ) : (
-        <div className="w-full">
-          <div className="animate-pulse flex-1">
-            <div className="h-36 bg-slate-200 rounded" />
-          </div>
-        </div>
-      )}
+      <StatsDisplay
+        heading="New Since"
+        loading={tipStatsLoading}
+        stats={
+          tipStats &&
+          Object.entries(tipStats.subtotals.newSince).map(
+            ([key, subtotal]) => ({
+              key: key,
+              name: fromDaysKey(key),
+              stat: subtotal,
+              detail: `${((subtotal / (tipStats.total || 1)) * 100).toFixed(
+                2
+              )}%`,
+            })
+          )
+        }
+      />
+
+      <StatsDisplay
+        heading="Totals by Status"
+        loading={tipStatsLoading}
+        stats={
+          tipStats &&
+          Object.entries(tipStats.subtotals.statuses).map(
+            ([key, subtotal]) => ({
+              key: key,
+              name: <StatusPill status={key as TipStatus} />,
+              stat: subtotal,
+              detail: `${((subtotal / (tipStats.total || 1)) * 100).toFixed(
+                2
+              )}%`,
+            })
+          )
+        }
+      />
 
       {/* VIEW ASSESSMENTS */}
       <DataTable
@@ -192,6 +156,11 @@ const AdministrativeReportsDashboard: React.FC = () => {
               label: "Location",
               key: "location.name",
             },
+            // {
+            //   label: "Files",
+            //   key: "pocFiles",
+            //   noSort: true,
+            // },
             {
               label: <span className="sr-only">View</span>,
               key: "view",
@@ -220,9 +189,10 @@ const AdministrativeReportsDashboard: React.FC = () => {
               updatedOn: dayjs(tip.updatedOn).fromNow(),
               ["unit.name"]: tip.unit?.name ?? "—",
               ["location.name"]: tip.location?.name ?? "—",
+              // pocFiles: <POCFilesButtonCompact pocFiles={tip.pocFiles} />,
               view: (
                 <Link
-                  to={`./safety-concerns/${tip.id}`}
+                  to={`./${tip.id}`}
                   state={{ from: location }}
                   className="text-secondary-600 hover:text-secondary-900 font-medium"
                 >
@@ -315,13 +285,11 @@ const AdministrativeReportsDashboard: React.FC = () => {
   );
 };
 
-export const administrativeReportsDashboardPermissionsOptions: RequirePermissionsOptions =
-  {
-    permissions: [READ.TIPS],
-    type: "all",
-  };
+export const safetyConcernPermissionsOptions = {
+  permissions: [READ.TIPS],
+};
 
 export default withRequirePermissions(
-  AdministrativeReportsDashboard,
-  administrativeReportsDashboardPermissionsOptions
+  SafetyConcernsDashboard,
+  safetyConcernPermissionsOptions
 );

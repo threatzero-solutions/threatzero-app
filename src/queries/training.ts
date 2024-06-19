@@ -26,8 +26,10 @@ export const getTrainingSection = (id?: string) =>
 export const getTrainingItems = (options: ItemFilterQueryParams = {}) =>
   findMany<TrainingItem>("/training/items/", options);
 
-export const getTrainingItem = (id?: string) =>
-  findOne<TrainingItem>("/training/items/", id);
+export const getTrainingItem = (id?: string, watchId?: string | null) =>
+  findOne<TrainingItem>(`/training/items/${watchId ? "watch/" : ""}`, id, {
+    params: { watch_id: watchId },
+  });
 
 export const getPresignedPutUrl = (key: string) =>
   axios
@@ -74,7 +76,15 @@ export const saveTrainingAudience = (audience: Partial<Audience>) =>
 export const deleteTrainingAudience = (id?: string) =>
   deleteOne("/training/audiences/", id);
 
-export const emitVideoEvent = async (event: VideoEvent) =>
+export const emitVideoEvent = async (
+  event: VideoEvent,
+  watchId?: string | null
+) =>
   axios
-    .post(`${API_BASE_URL}/media/video/events/`, event)
+    .post(
+      `${API_BASE_URL}/media/video/events/${
+        watchId ? "?watch_id=" + watchId : ""
+      }`,
+      event
+    )
     .then((res) => res.data);

@@ -1,6 +1,7 @@
 import {
   PropsWithChildren,
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -10,6 +11,10 @@ import configJson from "../config";
 import { useNavigate } from "react-router-dom";
 import ErrorPage from "../pages/ErrorPage";
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
+import axios, { InternalAxiosRequestConfig } from "axios";
+import SplashScreen from "../components/layouts/SplashScreen";
+
+const TOKEN_MIN_VALIDATY_SECONDS = 2;
 
 const AuthCheck: React.FC<
   PropsWithChildren<{ keycloak: Keycloak; authError: unknown }>
@@ -64,6 +69,12 @@ export interface AuthContextType {
     event: string,
     cb: (kc: Keycloak, ...args: any[]) => void
   ) => void;
+  hasPermissions: (
+    requiredPermissions: string[],
+    type?: "any" | "all"
+  ) => boolean;
+  accessTokenClaims?: { [key: string]: any } | null;
+  interceptorReady: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -72,6 +83,8 @@ export const AuthContext = createContext<AuthContextType>({
   accessToken: null,
   authenticated: false,
   addEventListener: () => {},
+  hasPermissions: () => false,
+  interceptorReady: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -83,6 +96,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [authError, setAuthError] = useState<unknown>();
+  const [interceptorReady, setInterceptorReady] = useState(false);
   const kcInitializing = useRef(false);
 
   const eventCallbacks = new Map<
@@ -167,6 +181,73 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   });
 
+  useEffect(() => {
+    if (!accessToken || !keycloak) {
+      return;
+    }
+
+    axios.interceptors.request.use(
+      async (config) => {
+        try {
+          await keycloak.updateToken(TOKEN_MIN_VALIDATY_SECONDS);
+        } catch (e) {
+          console.error("Update token failed", e);
+        }
+
+        const headers: Record<string, string> = {};
+        if (!("x-local-noauth" in config.headers)) {
+          headers["Authorization"] = `Bearer ${keycloak.token}`;
+        }
+
+        return {
+          ...config,
+          headers: {
+            ...config.headers,
+            ...headers,
+          },
+        } as InternalAxiosRequestConfig;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    axios.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      async (error) => {
+        if (error.response && error.response.status === 401) {
+          if (keycloak.isTokenExpired()) {
+            await keycloak.login();
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    setInterceptorReady(true);
+  }, [accessToken, keycloak]);
+
+  const hasPermissions = useCallback(
+    (requiredPermissions: string[], type?: "any" | "all"): boolean => {
+      const permissions =
+        keycloak?.tokenParsed?.resource_access?.["threatzero-api"]?.roles;
+      if (!permissions || !Array.isArray(permissions)) {
+        return false;
+      }
+
+      const predicate = (p: string) => permissions.includes(p);
+      switch (type) {
+        case "all":
+          return requiredPermissions.every(predicate);
+        case "any":
+        default:
+          return requiredPermissions.some(predicate);
+      }
+    },
+    [keycloak]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -175,12 +256,17 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         accessToken,
         authenticated,
         addEventListener,
+        hasPermissions,
+        accessTokenClaims: keycloak?.tokenParsed,
+        interceptorReady,
       }}
     >
-      {keycloak && (
+      {keycloak ? (
         <AuthCheck keycloak={keycloak} authError={authError}>
           {children}
         </AuthCheck>
+      ) : (
+        <SplashScreen />
       )}
     </AuthContext.Provider>
   );
@@ -189,7 +275,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
 export const withAuthenticationRequired =
   (Component: React.FC<PropsWithChildren>): React.FC =>
   (props: PropsWithChildren) => {
-    const { authenticated, keycloak } = useAuth();
+    const { authenticated, keycloak, interceptorReady } = useAuth();
 
     useEffect(() => {
       if (!authenticated && keycloak) {
@@ -197,7 +283,15 @@ export const withAuthenticationRequired =
       }
     }, [keycloak, authenticated]);
 
-    return <>{authenticated && <Component {...props} />}</>;
+    return (
+      <>
+        {authenticated && interceptorReady ? (
+          <Component {...props} />
+        ) : (
+          <SplashScreen />
+        )}
+      </>
+    );
   };
 
 export default AuthProvider;

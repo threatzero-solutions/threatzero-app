@@ -1,59 +1,198 @@
-import dayjs from "dayjs";
-import {
-	UserPlusIcon,
-	ArrowPathIcon,
-	UserGroupIcon,
-} from "@heroicons/react/24/solid";
-import { useState } from "react";
-import PillBadge from "../../../components/PillBadge";
-import Notice from "../../../components/layouts/Notice";
+// const colorForJobStatus = (status: any) => {
+// 	switch (status) {
+// 		case "pending":
+// 			return "yellow";
+// 		case "completed":
+// 			return "green";
+// 		case "failed":
+// 			return "red";
+// 		default:
+// 			return "gray";
+// 	}
+// };
 
-const colorForJobStatus = (status: any) => {
-	switch (status) {
-		case "pending":
-			return "yellow";
-		case "completed":
-			return "green";
-		case "failed":
-			return "red";
-		default:
-			return "gray";
-	}
-};
+import { useImmer } from "use-immer";
+import DataTable from "../../../components/layouts/DataTable";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { getTrainingTokens } from "../../../queries/users";
+import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { useResolvedPath } from "react-router-dom";
+import { OpaqueToken } from "../../../types/entities";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import { useContext, useState } from "react";
+import ManageTrainingToken from "./training-tokens/ManageTrainingToken";
+import { CoreContext } from "../../../contexts/core/core-context";
+
+dayjs.extend(relativeTime);
 
 const UsersDashboard: React.FC = () => {
-	const [recentImports] = useState<any[]>([
-		{
-			id: "abc04-ab03k4j-alsj30999944-909449",
-			type: "users_import",
-			status: "pending",
-			created_at: dayjs().toISOString(),
-		},
-	]);
+  // 	const [recentImports] = useState<any[]>([
+  // 		{
+  // 			id: "abc04-ab03k4j-alsj30999944-909449",
+  // 			type: "users_import",
+  // 			status: "pending",
+  // 			created_at: dayjs().toISOString(),
+  // 		},
+  // 	]);
 
-	const handleBulkUserImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		console.debug(file?.name);
-	};
+  // 	const handleBulkUserImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 		const file = e.target.files?.[0];
+  // 		console.debug(file?.name);
+  // 	};
 
-	const refreshJob = (id: string) => {
-		console.debug("refreshing job", id);
-	};
+  // 	const refreshJob = (id: string) => {
+  // 		console.debug("refreshing job", id);
+  // 	};
+  const [manageTrainingTokenSliderOpen, setManageTrainingTokenSliderOpen] =
+    useState(false);
+  const [selectedTrainingToken, setSelectedTrainingToken] =
+    useState<OpaqueToken>();
 
-	return (
-		<>
-			<Notice
-				notice={"This feature is in the early stages of development."}
-				className="mb-4"
-			/>
+  const watchTrainingPath = useResolvedPath("/watch-training/");
 
-			<div className="border-b border-gray-200 pb-5 sm:flex sm:items-center mb-8">
-				<h3 className="text-base font-semibold leading-6 text-gray-900">
-					User Management
-				</h3>
-			</div>
+  const { setSuccess } = useContext(CoreContext);
 
-			<div className="overflow-hidden bg-white shadow sm:rounded-lg mb-8">
+  const [itemFilterOptions, setItemFilterOptions] =
+    useImmer<ItemFilterQueryParams>({});
+
+  const { data: trainingTokens, isLoading: trainingTokensLoading } = useQuery({
+    queryKey: ["training-tokens", itemFilterOptions] as const,
+    queryFn: ({ queryKey }) => getTrainingTokens(queryKey[1]),
+  });
+
+  const copyTrainingUrl = (token: OpaqueToken) => {
+    const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
+    navigator.clipboard.writeText(url);
+    setSuccess("Copied training link to clipboard");
+
+    setTimeout(() => {
+      setSuccess(null);
+    }, 5000);
+  };
+
+  const viewValue = (token: OpaqueToken) => {
+    setSelectedTrainingToken(token);
+    setManageTrainingTokenSliderOpen(true);
+  };
+
+  const handleCreateTrainingToken = () => {
+    console.debug("cheese!");
+    setSelectedTrainingToken(undefined);
+    setManageTrainingTokenSliderOpen(true);
+  };
+
+  return (
+    <>
+      <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center mb-8">
+        <h3 className="text-base font-semibold leading-6 text-gray-900">
+          User Management
+        </h3>
+      </div>
+
+      <DataTable
+        data={{
+          headers: [
+            {
+              label: "Email",
+              key: "email",
+            },
+            {
+              label: "Created On",
+              key: "createdOn",
+            },
+            {
+              label: "Expires",
+              key: "expiresOn",
+            },
+            {
+              label: <span className="sr-only">Training Link</span>,
+              key: "link",
+              noSort: true,
+            },
+            {
+              label: <span className="sr-only">View Token Value</span>,
+              key: "view",
+              align: "right",
+              noSort: true,
+            },
+          ],
+          rows: (trainingTokens?.results ?? []).map((t) => ({
+            id: t.id,
+            createdOn: dayjs(t.createdOn).format("MMM D, YYYY h:mm A"),
+            email: t.value.email,
+            expiresOn: (
+              <span title={dayjs(t.value.expiresOn).format("MMM D, YYYY")}>
+                {dayjs(t.value.expiresOn).fromNow()}
+              </span>
+            ),
+            link: (
+              <button
+                type="button"
+                className="text-secondary-600 hover:text-secondary-900 font-medium"
+                onClick={() => copyTrainingUrl(t)}
+              >
+                Copy Training Link
+                <span className="sr-only">, {t.id}</span>
+              </button>
+            ),
+            view: (
+              <button
+                type="button"
+                className="text-secondary-600 hover:text-secondary-900 font-medium"
+                onClick={() => viewValue(t)}
+              >
+                View Value
+                <span className="sr-only">, {t.id}</span>
+              </button>
+            ),
+          })),
+        }}
+        isLoading={trainingTokensLoading}
+        title="Training Tokens"
+        subtitle="View and manage tokens used to provide special access to training materials."
+        action={
+          <button
+            type="button"
+            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            onClick={() => handleCreateTrainingToken()}
+          >
+            + New Training Token
+          </button>
+        }
+        orderOptions={{
+          order: itemFilterOptions.order,
+          setOrder: (k, v) => {
+            setItemFilterOptions((options) => {
+              options.order = { [k]: v };
+              options.offset = 0;
+            });
+          },
+        }}
+        paginationOptions={{
+          currentOffset: trainingTokens?.offset,
+          total: trainingTokens?.count,
+          limit: trainingTokens?.limit,
+          setOffset: (offset) =>
+            setItemFilterOptions((q) => {
+              q.offset = offset;
+            }),
+        }}
+      />
+
+      <SlideOver
+        open={manageTrainingTokenSliderOpen}
+        setOpen={setManageTrainingTokenSliderOpen}
+      >
+        <ManageTrainingToken
+          setOpen={setManageTrainingTokenSliderOpen}
+          trainingToken={selectedTrainingToken}
+          readOnly={!!selectedTrainingToken}
+        />
+      </SlideOver>
+
+      {/* <div className="overflow-hidden bg-white shadow sm:rounded-lg mb-8">
 				<div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
 					<h3 className="text-base font-semibold leading-6 text-gray-900">
 						Import Users
@@ -185,9 +324,9 @@ const UsersDashboard: React.FC = () => {
 						))}
 					</ul>
 				</div>
-			</div>
-		</>
-	);
+			</div> */}
+    </>
+  );
 };
 
 export default UsersDashboard;

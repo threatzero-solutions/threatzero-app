@@ -11,6 +11,14 @@ export interface Paginated<T> {
   limit: number;
 }
 
+// ------------------ LANGUAGES ------------------
+
+export interface Language extends Base {
+  code: string;
+  name: string;
+  nativeName: string;
+}
+
 // ------------------ ORGANIZATIONS ------------------
 
 export interface OrganizationBase extends Base {
@@ -18,6 +26,8 @@ export interface OrganizationBase extends Base {
   slug: string;
   name: string;
   address: string | null;
+  safetyContact?: SafetyContact;
+  policiesAndProcedures: OrganizationPolicyFile[];
 }
 
 /** Represents an organization (ie district, company, etc.) */
@@ -156,6 +166,7 @@ export interface Form extends Base {
   groups?: FieldGroup[];
   state: FormState;
   version: number;
+  language: Language;
 }
 
 export enum FieldType {
@@ -248,7 +259,35 @@ export interface Note extends Base {
   user: UserRepresentation | null;
 }
 
-// ------------------ TIP SUBMISSIONS ------------------
+// ------------------ SAFETY MANAGEMENT ------------------
+
+export interface SafetyContact extends Base {
+  name: string;
+  email: string;
+  phone: string;
+  title?: string;
+}
+
+export interface OrganizationPolicyFile extends Base {
+  name: string;
+  pdfS3Key: string;
+  pdfUrl?: string;
+}
+
+interface SafetyResourceBase extends Base {
+  tag?: string;
+  unitSlug: string;
+  unit: Unit;
+  submission: FormSubmission;
+}
+
+export interface POCFile extends Base {
+  pocFirstName: string;
+  pocLastName: string;
+  unit: Unit;
+  tips: Tip[];
+  assessments: ThreatAssessment[];
+}
 
 export enum TipStatus {
   NEW = "new",
@@ -257,12 +296,9 @@ export enum TipStatus {
 }
 
 /** Metadata about a tip and its form submission. */
-export interface Tip extends Base {
-  tag?: string;
-  unitSlug: string;
-  unit: Unit;
+export interface Tip extends SafetyResourceBase {
   location?: Location;
-  submission: FormSubmission;
+  pocFiles: POCFile[];
   informantFirstName: string;
   informantLastName: string;
   informantEmail: string;
@@ -270,8 +306,6 @@ export interface Tip extends Base {
   notes: Note[];
   status: TipStatus;
 }
-
-// ------------------ THREAT ASSESSMENTS ------------------
 
 export enum AssessmentStatus {
   IN_PROGRESS = "in_progress",
@@ -281,12 +315,20 @@ export enum AssessmentStatus {
 }
 
 /** Metadata about a threat assessment and its form submission. */
-export interface ThreatAssessment extends Base {
-  tag?: string;
-  unitSlug: string;
-  unit: Unit;
-  submission: FormSubmission;
+export interface ThreatAssessment extends SafetyResourceBase {
+  pocFiles: POCFile[];
   status: AssessmentStatus;
+  statusName?: string;
+}
+
+export enum ViolentIncidentReportStatus {
+  NEW = "new",
+  REVIEWED = "reviewed",
+}
+
+export interface ViolentIncidentReport extends SafetyResourceBase {
+  pocFiles: POCFile[];
+  status: ViolentIncidentReportStatus;
   statusName?: string;
 }
 
@@ -371,4 +413,11 @@ export interface ResourceItem extends Base {
   type: ResourceType;
   category: ResourceItemCategory;
   organizations: Organization[];
+}
+
+// USERS
+
+export interface OpaqueToken extends Base {
+  key: string;
+  value: Record<string, any>;
 }

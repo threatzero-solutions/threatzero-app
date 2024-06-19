@@ -1,5 +1,3 @@
-import { Dialog } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef } from "react";
 import { Organization, Field, FieldType } from "../../../../types/entities";
 import { orderSort, slugify } from "../../../../utils/core";
@@ -16,6 +14,9 @@ import { getResourceItems } from "../../../../queries/media";
 import { DeepPartial } from "../../../../types/core";
 import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
 import PillBadge from "../../../../components/PillBadge";
+import SafetyContactInput from "../../../../components/safety-management/SafetyContactInput";
+import PolicyProcedureInput from "../../../../components/safety-management/PolicyProcedureInput";
+import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
   {
@@ -58,6 +59,26 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
     order: 5,
   },
   {
+    name: "safetyContact",
+    label: "Safety Contact",
+    type: FieldType.TEXTAREA,
+    elementProperties: {
+      readOnly: true,
+    },
+    required: false,
+    order: 6,
+  },
+  {
+    name: "policiesAndProcedures",
+    label: "Policies & Procedures",
+    type: FieldType.TEXT,
+    elementProperties: {
+      readOnly: true,
+    },
+    required: false,
+    order: 7,
+  },
+  {
     name: "courses",
     label: "Training Courses",
     type: FieldType.SELECT,
@@ -65,7 +86,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
       rows: 3,
     },
     required: false,
-    order: 6,
+    order: 8,
   },
   {
     name: "resources",
@@ -75,7 +96,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
       rows: 3,
     },
     required: false,
-    order: 7,
+    order: 9,
   },
 ];
 
@@ -157,7 +178,10 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
 
     setOrganization((o) => {
       o[
-        event.target.name as keyof Omit<Organization, "courses" | "resources">
+        event.target.name as keyof Omit<
+          Organization,
+          "courses" | "resources" | "policiesAndProcedures"
+        >
       ] = value;
 
       if (createNewSlug.current && event.target.name === "name") {
@@ -192,32 +216,13 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
   return (
     <form className="flex h-full flex-col" onSubmit={handleSubmit}>
       <div className="flex-1">
-        {/* Header */}
-        <div className="bg-gray-50 px-4 py-6 sm:px-6">
-          <div className="flex items-start justify-between space-x-3">
-            <div className="space-y-1">
-              <Dialog.Title className="text-base font-semibold leading-6 text-gray-900">
-                {isNew ? "Add organization" : "Edit organization"}
-              </Dialog.Title>
-              <p className="text-sm text-gray-500">
-                Organizations can be school districts, companies, institutions,
+        <SlideOverHeading
+          title={isNew ? "Add organization" : "Edit organization"}
+          description="Organizations can be school districts, companies, institutions,
                 etc. These correlate to organizations registered in the identity
-                provider.
-              </p>
-            </div>
-            <div className="flex h-7 items-center">
-              <button
-                type="button"
-                className="relative text-gray-400 hover:text-gray-500"
-                onClick={() => setOpen(false)}
-              >
-                <span className="absolute -inset-2.5" />
-                <span className="sr-only">Close panel</span>
-                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        </div>
+                provider."
+          setOpen={setOpen}
+        />
 
         {/* Divider container */}
         <div className="space-y-6 py-6 sm:space-y-0 sm:divide-y sm:divide-gray-200 sm:py-0">
@@ -235,7 +240,27 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
                 </label>
               </div>
               <div className="sm:col-span-2 space-y-2">
-                {input.name === "courses" ? (
+                {input.name === "safetyContact" ? (
+                  <SafetyContactInput
+                    value={organization.safetyContact}
+                    onChange={(e) =>
+                      setOrganization((o) => ({
+                        ...o,
+                        safetyContact: e.target?.value,
+                      }))
+                    }
+                  />
+                ) : input.name === "policiesAndProcedures" ? (
+                  <PolicyProcedureInput
+                    value={organization.policiesAndProcedures}
+                    onChange={(e) =>
+                      setOrganization((o) => ({
+                        ...o,
+                        policiesAndProcedures: e.target?.value ?? [],
+                      }))
+                    }
+                  />
+                ) : input.name === "courses" ? (
                   <MultipleSelect
                     prefix="organization_courses"
                     value={

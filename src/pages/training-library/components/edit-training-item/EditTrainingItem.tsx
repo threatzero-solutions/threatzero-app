@@ -164,6 +164,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
       return saveTrainingItem(item);
     },
     onSuccess: (d) => {
+      setItem((item) => ({ ...item, ...d }));
       onMutateSuccess(d);
     },
     onError: () => setItemSaving(false),

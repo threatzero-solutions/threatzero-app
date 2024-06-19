@@ -4,13 +4,13 @@ import { TrainingCourse, TrainingVisibility } from "../../../types/entities";
 import { Dialog } from "@headlessui/react";
 import { EyeSlashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
-import { CoreContext } from "../../../contexts/core/core-context";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import PillBadge from "../../../components/PillBadge";
+import { useAuth } from "../../../contexts/AuthProvider";
 
 const ViewCourses: React.FC = () => {
   const { dispatch, setActiveCourse, state } = useContext(TrainingContext);
-  const { hasPermissions } = useContext(CoreContext);
+  const { hasPermissions } = useAuth();
   const navigate = useNavigate();
 
   const isTrainingAdmin = useMemo(

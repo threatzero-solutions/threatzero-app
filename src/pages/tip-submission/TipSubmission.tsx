@@ -1,45 +1,47 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  SubmitTipInput,
   addTipNote,
   getTipForm,
+  getTipForms,
   getTipNotes,
   getTipSubmission,
   saveTip,
   submitTip,
-} from "../../queries/tips";
+} from "../../queries/safety-management";
 import Form from "../../components/forms/Form";
-import { FormState, FormSubmission, TipStatus } from "../../types/entities";
+import {
+  FormState,
+  FormSubmission,
+  Tip,
+  TipStatus,
+} from "../../types/entities";
 import {
   Link,
   useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TIP_SUBMISSION_FORM_SLUG } from "../../constants/forms";
 import { LEVEL, READ, WRITE } from "../../constants/permissions";
-import { CoreContext } from "../../contexts/core/core-context";
 import Dropdown, { DropdownAction } from "../../components/layouts/Dropdown";
 import StatusPill from "./components/StatusPill";
-import SlideOver from "../../components/layouts/SlideOver";
+import SlideOver from "../../components/layouts/slide-over/SlideOver";
 import ManageNotes from "../../components/notes/ManageNotes";
 import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 import EditableCell from "../../components/layouts/EditableCell";
+import { DeepPartial } from "../../types/core";
+import { useAuth } from "../../contexts/AuthProvider";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
 const TipSubmission: React.FC = () => {
   const [manageNotesOpen, setManageNotesOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: form, isLoading: formLoading } = useQuery({
-    queryKey: ["tip-form"],
-    queryFn: getTipForm,
-  });
-  const [searchParams] = useSearchParams();
   const params = useParams();
-  const { hasPermissions } = useContext(CoreContext);
+  const { hasPermissions } = useAuth();
   const navigate = useNavigate();
 
   const canAlterForm = useMemo(
@@ -57,11 +59,32 @@ const TipSubmission: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: tip, refetch: refetchTip } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: tip, isLoading: tipLoading } = useQuery({
     queryKey: ["tip", params.tipId],
     queryFn: ({ queryKey }) =>
       getTipSubmission(queryKey[1] as string).catch(() => null),
     enabled: canReadTip,
+  });
+
+  const { data: form, isLoading: formLoading } = useQuery({
+    queryKey: [
+      "tip-form",
+      searchParams.get("language") ?? "en",
+      tip?.submission?.formId ?? undefined,
+    ] as const,
+    queryFn: ({ queryKey }) =>
+      getTipForm({
+        language_code: queryKey[2] ? undefined : queryKey[1],
+        id: queryKey[2],
+      }),
+    enabled: !tipLoading,
+  });
+
+  const { data: forms } = useQuery({
+    queryKey: ["tip-forms"],
+    queryFn: () => getTipForms(),
   });
 
   const { data: notes } = useQuery({
@@ -71,7 +94,7 @@ const TipSubmission: React.FC = () => {
   });
 
   const submitTipMutation = useMutation({
-    mutationFn: (value: { tip: SubmitTipInput; locationId?: string }) =>
+    mutationFn: (value: { tip: DeepPartial<Tip>; locationId?: string }) =>
       submitTip(value.tip, value.locationId),
     onSuccess: () => {
       navigate("./success");
@@ -81,7 +104,7 @@ const TipSubmission: React.FC = () => {
   const saveTipMutation = useMutation({
     mutationFn: saveTip,
     onSuccess: () => {
-      refetchTip();
+      queryClient.invalidateQueries({ queryKey: ["tip", params.tipId] });
     },
   });
 
@@ -126,7 +149,7 @@ const TipSubmission: React.FC = () => {
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
-    submission: Partial<FormSubmission>
+    submission: DeepPartial<FormSubmission>
   ) => {
     event.preventDefault();
 
@@ -134,7 +157,12 @@ const TipSubmission: React.FC = () => {
     // TODO: Submit form, but also handle file uploads somehow.
     submitTipMutation.mutate({
       tip: {
-        submission,
+        submission: {
+          ...submission,
+          form: {
+            id: form?.id,
+          },
+        },
       },
       locationId: locationId ?? undefined,
     });
@@ -165,6 +193,13 @@ const TipSubmission: React.FC = () => {
                 />
               </span>
             </span>
+            {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
+              PoC files:
+              <POCFilesButtonCompact
+                pocFiles={tip.pocFiles}
+                className="text-gray-500"
+              />
+            </span> */}
             <StatusPill status={tip.status} />
             <button
               type="button"
@@ -205,6 +240,10 @@ const TipSubmission: React.FC = () => {
               ? `?locationId=${searchParams.get("loc_id")}`
               : ""
           }`}
+          languages={forms?.map((f) => f.language)}
+          setLanguage={(l) =>
+            setSearchParams((p) => ({ ...p, language: l.code }))
+          }
         />
       )}
       <SlideOver open={manageNotesOpen} setOpen={setManageNotesOpen}>

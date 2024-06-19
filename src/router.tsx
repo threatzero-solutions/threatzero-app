@@ -19,15 +19,15 @@ import {
 import { PropsWithChildren, useContext, useEffect, useState } from "react";
 import { CoreContextProvider } from "./contexts/core/core-context";
 import TrainingItem from "./pages/training-library/TrainingItem";
-import ThreatAssessmentDashboard from "./pages/threat-assessments/ThreatAssessmentDashboard";
-import ThreatAssessmentForm from "./pages/threat-assessments/ThreatAssessmentForm";
+import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
+import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
 import { FormsContextProvider } from "./contexts/forms/forms-context";
 import { TrainingContextProvider } from "./contexts/training/training-context";
 import CourseBuilder from "./pages/training-library/CourseBuilder";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
 import PublicLayout from "./components/layouts/PublicLayout";
-import AdministrativeReportsDashboard from "./pages/administrative-reports/AdministrativeReportsDashboard";
+import MyDashboard from "./pages/my-dashboard/MyDashboard";
 import ViewTrainingSection from "./pages/training-library/ViewTrainingSection";
 import Page404 from "./pages/Page404";
 import FirstLinkRedirect from "./components/layouts/side-nav/FirstLinkRedirect";
@@ -47,7 +47,12 @@ import ErrorPage from "./pages/ErrorPage";
 import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
 import HelpCenter from "./pages/HelpCenter";
 import { AxiosError } from "axios";
+import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
 import { ResourceItemCategories } from "./types/entities";
+import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
+import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
+import ViolentIncidentReportForm from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportForm";
+import { ViewLanguages } from "./pages/admin-panel/languages/ViewLanguages";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -56,7 +61,13 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
     console.error(error);
     if (error instanceof AxiosError && error.response?.status) {
       if (error.response.status >= 400 && error.response.status < 500) {
-        setError(error.response?.data?.message ?? error.message ?? `${error}`);
+        const errMsgRaw =
+          error.response?.data?.message ?? error.message ?? error;
+        const errMsg =
+          typeof errMsgRaw === "object"
+            ? JSON.stringify(errMsgRaw, null, 2)
+            : `${errMsgRaw}`;
+        setError(errMsg);
       }
     } else {
       setError("Oops! Something went wrong.");
@@ -84,14 +95,16 @@ const Contexts: React.FC<PropsWithChildren> = ({ children }) => {
     <ErrorContextProvider>
       <QueryContext>
         <CoreContextProvider>
-          <FormsContextProvider>{children}</FormsContextProvider>
+          <FormsContextProvider>
+            <TrainingContextProvider>{children}</TrainingContextProvider>
+          </FormsContextProvider>
         </CoreContextProvider>
       </QueryContext>
     </ErrorContextProvider>
   );
 };
 
-const Root: React.FC = () => {
+const useTitles = () => {
   const matches = useMatches();
   const titles = matches
     .map((match) => (match.handle as { title?: string })?.title)
@@ -100,6 +113,11 @@ const Root: React.FC = () => {
   useEffect(() => {
     document.title = [...titles, "ThreatZero"].join(" | ");
   }, [titles]);
+  return titles;
+};
+
+const Root: React.FC = () => {
+  useTitles();
 
   return (
     <AuthProvider>
@@ -110,23 +128,29 @@ const Root: React.FC = () => {
   );
 };
 
+const PublicRoot: React.FC = () => {
+  useTitles();
+
+  return (
+    <ErrorContextProvider>
+      <QueryContext>
+        <FormsContextProvider>
+          <PublicLayout>
+            <Outlet />
+          </PublicLayout>
+        </FormsContextProvider>
+      </QueryContext>
+    </ErrorContextProvider>
+  );
+};
+
 export const router = createBrowserRouter(
   [
     {
       path: "/sos",
       handle: { title: "S.O.S." },
+      element: <PublicRoot />,
       errorElement: <ErrorPage />,
-      element: (
-        <ErrorContextProvider>
-          <QueryContext>
-            <FormsContextProvider>
-              <PublicLayout>
-                <Outlet />
-              </PublicLayout>
-            </FormsContextProvider>
-          </QueryContext>
-        </ErrorContextProvider>
-      ),
       children: [
         {
           path: "",
@@ -136,6 +160,18 @@ export const router = createBrowserRouter(
           path: "success",
           handle: { title: "S.O.S. - Thank you!" },
           element: <SuccessfulSubmission />,
+        },
+      ],
+    },
+    {
+      path: "/watch-training/:itemId",
+      handle: { title: "Watch Training" },
+      element: <PublicRoot />,
+      errorElement: <ErrorPage />,
+      children: [
+        {
+          path: "",
+          element: <TrainingItem />,
         },
       ],
     },
@@ -157,12 +193,12 @@ export const router = createBrowserRouter(
               element: <Dashboard />,
               children: [
                 {
-                  path: "administrative-reports",
-                  handle: { title: "Administrative Reports" },
+                  path: "dashboard",
+                  handle: { title: "My Dashboard" },
                   children: [
                     {
                       path: "",
-                      element: <AdministrativeReportsDashboard />,
+                      element: <MyDashboard />,
                     },
                     {
                       path: "safety-concerns/:tipId",
@@ -172,11 +208,6 @@ export const router = createBrowserRouter(
                 },
                 {
                   path: "training",
-                  element: (
-                    <TrainingContextProvider>
-                      <Outlet />
-                    </TrainingContextProvider>
-                  ),
                   children: [
                     {
                       path: "library",
@@ -225,21 +256,69 @@ export const router = createBrowserRouter(
                   ],
                 },
                 {
-                  path: "threat-assessments",
-                  handle: { title: "Threat Assessments" },
+                  path: "safety-management",
+                  handle: { title: "Safety Management" },
+                  element: <SafetyManagementRoot />,
                   children: [
+                    // {
+                    //   path: "poc-files",
+                    //   handle: { title: "POC Files" },
+                    //   element: <POCFilesDashboard />,
+                    // },
                     {
-                      path: "",
-                      element: <ThreatAssessmentDashboard />,
+                      path: "safety-concerns",
+                      handle: { title: "Administrative Reports" },
+                      children: [
+                        {
+                          path: "",
+                          element: <SafetyConcernsDashboard />,
+                        },
+                        {
+                          path: ":tipId",
+                          element: <TipSubmission />,
+                        },
+                      ],
                     },
                     {
-                      path: "new",
-                      element: <ThreatAssessmentForm />,
+                      path: "threat-assessments",
+                      handle: { title: "Threat Assessments" },
+                      children: [
+                        {
+                          path: "",
+                          element: <ThreatAssessmentDashboard />,
+                        },
+                        {
+                          path: "new",
+                          element: <ThreatAssessmentForm />,
+                        },
+                        {
+                          path: ":assessmentId",
+                          element: <ThreatAssessmentForm />,
+                        },
+                      ],
                     },
                     {
-                      path: ":assessmentId",
-                      element: <ThreatAssessmentForm />,
+                      path: "violent-incident-reports",
+                      handle: { title: "Violent Incident Log" },
+                      children: [
+                        {
+                          path: "",
+                          element: <ViolentIncidentReportsDashboard />,
+                        },
+                        {
+                          path: "new",
+                          element: <ViolentIncidentReportForm />,
+                        },
+                        {
+                          path: ":reportId",
+                          element: <ViolentIncidentReportForm />,
+                        },
+                      ],
                     },
+                    // {
+                    //   path: "*?",
+                    //   loader: () => redirect("poc-files"),
+                    // },
                   ],
                 },
                 {
@@ -270,6 +349,11 @@ export const router = createBrowserRouter(
                       path: "resources",
                       handle: { title: "Resources" },
                       element: <ViewResources />,
+                    },
+                    {
+                      path: "languages",
+                      handle: { title: "Languages" },
+                      element: <ViewLanguages />,
                     },
                     {
                       path: "users",
