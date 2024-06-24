@@ -241,7 +241,6 @@ const EditTrainingSection: React.FC = () => {
         items,
       };
     });
-    setOpen(false);
   };
 
   const handleRemoveItem = (item?: Partial<TrainingItem>) => {
