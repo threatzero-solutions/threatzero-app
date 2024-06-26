@@ -30,9 +30,8 @@ const displayCourse = (course?: TrainingCourse | null, admin = false) => {
 
 const ViewWatchStats: React.FC = () => {
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
-  const [selectedOrganization, setSelectedOrganization] = useState<
-    Organization | undefined
-  >();
+  const [selectedOrganization, setSelectedOrganization] =
+    useState<Organization | null>();
   const [selectedCourse, setSelectedCourse] = useState<
     TrainingCourse | undefined | null
   >();
@@ -82,7 +81,7 @@ const ViewWatchStats: React.FC = () => {
     event: SimpleChangeEvent<Organization | undefined | null | string>
   ) => {
     setSelectedOrganization(
-      (event.target?.value ?? undefined) as Organization | undefined
+      (event.target?.value ?? null) as Organization | null
     );
     setSelectedUnits([]);
   };
@@ -156,9 +155,11 @@ const ViewWatchStats: React.FC = () => {
                 value={selectedUnits}
                 onChange={handleSelectUnits}
                 queryFilter={
-                  selectedOrganization && {
-                    "organization.id": selectedOrganization.id,
-                  }
+                  selectedOrganization
+                    ? {
+                        "organization.id": selectedOrganization.id,
+                      }
+                    : undefined
                 }
               />
             </div>

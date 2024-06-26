@@ -131,10 +131,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
         as="div"
         immediate
         onChange={handleChange as any}
-        value={
-          value ??
-          ((many ? [] : { name: "" }) as ConditionalOrganization<M> as any)
-        }
+        value={value as any}
         className="relative"
         aria-required={required}
       >
