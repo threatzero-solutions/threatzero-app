@@ -1,13 +1,21 @@
 import { Disclosure } from "@headlessui/react";
 import { XMarkIcon, Bars3Icon } from "@heroicons/react/20/solid";
-import { NavLink, To } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { classNames } from "../../utils/core";
+import { NavigationItem } from "../../types/core";
+import { useNav } from "../../utils/navigation";
 
 interface PageNavBarProps {
-  navigation: { name: string; to: To }[];
+  navigation: NavigationItem[];
 }
 
 const PageNavBar: React.FC<PageNavBarProps> = ({ navigation }) => {
+  const { filterByPermissions, canNavigate } = useNav();
+
+  const filteredNavigation = navigation
+    .filter(canNavigate)
+    .map(filterByPermissions);
+
   return (
     <Disclosure as="nav" className="bg-gray-800 mb-6 rounded-md">
       {({ open }) => (
@@ -29,10 +37,10 @@ const PageNavBar: React.FC<PageNavBarProps> = ({ navigation }) => {
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div className="hidden sm:block">
                   <div className="flex space-x-4">
-                    {navigation.map((item) => (
+                    {filteredNavigation.map((item) => (
                       <NavLink
                         key={item.name}
-                        to={item.to}
+                        to={item.to ?? "#"}
                         className={({ isActive }) =>
                           classNames(
                             isActive
@@ -56,11 +64,11 @@ const PageNavBar: React.FC<PageNavBarProps> = ({ navigation }) => {
 
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 px-2 pb-3 pt-2">
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <Disclosure.Button
                   key={item.name}
                   as={NavLink}
-                  to={item.to}
+                  to={item.to ?? "#"}
                   className={(props: any) =>
                     classNames(
                       props.isActive

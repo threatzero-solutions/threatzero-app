@@ -17,7 +17,7 @@ const SideNavLink: React.FC<SideNavLinkProps> = ({ item }) => {
         <Disclosure
           as="div"
           defaultOpen={item.children.some((c) =>
-            location.pathname.startsWith(c.href ?? "#")
+            location.pathname.startsWith(c.to ?? "#")
           )}
         >
           {({ open }) => (
@@ -36,7 +36,7 @@ const SideNavLink: React.FC<SideNavLinkProps> = ({ item }) => {
                 {(item.children ?? []).map((subItem) => (
                   <li key={subItem.name}>
                     <NavLink
-                      to={subItem.href ?? "#"}
+                      to={subItem.to ?? "#"}
                       className={({ isActive }: { isActive: boolean }) =>
                         classNames(
                           isActive
@@ -56,7 +56,7 @@ const SideNavLink: React.FC<SideNavLinkProps> = ({ item }) => {
         </Disclosure>
       ) : (
         <NavLink
-          to={item.href ?? "#"}
+          to={item.to ?? "#"}
           className={({ isActive }) =>
             classNames(
               isActive

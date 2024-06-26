@@ -2,7 +2,7 @@ import { RequirePermissionsOptions } from "../guards/RequirePermissions";
 
 export interface NavigationItem {
   name: string;
-  href?: string;
+  to?: string;
   permissionOptions?: RequirePermissionsOptions;
   children?: NavigationItem[];
 }

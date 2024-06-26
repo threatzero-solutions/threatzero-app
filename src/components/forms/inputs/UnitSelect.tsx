@@ -5,113 +5,109 @@ import {
   ComboboxOptions,
   Label,
 } from "@headlessui/react";
-import { Organization } from "../../../types/entities";
+import { Unit } from "../../../types/entities";
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  getOrganizationBySlug,
-  getOrganizations,
-} from "../../../queries/organizations";
+import { getUnits, getUnitBySlug } from "../../../queries/organizations";
 import { classNames } from "../../../utils/core";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { SimpleChangeEvent } from "../../../types/core";
 import PillBadge from "../../PillBadge";
 
-type ConditionalOrganization<M> = M extends true
-  ? Organization[]
-  : Organization | string | null | undefined;
+type ConditionalUnit<M> = M extends true
+  ? Unit[]
+  : Unit | string | null | undefined;
 
-interface OrganizationSelectProps<M extends boolean | undefined> {
-  value: ConditionalOrganization<M>;
-  onChange?: (event: SimpleChangeEvent<ConditionalOrganization<M>>) => void;
+interface UnitSelectProps<M extends boolean | undefined> {
+  value: ConditionalUnit<M>;
+  onChange?: (event: SimpleChangeEvent<ConditionalUnit<M>>) => void;
   name?: string;
   label?: string;
   many?: M;
   required?: boolean;
+  queryFilter?: Record<string, string>;
 }
 
-const OrganizationSelect = <M extends boolean | undefined = false>({
+const UnitSelect = <M extends boolean | undefined = false>({
   value,
   onChange,
   name,
   label,
   many,
   required,
-}: OrganizationSelectProps<M>) => {
-  const [organizationQuery, setOrganizationQuery] = useState<string>("");
+  queryFilter,
+}: UnitSelectProps<M>) => {
+  const [unitQuery, setUnitQuery] = useState<string>("");
 
-  const organizationQueryDebounce = useRef<number>();
+  const unitQueryDebounce = useRef<number>();
 
-  const { data: organizationData } = useQuery({
-    queryKey: ["organizations", organizationQuery],
+  const { data: unitData } = useQuery({
+    queryKey: ["units", unitQuery, queryFilter] as const,
     queryFn: ({ queryKey }) =>
-      getOrganizations({
+      getUnits({
         search: queryKey[1] || undefined,
         limit: 5,
         order: { name: "ASC" },
+        ...queryFilter,
       }),
   });
 
-  const { data: selectedOrganization } = useQuery({
+  const { data: selectedUnit } = useQuery({
     queryKey: ["unit", value] as const,
-    queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[1] as string),
+    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[1] as string),
     enabled: !!value && typeof value === "string",
   });
 
-  const handleQueryOrganization = (event: ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(organizationQueryDebounce.current);
-    organizationQueryDebounce.current = setTimeout(() => {
-      setOrganizationQuery(event.target.value);
+  const handleQueryUnit = (event: ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(unitQueryDebounce.current);
+    unitQueryDebounce.current = setTimeout(() => {
+      setUnitQuery(event.target.value);
     }, 350);
   };
 
-  const organizations = useMemo(() => {
-    return organizationData?.results?.filter((org) => {
+  const units = useMemo(() => {
+    return unitData?.results?.filter((unit) => {
       if (Array.isArray(value)) {
-        return !value.some((o) =>
-          typeof o === "string" ? o === org.slug : o.id === org.id
+        return !value.some((u) =>
+          typeof u === "string" ? u === unit.slug : u.id === unit.id
         );
       }
       if (value) {
         return typeof value === "string"
-          ? value === org.slug
-          : value.id !== org.id;
+          ? value === unit.slug
+          : value.id !== unit.id;
       }
       return true;
     });
-  }, [organizationData, value]);
+  }, [unitData, value]);
 
-  const handleChange = (organizations: ConditionalOrganization<M>) => {
-    if (many && !Array.isArray(organizations) && organizations) {
-      handleAddOrganization(organizations);
+  const handleChange = (units: ConditionalUnit<M>) => {
+    if (many && !Array.isArray(units) && units) {
+      handleAddUnit(units);
       return;
     }
 
     onChange?.({
       type: "change",
       target: {
-        name: name ?? "organization",
-        value: organizations,
+        name: name ?? "unit",
+        value: units,
       },
     });
   };
 
-  const handleAddOrganization = (organization: Organization | string) => {
+  const handleAddUnit = (unit: Unit | string) => {
     if (!many || !Array.isArray(value)) {
       return;
     }
-    handleChange([...value, organization] as ConditionalOrganization<M>);
+    handleChange([...value, unit] as ConditionalUnit<M>);
   };
 
-  const handleRemoveOrganization = (organization: Organization) => {
+  const handleRemoveUnit = (unit: Unit) => {
     if (!many || !Array.isArray(value)) {
       return;
     }
-    handleChange(
-      value.filter(
-        (o) => o.id !== organization.id
-      ) as ConditionalOrganization<M>
-    );
+    handleChange(value.filter((o) => o.id !== unit.id) as ConditionalUnit<M>);
   };
 
   return (
@@ -121,8 +117,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
         immediate
         onChange={handleChange as any}
         value={
-          value ??
-          ((many ? [] : { name: "" }) as ConditionalOrganization<M> as any)
+          value ?? ((many ? [] : { name: "" }) as ConditionalUnit<M> as any)
         }
         className="relative"
         aria-required={required}
@@ -135,30 +130,30 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
         <div className="relative">
           <ComboboxInput
             className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
-            onChange={handleQueryOrganization}
-            displayValue={(organization: Organization) =>
+            onChange={handleQueryUnit}
+            displayValue={(unit: Unit | string) =>
               many
                 ? ""
-                : typeof organization === "string"
-                ? selectedOrganization?.name ?? ""
-                : organization?.name
+                : typeof unit === "string"
+                ? selectedUnit?.name ?? ""
+                : unit?.name
             }
-            placeholder="Search for an organization..."
+            placeholder="Search for a unit..."
             type="search"
             required={required}
           />
           {!many && value && (
             <button
               type="button"
-              onClick={() => handleChange(null as ConditionalOrganization<M>)}
+              onClick={() => handleChange(null as ConditionalUnit<M>)}
               className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none"
             >
               <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
             </button>
           )}
-          {organizations && (
+          {units && (
             <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-              {organizations.length === 0 && (
+              {units.length === 0 && (
                 <ComboboxOption
                   value={null}
                   disabled={true}
@@ -167,19 +162,19 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
                   No results
                 </ComboboxOption>
               )}
-              {organizations.map((organization) => (
+              {units.map((unit) => (
                 <ComboboxOption
-                  key={organization?.id ?? -1}
-                  value={organization}
-                  className={({ active }) =>
+                  key={unit?.id ?? -1}
+                  value={unit}
+                  className={({ focus }) =>
                     classNames(
                       "relative cursor-default select-none py-2 pl-3 pr-9",
-                      active ? "bg-secondary-600 text-white" : "text-gray-900"
+                      focus ? "bg-secondary-600 text-white" : "text-gray-900"
                     )
                   }
                 >
                   <span className="block truncate">
-                    {organization?.name ?? "Any organization"}
+                    {unit?.name ?? "Any unit"}
                   </span>
                 </ComboboxOption>
               ))}
@@ -190,19 +185,19 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
       {many && (
         <div className="flex gap-2 flex-wrap mt-3">
           {Array.isArray(value) && value.length > 0 ? (
-            value.map((org) => (
+            value.map((unit) => (
               <PillBadge
-                key={org.id}
-                value={org}
-                displayValue={org.name}
+                key={unit.id}
+                value={unit}
+                displayValue={unit.name}
                 color="blue"
                 isRemovable={true}
-                onRemove={() => handleRemoveOrganization(org)}
+                onRemove={() => handleRemoveUnit(unit)}
               />
             ))
           ) : (
             <span className="text-sm text-gray-400 italic">
-              No organizations selected
+              No units selected
             </span>
           )}
         </div>
@@ -211,4 +206,4 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
   );
 };
 
-export default OrganizationSelect;
+export default UnitSelect;

@@ -13,6 +13,8 @@ import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import Paginator from "../../../components/layouts/Paginator";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
+import { useAuth } from "../../../contexts/AuthProvider";
+import { LEVEL } from "../../../constants/permissions";
 
 interface ManageItemsProps {
   setOpen: (open: boolean) => void;
@@ -36,6 +38,13 @@ const ManageItems: React.FC<ManageItemsProps> = ({
   const [itemEditing, setItemEditing] = useState<Partial<TrainingItem>>();
   const [selection, setSelection] = useState<Partial<TrainingItem>[]>(
     excludeSelected ? [] : existingItemSelection ?? []
+  );
+
+  const { hasPermissions } = useAuth();
+
+  const canManageItems = useMemo(
+    () => hasPermissions([LEVEL.ADMIN]),
+    [hasPermissions]
   );
 
   const selectedIds = useMemo(() => selection.map((i) => i.id), [selection]);
@@ -190,7 +199,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
         {/* Action buttons */}
         <div className="flex-shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
           <div className="flex space-x-3">
-            {!isManagingItems && (
+            {!isManagingItems && canManageItems && (
               <button
                 type="button"
                 className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"

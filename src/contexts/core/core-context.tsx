@@ -1,4 +1,4 @@
-import { createContext, Dispatch, PropsWithChildren } from "react";
+import { createContext, Dispatch, PropsWithChildren, useRef } from "react";
 import { NavigationItem } from "../../types/core";
 import { ImmerReducer, useImmerReducer } from "use-immer";
 import { withAuthenticationRequired } from "../AuthProvider";
@@ -26,7 +26,7 @@ export interface CoreContextType {
   dispatch: Dispatch<CoreAction>;
 
   // OTHER
-  setSuccess: (message?: string | null) => void;
+  setSuccess: (message?: string | null, timeout?: number) => void;
 }
 
 export const CoreContext = createContext<CoreContextType>({
@@ -53,12 +53,22 @@ const coreReducer: ImmerReducer<CoreState, CoreAction> = (state, action) => {
 export const CoreContextProvider: React.FC<PropsWithChildren<any>> =
   withAuthenticationRequired(({ children }) => {
     const [state, dispatch] = useImmerReducer(coreReducer, INITIAL_STATE);
+    const setSuccessTimeout = useRef<number>();
 
-    const setSuccess = (message?: string | null) => {
+    const setSuccess = (message?: string | null, timeout?: number) => {
       if (message) {
         dispatch({ type: "SHOW_SUCCESS_MESSAGE", payload: message });
       } else {
         dispatch({ type: "DISMISS_SUCCESS_MESSAGE" });
+      }
+
+      if (timeout) {
+        if (setSuccessTimeout.current) {
+          clearTimeout(setSuccessTimeout.current);
+        }
+        setSuccessTimeout.current = window.setTimeout(() => {
+          dispatch({ type: "DISMISS_SUCCESS_MESSAGE" });
+        }, timeout);
       }
     };
 

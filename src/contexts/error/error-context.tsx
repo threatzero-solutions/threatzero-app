@@ -1,4 +1,4 @@
-import { createContext, Dispatch, PropsWithChildren } from "react";
+import { createContext, Dispatch, PropsWithChildren, useRef } from "react";
 import { ImmerReducer, useImmerReducer } from "use-immer";
 import ErrorNotice from "../../components/layouts/notices/ErrorNotice";
 import { createPortal } from "react-dom";
@@ -22,7 +22,7 @@ export interface ErrorContextType {
   state: ErrorState;
   dispatch: Dispatch<ErrorAction>;
 
-  setError: (error: string) => void;
+  setError: (error?: string | null, timeout?: number) => void;
 }
 
 export const ErrorContext = createContext<ErrorContextType>({
@@ -47,12 +47,26 @@ export const ErrorContextProvider: React.FC<PropsWithChildren<any>> = ({
   children,
 }) => {
   const [state, dispatch] = useImmerReducer(coreReducer, INITIAL_STATE);
+  const setErrorTimeout = useRef<number>();
 
-  const setError = (error: string) => {
-    dispatch({
-      type: "SHOW_ERROR_MESSAGE",
-      payload: error,
-    });
+  const setError = (error?: string | null, timeout?: number) => {
+    if (error) {
+      dispatch({
+        type: "SHOW_ERROR_MESSAGE",
+        payload: error,
+      });
+    } else {
+      dispatch({ type: "DISMISS_ERROR_MESSAGE" });
+    }
+
+    if (timeout) {
+      if (setErrorTimeout.current) {
+        clearTimeout(setErrorTimeout.current);
+      }
+      setErrorTimeout.current = window.setTimeout(() => {
+        dispatch({ type: "DISMISS_ERROR_MESSAGE" });
+      }, timeout);
+    }
   };
 
   return (
