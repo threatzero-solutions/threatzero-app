@@ -1,4 +1,10 @@
-import { Combobox, Dialog } from "@headlessui/react";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxOption,
+  ComboboxOptions,
+  Dialog,
+} from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
   ChangeEvent,
@@ -172,11 +178,13 @@ const EditLocation: React.FC<EditLocationProps> = ({
                 {input.name === "unit" ? (
                   <Combobox
                     as="div"
-                    value={location.unit ?? ({} as Unit)}
-                    onChange={(v) => setLocation((l) => ({ ...l, unit: v }))}
+                    value={location.unit ?? ({} as Unit as any)}
+                    onChange={(v) =>
+                      setLocation((l) => ({ ...l, unit: v })) as any
+                    }
                     className="relative"
                   >
-                    <Combobox.Input
+                    <ComboboxInput
                       className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
                       onChange={handleQueryUnit}
                       displayValue={(unit: Unit) => unit?.name}
@@ -184,24 +192,24 @@ const EditLocation: React.FC<EditLocationProps> = ({
                       placeholder="Search for a unit..."
                     />
                     {!!units?.results && units.results.length > 0 && (
-                      <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                      <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                         {units?.results.map((unit) => (
-                          <Combobox.Option
+                          <ComboboxOption
                             key={unit.id}
                             value={unit}
-                            className={({ active }) =>
+                            className={({ focus }) =>
                               classNames(
                                 "relative cursor-default select-none py-2 pl-3 pr-9",
-                                active
+                                focus
                                   ? "bg-secondary-600 text-white"
                                   : "text-gray-900"
                               )
                             }
                           >
                             <span className="block truncate">{unit.name}</span>
-                          </Combobox.Option>
+                          </ComboboxOption>
                         ))}
-                      </Combobox.Options>
+                      </ComboboxOptions>
                     )}
                   </Combobox>
                 ) : (
