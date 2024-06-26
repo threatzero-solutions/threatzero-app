@@ -19,20 +19,22 @@ import { violentIncidentReportPermissionsOptions } from "../../../pages/safety-m
 import { safetyConcernPermissionsOptions } from "../../../pages/safety-management/safety-concerns/SafetyConcernsDashboard";
 import { threatAssessmentPermissionsOptions } from "../../../pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
 import { useAuth } from "../../../contexts/AuthProvider";
+import { useNav } from "../../../utils/navigation";
+import { trainingAdminPermissionOptions } from "../../../pages/safety-management/training-admin/TrainingAdminDashboard";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
   {
     name: "My Dashboard",
-    href: "/dashboard",
+    to: "/dashboard",
   },
   {
     name: "Training Library",
-    href: "/training/library",
+    to: "/training/library",
     permissionOptions: trainingLibraryPermissionsOptions,
   },
   {
     name: "Share a Safety Concern",
-    href: "/safety-concerns",
+    to: "/safety-concerns",
   },
   {
     name: "Safety Management",
@@ -44,18 +46,23 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
       // },
       {
         name: "Safety Concerns",
-        href: "/safety-management/safety-concerns",
+        to: "/safety-management/safety-concerns",
         permissionOptions: safetyConcernPermissionsOptions,
       },
       {
         name: "Threat Assessments",
-        href: "/safety-management/threat-assessments",
+        to: "/safety-management/threat-assessments",
         permissionOptions: threatAssessmentPermissionsOptions,
       },
       {
         name: "Violent Incident Log",
-        href: "/safety-management/violent-incident-reports",
+        to: "/safety-management/violent-incident-reports",
         permissionOptions: violentIncidentReportPermissionsOptions,
+      },
+      {
+        name: "Training Admin",
+        to: "/safety-management/training-admin",
+        permissionOptions: trainingAdminPermissionOptions,
       },
     ],
   },
@@ -65,25 +72,25 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     children: [
       {
         name: "Prevention",
-        href: "/resources/prevention",
+        to: "/resources/prevention",
       },
       {
         name: "Preparation",
-        href: "/resources/preparation",
+        to: "/resources/preparation",
       },
       {
         name: "Response",
-        href: "/resources/response",
+        to: "/resources/response",
       },
       {
         name: "Resiliency",
-        href: "/resources/resiliency",
+        to: "/resources/resiliency",
       },
     ],
   },
   {
     name: "Admin Panel",
-    href: "/admin-panel",
+    to: "/admin-panel",
     permissionOptions: adminPanelPermissionOptions,
   },
 ];
@@ -111,42 +118,19 @@ export default function SideNav() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { dispatch, state } = useContext(CoreContext);
-  const { hasPermissions, interceptorReady } = useAuth();
+  const { interceptorReady } = useAuth();
+  const { filterByPermissions, canNavigate } = useNav();
 
   useEffect(() => {
     if (!interceptorReady) {
       return;
     }
 
-    const filterByPermission = (item: NavigationItem) => {
-      if (!item.permissionOptions) {
-        return true;
-      }
-
-      return hasPermissions(
-        item.permissionOptions.permissions,
-        item.permissionOptions.type
-      );
-    };
-
-    const filterChildrenMap = (item: NavigationItem): NavigationItem => {
-      if (!item.children) {
-        return item;
-      }
-      return {
-        ...item,
-        children: item.children
-          .filter(filterByPermission)
-          .map(filterChildrenMap),
-      };
-    };
-
     dispatch({
       type: "SET_MAIN_NAVIGATION_ITEMS",
-      payload:
-        INITIAL_NAVIGATION.filter(filterByPermission).map(filterChildrenMap),
+      payload: INITIAL_NAVIGATION.filter(canNavigate).map(filterByPermissions),
     });
-  }, [interceptorReady, hasPermissions, dispatch]);
+  }, [interceptorReady, filterByPermissions, canNavigate, dispatch]);
 
   return (
     <>

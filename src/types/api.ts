@@ -19,3 +19,21 @@ export interface TrainingCheckpointStats {
     };
   };
 }
+
+export interface TrainingParticipantRepresentation {
+  trainingItemId: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  organizationSlug: string;
+  unitSlug: string;
+  audiences?: string[];
+  expiresOn?: string;
+}
+
+export interface SendTrainingLinksDto {
+  trainingTokenValues: Partial<TrainingParticipantRepresentation>[];
+  trainingUrlTemplate: string;
+  trainingItemId: string;
+}

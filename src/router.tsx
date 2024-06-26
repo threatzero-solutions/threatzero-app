@@ -53,6 +53,9 @@ import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot
 import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
 import ViolentIncidentReportForm from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportForm";
 import { ViewLanguages } from "./pages/admin-panel/languages/ViewLanguages";
+import ViewWatchStats from "./pages/safety-management/training-admin/ViewWatchStats";
+import ManageTrainingInvites from "./pages/safety-management/training-admin/ManageTrainingInvites";
+import TrainingAdminDashboard from "./pages/safety-management/training-admin/TrainingAdminDashboard";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(ErrorContext);
@@ -294,6 +297,27 @@ export const router = createBrowserRouter(
                         {
                           path: ":assessmentId",
                           element: <ThreatAssessmentForm />,
+                        },
+                      ],
+                    },
+                    {
+                      path: "training-admin",
+                      handle: { title: "Training Admin" },
+                      element: <TrainingAdminDashboard />,
+                      children: [
+                        {
+                          path: "watch-stats",
+                          handle: { title: "View Watch Stats" },
+                          element: <ViewWatchStats />,
+                        },
+                        {
+                          path: "invites",
+                          handle: { title: "Manage Invites" },
+                          element: <ManageTrainingInvites />,
+                        },
+                        {
+                          path: "*?",
+                          loader: () => redirect("watch-stats"),
                         },
                       ],
                     },

@@ -65,11 +65,7 @@ const UsersDashboard: React.FC = () => {
   const copyTrainingUrl = (token: OpaqueToken) => {
     const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
     navigator.clipboard.writeText(url);
-    setSuccess("Copied training link to clipboard");
-
-    setTimeout(() => {
-      setSuccess(null);
-    }, 5000);
+    setSuccess("Copied training link to clipboard", 5000);
   };
 
   const viewValue = (token: OpaqueToken) => {
@@ -78,7 +74,6 @@ const UsersDashboard: React.FC = () => {
   };
 
   const handleCreateTrainingToken = () => {
-    console.debug("cheese!");
     setSelectedTrainingToken(undefined);
     setManageTrainingTokenSliderOpen(true);
   };

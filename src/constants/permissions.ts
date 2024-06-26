@@ -9,6 +9,7 @@ export const READ = {
   ORGANIZATIONS: "read:organizations",
   UNITS: "read:units",
   RESOURCES: "read:resources",
+  TRAINING_STATS: "read:training-stats",
 };
 
 export const WRITE = {
@@ -21,6 +22,7 @@ export const WRITE = {
   ORGANIZATIONS: "write:organizations",
   UNITS: "write:units",
   RESOURCES: "write:resources",
+  TRAINING_LINKS: "write:training-links",
 };
 
 export const LEVEL = {

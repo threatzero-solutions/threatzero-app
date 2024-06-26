@@ -8,7 +8,7 @@ const FirstLinkRedirect: React.FC = () => {
 
   useEffect(() => {
     if (state.mainNavigationItems.length) {
-      navigate(state.mainNavigationItems[0]?.href ?? "/");
+      navigate(state.mainNavigationItems[0]?.to ?? "/");
     }
   }, [navigate, state.mainNavigationItems]);
 
