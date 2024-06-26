@@ -1,4 +1,10 @@
-import { Combobox } from "@headlessui/react";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxOption,
+  ComboboxOptions,
+  Label,
+} from "@headlessui/react";
 import { ChangeEvent, useRef } from "react";
 import { classNames } from "../../../utils/core";
 import { XMarkIcon } from "@heroicons/react/20/solid";
@@ -13,6 +19,8 @@ interface AutocompleteProps<V extends { id: string }> {
   options?: V[];
   placeholder?: string;
   displayValue?: (v: V) => string;
+  immediate?: boolean;
+  required?: boolean;
 }
 
 const Autocomplete = <V extends { id: string }>({
@@ -24,6 +32,8 @@ const Autocomplete = <V extends { id: string }>({
   options,
   placeholder,
   displayValue,
+  immediate,
+  required,
 }: AutocompleteProps<V>) => {
   const queryDebounce = useRef<number>();
 
@@ -36,19 +46,26 @@ const Autocomplete = <V extends { id: string }>({
 
   return (
     <div>
-      <Combobox as="div" onChange={onChange} value={value} className="relative">
+      <Combobox
+        as="div"
+        immediate={immediate}
+        onChange={onChange}
+        value={value}
+        className="relative"
+      >
         {label && (
-          <Combobox.Label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
+          <Label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
             {label}
-          </Combobox.Label>
+          </Label>
         )}
         <div className="relative">
-          <Combobox.Input
+          <ComboboxInput
             className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
             onChange={handleQuery}
             displayValue={displayValue ?? ((v) => `${v}`)}
             placeholder={placeholder ?? "Search..."}
             type="search"
+            required={required}
           />
           {value && onRemove && (
             <button
@@ -60,33 +77,33 @@ const Autocomplete = <V extends { id: string }>({
             </button>
           )}
           {options && (
-            <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
               {options.length === 0 && (
-                <Combobox.Option
+                <ComboboxOption
                   value={null}
                   disabled={true}
                   className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-500"
                 >
                   No results
-                </Combobox.Option>
+                </ComboboxOption>
               )}
               {options.map((option) => (
-                <Combobox.Option
+                <ComboboxOption
                   key={option?.id ?? -1}
                   value={option}
-                  className={({ active }) =>
+                  className={({ focus }) =>
                     classNames(
                       "relative cursor-default select-none py-2 pl-3 pr-9",
-                      active ? "bg-secondary-600 text-white" : "text-gray-900"
+                      focus ? "bg-secondary-600 text-white" : "text-gray-900"
                     )
                   }
                 >
                   <span className="block truncate">
                     {displayValue ? displayValue(option) : `${option}`}
                   </span>
-                </Combobox.Option>
+                </ComboboxOption>
               ))}
-            </Combobox.Options>
+            </ComboboxOptions>
           )}
         </div>
       </Combobox>

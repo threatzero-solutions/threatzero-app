@@ -47,7 +47,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
     queryFn: ({ queryKey }) =>
       getOrganizations({
         search: queryKey[1] || undefined,
-        limit: 5,
+        limit: 5 + (Array.isArray(value) ? value.length : !!value ? 1 : 0),
         order: { name: "ASC" },
       }),
   });
@@ -66,19 +66,21 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
   };
 
   const organizations = useMemo(() => {
-    return organizationData?.results?.filter((org) => {
-      if (Array.isArray(value)) {
-        return !value.some((o) =>
-          typeof o === "string" ? o === org.slug : o.id === org.id
-        );
-      }
-      if (value) {
-        return typeof value === "string"
-          ? value === org.slug
-          : value.id !== org.id;
-      }
-      return true;
-    });
+    return organizationData?.results
+      ?.filter((org) => {
+        if (Array.isArray(value)) {
+          return !value.some((o) =>
+            typeof o === "string" ? o === org.slug : o.id === org.id
+          );
+        }
+        if (value) {
+          return typeof value === "string"
+            ? value === org.slug
+            : value.id !== org.id;
+        }
+        return true;
+      })
+      ?.slice(0, 5);
   }, [organizationData, value]);
 
   const handleChange = (organizations: ConditionalOrganization<M>) => {
