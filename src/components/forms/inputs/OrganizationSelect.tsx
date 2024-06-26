@@ -42,12 +42,21 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
 
   const organizationQueryDebounce = useRef<number>();
 
+  const selectedOrganizationsLength = Array.isArray(value)
+    ? value.length
+    : !!value
+    ? 1
+    : 0;
   const { data: organizationData } = useQuery({
-    queryKey: ["organizations", organizationQuery],
+    queryKey: [
+      "organizations",
+      organizationQuery,
+      selectedOrganizationsLength,
+    ] as const,
     queryFn: ({ queryKey }) =>
       getOrganizations({
         search: queryKey[1] || undefined,
-        limit: 5 + (Array.isArray(value) ? value.length : !!value ? 1 : 0),
+        limit: 5 + queryKey[2],
         order: { name: "ASC" },
       }),
   });
