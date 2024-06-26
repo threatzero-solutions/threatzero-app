@@ -46,7 +46,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
     queryFn: ({ queryKey }) =>
       getUnits({
         search: queryKey[1] || undefined,
-        limit: 5,
+        limit: 5 + (Array.isArray(value) ? value.length : !!value ? 1 : 0),
         order: { name: "ASC" },
         ...queryFilter,
       }),
@@ -66,19 +66,21 @@ const UnitSelect = <M extends boolean | undefined = false>({
   };
 
   const units = useMemo(() => {
-    return unitData?.results?.filter((unit) => {
-      if (Array.isArray(value)) {
-        return !value.some((u) =>
-          typeof u === "string" ? u === unit.slug : u.id === unit.id
-        );
-      }
-      if (value) {
-        return typeof value === "string"
-          ? value === unit.slug
-          : value.id !== unit.id;
-      }
-      return true;
-    });
+    return unitData?.results
+      ?.filter((unit) => {
+        if (Array.isArray(value)) {
+          return !value.some((u) =>
+            typeof u === "string" ? u === unit.slug : u.id === unit.id
+          );
+        }
+        if (value) {
+          return typeof value === "string"
+            ? value === unit.slug
+            : value.id !== unit.id;
+        }
+        return true;
+      })
+      ?.slice(0, 5);
   }, [unitData, value]);
 
   const handleChange = (units: ConditionalUnit<M>) => {
