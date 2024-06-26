@@ -41,12 +41,17 @@ const UnitSelect = <M extends boolean | undefined = false>({
 
   const unitQueryDebounce = useRef<number>();
 
+  const selectedUnitsLength = Array.isArray(value)
+    ? value.length
+    : !!value
+    ? 1
+    : 0;
   const { data: unitData } = useQuery({
-    queryKey: ["units", unitQuery, queryFilter] as const,
+    queryKey: ["units", unitQuery, queryFilter, selectedUnitsLength] as const,
     queryFn: ({ queryKey }) =>
       getUnits({
         search: queryKey[1] || undefined,
-        limit: 5 + (Array.isArray(value) ? value.length : !!value ? 1 : 0),
+        limit: 5 + queryKey[3],
         order: { name: "ASC" },
         ...queryFilter,
       }),
