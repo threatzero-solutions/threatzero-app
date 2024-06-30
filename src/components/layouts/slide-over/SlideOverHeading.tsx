@@ -1,4 +1,4 @@
-import { Dialog } from "@headlessui/react";
+import { DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ReactNode } from "react";
 
@@ -17,9 +17,9 @@ const SlideOverHeading: React.FC<SlideOverHeadingProps> = ({
     <div className="bg-gray-50 px-4 py-6 sm:px-6">
       <div className="flex items-start justify-between space-x-3">
         <div className="space-y-1">
-          <Dialog.Title className="text-base font-semibold leading-6 text-gray-900">
+          <DialogTitle className="text-base font-semibold leading-6 text-gray-900">
             {title}
-          </Dialog.Title>
+          </DialogTitle>
           <p className="text-sm text-gray-500">{description}</p>
         </div>
         <div className="flex h-7 items-center">

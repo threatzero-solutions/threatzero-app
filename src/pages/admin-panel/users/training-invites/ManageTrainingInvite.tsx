@@ -35,7 +35,7 @@ const INPUT_DATA: Array<Partial<Field>> = [
     name: "expiresOn",
     label: "Expires On",
     helpText:
-      "The date on which the token expires and access is revoked automatically.",
+      "The date on which the invite expires and access is revoked automatically.",
     type: FieldType.DATE,
     required: true,
     order: 2,
@@ -51,13 +51,13 @@ const INPUT_DATA: Array<Partial<Field>> = [
   },
 ];
 
-interface ManageTrainingTokenProps {
+interface ManageTrainingInviteProps {
   setOpen: (open: boolean) => void;
   trainingToken?: Partial<OpaqueToken>;
   readOnly?: boolean;
 }
 
-const ManageTrainingToken: React.FC<ManageTrainingTokenProps> = ({
+const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
   setOpen,
   trainingToken: trainingTokenProp,
   readOnly,
@@ -130,7 +130,7 @@ const ManageTrainingToken: React.FC<ManageTrainingTokenProps> = ({
         readOnly={readOnly}
       >
         <SlideOverHeading
-          title={readOnly ? "View Training Token" : "Create Training Token"}
+          title={readOnly ? "View Training Invite" : "Create Training Invite"}
           description=""
           setOpen={setOpen}
         />
@@ -139,6 +139,7 @@ const ManageTrainingToken: React.FC<ManageTrainingTokenProps> = ({
         <SlideOverFormBody>
           {INPUT_DATA.sort(orderSort).map((input) => (
             <SlideOverField
+              key={input.id ?? input.name}
               label={input.label}
               name={input.name}
               helpText={input.helpText}
@@ -210,24 +211,24 @@ const ManageTrainingToken: React.FC<ManageTrainingTokenProps> = ({
             </SlideOverField>
           ))}
         </SlideOverFormBody>
+        <SlideOver open={selectItemOpen} setOpen={setSelectItemOpen}>
+          <ManageItems
+            setOpen={setSelectItemOpen}
+            isSelecting={true}
+            multiple={false}
+            onConfirmSelection={(selection) =>
+              selection.length &&
+              setTrainingTokenValue((v) => ({
+                ...v,
+                trainingItemId: selection[0]?.id,
+              }))
+            }
+            existingItemSelection={trainingItem ? [trainingItem] : []}
+          />
+        </SlideOver>
       </SlideOverForm>
-      <SlideOver open={selectItemOpen} setOpen={setSelectItemOpen}>
-        <ManageItems
-          setOpen={setSelectItemOpen}
-          isSelecting={true}
-          multiple={false}
-          onConfirmSelection={(selection) =>
-            selection.length &&
-            setTrainingTokenValue((v) => ({
-              ...v,
-              trainingItemId: selection[0]?.id,
-            }))
-          }
-          existingItemSelection={trainingItem ? [trainingItem] : []}
-        />
-      </SlideOver>
     </>
   );
 };
 
-export default ManageTrainingToken;
+export default ManageTrainingInvite;

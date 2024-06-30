@@ -22,7 +22,7 @@ import { useResolvedPath } from "react-router-dom";
 import { OpaqueToken } from "../../../types/entities";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useContext, useState } from "react";
-import ManageTrainingToken from "./training-tokens/ManageTrainingToken";
+import ManageTrainingInvite from "./training-invites/ManageTrainingInvite";
 import { CoreContext } from "../../../contexts/core/core-context";
 
 dayjs.extend(relativeTime);
@@ -180,7 +180,7 @@ const UsersDashboard: React.FC = () => {
         open={manageTrainingTokenSliderOpen}
         setOpen={setManageTrainingTokenSliderOpen}
       >
-        <ManageTrainingToken
+        <ManageTrainingInvite
           setOpen={setManageTrainingTokenSliderOpen}
           trainingToken={selectedTrainingToken}
           readOnly={!!selectedTrainingToken}
