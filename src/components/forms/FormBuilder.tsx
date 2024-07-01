@@ -7,6 +7,7 @@ import { getForm, getForms, saveForm } from "../../queries/forms";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormsContext } from "../../contexts/forms/forms-context";
 import { Language } from "../../types/entities";
+import { getLanguages } from "../../queries/languages";
 
 const FormBuilder: React.FC = () => {
   const params = useParams();
@@ -43,18 +44,24 @@ const FormBuilder: React.FC = () => {
 
   const queryClient = useQueryClient();
   const { data: form, isLoading: isLoadingSelectedForm } = useQuery({
-    queryKey: ["form", params.slug, selectedFormId],
+    queryKey: ["form", params.slug, selectedFormId] as const,
     queryFn: ({ queryKey }) =>
       queryKey[2]
-        ? getForm(queryKey[2] as string)
-        : saveForm({ slug: queryKey[1] as string }).then((f) => {
-            setSearchParams((p) => {
-              p.set("v", f.version + "");
-              return p;
-            });
-            queryClient.invalidateQueries({ queryKey: ["form", queryKey[1]] });
-            return f;
-          }),
+        ? getForm(queryKey[2])
+        : getLanguages({ code: "en" })
+            .then((languages) =>
+              saveForm({ slug: queryKey[1], language: languages.results[0] })
+            )
+            .then((f) => {
+              setSearchParams((p) => {
+                p.set("v", f.version + "");
+                return p;
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["form", queryKey[1]],
+              });
+              return f;
+            }),
     enabled: selectedFormId !== undefined,
   });
 
