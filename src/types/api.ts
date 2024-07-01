@@ -37,3 +37,8 @@ export interface SendTrainingLinksDto {
   trainingUrlTemplate: string;
   trainingItemId: string;
 }
+
+export interface ResendTrainingLinksDto {
+  trainingTokenIds: string[];
+  trainingUrlTemplate: string;
+}

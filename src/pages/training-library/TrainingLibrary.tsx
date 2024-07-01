@@ -6,7 +6,13 @@ import { TrainingContext } from "../../contexts/training/training-context";
 import { trainingSectionSort } from "../../utils/training";
 import TrainingSections from "./components/TrainingSections";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Transition } from "@headlessui/react";
+import {
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+  Transition,
+} from "@headlessui/react";
 import { classNames } from "../../utils/core";
 import { EyeSlashIcon, FolderOpenIcon } from "@heroicons/react/20/solid";
 import PillBadge from "../../components/PillBadge";
@@ -104,13 +110,13 @@ const TrainingLibrary: React.FC = () => {
             <div className="mt-3 flex sm:ml-4 sm:mt-0">
               {isTrainingAdmin && (
                 <Menu as="div" className="relative flex-none">
-                  <Menu.Button className="-m-1 block p-1 text-gray-500 hover:text-gray-900 my-auto">
+                  <MenuButton className="-m-1 block p-1 text-gray-500 hover:text-gray-900 my-auto">
                     <span className="sr-only">Open options</span>
                     <EllipsisVerticalIcon
                       className="h-7 w-7"
                       aria-hidden="true"
                     />
-                  </Menu.Button>
+                  </MenuButton>
                   <Transition
                     as={Fragment}
                     enter="transition ease-out duration-100"
@@ -120,13 +126,13 @@ const TrainingLibrary: React.FC = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
-                      <Menu.Item>
-                        {({ active }) => (
+                    <MenuItems className="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
+                      <MenuItem>
+                        {({ focus }) => (
                           <Link
                             to={`/training/library/manage?courseId=${state.activeCourse?.id}`}
                             className={classNames(
-                              active ? "bg-gray-50" : "",
+                              focus ? "bg-gray-50" : "",
                               "block px-3 py-1 text-sm leading-6 text-gray-900 text-end"
                             )}
                           >
@@ -136,9 +142,9 @@ const TrainingLibrary: React.FC = () => {
                             </span>
                           </Link>
                         )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
+                      </MenuItem>
+                      <MenuItem>
+                        {({ focus }) => (
                           <button
                             type="button"
                             onClick={() =>
@@ -147,7 +153,7 @@ const TrainingLibrary: React.FC = () => {
                               })
                             }
                             className={classNames(
-                              active ? "bg-gray-50" : "",
+                              focus ? "bg-gray-50" : "",
                               "px-3 py-1 text-sm leading-6 text-gray-900 w-max text-end"
                             )}
                           >
@@ -157,8 +163,8 @@ const TrainingLibrary: React.FC = () => {
                             </span>
                           </button>
                         )}
-                      </Menu.Item>
-                    </Menu.Items>
+                      </MenuItem>
+                    </MenuItems>
                   </Transition>
                 </Menu>
               )}

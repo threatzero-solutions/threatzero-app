@@ -19,6 +19,7 @@ interface DataTableProps {
   title?: string;
   subtitle?: string;
   action?: ReactNode;
+  dense?: boolean;
   data?: {
     headers: {
       label: ReactNode;
@@ -45,6 +46,7 @@ const DataTable: React.FC<DataTableProps> = ({
   title,
   subtitle,
   action,
+  dense,
   data,
   isLoading,
   notFoundDetail,
@@ -99,12 +101,19 @@ const DataTable: React.FC<DataTableProps> = ({
                           key={key}
                           scope="col"
                           className={classNames(
-                            "py-3.5 text-left text-sm font-semibold text-gray-900",
+                            dense ? "py-1.5" : "py-3.5",
+                            "text-left text-sm font-semibold text-gray-900",
                             idx === 0
-                              ? "pl-4 pr-3 sm:pl-0"
+                              ? dense
+                                ? "pl-2.5 pr-1.5 sm:pl-0"
+                                : "pl-4 pr-3 sm:pl-0"
                               : idx === data.headers.length - 1
-                              ? "pl-3 pr-4 sm:pr-0"
-                              : "px-3",
+                              ? dense
+                                ? "pl-1.5 pr-2.5 sm:pl-0"
+                                : "pl-3 pr-4 sm:pl-0"
+                              : dense
+                              ? "px-1.5"
+                              : "px-2",
                             `text-${align ?? "left"}`
                           )}
                         >
@@ -164,12 +173,19 @@ const DataTable: React.FC<DataTableProps> = ({
                             <td
                               key={`${row.id}_${key}`}
                               className={classNames(
-                                "py-4 text-sm text-gray-500",
+                                dense ? "py-2" : "py-4",
+                                "text-sm text-gray-500",
                                 idx_col === 0
-                                  ? "pl-4 pr-3 sm:pl-0"
+                                  ? dense
+                                    ? "pl-2.5 pr-1.5 sm:pl-0"
+                                    : "pl-4 pr-3 sm:pl-0"
                                   : idx_col === data.headers.length - 1
-                                  ? "pl-3 pr-4 sm:pr-0"
-                                  : "px-3",
+                                  ? dense
+                                    ? "pl-1.5 pr-2.5 sm:pl-0"
+                                    : "pl-3 pr-4 sm:pl-0"
+                                  : dense
+                                  ? "px-1.5"
+                                  : "px-2",
                                 `text-${align ?? "left"}`
                               )}
                             >

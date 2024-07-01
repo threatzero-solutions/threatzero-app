@@ -1,4 +1,10 @@
-import { Menu, Transition } from "@headlessui/react";
+import {
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+  Transition,
+} from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { Fragment, ReactNode } from "react";
 import { classNames } from "../../utils/core";
@@ -20,6 +26,8 @@ export interface DropdownActionGroup {
 
 interface DropdownProps {
   value?: string;
+  valueIcon?: ReactNode;
+  iconOnly?: boolean;
   actions?: DropdownAction[];
   actionGroups?: DropdownActionGroup[];
   className?: string;
@@ -30,21 +38,21 @@ interface DropdownProps {
 
 const Action: React.FC<{ action: DropdownAction }> = ({ action }) => {
   return (
-    <Menu.Item>
-      {({ active }) => (
+    <MenuItem>
+      {({ focus }) => (
         <button
           type="button"
           disabled={action.disabled}
           onClick={action.action}
           className={classNames(
-            active ? "bg-gray-100 text-gray-900" : "text-gray-700",
+            focus ? "bg-gray-100 text-gray-900" : "text-gray-700",
             "block w-full px-4 py-2 text-left text-sm"
           )}
         >
           {action.value}
         </button>
       )}
-    </Menu.Item>
+    </MenuItem>
   );
 };
 
@@ -67,6 +75,8 @@ const ActionGroup: React.FC<{ actionGroup: DropdownActionGroup }> = ({
 
 const Dropdown: React.FC<DropdownProps> = ({
   value,
+  valueIcon,
+  iconOnly,
   actions,
   actionGroups,
   className,
@@ -80,20 +90,28 @@ const Dropdown: React.FC<DropdownProps> = ({
       className={classNames("relative inline-block text-left", className)}
       aria-disabled={disabled}
     >
-      <Menu.Button
+      <MenuButton
         type="button"
-        className="inline-flex h-full w-full justify-center items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        className={classNames(
+          iconOnly
+            ? "block p-1 text-gray-500 hover:text-gray-900 my-auto"
+            : "inline-flex h-full w-full justify-center items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        )}
         disabled={disabled}
       >
-        {value}
-        <ChevronDownIcon
-          className={classNames(
-            "-mr-1 h-5 w-5 text-gray-400",
-            value ? "" : "-ml-1"
-          )}
-          aria-hidden="true"
-        />
-      </Menu.Button>
+        {iconOnly ? <span className="sr-only">{value}</span> : value}
+        {valueIcon ? (
+          valueIcon
+        ) : (
+          <ChevronDownIcon
+            className={classNames(
+              "-mr-1 h-5 w-5 text-gray-400",
+              value ? "" : "-ml-1"
+            )}
+            aria-hidden="true"
+          />
+        )}
+      </MenuButton>
 
       <Transition
         as={Fragment}
@@ -104,7 +122,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items
+        <MenuItems
           className={classNames(
             "absolute z-20 mt-2 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none",
             openTo === "right"
@@ -124,7 +142,7 @@ const Dropdown: React.FC<DropdownProps> = ({
           {actionGroups?.map((actionGroup) => (
             <ActionGroup key={actionGroup.id} actionGroup={actionGroup} />
           ))}
-        </Menu.Items>
+        </MenuItems>
       </Transition>
     </Menu>
   );
