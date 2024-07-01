@@ -32,6 +32,7 @@ import ManageTrainingInvite from "../../admin-panel/users/training-invites/Manag
 import Dropdown from "../../../components/layouts/Dropdown";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { getUnitBySlug } from "../../../queries/organizations";
+import { stripHtml } from "../../../utils/core";
 
 const CSV_HEADERS_MAPPER = new Map([
   ["firstname", "firstName"],
@@ -68,7 +69,9 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
   return isLoading ? (
     <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
   ) : (
-    <span>{trainingItemMetadata ? trainingItemMetadata.title : "—"}</span>
+    <span>
+      {trainingItemMetadata ? stripHtml(trainingItemMetadata.title) : "—"}
+    </span>
   );
 };
 
@@ -436,11 +439,12 @@ const ManageTrainingInvites: React.FC = () => {
               },
               {
                 label: "Unit",
-                key: "unit",
+                key: "unitSlug",
               },
               {
                 label: "Training Item",
                 key: "trainingItemId",
+                noSort: true,
               },
               {
                 label: "Created On",
@@ -485,7 +489,7 @@ const ManageTrainingInvites: React.FC = () => {
                   <span className="sr-only">, {t.id}</span>
                 </button>
               ),
-              unit: <ViewUnit unitSlug={t.value.unitSlug} />,
+              unitSlug: <ViewUnit unitSlug={t.value.unitSlug} />,
               trainingItemId: (
                 <ViewTrainingItem trainingItemId={t.value.trainingItemId} />
               ),
