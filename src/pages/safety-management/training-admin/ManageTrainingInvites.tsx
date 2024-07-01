@@ -10,7 +10,7 @@ import { ChangeEvent, FormEvent, useContext, useMemo, useState } from "react";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import { SimpleChangeEvent } from "../../../types/core";
 import { getTrainingItem } from "../../../queries/training";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import TrainingItemTile from "../../training-library/components/TrainingItemTile";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import ManageItems from "../../training-library/components/ManageItems";
@@ -18,8 +18,15 @@ import { useAuth } from "../../../contexts/AuthProvider";
 import { LEVEL } from "../../../constants/permissions";
 import { ErrorContext } from "../../../contexts/error/error-context";
 import { useResolvedPath } from "react-router-dom";
-import { sendTrainingLinks } from "../../../queries/training-admin";
+import {
+  getTrainingInvites,
+  sendTrainingLinks,
+} from "../../../queries/training-admin";
 import { CoreContext } from "../../../contexts/core/core-context";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { OpaqueToken } from "../../../types/entities";
+import dayjs from "dayjs";
+import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
 
 const CSV_HEADERS_MAPPER = new Map([
   ["firstname", "firstName"],
@@ -56,12 +63,26 @@ const ManageTrainingInvites: React.FC = () => {
   ]);
   const [trainingItemId, setTrainingItemId] = useState<string | undefined>();
   const [selectItemOpen, setSelectItemOpen] = useState(false);
+  const [manageTrainingInviteSliderOpen, setManageTrainingInviteSliderOpen] =
+    useState(false);
+  const [selectedTrainingInvite, setSelectedTrainingInvite] =
+    useState<OpaqueToken>();
 
   const { hasPermissions, accessTokenClaims } = useAuth();
   const { setError } = useContext(ErrorContext);
   const { setSuccess } = useContext(CoreContext);
 
   const watchTrainingPath = useResolvedPath("/watch-training/");
+
+  const [itemFilterOptions, setItemFilterOptions] =
+    useImmer<ItemFilterQueryParams>({});
+
+  const { data: trainingInvites, isLoading: trainingInvitesLoading } = useQuery(
+    {
+      queryKey: ["training-invites", itemFilterOptions] as const,
+      queryFn: ({ queryKey }) => getTrainingInvites(queryKey[1]),
+    }
+  );
 
   const multipleUnits = useMemo(
     () =>
@@ -147,12 +168,14 @@ const ManageTrainingInvites: React.FC = () => {
     });
   };
 
+  const queryClient = useQueryClient();
   const sendTrainingLinksMutation = useMutation({
     mutationFn: (body: SendTrainingLinksDto) => sendTrainingLinks(body),
     onSuccess: () => {
       setSuccess("Invites successfully sent!", 5000);
       setTokenValues([{ firstName: "", lastName: "", email: "" }]);
       setTrainingItemId(undefined);
+      queryClient.invalidateQueries({ queryKey: ["training-invites"] });
     },
   });
 
@@ -177,163 +200,279 @@ const ManageTrainingInvites: React.FC = () => {
     sendTrainingLinksMutation.mutate(preparedRequest);
   };
 
+  const copyTrainingUrl = (token: OpaqueToken) => {
+    const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
+    navigator.clipboard.writeText(url);
+    setSuccess("Copied training link to clipboard", 5000);
+  };
+
+  const viewInvite = (token: OpaqueToken) => {
+    setSelectedTrainingInvite(token);
+    setManageTrainingInviteSliderOpen(true);
+  };
+
   return (
     <>
-      <form className="flex flex-col gap-6" onSubmit={onSubmitSendInvites}>
-        <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center mb-8">
+      <div className="flex flex-col gap-16">
+        <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center ">
           <h1 className="text-base font-semibold leading-6 text-gray-900">
             Manage Training Invites
           </h1>
         </div>
-        <DataTable
-          data={{
-            headers: [
-              {
-                label: "First Name",
-                key: "firstName",
-              },
-              {
-                label: "Last Name",
-                key: "lastName",
-              },
-              {
-                label: "Email",
-                key: "email",
-              },
-              {
-                label: "Unit",
-                key: "unit",
-                hidden: !multipleUnits,
-              },
-              {
-                label: <span className="sr-only">Delete Invite</span>,
-                key: "delete",
-                align: "right",
-                noSort: true,
-              },
-            ],
-            rows: tokenValues.map((t, idx) => ({
-              id: `${idx}`,
-              firstName: (
-                <Input
-                  value={t.firstName ?? ""}
-                  className="w-full"
-                  onChange={(e) => handleUpdateInvite(idx, "firstName", e)}
-                  required
+        <form className="flex flex-col gap-6" onSubmit={onSubmitSendInvites}>
+          {/* SEND NEW INVITES */}
+          <DataTable
+            data={{
+              headers: [
+                {
+                  label: "First Name",
+                  key: "firstName",
+                },
+                {
+                  label: "Last Name",
+                  key: "lastName",
+                },
+                {
+                  label: "Email",
+                  key: "email",
+                },
+                {
+                  label: "Unit",
+                  key: "unit",
+                  hidden: !multipleUnits,
+                },
+                {
+                  label: <span className="sr-only">Delete Invite</span>,
+                  key: "delete",
+                  align: "right",
+                  noSort: true,
+                },
+              ],
+              rows: tokenValues.map((t, idx) => ({
+                id: `${idx}`,
+                firstName: (
+                  <Input
+                    value={t.firstName ?? ""}
+                    className="w-full"
+                    onChange={(e) => handleUpdateInvite(idx, "firstName", e)}
+                    required
+                  />
+                ),
+                lastName: (
+                  <Input
+                    value={t.lastName ?? ""}
+                    className="w-full"
+                    onChange={(e) => handleUpdateInvite(idx, "lastName", e)}
+                    required
+                  />
+                ),
+                email: (
+                  <Input
+                    value={t.email ?? ""}
+                    className="w-full"
+                    onChange={(e) => handleUpdateInvite(idx, "email", e)}
+                    required
+                  />
+                ),
+                unit: (
+                  <UnitSelect
+                    value={t.unitSlug}
+                    onChange={(e) =>
+                      handleUpdateInvite(
+                        idx,
+                        "unitSlug",
+                        e as SimpleChangeEvent<string>
+                      )
+                    }
+                    required={true}
+                  />
+                ),
+                delete: (
+                  <button type="button" onClick={() => handleDeleteInvite(idx)}>
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                ),
+              })),
+            }}
+            title="Send New Invites"
+            subtitle="Send members of your organization email invites to watch specific trainings."
+            action={
+              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+                + Upload From CSV
+                <input
+                  type="file"
+                  onChange={handleCSVUpload}
+                  className="hidden"
                 />
-              ),
-              lastName: (
-                <Input
-                  value={t.lastName ?? ""}
-                  className="w-full"
-                  onChange={(e) => handleUpdateInvite(idx, "lastName", e)}
-                  required
-                />
-              ),
-              email: (
-                <Input
-                  value={t.email ?? ""}
-                  className="w-full"
-                  onChange={(e) => handleUpdateInvite(idx, "email", e)}
-                  required
-                />
-              ),
-              unit: (
-                <UnitSelect
-                  value={t.unitSlug}
-                  onChange={(e) =>
-                    handleUpdateInvite(
-                      idx,
-                      "unitSlug",
-                      e as SimpleChangeEvent<string>
-                    )
-                  }
-                  required={true}
-                />
-              ),
-              delete: (
-                <button type="button" onClick={() => handleDeleteInvite(idx)}>
-                  <TrashIcon className="w-5 h-5" />
-                </button>
-              ),
-            })),
-          }}
-          title="Send New Invites"
-          subtitle="Send members of your organization email invites to watch specific trainings."
-          action={
-            <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
-              + Upload From CSV
-              <input
-                type="file"
-                onChange={handleCSVUpload}
-                className="hidden"
-              />
+              </label>
+            }
+          />
+          <button
+            type="button"
+            className="w-max self-center text-base text-secondary-600 hover:text-secondary-700 transition-colors"
+            onClick={() => handleAddInvite()}
+          >
+            + Add Invite
+          </button>
+          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              Select a training item
             </label>
-          }
-        />
-        <button
-          type="button"
-          className="w-max self-center text-base text-secondary-600 hover:text-secondary-700 transition-colors"
-          onClick={() => handleAddInvite()}
-        >
-          + Add Invite
-        </button>
-        <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-          <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-            Select a training item
-          </label>
-          <div className="mt-2 sm:col-span-2 sm:mt-0">
-            {trainingItemLoading ? (
-              <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow sm:p-6"></div>
-            ) : trainingItem ? (
-              <div className="space-y-4 mb-4">
-                <TrainingItemTile
-                  item={trainingItem}
-                  dense={true}
-                  navigateDisabled={true}
-                  className="shadow-lg"
-                />
+            <div className="mt-2 sm:col-span-2 sm:mt-0">
+              {trainingItemLoading ? (
+                <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow sm:p-6"></div>
+              ) : trainingItem ? (
+                <div className="space-y-4 mb-4">
+                  <TrainingItemTile
+                    item={trainingItem}
+                    dense={true}
+                    navigateDisabled={true}
+                    className="shadow-lg"
+                  />
+                  <button
+                    type="button"
+                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                    onClick={() => setSelectItemOpen(true)}
+                  >
+                    Change training item
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
                   className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
                   onClick={() => setSelectItemOpen(true)}
                 >
-                  Change training item
+                  Select a training item
                 </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                onClick={() => setSelectItemOpen(true)}
-              >
-                Select a training item
-              </button>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-sm text-gray-700">
-            Click "Send Invites" to immediately send training invites via email
-            to each of the above recipients.
-          </p>
-          <button
-            type="submit"
-            className="w-max self-center block rounded-lg bg-primary-500 px-3 py-2 text-center text-base font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
-          >
-            Send Invites
-          </button>
-        </div>
-      </form>
-      <SlideOver open={selectItemOpen} setOpen={setSelectItemOpen}>
-        <ManageItems
-          setOpen={setSelectItemOpen}
-          isSelecting={true}
-          multiple={false}
-          onConfirmSelection={(selection) =>
-            selection.length && setTrainingItemId(selection[0]?.id)
-          }
-          existingItemSelection={trainingItem ? [trainingItem] : []}
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-sm text-gray-700">
+              Click "Send Invites" to immediately send training invites via
+              email to each of the above recipients.
+            </p>
+            <button
+              type="submit"
+              className="w-max self-center block rounded-lg bg-primary-500 px-3 py-2 text-center text-base font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
+            >
+              Send Invites
+            </button>
+          </div>
+        </form>
+        <SlideOver open={selectItemOpen} setOpen={setSelectItemOpen}>
+          <ManageItems
+            setOpen={setSelectItemOpen}
+            isSelecting={true}
+            multiple={false}
+            onConfirmSelection={(selection) =>
+              selection.length && setTrainingItemId(selection[0]?.id)
+            }
+            existingItemSelection={trainingItem ? [trainingItem] : []}
+          />
+        </SlideOver>
+
+        {/* VIEW EXISTING INVITES */}
+        <DataTable
+          data={{
+            headers: [
+              {
+                label: "Email",
+                key: "email",
+              },
+              {
+                label: "Created On",
+                key: "createdOn",
+              },
+              {
+                label: "Expires",
+                key: "expiresOn",
+              },
+              {
+                label: <span className="sr-only">Training Link</span>,
+                key: "link",
+                noSort: true,
+              },
+              {
+                label: <span className="sr-only">Resend Invite</span>,
+                key: "resend",
+                align: "right",
+                noSort: true,
+              },
+            ],
+            rows: (trainingInvites?.results ?? []).map((t) => ({
+              id: t.id,
+              createdOn: dayjs(t.createdOn).format("MMM D, YYYY h:mm A"),
+              email: (
+                <button
+                  type="button"
+                  className="text-secondary-600 hover:text-secondary-900 font-medium"
+                  onClick={() => viewInvite(t)}
+                  title="Click to view invite details"
+                >
+                  {t.value.email}
+                  <span className="sr-only">, {t.id}</span>
+                </button>
+              ),
+              expiresOn: (
+                <span title={dayjs(t.value.expiresOn).format("MMM D, YYYY")}>
+                  {dayjs(t.value.expiresOn).fromNow()}
+                </span>
+              ),
+              link: (
+                <button
+                  type="button"
+                  className="text-secondary-600 hover:text-secondary-900 font-medium"
+                  onClick={() => copyTrainingUrl(t)}
+                >
+                  Copy Invite Link
+                  <span className="sr-only">, {t.id}</span>
+                </button>
+              ),
+              resend: (
+                <button
+                  type="button"
+                  className="rounded-md bg-primary-500 px-2 py-1 text-center text-xs font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
+                  onClick={() => setError("Feature not available yet :(", 5000)}
+                >
+                  Resend
+                  <span className="sr-only">, {t.id}</span>
+                </button>
+              ),
+            })),
+          }}
+          isLoading={trainingInvitesLoading}
+          title="View Existing Training Invites"
+          subtitle="View and manage invites used to provide special access to training materials."
+          orderOptions={{
+            order: itemFilterOptions.order,
+            setOrder: (k, v) => {
+              setItemFilterOptions((options) => {
+                options.order = { [k]: v };
+                options.offset = 0;
+              });
+            },
+          }}
+          paginationOptions={{
+            currentOffset: trainingInvites?.offset,
+            total: trainingInvites?.count,
+            limit: trainingInvites?.limit,
+            setOffset: (offset) =>
+              setItemFilterOptions((q) => {
+                q.offset = offset;
+              }),
+          }}
+        />
+      </div>
+      <SlideOver
+        open={manageTrainingInviteSliderOpen}
+        setOpen={setManageTrainingInviteSliderOpen}
+      >
+        <ManageTrainingInvite
+          setOpen={setManageTrainingInviteSliderOpen}
+          trainingToken={selectedTrainingInvite}
+          readOnly={!!selectedTrainingInvite}
         />
       </SlideOver>
     </>
