@@ -5,7 +5,7 @@ import Footer from "../../components/layouts/Footer";
 const Dashboard: React.FC = () => {
   return (
     <div className="flex relative h-full">
-      <div className="lg:w-72"></div>
+      <div className="lg:w-72 shrink-0"></div>
       <div className="flex flex-col flex-1 w-full">
         <SideNav />
         <div className="flex flex-col w-full grow">

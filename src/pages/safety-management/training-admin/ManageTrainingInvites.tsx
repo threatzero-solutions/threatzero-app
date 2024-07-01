@@ -1,6 +1,7 @@
 import { useImmer } from "use-immer";
 import DataTable from "../../../components/layouts/DataTable";
 import {
+  ResendTrainingLinksDto,
   SendTrainingLinksDto,
   TrainingParticipantRepresentation,
 } from "../../../types/api";
@@ -20,6 +21,7 @@ import { ErrorContext } from "../../../contexts/error/error-context";
 import { useResolvedPath } from "react-router-dom";
 import {
   getTrainingInvites,
+  resendTrainingLinks,
   sendTrainingLinks,
 } from "../../../queries/training-admin";
 import { CoreContext } from "../../../contexts/core/core-context";
@@ -27,6 +29,9 @@ import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { OpaqueToken } from "../../../types/entities";
 import dayjs from "dayjs";
 import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
+import Dropdown from "../../../components/layouts/Dropdown";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { getUnitBySlug } from "../../../queries/organizations";
 
 const CSV_HEADERS_MAPPER = new Map([
   ["firstname", "firstName"],
@@ -48,6 +53,35 @@ const normalizeHeaders = (headers: string[]) => {
   return headers.map(
     (h) =>
       CSV_HEADERS_MAPPER.get(h.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()) || h
+  );
+};
+
+const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
+  trainingItemId,
+}) => {
+  const { data: trainingItemMetadata, isLoading } = useQuery({
+    queryKey: ["training-item-metadata", trainingItemId] as const,
+    queryFn: ({ queryKey }) =>
+      getTrainingItem(queryKey[1]).then((t) => t?.metadata),
+    enabled: !!trainingItemId,
+  });
+  return isLoading ? (
+    <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
+  ) : (
+    <span>{trainingItemMetadata ? trainingItemMetadata.title : "—"}</span>
+  );
+};
+
+const ViewUnit: React.FC<{ unitSlug?: string }> = ({ unitSlug }) => {
+  const { data: unitName, isLoading } = useQuery({
+    queryKey: ["unit-name", unitSlug] as const,
+    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[1]).then((t) => t?.name),
+    enabled: !!unitSlug,
+  });
+  return isLoading ? (
+    <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
+  ) : (
+    <span>{unitName ? unitName : "—"}</span>
   );
 };
 
@@ -179,6 +213,13 @@ const ManageTrainingInvites: React.FC = () => {
     },
   });
 
+  const resendTrainingLinkMutation = useMutation({
+    mutationFn: (body: ResendTrainingLinksDto) => resendTrainingLinks(body),
+    onSuccess: () => {
+      setSuccess("Invite successfully resent!", 5000);
+    },
+  });
+
   const onSubmitSendInvites = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -193,7 +234,7 @@ const ManageTrainingInvites: React.FC = () => {
         ...t,
         userId: t.email,
       })),
-      trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}${trainingItemId}?watchId={token}`,
+      trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
       trainingItemId,
     };
 
@@ -209,6 +250,13 @@ const ManageTrainingInvites: React.FC = () => {
   const viewInvite = (token: OpaqueToken) => {
     setSelectedTrainingInvite(token);
     setManageTrainingInviteSliderOpen(true);
+  };
+
+  const handleResendInvite = (token: OpaqueToken) => {
+    resendTrainingLinkMutation.mutate({
+      trainingTokenIds: [token.id],
+      trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
+    });
   };
 
   return (
@@ -375,11 +423,24 @@ const ManageTrainingInvites: React.FC = () => {
 
         {/* VIEW EXISTING INVITES */}
         <DataTable
+          dense
           data={{
             headers: [
               {
+                label: "Name",
+                key: "lastName",
+              },
+              {
                 label: "Email",
                 key: "email",
+              },
+              {
+                label: "Unit",
+                key: "unit",
+              },
+              {
+                label: "Training Item",
+                key: "trainingItemId",
               },
               {
                 label: "Created On",
@@ -390,20 +451,29 @@ const ManageTrainingInvites: React.FC = () => {
                 key: "expiresOn",
               },
               {
-                label: <span className="sr-only">Training Link</span>,
-                key: "link",
+                label: <span className="sr-only">Resend Invite</span>,
+                key: "resend",
+                align: "right",
                 noSort: true,
               },
               {
-                label: <span className="sr-only">Resend Invite</span>,
-                key: "resend",
+                label: <span className="sr-only">Options</span>,
+                key: "options",
                 align: "right",
                 noSort: true,
               },
             ],
             rows: (trainingInvites?.results ?? []).map((t) => ({
               id: t.id,
-              createdOn: dayjs(t.createdOn).format("MMM D, YYYY h:mm A"),
+              lastName: (
+                <span className="whitespace-nowrap">
+                  {(
+                    (t.value.lastName ?? "") +
+                    ", " +
+                    (t.value.firstName ?? "")
+                  ).replace(/(^[,\s]+)|(^[,\s]+$)/g, "") || "—"}
+                </span>
+              ),
               email: (
                 <button
                   type="button"
@@ -414,6 +484,15 @@ const ManageTrainingInvites: React.FC = () => {
                   {t.value.email}
                   <span className="sr-only">, {t.id}</span>
                 </button>
+              ),
+              unit: <ViewUnit unitSlug={t.value.unitSlug} />,
+              trainingItemId: (
+                <ViewTrainingItem trainingItemId={t.value.trainingItemId} />
+              ),
+              createdOn: (
+                <span title={dayjs(t.createdOn).format("MMM D, YYYY h:mm A")}>
+                  {dayjs(t.createdOn).fromNow()}
+                </span>
               ),
               expiresOn: (
                 <span title={dayjs(t.value.expiresOn).format("MMM D, YYYY")}>
@@ -434,11 +513,35 @@ const ManageTrainingInvites: React.FC = () => {
                 <button
                   type="button"
                   className="rounded-md bg-primary-500 px-2 py-1 text-center text-xs font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
-                  onClick={() => setError("Feature not available yet :(", 5000)}
+                  onClick={() => handleResendInvite(t)}
                 >
                   Resend
                   <span className="sr-only">, {t.id}</span>
                 </button>
+              ),
+              options: (
+                <Dropdown
+                  value="Open options menu"
+                  valueIcon={
+                    <EllipsisVerticalIcon
+                      className="h-7 w-7"
+                      aria-hidden="true"
+                    />
+                  }
+                  iconOnly={true}
+                  actions={[
+                    {
+                      id: "view",
+                      value: "View",
+                      action: () => viewInvite(t),
+                    },
+                    {
+                      id: "copy-url",
+                      value: "Copy Invite Link",
+                      action: () => copyTrainingUrl(t),
+                    },
+                  ]}
+                />
               ),
             })),
           }}
