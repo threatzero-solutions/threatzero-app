@@ -12,17 +12,15 @@ import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 import { CoreContext } from "../../../contexts/core/core-context";
+import { stripHtml } from "../../../utils/core";
 
 const displayCourse = (course?: TrainingCourse | null, admin = false) => {
   if (!course) {
     return "";
   }
 
-  const someDiv = document.createElement("div");
-  someDiv.innerHTML = course.metadata.title;
-  const strippedTitle = someDiv.textContent || someDiv.innerText || "";
   return (
-    strippedTitle +
+    stripHtml(course.metadata.title) +
     " " +
     (admin && course.metadata.tag ? `(${course.metadata.tag})` : "")
   );
