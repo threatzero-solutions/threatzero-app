@@ -35,6 +35,7 @@ export interface TrainingParticipantRepresentation {
 export interface SendTrainingLinksDto {
   trainingTokenValues: Partial<TrainingParticipantRepresentation>[];
   trainingUrlTemplate: string;
+  trainingCourseId: string;
   trainingItemId: string;
 }
 
