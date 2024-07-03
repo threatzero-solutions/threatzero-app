@@ -6,25 +6,10 @@ import { getWatchStats } from "../../../queries/training-admin";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { LEVEL } from "../../../constants/permissions";
 import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
-import { useQuery } from "@tanstack/react-query";
-import { getTrainingCourses } from "../../../queries/training";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 import { CoreContext } from "../../../contexts/core/core-context";
-import { stripHtml } from "../../../utils/core";
-
-const displayCourse = (course?: TrainingCourse | null, admin = false) => {
-  if (!course) {
-    return "";
-  }
-
-  return (
-    stripHtml(course.metadata.title) +
-    " " +
-    (admin && course.metadata.tag ? `(${course.metadata.tag})` : "")
-  );
-};
+import CourseSelect from "../../../components/forms/inputs/CourseSelect";
 
 const ViewWatchStats: React.FC = () => {
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
@@ -57,20 +42,13 @@ const ViewWatchStats: React.FC = () => {
       });
 
       setSelectedCourse(null);
+    } else {
+      setCoursesQuery((q) => {
+        Reflect.deleteProperty(q, "organizations.id");
+      });
     }
   }, [selectedOrganization]);
 
-  const { data: allCourses } = useQuery({
-    queryKey: ["training-courses", coursesQuery] as const,
-    queryFn: ({ queryKey }) => getTrainingCourses(queryKey[1]),
-  });
-
-  const availableCourses = useMemo(() => {
-    if (allCourses) {
-      return allCourses.results;
-    }
-    return [];
-  }, [allCourses]);
   const handleSelectUnits = (event: SimpleChangeEvent<Unit[]>) => {
     setSelectedUnits(event.target?.value ?? []);
   };
@@ -169,22 +147,12 @@ const ViewWatchStats: React.FC = () => {
             Select course
           </label>
           <div className="mt-2 sm:col-span-2 sm:mt-0">
-            <Autocomplete
-              value={selectedCourse ?? null}
-              onChange={setSelectedCourse}
-              onRemove={() => setSelectedCourse(null)}
-              setQuery={(s) =>
-                setCoursesQuery((q) => {
-                  q.search = s;
-                })
-              }
-              options={availableCourses}
-              placeholder="Search for course..."
-              displayValue={(course) =>
-                displayCourse(course, multipleOrganizations)
-              }
-              immediate
+            <CourseSelect
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target?.value)}
+              queryFilter={coursesQuery}
               required
+              immediate
             />
           </div>
         </div>

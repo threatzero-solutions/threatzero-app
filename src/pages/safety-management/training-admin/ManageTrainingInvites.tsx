@@ -7,14 +7,19 @@ import {
 } from "../../../types/api";
 import Input from "../../../components/forms/inputs/Input";
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { ChangeEvent, FormEvent, useContext, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import { SimpleChangeEvent } from "../../../types/core";
-import { getTrainingItem } from "../../../queries/training";
+import { getTrainingCourse, getTrainingItem } from "../../../queries/training";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import TrainingItemTile from "../../training-library/components/TrainingItemTile";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
-import ManageItems from "../../training-library/components/ManageItems";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { LEVEL } from "../../../constants/permissions";
 import { ErrorContext } from "../../../contexts/error/error-context";
@@ -26,13 +31,19 @@ import {
 } from "../../../queries/training-admin";
 import { CoreContext } from "../../../contexts/core/core-context";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { OpaqueToken } from "../../../types/entities";
+import {
+  OpaqueToken,
+  TrainingCourse,
+  TrainingItem,
+} from "../../../types/entities";
 import dayjs from "dayjs";
 import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
 import Dropdown from "../../../components/layouts/Dropdown";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { getUnitBySlug } from "../../../queries/organizations";
 import { stripHtml } from "../../../utils/core";
+import CourseSelect from "../../../components/forms/inputs/CourseSelect";
+import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 
 const CSV_HEADERS_MAPPER = new Map([
   ["firstname", "firstName"],
@@ -44,9 +55,11 @@ const CSV_HEADERS_MAPPER = new Map([
   ["surname", "lastName"],
   ["unit", "unitSlug"],
   ["school", "unitSlug"],
+  ["course", "trainingCourseId"],
+  ["courseid", "trainingCourseId"],
+  ["trainingcourseid", "trainingCourseId"],
+  ["item", "trainingItemId"],
   ["trainingitem", "trainingItemId"],
-  ["training", "trainingItemId"],
-  ["trainingid", "trainingItemId"],
   ["trainingitemid", "trainingItemId"],
 ]);
 
@@ -111,8 +124,13 @@ const ManageTrainingInvites: React.FC = () => {
       email: "",
     },
   ]);
-  const [trainingItemId, setTrainingItemId] = useState<string | undefined>();
-  const [selectItemOpen, setSelectItemOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<
+    TrainingCourse | undefined | null
+  >();
+  const [selectedItem, setSelectedItem] = useState<
+    TrainingItem | undefined | null
+  >();
+  const [itemSearchQuery, setItemSearchQuery] = useState("");
   const [manageTrainingInviteSliderOpen, setManageTrainingInviteSliderOpen] =
     useState(false);
   const [selectedTrainingInvite, setSelectedTrainingInvite] =
@@ -141,11 +159,33 @@ const ManageTrainingInvites: React.FC = () => {
     [hasPermissions, accessTokenClaims]
   );
 
-  const { data: trainingItem, isLoading: trainingItemLoading } = useQuery({
-    queryKey: ["training-items", trainingItemId] as const,
-    queryFn: ({ queryKey }) => getTrainingItem(`${queryKey[1]}`),
-    enabled: !!trainingItemId,
+  useEffect(() => {
+    console.debug(selectedCourse);
+  }, [selectedCourse]);
+
+  const { data: allTrainingItems } = useQuery({
+    queryKey: ["training-course-items", selectedCourse] as const,
+    queryFn: ({ queryKey }) =>
+      getTrainingCourse(queryKey[1]?.id).then((c) =>
+        c?.sections.reduce((arr, s) => {
+          arr.push(...(s.items?.map((i) => i.item) ?? []));
+          return arr;
+        }, [] as TrainingItem[])
+      ),
+    enabled: !!selectedCourse,
   });
+
+  const filteredTrainingItems = useMemo(() => {
+    if (!allTrainingItems) {
+      return [];
+    }
+
+    return allTrainingItems.filter(
+      (i) =>
+        !itemSearchQuery ||
+        i.metadata.title?.toLowerCase().includes(itemSearchQuery.toLowerCase())
+    );
+  }, [allTrainingItems, itemSearchQuery]);
 
   const handleCSVUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -167,13 +207,30 @@ const ManageTrainingInvites: React.FC = () => {
             lastName,
             email,
             unitSlug,
+            trainingCourseId: _trainingCourseId,
             trainingItemId: _trainingItemId,
           } = Object.fromEntries(
             headers.map((h, i) => [h, line.split(",")[i]])
           );
 
-          if (!trainingItemId && _trainingItemId) {
-            setTrainingItemId(_trainingItemId);
+          if (!selectedCourse && _trainingCourseId) {
+            getTrainingCourse(_trainingCourseId).then((c) => {
+              setSelectedCourse(c);
+
+              if (!selectedItem && _trainingItemId) {
+                setSelectedItem(
+                  c?.sections.reduce((acc, s) => {
+                    if (!acc) {
+                      acc = s.items
+                        ?.map((i) => i.item)
+                        .find((i) => i.id === _trainingItemId);
+                    }
+
+                    return acc;
+                  }, undefined as TrainingItem | undefined)
+                );
+              }
+            });
           }
 
           return {
@@ -224,7 +281,8 @@ const ManageTrainingInvites: React.FC = () => {
     onSuccess: () => {
       setSuccess("Invites successfully sent!", 5000);
       setTokenValues([{ firstName: "", lastName: "", email: "" }]);
-      setTrainingItemId(undefined);
+      setSelectedCourse(undefined);
+      setSelectedItem(undefined);
       queryClient.invalidateQueries({ queryKey: ["training-invites"] });
     },
   });
@@ -240,7 +298,12 @@ const ManageTrainingInvites: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!trainingItemId) {
+    if (!selectedCourse) {
+      setError("No training course selected.", 5000);
+      return;
+    }
+
+    if (!selectedItem) {
       setError("No training item selected.", 5000);
       return;
     }
@@ -251,7 +314,8 @@ const ManageTrainingInvites: React.FC = () => {
         userId: t.email,
       })),
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
-      trainingItemId,
+      trainingCourseId: selectedCourse?.id,
+      trainingItemId: selectedItem?.id,
     };
 
     sendTrainingLinksMutation.mutate(preparedRequest);
@@ -380,36 +444,33 @@ const ManageTrainingInvites: React.FC = () => {
           </button>
           <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
             <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              Select a training course
+            </label>
+            <div className="mt-2 sm:col-span-2 sm:mt-0">
+              <CourseSelect
+                value={selectedCourse}
+                onChange={(e) => setSelectedCourse(e.target?.value)}
+                immediate
+                required
+              />
+            </div>
+          </div>{" "}
+          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
               Select a training item
             </label>
             <div className="mt-2 sm:col-span-2 sm:mt-0">
-              {trainingItemLoading ? (
-                <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow sm:p-6"></div>
-              ) : trainingItem ? (
-                <div className="space-y-4 mb-4">
-                  <TrainingItemTile
-                    item={trainingItem}
-                    dense={true}
-                    navigateDisabled={true}
-                    className="shadow-lg"
-                  />
-                  <button
-                    type="button"
-                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                    onClick={() => setSelectItemOpen(true)}
-                  >
-                    Change training item
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                  onClick={() => setSelectItemOpen(true)}
-                >
-                  Select a training item
-                </button>
-              )}
+              <Autocomplete
+                value={selectedItem ?? null}
+                onChange={setSelectedItem}
+                onRemove={() => setSelectedItem(null)}
+                setQuery={setItemSearchQuery}
+                options={filteredTrainingItems}
+                placeholder="Search for training item in course..."
+                displayValue={(i) => stripHtml(i?.metadata.title) ?? ""}
+                required
+                immediate
+              />
             </div>
           </div>
           <div className="flex flex-col items-center gap-3">
@@ -425,17 +486,6 @@ const ManageTrainingInvites: React.FC = () => {
             </button>
           </div>
         </form>
-        <SlideOver open={selectItemOpen} setOpen={setSelectItemOpen}>
-          <ManageItems
-            setOpen={setSelectItemOpen}
-            isSelecting={true}
-            multiple={false}
-            onConfirmSelection={(selection) =>
-              selection.length && setTrainingItemId(selection[0]?.id)
-            }
-            existingItemSelection={trainingItem ? [trainingItem] : []}
-          />
-        </SlideOver>
 
         {/* VIEW EXISTING INVITES */}
         <DataTable
