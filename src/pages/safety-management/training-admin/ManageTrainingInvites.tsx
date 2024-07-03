@@ -6,7 +6,7 @@ import {
   TrainingParticipantRepresentation,
 } from "../../../types/api";
 import Input from "../../../components/forms/inputs/Input";
-import { TrashIcon } from "@heroicons/react/20/solid";
+import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { ChangeEvent, FormEvent, useContext, useMemo, useState } from "react";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import { SimpleChangeEvent } from "../../../types/core";
@@ -63,14 +63,26 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
   const { data: trainingItemMetadata, isLoading } = useQuery({
     queryKey: ["training-item-metadata", trainingItemId] as const,
     queryFn: ({ queryKey }) =>
-      getTrainingItem(queryKey[1]).then((t) => t?.metadata),
+      getTrainingItem(queryKey[1]).then((t) => t?.metadata ?? null),
     enabled: !!trainingItemId,
   });
   return isLoading ? (
     <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
   ) : (
     <span>
-      {trainingItemMetadata ? stripHtml(trainingItemMetadata.title) : "—"}
+      {trainingItemMetadata ? (
+        stripHtml(trainingItemMetadata.title)
+      ) : trainingItemMetadata === null ? (
+        <span className="inline-flex items-center gap-1">
+          Unknown{" "}
+          <QuestionMarkCircleIcon
+            className="h-4 w-4"
+            title="Training is unavailable or not visible to you."
+          />
+        </span>
+      ) : (
+        "—"
+      )}
     </span>
   );
 };
@@ -78,7 +90,8 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
 const ViewUnit: React.FC<{ unitSlug?: string }> = ({ unitSlug }) => {
   const { data: unitName, isLoading } = useQuery({
     queryKey: ["unit-name", unitSlug] as const,
-    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[1]).then((t) => t?.name),
+    queryFn: ({ queryKey }) =>
+      getUnitBySlug(queryKey[1]).then((u) => u?.name ?? null),
     enabled: !!unitSlug,
   });
   return isLoading ? (
