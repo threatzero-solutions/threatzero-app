@@ -51,6 +51,7 @@ const TrainingItem: React.FC = () => {
           url: window.location.href,
           itemId: itemId,
           sectionId: sectionId,
+          courseId: state.activeCourse?.id,
         },
         watchId
       ),

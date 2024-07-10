@@ -28,6 +28,22 @@ export const resendTrainingLinks = (
 export const getTrainingInvites = (query?: ItemFilterQueryParams) =>
   findMany<OpaqueToken>("/training-admin/invites/", query);
 
+export const getTrainingInvitesCsv = (
+  trainingUrlTemplate: string,
+  query?: ItemFilterQueryParams,
+  options?: AxiosRequestConfig
+) =>
+  axios
+    .get(`${API_BASE_URL}/training-admin/invites/csv/`, {
+      params: {
+        ...query,
+        trainingUrlTemplate,
+      },
+      responseType: "arraybuffer",
+      ...options,
+    })
+    .then((res) => res.data);
+
 export const getWatchStats = (
   courseId: string,
   organizationSlug?: string,

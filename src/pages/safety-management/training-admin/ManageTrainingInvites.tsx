@@ -26,6 +26,7 @@ import { ErrorContext } from "../../../contexts/error/error-context";
 import { useResolvedPath } from "react-router-dom";
 import {
   getTrainingInvites,
+  getTrainingInvitesCsv,
   resendTrainingLinks,
   sendTrainingLinks,
 } from "../../../queries/training-admin";
@@ -138,7 +139,7 @@ const ManageTrainingInvites: React.FC = () => {
 
   const { hasPermissions, accessTokenClaims } = useAuth();
   const { setError } = useContext(ErrorContext);
-  const { setSuccess } = useContext(CoreContext);
+  const { setSuccess, setInfo } = useContext(CoreContext);
 
   const watchTrainingPath = useResolvedPath("/watch-training/");
 
@@ -336,6 +337,23 @@ const ManageTrainingInvites: React.FC = () => {
     resendTrainingLinkMutation.mutate({
       trainingTokenIds: [token.id],
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
+    });
+  };
+
+  const handleDownloadTrainingLinksCsv = () => {
+    setInfo("Downloading CSV...");
+    getTrainingInvitesCsv(
+      `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
+      itemFilterOptions
+    ).then((response) => {
+      const a = document.createElement("a");
+      a.setAttribute("href", window.URL.createObjectURL(new Blob([response])));
+      a.setAttribute("download", "training-links.csv");
+      document.body.append(a);
+      a.click();
+      a.remove();
+
+      setTimeout(() => setInfo(), 2000);
     });
   };
 
@@ -615,6 +633,15 @@ const ManageTrainingInvites: React.FC = () => {
           isLoading={trainingInvitesLoading}
           title="View Existing Training Invites"
           subtitle="View and manage invites used to provide special access to training materials."
+          action={
+            <button
+              type="button"
+              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              onClick={() => handleDownloadTrainingLinksCsv()}
+            >
+              Download (.csv)
+            </button>
+          }
           orderOptions={{
             order: itemFilterOptions.order,
             setOrder: (k, v) => {
