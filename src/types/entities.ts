@@ -383,6 +383,7 @@ export interface VideoEvent {
   type: VideoEventType;
   itemId?: string;
   sectionId?: string;
+  courseId?: string;
   videoId?: string;
   eventData: unknown;
   url: string;
