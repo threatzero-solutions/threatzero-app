@@ -166,25 +166,25 @@ const ViewWatchStats: React.FC = () => {
         filterOptions={{
           filters: [
             {
-              key: "organizationId",
+              key: "organizationSlug",
               label: "Organization",
-              value: watchStatsQuery.organizationId
-                ? `${watchStatsQuery.organizationId}`
+              value: watchStatsQuery.organizationSlug
+                ? `${watchStatsQuery.organizationSlug}`
                 : undefined,
               options: organizations?.results.map((org) => ({
-                value: org.id,
+                value: org.slug,
                 label: org.name,
               })) ?? [{ value: undefined, label: "All organizations" }],
               hidden: !multipleOrganizations,
             },
             {
-              key: "unitId",
+              key: "unitSlug",
               label: "Unit",
-              value: watchStatsQuery.unitId
-                ? `${watchStatsQuery.unitId}`
+              value: watchStatsQuery.unitSlug
+                ? `${watchStatsQuery.unitSlug}`
                 : undefined,
               options: units?.results.map((unit) => ({
-                value: unit.id,
+                value: unit.slug,
                 label: unit.name,
               })) ?? [{ value: undefined, label: "All units" }],
               hidden: !multipleUnits,
