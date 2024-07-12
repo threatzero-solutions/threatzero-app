@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { ResendTrainingLinksDto, SendTrainingLinksDto } from "../types/api";
-import { OpaqueToken } from "../types/entities";
+import { OpaqueToken, WatchStat } from "../types/entities";
 import { findMany } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
@@ -44,18 +44,17 @@ export const getTrainingInvitesCsv = (
     })
     .then((res) => res.data);
 
-export const getWatchStats = (
-  courseId: string,
-  organizationSlug?: string,
-  unitSlugs?: string[],
-  options?: AxiosRequestConfig
+export const findWatchStats = (query?: ItemFilterQueryParams) =>
+  findMany<WatchStat>("/training-admin/watch-stats/", query);
+
+export const getWatchStatsCsv = (
+  query?: ItemFilterQueryParams,
+  options: AxiosRequestConfig = {}
 ) =>
   axios
     .get(`${API_BASE_URL}/training-admin/watch-stats/csv/`, {
       params: {
-        courseId,
-        organizationSlug,
-        unitSlug: unitSlugs,
+        ...query,
       },
       responseType: "arraybuffer",
       ...options,

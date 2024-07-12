@@ -1,24 +1,24 @@
-import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
-import UnitSelect from "../../../components/forms/inputs/UnitSelect";
-import { SimpleChangeEvent } from "../../../types/core";
-import { Organization, TrainingCourse, Unit } from "../../../types/entities";
-import { getWatchStats } from "../../../queries/training-admin";
+import { useContext, useEffect, useMemo } from "react";
+import {
+  findWatchStats,
+  getWatchStatsCsv,
+} from "../../../queries/training-admin";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { LEVEL } from "../../../constants/permissions";
-import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import DataTable from "../../../components/layouts/DataTable";
+import { useQuery } from "@tanstack/react-query";
+import { getOrganizations, getUnits } from "../../../queries/organizations";
 import { CoreContext } from "../../../contexts/core/core-context";
-import CourseSelect from "../../../components/forms/inputs/CourseSelect";
 
 const ViewWatchStats: React.FC = () => {
-  const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
-  const [selectedOrganization, setSelectedOrganization] =
-    useState<Organization | null>();
-  const [selectedCourse, setSelectedCourse] = useState<
-    TrainingCourse | undefined | null
-  >();
-  const [coursesQuery, setCoursesQuery] = useImmer<ItemFilterQueryParams>({});
+  const [watchStatsQuery, setWatchStatsQuery] = useImmer<ItemFilterQueryParams>(
+    {}
+  );
+  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
+    limit: 100,
+  });
 
   const { hasPermissions, accessTokenClaims } = useAuth();
   const { setInfo } = useContext(CoreContext);
@@ -35,56 +35,45 @@ const ViewWatchStats: React.FC = () => {
     [hasPermissions]
   );
 
+  const { data: watchStats, isLoading: watchStatsLoading } = useQuery({
+    queryKey: ["watch-stats", watchStatsQuery],
+    queryFn: () => findWatchStats(watchStatsQuery),
+  });
+
+  const { data: organizations } = useQuery({
+    queryKey: ["organizations"],
+    queryFn: () => getOrganizations({ limit: 100 }),
+    enabled: multipleOrganizations,
+  });
+
+  const { data: units } = useQuery({
+    queryKey: ["units", unitsQuery] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
+    enabled: multipleUnits,
+  });
+
   useEffect(() => {
-    if (selectedOrganization) {
-      setCoursesQuery((q) => {
-        q["organizations.id"] = selectedOrganization.id;
-      });
+    setUnitsQuery((q) => {
+      if (watchStatsQuery.organizationId) {
+        q["organization.id"] = watchStatsQuery.organizationId;
+      } else {
+        Reflect.deleteProperty(q, "organization.id");
+      }
+    });
+  }, [watchStatsQuery.organizationId]);
 
-      setSelectedCourse(null);
-    } else {
-      setCoursesQuery((q) => {
-        Reflect.deleteProperty(q, "organizations.id");
-      });
-    }
-  }, [selectedOrganization]);
+  const handleDownloadWatchStatsCsv = () => {
+    setInfo("Downloading CSV...");
+    getWatchStatsCsv(watchStatsQuery).then((response) => {
+      const a = document.createElement("a");
+      a.setAttribute("href", window.URL.createObjectURL(new Blob([response])));
+      a.setAttribute("download", "watch-stats.csv");
+      document.body.append(a);
+      a.click();
+      a.remove();
 
-  const handleSelectUnits = (event: SimpleChangeEvent<Unit[]>) => {
-    setSelectedUnits(event.target?.value ?? []);
-  };
-
-  const handleSelectOrganization = (
-    event: SimpleChangeEvent<Organization | undefined | null | string>
-  ) => {
-    setSelectedOrganization(
-      (event.target?.value ?? null) as Organization | null
-    );
-    setSelectedUnits([]);
-  };
-
-  const onSubmitGetWatchStats = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (selectedCourse) {
-      setInfo("Generating report...");
-      getWatchStats(
-        selectedCourse.id,
-        selectedOrganization?.slug,
-        selectedUnits.map((u) => u.slug)
-      ).then((response) => {
-        const a = document.createElement("a");
-        a.setAttribute(
-          "href",
-          window.URL.createObjectURL(new Blob([response]))
-        );
-        a.setAttribute("download", "watch-stats.csv");
-        document.body.append(a);
-        a.click();
-        a.remove();
-
-        setTimeout(() => setInfo(), 2000);
-      });
-    }
+      setTimeout(() => setInfo(), 2000);
+    });
   };
 
   return (
@@ -94,75 +83,121 @@ const ViewWatchStats: React.FC = () => {
           Watch Stats
         </h1>
       </div>
-      <form className="flex flex-col" onSubmit={onSubmitGetWatchStats}>
-        <div className="sm:flex-auto">
-          <h1 className="text-base font-semibold leading-6 text-gray-900">
-            Generate Report
-          </h1>
-          <p className="mt-2 text-sm text-gray-700">
-            A report will be generated for all users{" "}
-            {multipleUnits ? "in the selected units" : "in your unit"} that will
-            include the percentages watched of each training item in the
-            selected course.
-          </p>
-        </div>
-        {multipleOrganizations && (
-          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-              1. Select an organization
-            </label>
-            <div className="mt-2 sm:col-span-2 sm:mt-0">
-              <OrganizationSelect
-                value={selectedOrganization}
-                onChange={handleSelectOrganization}
-                required
-              />
-            </div>
-          </div>
-        )}
-        {multipleUnits && (
-          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-              {(multipleOrganizations ? 1 : 0) + 1}. (Optional) Select units
-            </label>
-            <div className="mt-2 sm:col-span-2 sm:mt-0">
-              <UnitSelect
-                many={true}
-                value={selectedUnits}
-                onChange={handleSelectUnits}
-                queryFilter={
-                  selectedOrganization
-                    ? {
-                        "organization.id": selectedOrganization.id,
-                      }
-                    : undefined
-                }
-              />
-            </div>
-          </div>
-        )}
-        <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-          <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-            {(multipleOrganizations ? 1 : 0) + (multipleUnits ? 1 : 0) + 1}.
-            Select course
-          </label>
-          <div className="mt-2 sm:col-span-2 sm:mt-0">
-            <CourseSelect
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target?.value)}
-              queryFilter={coursesQuery}
-              required
-              immediate
-            />
-          </div>
-        </div>
-        <button
-          type="submit"
-          className="mt-4 self-center block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 transition-colors"
-        >
-          Generate and Download Report (.csv)
-        </button>
-      </form>
+      <DataTable
+        data={{
+          headers: [
+            {
+              key: "firstName",
+              label: "First Name",
+            },
+            {
+              key: "lastName",
+              label: "Last Name",
+            },
+            {
+              key: "email",
+              label: "Email",
+            },
+            {
+              key: "trainingItemTitle",
+              label: "Training Item",
+            },
+            {
+              key: "organizationName",
+              label: "Organization",
+            },
+            {
+              key: "unitName",
+              label: "Unit",
+            },
+            {
+              key: "year",
+              label: "Year",
+            },
+            {
+              key: "percentWatched",
+              label: "Percent Watched",
+            },
+          ],
+          rows: (watchStats?.results ?? []).map((r, idx) => ({
+            id: `${r.organizationSlug ?? idx}|${r.unitSlug ?? idx}|${
+              r.email ?? idx
+            }|${r.trainingItemId ?? idx}`,
+            firstName: r.firstName,
+            lastName: r.lastName,
+            email: r.email,
+            trainingItemTitle: r.trainingItemTitle,
+            organizationName: r.organizationName,
+            unitName: r.unitName,
+            year: r.year,
+            percentWatched: r.percentWatched,
+          })),
+        }}
+        title="All Training Watch Stats"
+        subtitle="Sort and filter through watch stats."
+        isLoading={watchStatsLoading}
+        action={
+          <button
+            type="button"
+            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            onClick={() => handleDownloadWatchStatsCsv()}
+          >
+            Download (.csv)
+          </button>
+        }
+        orderOptions={{
+          order: watchStatsQuery.order,
+          setOrder: (k, v) => {
+            setWatchStatsQuery((options) => {
+              options.order = { [k]: v };
+              options.offset = 0;
+            });
+          },
+        }}
+        paginationOptions={{
+          currentOffset: watchStats?.offset,
+          total: watchStats?.count,
+          limit: watchStats?.limit,
+          setOffset: (offset) =>
+            setWatchStatsQuery((q) => {
+              q.offset = offset;
+            }),
+        }}
+        filterOptions={{
+          filters: [
+            {
+              key: "organizationId",
+              label: "Organization",
+              value: watchStatsQuery.organizationId
+                ? `${watchStatsQuery.organizationId}`
+                : undefined,
+              options: organizations?.results.map((org) => ({
+                value: org.id,
+                label: org.name,
+              })) ?? [{ value: undefined, label: "All organizations" }],
+              hidden: !multipleOrganizations,
+            },
+            {
+              key: "unitId",
+              label: "Unit",
+              value: watchStatsQuery.unitId
+                ? `${watchStatsQuery.unitId}`
+                : undefined,
+              options: units?.results.map((unit) => ({
+                value: unit.id,
+                label: unit.name,
+              })) ?? [{ value: undefined, label: "All units" }],
+              hidden: !multipleUnits,
+            },
+          ],
+          setFilter: (key, value) =>
+            setWatchStatsQuery((options) => ({
+              ...options,
+              [key]: options[key] === value ? undefined : value,
+              offset: 0,
+            })),
+        }}
+      />
     </>
   );
 };
