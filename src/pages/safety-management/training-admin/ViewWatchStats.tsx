@@ -54,13 +54,16 @@ const ViewWatchStats: React.FC = () => {
 
   useEffect(() => {
     setUnitsQuery((q) => {
-      if (watchStatsQuery.organizationId) {
-        q["organization.id"] = watchStatsQuery.organizationId;
+      if (watchStatsQuery.organizationSlug) {
+        q["organization.slug"] = watchStatsQuery.organizationSlug;
       } else {
-        Reflect.deleteProperty(q, "organization.id");
+        Reflect.deleteProperty(q, "organization.slug");
       }
     });
-  }, [watchStatsQuery.organizationId]);
+    setWatchStatsQuery((q) => {
+      Reflect.deleteProperty(q, "unitSlug");
+    });
+  }, [watchStatsQuery.organizationSlug]);
 
   const handleDownloadWatchStatsCsv = () => {
     setInfo("Downloading CSV...");
@@ -122,7 +125,7 @@ const ViewWatchStats: React.FC = () => {
           rows: (watchStats?.results ?? []).map((r, idx) => ({
             id: `${r.organizationSlug ?? idx}|${r.unitSlug ?? idx}|${
               r.email ?? idx
-            }|${r.trainingItemId ?? idx}`,
+            }|${r.trainingItemId ?? idx}|${r.year ?? idx}`,
             firstName: r.firstName,
             lastName: r.lastName,
             email: r.email,
@@ -168,9 +171,7 @@ const ViewWatchStats: React.FC = () => {
             {
               key: "organizationSlug",
               label: "Organization",
-              value: watchStatsQuery.organizationSlug
-                ? `${watchStatsQuery.organizationSlug}`
-                : undefined,
+              value: (watchStatsQuery.organizationSlug ?? []) as string[],
               options: organizations?.results.map((org) => ({
                 value: org.slug,
                 label: org.name,
@@ -180,9 +181,7 @@ const ViewWatchStats: React.FC = () => {
             {
               key: "unitSlug",
               label: "Unit",
-              value: watchStatsQuery.unitSlug
-                ? `${watchStatsQuery.unitSlug}`
-                : undefined,
+              value: (watchStatsQuery.unitSlug ?? []) as string[],
               options: units?.results.map((unit) => ({
                 value: unit.slug,
                 label: unit.name,
@@ -191,11 +190,23 @@ const ViewWatchStats: React.FC = () => {
             },
           ],
           setFilter: (key, value) =>
-            setWatchStatsQuery((options) => ({
-              ...options,
-              [key]: options[key] === value ? undefined : value,
-              offset: 0,
-            })),
+            setWatchStatsQuery((options) => {
+              if (["organizationSlug", "unitSlug"].includes(key)) {
+                if (!value || !Array.isArray(options[key])) {
+                  options[key] = [];
+                }
+                if (value && !(options[key] as string[]).includes(value)) {
+                  options[key] = [...(options[key] as string[]), value];
+                } else if (value) {
+                  options[key] = (options[key] as string[]).filter(
+                    (v) => v !== value
+                  );
+                }
+              } else {
+                options[key] = options[key] === value ? undefined : value;
+              }
+              options.offset = 0;
+            }),
         }}
       />
     </>

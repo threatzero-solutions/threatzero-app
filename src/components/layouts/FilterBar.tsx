@@ -19,8 +19,9 @@ export interface FilterBarFilter {
   key: string;
   label: string;
   options: FilterBarFilterOption[];
-  value?: string;
+  value?: string | string[];
   hidden?: boolean;
+  selected?: boolean;
 }
 
 export interface FilterBarFilterOptions {
@@ -56,7 +57,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
                         type="checkbox"
                         readOnly={true}
                         className="pointer-events-none h-4 w-4 mr-2 rounded border-gray-300 text-secondary-600 focus:ring-secondary-600"
-                        checked={o.value === f.value}
+                        checked={
+                          Array.isArray(f.value)
+                            ? f.value.includes(o.value ?? "none")
+                            : o.value === f.value
+                        }
                       />
                       {o.label}
                     </div>
@@ -69,7 +74,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
                     <span
                       className={classNames(
                         "pl-1 text-xs font-semibol",
-                        f.value === undefined
+                        (
+                          Array.isArray(f.value)
+                            ? !f.value.length
+                            : f.value === undefined
+                        )
                           ? "text-gray-400"
                           : "text-secondary-600"
                       )}
@@ -78,7 +87,9 @@ const FilterBar: React.FC<FilterBarProps> = ({
                     </span>
                   ),
                   action: () => filterOptions?.setFilter?.(f.key, undefined),
-                  disabled: f.value === undefined,
+                  disabled: Array.isArray(f.value)
+                    ? !f.value.length
+                    : f.value === undefined,
                   hidden: f.options.some((o) => o.value === undefined),
                 },
               ],
