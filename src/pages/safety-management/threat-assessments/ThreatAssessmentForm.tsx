@@ -181,7 +181,7 @@ const ThreatAssessmentForm: React.FC = () => {
           <Dropdown
             actions={assessmentActions}
             value="Actions"
-            openTo="right"
+            placement="bottom-start"
           />
 
           <div className="flex gap-4">

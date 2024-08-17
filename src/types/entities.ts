@@ -422,3 +422,22 @@ export interface OpaqueToken extends Base {
   key: string;
   value: Record<string, any>;
 }
+
+export interface WatchStat {
+  trainingItemId: string;
+  trainingItemTitle: string;
+  trainingCourseId: string | null;
+  percentWatched: string;
+  year: number;
+  userId: string | null;
+  userExternalId: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  organizationId: string | null;
+  organizationSlug: string | null;
+  organizationName: string | null;
+  unitId: string | null;
+  unitSlug: string | null;
+  unitName: string | null;
+}

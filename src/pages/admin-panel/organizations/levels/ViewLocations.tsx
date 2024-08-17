@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   generateQrCode,
   getLocations,
+  getUnits,
 } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
@@ -27,6 +28,11 @@ export const ViewLocations: React.FC = () => {
   const { data: locations, isLoading: locationsLoading } = useQuery({
     queryKey: ["locations", debouncedLocationsQuery] as const,
     queryFn: ({ queryKey }) => getLocations(queryKey[1]),
+  });
+
+  const { data: units } = useQuery({
+    queryKey: ["units"] as const,
+    queryFn: () => getUnits(),
   });
 
   const handleEditLocation = (location?: Location) => {
@@ -133,6 +139,25 @@ export const ViewLocations: React.FC = () => {
           setSearchQuery: (search) => {
             setLocationsQuery((q) => {
               q.search = search;
+              q.offset = 0;
+            });
+          },
+        }}
+        filterOptions={{
+          filters: [
+            {
+              key: "unit.id",
+              label: "Organization",
+              value: locationsQuery["unit.id"] as string | undefined,
+              options: (units?.results ?? []).map((unit) => ({
+                label: unit.name,
+                value: unit.id,
+              })),
+            },
+          ],
+          setFilter: (k, v) => {
+            setLocationsQuery((q) => {
+              q[k] = q[k] === v ? undefined : v;
               q.offset = 0;
             });
           },

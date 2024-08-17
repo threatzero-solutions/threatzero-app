@@ -19,6 +19,7 @@ import {
 import OrganizationSelect from "../../../../components/forms/inputs/OrganizationSelect";
 import FormInput from "../../../../components/forms/inputs/FormInput";
 import { useImmer } from "use-immer";
+import SafetyContactInput from "../../../../components/safety-management/SafetyContactInput";
 
 const INPUT_DATA: Array<
   Partial<Field> & { name: keyof Unit | "autoAddLocation" }
@@ -58,13 +59,23 @@ const INPUT_DATA: Array<
     order: 4,
   },
   {
+    name: "safetyContact",
+    label: "Safety Contact",
+    type: FieldType.TEXTAREA,
+    elementProperties: {
+      readOnly: true,
+    },
+    required: false,
+    order: 5,
+  },
+  {
     name: "autoAddLocation",
     label: "Automatically Add Location",
     helpText:
       "Automatically create a new location with the same name for this unit",
     type: FieldType.CHECKBOX,
     required: false,
-    order: 5,
+    order: 6,
   },
   {
     name: "groupId",
@@ -77,7 +88,7 @@ const INPUT_DATA: Array<
       disabled: true,
     },
     required: false,
-    order: 6,
+    order: 7,
   },
 ];
 
@@ -245,6 +256,16 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
                         setUnit((u) => ({
                           ...u,
                           organization: e.target?.value ?? undefined,
+                        }))
+                      }
+                    />
+                  ) : input.name === "safetyContact" ? (
+                    <SafetyContactInput
+                      value={unit.safetyContact}
+                      onChange={(e) =>
+                        setUnit((u) => ({
+                          ...u,
+                          safetyContact: e.target?.value,
                         }))
                       }
                     />

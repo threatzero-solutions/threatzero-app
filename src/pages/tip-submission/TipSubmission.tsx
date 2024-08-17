@@ -173,7 +173,11 @@ const TipSubmission: React.FC = () => {
       {tip && <BackButton defaultTo="../" valueOnDefault="Back to Dashboard" />}
       {tip && canAlterTip && (
         <div className="flex justify-between items-end mb-4">
-          <Dropdown actions={tipActions} value="Actions" openTo="right" />
+          <Dropdown
+            actions={tipActions}
+            value="Actions"
+            placement="bottom-start"
+          />
 
           <div className="flex gap-4">
             <span className="flex items-center gap-1 text-sm">

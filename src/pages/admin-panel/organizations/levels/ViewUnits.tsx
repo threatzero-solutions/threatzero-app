@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { getUnits } from "../../../../queries/organizations";
+import { getOrganizations, getUnits } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
 import { Unit } from "../../../../types/entities";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
@@ -19,6 +19,11 @@ export const ViewUnits: React.FC = () => {
   const { data: units, isLoading: unitsLoading } = useQuery({
     queryKey: ["units", debouncedUnitsQuery] as const,
     queryFn: ({ queryKey }) => getUnits(queryKey[1]),
+  });
+
+  const { data: organizations } = useQuery({
+    queryKey: ["organizations"] as const,
+    queryFn: () => getOrganizations(),
   });
 
   const handleEditUnit = (unit?: Unit) => {
@@ -92,6 +97,25 @@ export const ViewUnits: React.FC = () => {
           setSearchQuery: (search) => {
             setUnitsQuery((q) => {
               q.search = search;
+              q.offset = 0;
+            });
+          },
+        }}
+        filterOptions={{
+          filters: [
+            {
+              key: "organization.id",
+              label: "Organization",
+              value: unitsQuery["organization.id"] as string | undefined,
+              options: (organizations?.results ?? []).map((org) => ({
+                label: org.name,
+                value: org.id,
+              })),
+            },
+          ],
+          setFilter: (k, v) => {
+            setUnitsQuery((q) => {
+              q[k] = q[k] === v ? undefined : v;
               q.offset = 0;
             });
           },

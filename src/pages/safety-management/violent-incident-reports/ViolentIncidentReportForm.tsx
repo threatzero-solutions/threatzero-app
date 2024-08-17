@@ -193,7 +193,7 @@ const ViolentIncidentReportForm: React.FC = () => {
           <Dropdown
             actions={violentIncidentReportActions}
             value="Actions"
-            openTo="right"
+            placement="bottom-start"
           />
 
           <div className="flex gap-4">

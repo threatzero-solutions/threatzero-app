@@ -8,6 +8,7 @@ import {
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { Fragment, ReactNode } from "react";
 import { classNames } from "../../utils/core";
+import { flip, offset, Placement, useFloating } from "@floating-ui/react";
 
 export interface DropdownAction {
   id: string | number;
@@ -31,7 +32,7 @@ interface DropdownProps {
   actions?: DropdownAction[];
   actionGroups?: DropdownActionGroup[];
   className?: string;
-  openTo?: "left" | "right";
+  placement?: Placement;
   showDividers?: boolean;
   disabled?: boolean;
 }
@@ -80,10 +81,15 @@ const Dropdown: React.FC<DropdownProps> = ({
   actions,
   actionGroups,
   className,
-  openTo,
+  placement = "bottom-end",
   showDividers,
   disabled,
 }) => {
+  const { refs, floatingStyles } = useFloating({
+    middleware: [flip(), offset({ mainAxis: 8 })],
+    placement,
+  });
+
   return (
     <Menu
       as="div"
@@ -91,6 +97,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       aria-disabled={disabled}
     >
       <MenuButton
+        ref={refs.setReference}
         type="button"
         className={classNames(
           iconOnly
@@ -123,11 +130,14 @@ const Dropdown: React.FC<DropdownProps> = ({
         leaveTo="transform opacity-0 scale-95"
       >
         <MenuItems
+          ref={refs.setFloating}
+          style={floatingStyles}
           className={classNames(
-            "absolute z-20 mt-2 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none",
-            openTo === "right"
-              ? "origin-top-left left-0"
-              : "origin-top-right right-0",
+            "pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none",
+            // "absolute z-20 mt-2",
+            // openTo === "right"
+            //   ? "origin-top-left left-0"
+            //   : "origin-top-right right-0",
             showDividers ? "divide-y divide-gray-100" : ""
           )}
         >
