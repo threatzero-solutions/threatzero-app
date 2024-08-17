@@ -94,7 +94,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 },
               ],
             }))}
-          openTo="left"
           showDividers={true}
         />
       )}
