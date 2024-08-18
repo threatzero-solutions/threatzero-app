@@ -4,10 +4,8 @@ import Paginator, { PaginatorProps } from "./Paginator";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { OrderOptions, Ordering } from "../../types/core";
 
-import FilterBar, {
-  FilterBarFilterOptions,
-  FilterBarSearchOptions,
-} from "./FilterBar";
+import FilterBar, { FilterBarFilterOptions } from "./FilterBar";
+import { SearchInputProps } from "../forms/inputs/SearchInput";
 
 export interface DataTableOrderOptions {
   order?: Ordering;
@@ -36,7 +34,7 @@ interface DataTableProps {
   isLoading?: boolean;
   notFoundDetail?: ReactNode;
   paginationOptions?: PaginatorProps;
-  searchOptions?: FilterBarSearchOptions;
+  searchOptions?: SearchInputProps;
   filterOptions?: FilterBarFilterOptions;
   orderOptions?: DataTableOrderOptions;
 }

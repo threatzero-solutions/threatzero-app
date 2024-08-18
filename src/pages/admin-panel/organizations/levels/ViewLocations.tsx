@@ -30,9 +30,14 @@ export const ViewLocations: React.FC = () => {
     queryFn: ({ queryKey }) => getLocations(queryKey[1]),
   });
 
-  const { data: units } = useQuery({
-    queryKey: ["units"] as const,
-    queryFn: () => getUnits(),
+  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
+    limit: 5,
+  });
+  const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
+
+  const { data: units, isLoading: unitsLoading } = useQuery({
+    queryKey: ["units", debouncedUnitsQuery] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
   });
 
   const handleEditLocation = (location?: Location) => {
@@ -147,12 +152,19 @@ export const ViewLocations: React.FC = () => {
           filters: [
             {
               key: "unit.id",
-              label: "Organization",
+              label: "Unit",
               value: locationsQuery["unit.id"] as string | undefined,
               options: (units?.results ?? []).map((unit) => ({
                 label: unit.name,
                 value: unit.id,
               })),
+              query: unitsQuery.search,
+              setQuery: (sq) =>
+                setUnitsQuery((q) => {
+                  q.search = sq;
+                }),
+              queryPlaceholder: "Find units...",
+              isLoading: unitsLoading,
             },
           ],
           setFilter: (k, v) => {
