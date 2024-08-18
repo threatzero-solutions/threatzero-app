@@ -21,9 +21,16 @@ export const ViewUnits: React.FC = () => {
     queryFn: ({ queryKey }) => getUnits(queryKey[1]),
   });
 
-  const { data: organizations } = useQuery({
-    queryKey: ["organizations"] as const,
-    queryFn: () => getOrganizations(),
+  const [organizationsQuery, setOrganizationsQuery] =
+    useImmer<ItemFilterQueryParams>({ limit: 5 });
+  const [debouncedOrganizationsQuery] = useDebounceValue(
+    organizationsQuery,
+    300
+  );
+
+  const { data: organizations, isLoading: organizationsLoading } = useQuery({
+    queryKey: ["organizations", debouncedOrganizationsQuery] as const,
+    queryFn: ({ queryKey }) => getOrganizations(queryKey[1]),
   });
 
   const handleEditUnit = (unit?: Unit) => {
@@ -111,6 +118,13 @@ export const ViewUnits: React.FC = () => {
                 label: org.name,
                 value: org.id,
               })),
+              query: organizationsQuery.search,
+              setQuery: (sq) =>
+                setOrganizationsQuery((q) => {
+                  q.search = sq;
+                }),
+              queryPlaceholder: "Find organizations...",
+              isLoading: organizationsLoading,
             },
           ],
           setFilter: (k, v) => {

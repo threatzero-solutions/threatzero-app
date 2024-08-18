@@ -1,7 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import DataTable from "../../../components/layouts/DataTable";
-import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import {
+  ItemFilterQueryParams,
+  useItemFilterQuery,
+} from "../../../hooks/use-item-filter-query";
 import { ViolentIncidentReportStatus } from "../../../types/entities";
 import {
   SafetyManagementResourceFilterOptions,
@@ -20,6 +23,8 @@ import StatusPill from "./components/StatusPill";
 import EditableCell from "../../../components/layouts/EditableCell";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
 import { useAuth } from "../../../contexts/AuthProvider";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
 
 dayjs.extend(relativeTime);
 
@@ -80,9 +85,14 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: units } = useQuery({
-    queryKey: ["units"],
-    queryFn: () => getUnits({ limit: 100 }),
+  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
+    limit: 5,
+  });
+  const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
+
+  const { data: units, isLoading: unitsLoading } = useQuery({
+    queryKey: ["units", debouncedUnitsQuery] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
     enabled: hasOrganizationOrAdminLevel,
   });
 
@@ -266,6 +276,13 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
                 label: unit.name,
               })) ?? [{ value: undefined, label: "All schools" }],
               hidden: !hasOrganizationOrAdminLevel,
+              query: unitsQuery.search,
+              setQuery: (sq) =>
+                setUnitsQuery((q) => {
+                  q.search = sq;
+                }),
+              queryPlaceholder: "Find units...",
+              isLoading: unitsLoading,
             },
           ],
           setFilter: (key, value) =>

@@ -133,11 +133,8 @@ const Dropdown: React.FC<DropdownProps> = ({
           ref={refs.setFloating}
           style={floatingStyles}
           className={classNames(
-            "pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none",
-            // "absolute z-20 mt-2",
-            // openTo === "right"
-            //   ? "origin-top-left left-0"
-            //   : "origin-top-right right-0",
+            "z-20 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none",
+            "max-h-[45vh] overflow-y-auto",
             showDividers ? "divide-y divide-gray-100" : ""
           )}
         >

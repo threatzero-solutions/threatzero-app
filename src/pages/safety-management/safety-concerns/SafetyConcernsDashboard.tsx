@@ -14,11 +14,16 @@ import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import StatusPill from "../../tip-submission/components/StatusPill";
 import { getLocations, getUnits } from "../../../queries/organizations";
-import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import {
+  ItemFilterQueryParams,
+  useItemFilterQuery,
+} from "../../../hooks/use-item-filter-query";
 import EditableCell from "../../../components/layouts/EditableCell";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
 import { useAuth } from "../../../contexts/AuthProvider";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -73,15 +78,24 @@ const SafetyConcernsDashboard: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: units } = useQuery({
-    queryKey: ["units"],
-    queryFn: () => getUnits({ limit: 100 }),
-    enabled: hasOrganizationOrAdminLevel,
+  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
+    limit: 5,
+  });
+  const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
+
+  const { data: units, isLoading: unitsLoading } = useQuery({
+    queryKey: ["units", debouncedUnitsQuery] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
   });
 
-  const { data: locations } = useQuery({
-    queryKey: ["locations"],
-    queryFn: () => getLocations({ limit: 100 }),
+  const [locationsQuery, setLocationsQuery] = useImmer<ItemFilterQueryParams>({
+    limit: 5,
+  });
+  const [debouncedLocationsQuery] = useDebounceValue(locationsQuery, 300);
+
+  const { data: locations, isLoading: locationsLoading } = useQuery({
+    queryKey: ["locations", debouncedLocationsQuery] as const,
+    queryFn: ({ queryKey }) => getLocations(queryKey[1]),
   });
 
   return (
@@ -259,6 +273,13 @@ const SafetyConcernsDashboard: React.FC = () => {
                 label: unit.name,
               })) ?? [{ value: undefined, label: "All units" }],
               hidden: !hasOrganizationOrAdminLevel,
+              query: unitsQuery.search,
+              setQuery: (sq) =>
+                setUnitsQuery((q) => {
+                  q.search = sq;
+                }),
+              queryPlaceholder: "Find units...",
+              isLoading: unitsLoading,
             },
             {
               key: "location.id",
@@ -271,6 +292,13 @@ const SafetyConcernsDashboard: React.FC = () => {
                 value: locations.id,
                 label: locations.name,
               })) ?? [{ value: undefined, label: "All locations" }],
+              query: locationsQuery.search,
+              setQuery: (sq) =>
+                setLocationsQuery((q) => {
+                  q.search = sq;
+                }),
+              queryPlaceholder: "Find locations...",
+              isLoading: locationsLoading,
             },
           ],
           setFilter: (key, value) =>

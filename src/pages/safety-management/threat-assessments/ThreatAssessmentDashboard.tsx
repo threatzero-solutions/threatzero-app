@@ -16,10 +16,15 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import StatusPill from "./components/StatusPill";
 import DataTable from "../../../components/layouts/DataTable";
 import { getUnits } from "../../../queries/organizations";
-import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import {
+  ItemFilterQueryParams,
+  useItemFilterQuery,
+} from "../../../hooks/use-item-filter-query";
 import EditableCell from "../../../components/layouts/EditableCell";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { useAuth } from "../../../contexts/AuthProvider";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
 
 dayjs.extend(relativeTime);
 
@@ -79,9 +84,14 @@ const ThreatAssessmentDashboard: React.FC = () => {
     [hasPermissions]
   );
 
-  const { data: units } = useQuery({
-    queryKey: ["units"],
-    queryFn: () => getUnits({ limit: 100 }),
+  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
+    limit: 5,
+  });
+  const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
+
+  const { data: units, isLoading: unitsLoading } = useQuery({
+    queryKey: ["units", debouncedUnitsQuery] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
     enabled: hasOrganizationOrAdminLevel,
   });
 
@@ -266,6 +276,13 @@ const ThreatAssessmentDashboard: React.FC = () => {
                 label: unit.name,
               })) ?? [{ value: undefined, label: "All schools" }],
               hidden: !hasOrganizationOrAdminLevel,
+              query: unitsQuery.search,
+              setQuery: (sq) =>
+                setUnitsQuery((q) => {
+                  q.search = sq;
+                }),
+              queryPlaceholder: "Find units...",
+              isLoading: unitsLoading,
             },
           ],
           setFilter: (key, value) =>
