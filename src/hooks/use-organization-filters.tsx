@@ -37,7 +37,7 @@ export const useOrganizationFilters = ({
   const organizationSelected =
     !!organizationKey &&
     (Array.isArray(query[organizationKey])
-      ? query[organizationKey].length > 0
+      ? (query[organizationKey] as unknown[]).length > 0
       : !!query[organizationKey]);
 
   const [organizationsQuery, setOrganizationsQuery] =
@@ -56,7 +56,7 @@ export const useOrganizationFilters = ({
   const unitSelected =
     !!unitKey &&
     (Array.isArray(query[unitKey])
-      ? query[unitKey].length > 0
+      ? (query[unitKey] as unknown[]).length > 0
       : !!query[unitKey]);
 
   const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
