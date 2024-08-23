@@ -138,8 +138,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
           });
         }
 
-        console.debug(draft[thisKey]);
-
         setSelectedOptions((draft) => {
           if (!draft) {
             return;
