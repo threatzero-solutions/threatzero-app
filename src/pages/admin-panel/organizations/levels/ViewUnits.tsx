@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { getOrganizations, getUnits } from "../../../../queries/organizations";
+import { getUnits } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
 import { Unit } from "../../../../types/entities";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
@@ -8,6 +8,7 @@ import EditUnit from "./EditUnit";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
+import { useOrganizationFilters } from "../../../../hooks/use-organization-filters";
 
 export const ViewUnits: React.FC = () => {
   const [editUnitSliderOpen, setEditUnitSliderOpen] = useState(false);
@@ -21,16 +22,11 @@ export const ViewUnits: React.FC = () => {
     queryFn: ({ queryKey }) => getUnits(queryKey[1]),
   });
 
-  const [organizationsQuery, setOrganizationsQuery] =
-    useImmer<ItemFilterQueryParams>({ limit: 5 });
-  const [debouncedOrganizationsQuery] = useDebounceValue(
-    organizationsQuery,
-    300
-  );
-
-  const { data: organizations, isLoading: organizationsLoading } = useQuery({
-    queryKey: ["organizations", debouncedOrganizationsQuery] as const,
-    queryFn: ({ queryKey }) => getOrganizations(queryKey[1]),
+  const organizationFilters = useOrganizationFilters({
+    query: unitsQuery,
+    setQuery: setUnitsQuery,
+    organizationKey: "organization.slug",
+    unitsEnabled: false,
   });
 
   const handleEditUnit = (unit?: Unit) => {
@@ -108,32 +104,7 @@ export const ViewUnits: React.FC = () => {
             });
           },
         }}
-        filterOptions={{
-          filters: [
-            {
-              key: "organization.id",
-              label: "Organization",
-              value: unitsQuery["organization.id"] as string | undefined,
-              options: (organizations?.results ?? []).map((org) => ({
-                label: org.name,
-                value: org.id,
-              })),
-              query: organizationsQuery.search,
-              setQuery: (sq) =>
-                setOrganizationsQuery((q) => {
-                  q.search = sq;
-                }),
-              queryPlaceholder: "Find organizations...",
-              isLoading: organizationsLoading,
-            },
-          ],
-          setFilter: (k, v) => {
-            setUnitsQuery((q) => {
-              q[k] = q[k] === v ? undefined : v;
-              q.offset = 0;
-            });
-          },
-        }}
+        filterOptions={organizationFilters}
         notFoundDetail="No units found."
         action={
           <button

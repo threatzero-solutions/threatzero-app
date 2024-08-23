@@ -3,7 +3,6 @@ import { useState } from "react";
 import {
   generateQrCode,
   getLocations,
-  getUnits,
 } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
@@ -13,6 +12,7 @@ import { Link } from "react-router-dom";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
+import { useOrganizationFilters } from "../../../../hooks/use-organization-filters";
 
 export const ViewLocations: React.FC = () => {
   const [editLocationSliderOpen, setEditLocationSliderOpen] = useState(false);
@@ -30,14 +30,11 @@ export const ViewLocations: React.FC = () => {
     queryFn: ({ queryKey }) => getLocations(queryKey[1]),
   });
 
-  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
-    limit: 5,
-  });
-  const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
-
-  const { data: units, isLoading: unitsLoading } = useQuery({
-    queryKey: ["units", debouncedUnitsQuery] as const,
-    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
+  const organizationFilters = useOrganizationFilters({
+    query: locationsQuery,
+    setQuery: setLocationsQuery,
+    organizationKey: "unit.organization.slug",
+    unitKey: "unit.slug",
   });
 
   const handleEditLocation = (location?: Location) => {
@@ -148,32 +145,7 @@ export const ViewLocations: React.FC = () => {
             });
           },
         }}
-        filterOptions={{
-          filters: [
-            {
-              key: "unit.id",
-              label: "Unit",
-              value: locationsQuery["unit.id"] as string | undefined,
-              options: (units?.results ?? []).map((unit) => ({
-                label: unit.name,
-                value: unit.id,
-              })),
-              query: unitsQuery.search,
-              setQuery: (sq) =>
-                setUnitsQuery((q) => {
-                  q.search = sq;
-                }),
-              queryPlaceholder: "Find units...",
-              isLoading: unitsLoading,
-            },
-          ],
-          setFilter: (k, v) => {
-            setLocationsQuery((q) => {
-              q[k] = q[k] === v ? undefined : v;
-              q.offset = 0;
-            });
-          },
-        }}
+        filterOptions={organizationFilters}
         notFoundDetail="No locations found."
         action={
           <button
