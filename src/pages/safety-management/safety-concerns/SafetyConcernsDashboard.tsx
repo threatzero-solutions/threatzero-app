@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { LEVEL, READ, WRITE } from "../../../constants/permissions";
+import { READ, WRITE } from "../../../constants/permissions";
 import {
   SafetyManagementResourceFilterOptions,
   getTipSubmissionStats,
@@ -24,7 +24,11 @@ const DEFAULT_PAGE_SIZE = 10;
 
 const SafetyConcernsDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useAuth();
+  const {
+    hasPermissions,
+    hasMultipleOrganizationAccess,
+    hasMultipleUnitAccess,
+  } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -66,17 +70,12 @@ const SafetyConcernsDashboard: React.FC = () => {
     [hasPermissions]
   );
 
-  const hasOrganizationOrAdminLevel = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]) ||
-      !!accessTokenClaims?.peer_units?.length,
-    [hasPermissions]
-  );
-
   const { filters: organizationFilters } = useOrganizationFilters({
     query: tableFilterOptions,
     setQuery: setTableFilterOptions,
-    organizationsEnabled: false,
+    organizationsEnabled: hasMultipleOrganizationAccess,
+    organizationKey: "unit.organization.slug",
+    unitsEnabled: hasMultipleUnitAccess,
     unitKey: "unitSlug",
     locationKey: "location.id",
   });
@@ -147,7 +146,7 @@ const SafetyConcernsDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
-              hidden: !hasOrganizationOrAdminLevel,
+              hidden: !hasMultipleUnitAccess,
             },
             {
               label: "Location",

@@ -1,10 +1,9 @@
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 import {
   findWatchStats,
   getWatchStatsCsv,
 } from "../../../queries/training-admin";
 import { useAuth } from "../../../contexts/AuthProvider";
-import { LEVEL } from "../../../constants/permissions";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import DataTable from "../../../components/layouts/DataTable";
@@ -17,20 +16,8 @@ const ViewWatchStats: React.FC = () => {
     {}
   );
 
-  const { hasPermissions, accessTokenClaims } = useAuth();
+  const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
   const { setInfo } = useContext(CoreContext);
-
-  const multipleUnits = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN], "any") ||
-      !!accessTokenClaims?.peer_units?.length,
-    [hasPermissions, accessTokenClaims]
-  );
-
-  const multipleOrganizations = useMemo(
-    () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions]
-  );
 
   const { data: watchStats, isLoading: watchStatsLoading } = useQuery({
     queryKey: ["watch-stats", watchStatsQuery],
@@ -40,9 +27,9 @@ const ViewWatchStats: React.FC = () => {
   const organizationFilters = useOrganizationFilters({
     query: watchStatsQuery,
     setQuery: setWatchStatsQuery,
-    organizationsEnabled: multipleOrganizations,
-    unitsEnabled: multipleUnits,
+    organizationsEnabled: hasMultipleOrganizationAccess,
     organizationKey: "organizationSlug",
+    unitsEnabled: hasMultipleUnitAccess,
     unitKey: "unitSlug",
   });
 
@@ -89,10 +76,12 @@ const ViewWatchStats: React.FC = () => {
             {
               key: "organizationName",
               label: "Organization",
+              hidden: !hasMultipleOrganizationAccess,
             },
             {
               key: "unitName",
               label: "Unit",
+              hidden: !hasMultipleUnitAccess,
             },
             {
               key: "year",

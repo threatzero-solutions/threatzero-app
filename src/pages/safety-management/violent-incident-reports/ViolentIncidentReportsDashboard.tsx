@@ -12,7 +12,7 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Link, useLocation } from "react-router-dom";
-import { LEVEL, READ, WRITE } from "../../../constants/permissions";
+import { READ, WRITE } from "../../../constants/permissions";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
@@ -25,7 +25,11 @@ dayjs.extend(relativeTime);
 
 const ViolentIncidentReportsDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useAuth();
+  const {
+    hasPermissions,
+    hasMultipleOrganizationAccess,
+    hasMultipleUnitAccess,
+  } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -73,17 +77,12 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
     [hasPermissions]
   );
 
-  const hasOrganizationOrAdminLevel = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]) ||
-      !!accessTokenClaims?.peer_units?.length,
-    [hasPermissions]
-  );
-
   const { filters: organizationFilters } = useOrganizationFilters({
     query: tableFilterOptions,
     setQuery: setTableFilterOptions,
-    organizationsEnabled: false,
+    organizationsEnabled: hasMultipleOrganizationAccess,
+    organizationKey: "unit.organization.slug",
+    unitsEnabled: hasMultipleUnitAccess,
     unitKey: "unitSlug",
     locationKey: "location.id",
   });
@@ -154,7 +153,7 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
-              hidden: !hasOrganizationOrAdminLevel,
+              hidden: !hasMultipleUnitAccess,
             },
             // {
             //   label: "Files",

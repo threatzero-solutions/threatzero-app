@@ -109,6 +109,7 @@ export const useOrganizationFilters = ({
         setQuery: (sq) =>
           setOrganizationsQuery((q) => {
             q.search = sq;
+            q.limit = 5;
           }),
         queryPlaceholder: "Find organizations...",
         isLoading: organizationsLoading,
@@ -118,6 +119,11 @@ export const useOrganizationFilters = ({
             setFilter(unitKey, undefined);
           }
         },
+        loadMore: () =>
+          setOrganizationsQuery((q) => {
+            q.limit = +(q.limit ?? 5) + 5;
+          }),
+        hasMore: organizations && organizations.count > organizations.limit,
       },
       {
         key: unitKey ?? "unit",
@@ -132,6 +138,7 @@ export const useOrganizationFilters = ({
         setQuery: (sq) =>
           setUnitsQuery((q) => {
             q.search = sq;
+            q.limit = 5;
           }),
         queryPlaceholder: "Find units...",
         isLoading: unitsLoading,
@@ -144,6 +151,11 @@ export const useOrganizationFilters = ({
             setFilter(locationKey, undefined);
           }
         },
+        loadMore: () =>
+          setUnitsQuery((q) => {
+            q.limit = +(q.limit ?? 5) + 5;
+          }),
+        hasMore: units && units.count > units.limit,
       },
       {
         key: locationKey ?? "location",
@@ -158,11 +170,17 @@ export const useOrganizationFilters = ({
         setQuery: (sq) =>
           setLocationsQuery((q) => {
             q.search = sq;
+            q.limit = 5;
           }),
         queryPlaceholder: "Find locations...",
         isLoading: locationsLoading,
         hidden:
           !locationKey || !locationsEnabled || (unitsEnabled && !unitSelected),
+        loadMore: () =>
+          setLocationsQuery((q) => {
+            q.limit = +(q.limit ?? 5) + 5;
+          }),
+        hasMore: locations && locations.count > locations.limit,
       },
     ],
     setQuery,

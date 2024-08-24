@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -13,6 +14,7 @@ import ErrorPage from "../pages/ErrorPage";
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
 import axios, { InternalAxiosRequestConfig } from "axios";
 import SplashScreen from "../components/layouts/SplashScreen";
+import { LEVEL } from "../constants/permissions";
 
 const TOKEN_MIN_VALIDATY_SECONDS = 2;
 
@@ -75,6 +77,8 @@ export interface AuthContextType {
   ) => boolean;
   accessTokenClaims?: { [key: string]: any } | null;
   interceptorReady: boolean;
+  hasMultipleUnitAccess: boolean;
+  hasMultipleOrganizationAccess: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -85,6 +89,8 @@ export const AuthContext = createContext<AuthContextType>({
   addEventListener: () => {},
   hasPermissions: () => false,
   interceptorReady: false,
+  hasMultipleUnitAccess: false,
+  hasMultipleOrganizationAccess: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -248,6 +254,19 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     [keycloak]
   );
 
+  // Commonly used permission types.
+  const hasMultipleUnitAccess = useMemo(
+    () =>
+      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN], "any") ||
+      !!keycloak?.tokenParsed?.peer_units?.length,
+    [hasPermissions, keycloak?.tokenParsed]
+  );
+
+  const hasMultipleOrganizationAccess = useMemo(
+    () => hasPermissions([LEVEL.ADMIN]),
+    [hasPermissions]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -259,6 +278,8 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         hasPermissions,
         accessTokenClaims: keycloak?.tokenParsed,
         interceptorReady,
+        hasMultipleUnitAccess,
+        hasMultipleOrganizationAccess,
       }}
     >
       {keycloak ? (

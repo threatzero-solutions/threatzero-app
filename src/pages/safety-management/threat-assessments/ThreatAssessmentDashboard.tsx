@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { LEVEL, READ, WRITE } from "../../../constants/permissions";
+import { READ, WRITE } from "../../../constants/permissions";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -25,7 +25,11 @@ dayjs.extend(relativeTime);
 
 const ThreatAssessmentDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useAuth();
+  const {
+    hasPermissions,
+    hasMultipleOrganizationAccess,
+    hasMultipleUnitAccess,
+  } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -72,17 +76,12 @@ const ThreatAssessmentDashboard: React.FC = () => {
     [hasPermissions]
   );
 
-  const hasOrganizationOrAdminLevel = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]) ||
-      !!accessTokenClaims?.peer_units?.length,
-    [hasPermissions]
-  );
-
   const { filters: organizationFilters } = useOrganizationFilters({
     query: tableFilterOptions,
     setQuery: setTableFilterOptions,
-    organizationsEnabled: false,
+    organizationsEnabled: hasMultipleOrganizationAccess,
+    organizationKey: "unit.organization.slug",
+    unitsEnabled: hasMultipleUnitAccess,
     unitKey: "unitSlug",
     locationKey: "location.id",
   });
@@ -155,7 +154,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
-              hidden: !hasOrganizationOrAdminLevel,
+              hidden: !hasMultipleUnitAccess,
             },
             // {
             //   label: "Files",
