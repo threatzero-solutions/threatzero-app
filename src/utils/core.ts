@@ -143,3 +143,15 @@ export const formatPhoneNumber = (phoneNumber: string) => {
 export const stripPhoneNumber = (phoneNumber: string) => {
   return phoneNumber.replace(/[^+\d]/g, "");
 };
+
+export const dedup = <T>(arr: T[], key?: (item: T) => string) => {
+  const seen = new Set();
+  return arr.filter((item) => {
+    const k = key ? key(item) : item;
+    if (seen.has(k)) {
+      return false;
+    }
+    seen.add(k);
+    return true;
+  });
+};

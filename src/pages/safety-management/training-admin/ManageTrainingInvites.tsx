@@ -41,11 +41,12 @@ import {
   getOrganizationBySlug,
   getUnitBySlug,
 } from "../../../queries/organizations";
-import { classNames, stripHtml } from "../../../utils/core";
+import { stripHtml } from "../../../utils/core";
 import CourseSelect from "../../../components/forms/inputs/CourseSelect";
 import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 import { useDebounceValue } from "usehooks-ts";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
+import ViewPercentWatched from "./components/ViewPercentWatched";
 
 const CSV_HEADERS_MAPPER = new Map([
   ["firstname", "firstName"],
@@ -87,7 +88,7 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
   ) : (
     <span>
       {trainingItemMetadata ? (
-        <span className="line-clamp-2" title={title ?? undefined}>
+        <span className="line-clamp-3" title={title ?? undefined}>
           {title}
         </span>
       ) : trainingItemMetadata === null ? (
@@ -117,7 +118,9 @@ const ViewOrganization: React.FC<{ organizationSlug?: string }> = ({
   return isLoading ? (
     <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
   ) : (
-    <span>{organizationName ? organizationName : "—"}</span>
+    <span className="line-clamp-3" title={organizationName ?? undefined}>
+      {organizationName ? organizationName : "—"}
+    </span>
   );
 };
 
@@ -131,26 +134,8 @@ const ViewUnit: React.FC<{ unitSlug?: string }> = ({ unitSlug }) => {
   return isLoading ? (
     <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
   ) : (
-    <span>{unitName ? unitName : "—"}</span>
-  );
-};
-
-const ViewPercentWatched: React.FC<{ percentWatched?: string }> = ({
-  percentWatched,
-}) => {
-  const value = +(percentWatched ?? "0");
-  return (
-    <span
-      className={classNames(
-        "text-right w-full block px-5 font-semibold",
-        value > 80
-          ? "text-green-400"
-          : value > 50
-          ? "text-orange-400"
-          : "text-red-400"
-      )}
-    >
-      {value.toFixed(0)}%
+    <span className="line-clamp-3" title={unitName ?? undefined}>
+      {unitName ? unitName : "—"}
     </span>
   );
 };
