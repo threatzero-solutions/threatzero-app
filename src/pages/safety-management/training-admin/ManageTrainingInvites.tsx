@@ -7,21 +7,17 @@ import {
 } from "../../../types/api";
 import Input from "../../../components/forms/inputs/Input";
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
-import {
-  ChangeEvent,
-  FormEvent,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { ChangeEvent, FormEvent, useContext, useMemo, useState } from "react";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import { SimpleChangeEvent } from "../../../types/core";
-import { getTrainingCourse, getTrainingItem } from "../../../queries/training";
+import {
+  getTrainingCourse,
+  getTrainingItem,
+  getTrainingItems,
+} from "../../../queries/training";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useAuth } from "../../../contexts/AuthProvider";
-import { LEVEL } from "../../../constants/permissions";
 import { ErrorContext } from "../../../contexts/error/error-context";
 import { useResolvedPath } from "react-router-dom";
 import {
@@ -41,10 +37,16 @@ import dayjs from "dayjs";
 import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
 import Dropdown from "../../../components/layouts/Dropdown";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
-import { getUnitBySlug } from "../../../queries/organizations";
+import {
+  getOrganizationBySlug,
+  getUnitBySlug,
+} from "../../../queries/organizations";
 import { stripHtml } from "../../../utils/core";
 import CourseSelect from "../../../components/forms/inputs/CourseSelect";
 import Autocomplete from "../../../components/forms/inputs/Autocomplete";
+import { useDebounceValue } from "usehooks-ts";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
+import ViewPercentWatched from "./components/ViewPercentWatched";
 
 const CSV_HEADERS_MAPPER = new Map([
   ["firstname", "firstName"],
@@ -80,12 +82,15 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
       getTrainingItem(queryKey[1]).then((t) => t?.metadata ?? null),
     enabled: !!trainingItemId,
   });
+  const title = stripHtml(trainingItemMetadata?.title);
   return isLoading ? (
     <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
   ) : (
     <span>
       {trainingItemMetadata ? (
-        stripHtml(trainingItemMetadata.title)
+        <span className="line-clamp-3" title={title ?? undefined}>
+          {title}
+        </span>
       ) : trainingItemMetadata === null ? (
         <span className="inline-flex items-center gap-1">
           Unknown{" "}
@@ -101,6 +106,24 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
   );
 };
 
+const ViewOrganization: React.FC<{ organizationSlug?: string }> = ({
+  organizationSlug,
+}) => {
+  const { data: organizationName, isLoading } = useQuery({
+    queryKey: ["organization-name", organizationSlug] as const,
+    queryFn: ({ queryKey }) =>
+      getOrganizationBySlug(queryKey[1]).then((o) => o?.name ?? null),
+    enabled: !!organizationSlug,
+  });
+  return isLoading ? (
+    <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
+  ) : (
+    <span className="line-clamp-3" title={organizationName ?? undefined}>
+      {organizationName ? organizationName : "—"}
+    </span>
+  );
+};
+
 const ViewUnit: React.FC<{ unitSlug?: string }> = ({ unitSlug }) => {
   const { data: unitName, isLoading } = useQuery({
     queryKey: ["unit-name", unitSlug] as const,
@@ -111,7 +134,9 @@ const ViewUnit: React.FC<{ unitSlug?: string }> = ({ unitSlug }) => {
   return isLoading ? (
     <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
   ) : (
-    <span>{unitName ? unitName : "—"}</span>
+    <span className="line-clamp-3" title={unitName ?? undefined}>
+      {unitName ? unitName : "—"}
+    </span>
   );
 };
 
@@ -137,7 +162,7 @@ const ManageTrainingInvites: React.FC = () => {
   const [selectedTrainingInvite, setSelectedTrainingInvite] =
     useState<OpaqueToken>();
 
-  const { hasPermissions, accessTokenClaims } = useAuth();
+  const { hasMultipleUnitAccess, hasMultipleOrganizationAccess } = useAuth();
   const { setError } = useContext(ErrorContext);
   const { setSuccess, setInfo } = useContext(CoreContext);
 
@@ -153,16 +178,16 @@ const ManageTrainingInvites: React.FC = () => {
     }
   );
 
-  const multipleUnits = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN], "any") ||
-      !!accessTokenClaims?.peer_units?.length,
-    [hasPermissions, accessTokenClaims]
+  const [trainingItemFilterQuery, setTrainingItemFilterQuery] =
+    useImmer<ItemFilterQueryParams>({ limit: 10 });
+  const [debouncedTrainingItemFilterQuery] = useDebounceValue(
+    trainingItemFilterQuery,
+    300
   );
-
-  useEffect(() => {
-    console.debug(selectedCourse);
-  }, [selectedCourse]);
+  const { data: trainingItems, isLoading: trainingItemsLoading } = useQuery({
+    queryKey: ["training-items", debouncedTrainingItemFilterQuery] as const,
+    queryFn: ({ queryKey }) => getTrainingItems(queryKey[1]),
+  });
 
   const { data: allTrainingItems } = useQuery({
     queryKey: ["training-course-items", selectedCourse] as const,
@@ -174,6 +199,16 @@ const ManageTrainingInvites: React.FC = () => {
         }, [] as TrainingItem[])
       ),
     enabled: !!selectedCourse,
+  });
+
+  const organizationFilters = useOrganizationFilters({
+    query: itemFilterOptions,
+    setQuery: setItemFilterOptions,
+    organizationsEnabled: hasMultipleOrganizationAccess,
+    organizationKey: "organizationSlug",
+    unitsEnabled: hasMultipleUnitAccess,
+    unitKey: "unitSlug",
+    locationsEnabled: false,
   });
 
   const filteredTrainingItems = useMemo(() => {
@@ -385,7 +420,7 @@ const ManageTrainingInvites: React.FC = () => {
                 {
                   label: "Unit",
                   key: "unit",
-                  hidden: !multipleUnits,
+                  hidden: !hasMultipleUnitAccess,
                 },
                 {
                   label: <span className="sr-only">Delete Invite</span>,
@@ -508,6 +543,7 @@ const ManageTrainingInvites: React.FC = () => {
         {/* VIEW EXISTING INVITES */}
         <DataTable
           dense
+          className="text-xs"
           data={{
             headers: [
               {
@@ -519,8 +555,14 @@ const ManageTrainingInvites: React.FC = () => {
                 key: "email",
               },
               {
+                label: "Organization",
+                key: "organizationSlug",
+                hidden: !hasMultipleOrganizationAccess,
+              },
+              {
                 label: "Unit",
                 key: "unitSlug",
+                hidden: !hasMultipleUnitAccess,
               },
               {
                 label: "Training Item",
@@ -534,6 +576,11 @@ const ManageTrainingInvites: React.FC = () => {
               {
                 label: "Expires",
                 key: "expiresOn",
+              },
+              {
+                label: "Percent Watched",
+                key: "watchStat.percentWatched",
+                align: "right",
               },
               {
                 label: <span className="sr-only">Resend Invite</span>,
@@ -570,6 +617,9 @@ const ManageTrainingInvites: React.FC = () => {
                   <span className="sr-only">, {t.id}</span>
                 </button>
               ),
+              organizationSlug: (
+                <ViewOrganization organizationSlug={t.value.organizationSlug} />
+              ),
               unitSlug: <ViewUnit unitSlug={t.value.unitSlug} />,
               trainingItemId: (
                 <ViewTrainingItem trainingItemId={t.value.trainingItemId} />
@@ -583,6 +633,11 @@ const ManageTrainingInvites: React.FC = () => {
                 <span title={dayjs(t.value.expiresOn).format("MMM D, YYYY")}>
                   {dayjs(t.value.expiresOn).fromNow()}
                 </span>
+              ),
+              ["watchStat.percentWatched"]: (
+                <ViewPercentWatched
+                  percentWatched={t.watchStat?.percentWatched}
+                />
               ),
               link: (
                 <button
@@ -659,6 +714,35 @@ const ManageTrainingInvites: React.FC = () => {
               setItemFilterOptions((q) => {
                 q.offset = offset;
               }),
+          }}
+          filterOptions={{
+            filters: [
+              {
+                key: "trainingItemId",
+                label: "Training Item",
+                many: true,
+                options: trainingItems?.results.map((t) => ({
+                  label: stripHtml(t.metadata.title) ?? "—",
+                  value: t.id,
+                })) ?? [{ value: undefined, label: "All Training Items" }],
+                query: trainingItemFilterQuery.search,
+                setQuery: (sq) =>
+                  setTrainingItemFilterQuery((q) => {
+                    q.search = sq;
+                    q.limit = 10;
+                  }),
+                queryPlaceholder: "Search items...",
+                isLoading: trainingItemsLoading,
+                loadMore: () =>
+                  setTrainingItemFilterQuery((q) => {
+                    q.limit = +(q.limit ?? 10) + 10;
+                  }),
+                hasMore:
+                  trainingItems && trainingItems.count > trainingItems.limit,
+              },
+              ...(organizationFilters.filters ?? []),
+            ],
+            setQuery: setItemFilterOptions,
           }}
         />
       </div>

@@ -10,6 +10,8 @@ import DataTable from "../../../components/layouts/DataTable";
 import { useQuery } from "@tanstack/react-query";
 import { CoreContext } from "../../../contexts/core/core-context";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
+import ViewPercentWatched from "./components/ViewPercentWatched";
+import { dedup, stripHtml } from "../../../utils/core";
 
 const ViewWatchStats: React.FC = () => {
   const [watchStatsQuery, setWatchStatsQuery] = useImmer<ItemFilterQueryParams>(
@@ -58,20 +60,12 @@ const ViewWatchStats: React.FC = () => {
         data={{
           headers: [
             {
-              key: "firstName",
-              label: "First Name",
-            },
-            {
               key: "lastName",
-              label: "Last Name",
+              label: "Name",
             },
             {
               key: "email",
               label: "Email",
-            },
-            {
-              key: "trainingItemTitle",
-              label: "Training Item",
             },
             {
               key: "organizationName",
@@ -84,6 +78,10 @@ const ViewWatchStats: React.FC = () => {
               hidden: !hasMultipleUnitAccess,
             },
             {
+              key: "trainingItemTitle",
+              label: "Training Item",
+            },
+            {
               key: "year",
               label: "Year",
             },
@@ -92,18 +90,48 @@ const ViewWatchStats: React.FC = () => {
               label: "Percent Watched",
             },
           ],
-          rows: (watchStats?.results ?? []).map((r, idx) => ({
-            id: `${r.organizationSlug ?? idx}|${r.unitSlug ?? idx}|${
-              r.email ?? idx
-            }|${r.trainingItemId ?? idx}|${r.year ?? idx}`,
-            firstName: r.firstName,
-            lastName: r.lastName,
-            email: r.email,
-            trainingItemTitle: r.trainingItemTitle,
-            organizationName: r.organizationName,
-            unitName: r.unitName,
+          rows: dedup(
+            (watchStats?.results ?? []).map((r) => ({
+              ...r,
+              id: `${r.organizationSlug}|${r.unitSlug}|${r.userExternalId}|${r.trainingItemId}|${r.year}|${r.percentWatched}`,
+            })),
+            (r) => r.id
+          ).map((r) => ({
+            id: r.id,
+            lastName: (
+              <span className="whitespace-nowrap">
+                {((r.lastName ?? "") + ", " + (r.firstName ?? "")).replace(
+                  /(^[,\s]+)|(^[,\s]+$)/g,
+                  ""
+                ) || "—"}
+              </span>
+            ),
+            email: r.email || "—",
+            organizationName: (
+              <span
+                className="line-clamp-2"
+                title={r.organizationName ?? undefined}
+              >
+                {r.organizationName || "—"}
+              </span>
+            ),
+            unitName: (
+              <span className="line-clamp-2" title={r.unitName ?? undefined}>
+                {r.unitName || "—"}
+              </span>
+            ),
+            trainingItemTitle: (
+              <span
+                className="line-clamp-2"
+                title={stripHtml(r.trainingItemTitle) ?? undefined}
+              >
+                {stripHtml(r.trainingItemTitle) || "—"}
+              </span>
+            ),
             year: r.year,
-            percentWatched: r.percentWatched,
+            percentWatched: (
+              <ViewPercentWatched percentWatched={r.percentWatched} />
+            ),
           })),
         }}
         title="All Training Watch Stats"

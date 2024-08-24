@@ -423,6 +423,10 @@ export interface OpaqueToken extends Base {
   value: Record<string, any>;
 }
 
+export interface TrainingToken extends OpaqueToken {
+  watchStat?: WatchStat | null;
+}
+
 export interface WatchStat {
   trainingItemId: string;
   trainingItemTitle: string;
