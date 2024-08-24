@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { ResendTrainingLinksDto, SendTrainingLinksDto } from "../types/api";
-import { OpaqueToken, WatchStat } from "../types/entities";
+import { TrainingToken, WatchStat } from "../types/entities";
 import { findMany } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
@@ -26,7 +26,7 @@ export const resendTrainingLinks = (
     .then((res) => res.data);
 
 export const getTrainingInvites = (query?: ItemFilterQueryParams) =>
-  findMany<OpaqueToken>("/training-admin/invites/", query);
+  findMany<TrainingToken>("/training-admin/invites/", query);
 
 export const getTrainingInvitesCsv = (
   trainingUrlTemplate: string,

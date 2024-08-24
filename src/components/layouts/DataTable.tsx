@@ -99,8 +99,8 @@ const DataTable: React.FC<DataTableProps> = ({
                           key={key}
                           scope="col"
                           className={classNames(
-                            dense ? "py-1.5" : "py-3.5",
-                            "text-left text-sm font-semibold text-gray-900",
+                            dense ? "py-1.5 text-xs" : "py-3.5 text-sm",
+                            "text-left font-semibold text-gray-900",
                             idx === 0
                               ? dense
                                 ? "pl-2.5 pr-1.5 sm:pl-0"
@@ -134,9 +134,12 @@ const DataTable: React.FC<DataTableProps> = ({
                             onKeyUp={() => {}}
                           >
                             {label}
-                            {!noSort && !!orderOptions?.setOrder && (
+                            {!!orderOptions?.setOrder && (
                               <span
                                 className={classNames(
+                                  noSort
+                                    ? "pointer-events-none hidden w-0"
+                                    : "",
                                   "ml-2 flex-none rounded transition-colors",
                                   orderOptions?.order?.[key]
                                     ? "bg-gray-100 text-gray-900 group-hover:bg-gray-200"
@@ -145,12 +148,16 @@ const DataTable: React.FC<DataTableProps> = ({
                               >
                                 {orderOptions?.order?.[key] !== "ASC" ? (
                                   <ChevronDownIcon
-                                    className="h-5 w-5"
+                                    className={classNames(
+                                      dense ? "h-4 w-4" : "h-5 w-5"
+                                    )}
                                     aria-hidden="true"
                                   />
                                 ) : (
                                   <ChevronUpIcon
-                                    className="h-5 w-5"
+                                    className={classNames(
+                                      dense ? "h-4 w-4" : "h-5 w-5"
+                                    )}
                                     aria-hidden="true"
                                   />
                                 )}
@@ -171,8 +178,8 @@ const DataTable: React.FC<DataTableProps> = ({
                             <td
                               key={`${row.id}_${key}`}
                               className={classNames(
-                                dense ? "py-2" : "py-4",
-                                "text-sm text-gray-500",
+                                dense ? "py-2 text-xs" : "py-4 text-sm",
+                                "text-gray-500",
                                 idx_col === 0
                                   ? dense
                                     ? "pl-2.5 pr-1.5 sm:pl-0"
