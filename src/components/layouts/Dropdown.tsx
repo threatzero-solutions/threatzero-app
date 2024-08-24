@@ -6,14 +6,14 @@ import {
   Transition,
 } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { Fragment, ReactNode } from "react";
+import { Fragment, MouseEventHandler, ReactNode } from "react";
 import { classNames } from "../../utils/core";
 import { flip, offset, Placement, useFloating } from "@floating-ui/react";
 
 export interface DropdownAction {
   id: string | number;
   value: ReactNode;
-  action: () => void;
+  action?: MouseEventHandler<HTMLButtonElement>;
   hidden?: boolean;
   disabled?: boolean;
 }
@@ -43,10 +43,12 @@ const Action: React.FC<{ action: DropdownAction }> = ({ action }) => {
       {({ focus }) => (
         <button
           type="button"
-          disabled={action.disabled}
-          onClick={action.action}
+          // disabled={action.disabled}
+          onClick={action.disabled ? (e) => e.preventDefault() : action.action}
           className={classNames(
-            focus ? "bg-gray-100 text-gray-900" : "text-gray-700",
+            focus && !action.disabled
+              ? "bg-gray-100 text-gray-900"
+              : "text-gray-700",
             "block w-full px-4 py-2 text-left text-sm"
           )}
         >
@@ -137,6 +139,7 @@ const Dropdown: React.FC<DropdownProps> = ({
             "max-h-[45vh] overflow-y-auto",
             showDividers ? "divide-y divide-gray-100" : ""
           )}
+          static={true}
         >
           {!!actions && (
             <ActionGroup

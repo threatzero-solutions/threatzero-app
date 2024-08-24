@@ -1,69 +1,37 @@
-import { useContext, useEffect, useMemo } from "react";
+import { useContext } from "react";
 import {
   findWatchStats,
   getWatchStatsCsv,
 } from "../../../queries/training-admin";
 import { useAuth } from "../../../contexts/AuthProvider";
-import { LEVEL } from "../../../constants/permissions";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import DataTable from "../../../components/layouts/DataTable";
 import { useQuery } from "@tanstack/react-query";
-import { getOrganizations, getUnits } from "../../../queries/organizations";
 import { CoreContext } from "../../../contexts/core/core-context";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 
 const ViewWatchStats: React.FC = () => {
   const [watchStatsQuery, setWatchStatsQuery] = useImmer<ItemFilterQueryParams>(
     {}
   );
-  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
-    limit: 100,
-  });
 
-  const { hasPermissions, accessTokenClaims } = useAuth();
+  const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
   const { setInfo } = useContext(CoreContext);
-
-  const multipleUnits = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN], "any") ||
-      !!accessTokenClaims?.peer_units?.length,
-    [hasPermissions, accessTokenClaims]
-  );
-
-  const multipleOrganizations = useMemo(
-    () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions]
-  );
 
   const { data: watchStats, isLoading: watchStatsLoading } = useQuery({
     queryKey: ["watch-stats", watchStatsQuery],
     queryFn: () => findWatchStats(watchStatsQuery),
   });
 
-  const { data: organizations } = useQuery({
-    queryKey: ["organizations"],
-    queryFn: () => getOrganizations({ limit: 100 }),
-    enabled: multipleOrganizations,
+  const organizationFilters = useOrganizationFilters({
+    query: watchStatsQuery,
+    setQuery: setWatchStatsQuery,
+    organizationsEnabled: hasMultipleOrganizationAccess,
+    organizationKey: "organizationSlug",
+    unitsEnabled: hasMultipleUnitAccess,
+    unitKey: "unitSlug",
   });
-
-  const { data: units } = useQuery({
-    queryKey: ["units", unitsQuery] as const,
-    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
-    enabled: multipleUnits,
-  });
-
-  useEffect(() => {
-    setUnitsQuery((q) => {
-      if (watchStatsQuery.organizationSlug) {
-        q["organization.slug"] = watchStatsQuery.organizationSlug;
-      } else {
-        Reflect.deleteProperty(q, "organization.slug");
-      }
-    });
-    setWatchStatsQuery((q) => {
-      Reflect.deleteProperty(q, "unitSlug");
-    });
-  }, [watchStatsQuery.organizationSlug]);
 
   const handleDownloadWatchStatsCsv = () => {
     setInfo("Downloading CSV...");
@@ -108,10 +76,12 @@ const ViewWatchStats: React.FC = () => {
             {
               key: "organizationName",
               label: "Organization",
+              hidden: !hasMultipleOrganizationAccess,
             },
             {
               key: "unitName",
               label: "Unit",
+              hidden: !hasMultipleUnitAccess,
             },
             {
               key: "year",
@@ -166,48 +136,7 @@ const ViewWatchStats: React.FC = () => {
               q.offset = offset;
             }),
         }}
-        filterOptions={{
-          filters: [
-            {
-              key: "organizationSlug",
-              label: "Organization",
-              value: (watchStatsQuery.organizationSlug ?? []) as string[],
-              options: organizations?.results.map((org) => ({
-                value: org.slug,
-                label: org.name,
-              })) ?? [{ value: undefined, label: "All organizations" }],
-              hidden: !multipleOrganizations,
-            },
-            {
-              key: "unitSlug",
-              label: "Unit",
-              value: (watchStatsQuery.unitSlug ?? []) as string[],
-              options: units?.results.map((unit) => ({
-                value: unit.slug,
-                label: unit.name,
-              })) ?? [{ value: undefined, label: "All units" }],
-              hidden: !multipleUnits,
-            },
-          ],
-          setFilter: (key, value) =>
-            setWatchStatsQuery((options) => {
-              if (["organizationSlug", "unitSlug"].includes(key)) {
-                if (!value || !Array.isArray(options[key])) {
-                  options[key] = [];
-                }
-                if (value && !(options[key] as string[]).includes(value)) {
-                  options[key] = [...(options[key] as string[]), value];
-                } else if (value) {
-                  options[key] = (options[key] as string[]).filter(
-                    (v) => v !== value
-                  );
-                }
-              } else {
-                options[key] = options[key] === value ? undefined : value;
-              }
-              options.offset = 0;
-            }),
-        }}
+        filterOptions={organizationFilters}
       />
     </>
   );

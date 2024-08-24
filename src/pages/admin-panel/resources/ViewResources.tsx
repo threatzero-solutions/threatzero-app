@@ -117,7 +117,6 @@ export const ViewResources: React.FC = () => {
             {
               key: "type",
               label: "Resource Type",
-              value: itemFilterOptions.type,
               options: Object.values(ResourceType).map((type) => ({
                 label: type,
                 value: type,
@@ -126,7 +125,6 @@ export const ViewResources: React.FC = () => {
             {
               key: "category",
               label: "Category",
-              value: itemFilterOptions.category,
               options: [
                 { label: "Prevention", value: "prevention" },
                 { label: "Preparation", value: "preparation" },
@@ -134,12 +132,7 @@ export const ViewResources: React.FC = () => {
               ],
             },
           ],
-          setFilter: (key, value) =>
-            setItemFilterOptions((options) => ({
-              ...options,
-              [key]: options[key] === value ? undefined : value,
-              offset: 0,
-            })),
+          setQuery: setItemFilterOptions,
         }}
       />
       <SlideOver

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { LEVEL, READ, WRITE } from "../../../constants/permissions";
+import { READ, WRITE } from "../../../constants/permissions";
 import { withRequirePermissions } from "../../../guards/RequirePermissions";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -15,22 +15,21 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import StatusPill from "./components/StatusPill";
 import DataTable from "../../../components/layouts/DataTable";
-import { getUnits } from "../../../queries/organizations";
-import {
-  ItemFilterQueryParams,
-  useItemFilterQuery,
-} from "../../../hooks/use-item-filter-query";
+import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
 import EditableCell from "../../../components/layouts/EditableCell";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { useAuth } from "../../../contexts/AuthProvider";
-import { useImmer } from "use-immer";
-import { useDebounceValue } from "usehooks-ts";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 
 dayjs.extend(relativeTime);
 
 const ThreatAssessmentDashboard: React.FC = () => {
   const location = useLocation();
-  const { hasPermissions, accessTokenClaims } = useAuth();
+  const {
+    hasPermissions,
+    hasMultipleOrganizationAccess,
+    hasMultipleUnitAccess,
+  } = useAuth();
 
   const {
     itemFilterOptions: tableFilterOptions,
@@ -77,22 +76,14 @@ const ThreatAssessmentDashboard: React.FC = () => {
     [hasPermissions]
   );
 
-  const hasOrganizationOrAdminLevel = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN]) ||
-      !!accessTokenClaims?.peer_units?.length,
-    [hasPermissions]
-  );
-
-  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
-    limit: 5,
-  });
-  const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
-
-  const { data: units, isLoading: unitsLoading } = useQuery({
-    queryKey: ["units", debouncedUnitsQuery] as const,
-    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
-    enabled: hasOrganizationOrAdminLevel,
+  const { filters: organizationFilters } = useOrganizationFilters({
+    query: tableFilterOptions,
+    setQuery: setTableFilterOptions,
+    organizationsEnabled: hasMultipleOrganizationAccess,
+    organizationKey: "unit.organization.slug",
+    unitsEnabled: hasMultipleUnitAccess,
+    unitKey: "unitSlug",
+    locationKey: "location.id",
   });
 
   return (
@@ -163,7 +154,7 @@ const ThreatAssessmentDashboard: React.FC = () => {
             {
               label: "Unit",
               key: "unit.name",
-              hidden: !hasOrganizationOrAdminLevel,
+              hidden: !hasMultipleUnitAccess,
             },
             // {
             //   label: "Files",
@@ -256,41 +247,14 @@ const ThreatAssessmentDashboard: React.FC = () => {
             {
               key: "status",
               label: "Status",
-              value: tableFilterOptions.status
-                ? `${tableFilterOptions.status}`
-                : undefined,
               options: Object.values(AssessmentStatus).map((status) => ({
                 value: status,
                 label: fromStatus(status),
               })),
             },
-            {
-              key: "unitSlug",
-              label: "Unit",
-              value: tableFilterOptions.unitSlug
-                ? `${tableFilterOptions.unitSlug}`
-                : undefined,
-              // TODO: Dynamically get all units.
-              options: units?.results.map((unit) => ({
-                value: unit.slug,
-                label: unit.name,
-              })) ?? [{ value: undefined, label: "All schools" }],
-              hidden: !hasOrganizationOrAdminLevel,
-              query: unitsQuery.search,
-              setQuery: (sq) =>
-                setUnitsQuery((q) => {
-                  q.search = sq;
-                }),
-              queryPlaceholder: "Find units...",
-              isLoading: unitsLoading,
-            },
+            ...(organizationFilters ?? []),
           ],
-          setFilter: (key, value) =>
-            setTableFilterOptions((options) => ({
-              ...options,
-              [key]: options[key] === value ? undefined : value,
-              offset: 0,
-            })),
+          setQuery: setTableFilterOptions,
         }}
       />
     </div>
