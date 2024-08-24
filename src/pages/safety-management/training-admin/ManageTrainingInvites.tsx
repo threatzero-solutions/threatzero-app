@@ -81,12 +81,15 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
       getTrainingItem(queryKey[1]).then((t) => t?.metadata ?? null),
     enabled: !!trainingItemId,
   });
+  const title = stripHtml(trainingItemMetadata?.title);
   return isLoading ? (
     <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
   ) : (
     <span>
       {trainingItemMetadata ? (
-        stripHtml(trainingItemMetadata.title)
+        <span className="line-clamp-2" title={title ?? undefined}>
+          {title}
+        </span>
       ) : trainingItemMetadata === null ? (
         <span className="inline-flex items-center gap-1">
           Unknown{" "}
@@ -734,7 +737,7 @@ const ManageTrainingInvites: React.FC = () => {
                 label: "Training Item",
                 many: true,
                 options: trainingItems?.results.map((t) => ({
-                  label: t.metadata.title,
+                  label: stripHtml(t.metadata.title) ?? "—",
                   value: t.id,
                 })) ?? [{ value: undefined, label: "All Training Items" }],
                 query: trainingItemFilterQuery.search,
