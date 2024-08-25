@@ -12,6 +12,8 @@ import { CoreContext } from "../../../contexts/core/core-context";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import ViewPercentWatched from "./components/ViewPercentWatched";
 import { dedup, stripHtml } from "../../../utils/core";
+import { useDebounceValue } from "usehooks-ts";
+import { getTrainingItems } from "../../../queries/training";
 
 const ViewWatchStats: React.FC = () => {
   const [watchStatsQuery, setWatchStatsQuery] = useImmer<ItemFilterQueryParams>(
@@ -24,6 +26,17 @@ const ViewWatchStats: React.FC = () => {
   const { data: watchStats, isLoading: watchStatsLoading } = useQuery({
     queryKey: ["watch-stats", watchStatsQuery],
     queryFn: () => findWatchStats(watchStatsQuery),
+  });
+
+  const [trainingItemFilterQuery, setTrainingItemFilterQuery] =
+    useImmer<ItemFilterQueryParams>({ limit: 10 });
+  const [debouncedTrainingItemFilterQuery] = useDebounceValue(
+    trainingItemFilterQuery,
+    300
+  );
+  const { data: trainingItems, isLoading: trainingItemsLoading } = useQuery({
+    queryKey: ["training-items", debouncedTrainingItemFilterQuery] as const,
+    queryFn: ({ queryKey }) => getTrainingItems(queryKey[1]),
   });
 
   const organizationFilters = useOrganizationFilters({
@@ -164,7 +177,35 @@ const ViewWatchStats: React.FC = () => {
               q.offset = offset;
             }),
         }}
-        filterOptions={organizationFilters}
+        filterOptions={{
+          filters: [
+            {
+              key: "trainingItemId",
+              label: "Training Item",
+              many: true,
+              options: trainingItems?.results.map((t) => ({
+                label: stripHtml(t.metadata.title) ?? "—",
+                value: t.id,
+              })) ?? [{ value: undefined, label: "All Training Items" }],
+              query: trainingItemFilterQuery.search,
+              setQuery: (sq) =>
+                setTrainingItemFilterQuery((q) => {
+                  q.search = sq;
+                  q.limit = 10;
+                }),
+              queryPlaceholder: "Search items...",
+              isLoading: trainingItemsLoading,
+              loadMore: () =>
+                setTrainingItemFilterQuery((q) => {
+                  q.limit = +(q.limit ?? 10) + 10;
+                }),
+              hasMore:
+                trainingItems && trainingItems.count > trainingItems.limit,
+            },
+            ...(organizationFilters.filters ?? []),
+          ],
+          setQuery: setWatchStatsQuery,
+        }}
       />
     </>
   );
