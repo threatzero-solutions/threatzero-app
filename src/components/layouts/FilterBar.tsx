@@ -208,7 +208,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
               .map((f) => ({
                 id: `id-${f.key}`,
                 value: (
-                  <div className="inline-flex flex-col gap-2">
+                  <div className="inline-flex flex-col gap-2 text-base">
                     {f.label}
                     {f.setQuery && (
                       <SearchInput
