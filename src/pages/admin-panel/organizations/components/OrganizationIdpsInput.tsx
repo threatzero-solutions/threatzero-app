@@ -6,6 +6,7 @@ import { Organization } from "../../../../types/entities";
 import { PencilIcon } from "@heroicons/react/20/solid";
 import { useQuery } from "@tanstack/react-query";
 import { getOrganizationIdp } from "../../../../queries/organizations";
+import { classNames } from "../../../../utils/core";
 
 interface OrganizationIdpsInputProps {
   organizationId: Organization["id"];
@@ -23,15 +24,30 @@ const IdpRow: React.FC<{
   });
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-1">
       {idp ? (
         <>
-          <span className="ml-3 block text-sm font-medium leading-6 text-gray-900">
-            {idp.name}
-          </span>
-          <button type="button" onClick={() => onSelect?.(idp)}>
-            <PencilIcon className="h-4 w-4 text-gray-400" />
+          <button
+            type="button"
+            className="flex items-center gap-2 cursor-pointer text-gray-900 hover:text-gray-600 transition-colors text-sm font-medium leading-6"
+            onClick={() => onSelect?.(idp)}
+          >
+            <PencilIcon className="h-4 w-4" />
+            <span className="block">{idp.name}</span>
+            <span
+              className={classNames(
+                "rounded font-bold text-white px-2 py-1 uppercase text-xs",
+                idp.protocol === "saml" ? "bg-green-400" : "bg-secondary-400"
+              )}
+            >
+              {idp.protocol}
+            </span>
           </button>
+          <ol className="ml-2 pl-4 flex flex-col gap-2 border-l-2 border-l-secondary-400">
+            {idp.domains.map((domain) => (
+              <li className="text-sm text-gray-500">{domain}</li>
+            ))}
+          </ol>
         </>
       ) : (
         <div className="animate-pulse bg-slate-200 h-4 w-24 rounded-full"></div>
@@ -54,7 +70,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
 
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         {idpSlugs.map((idpSlug) => (
           <IdpRow
             key={idpSlug}

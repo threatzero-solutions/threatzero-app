@@ -15,6 +15,7 @@ import { FormEvent, useContext, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createOrganizationIdp,
+  deleteOrganizationIdp,
   updateOrganizationIdp,
 } from "../../../../queries/organizations";
 import Input from "../../../../components/forms/inputs/Input";
@@ -126,10 +127,9 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
     <div className="flex flex-col gap-1">
       <span className="text-xs">{label}</span>
       <div className="relative w-full">
-        <Input className="pr-10 w-full" readOnly={true} value={value} />
         <div
           className={
-            "cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 hover:opacity-75 transition-opacity"
+            "cursor-pointer absolute inset-y-0 left-0 flex items-center pl-3 hover:opacity-75 transition-opacity"
           }
           onClick={() => {
             navigator.clipboard.writeText(value);
@@ -138,6 +138,7 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
         >
           <ClipboardIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
         </div>
+        <Input className="pl-10 w-full" readOnly={true} value={value} />
       </div>
     </div>
   );
@@ -157,6 +158,8 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
 
   const [showCopyableConfig, setShowCopyableConfig] = useState(isNew);
 
+  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+
   const queryClient = useQueryClient();
   const createIdpMutation = useMutation({
     mutationFn: (idp: OrganizationIdpDto) =>
@@ -170,6 +173,18 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
       queryClient.invalidateQueries({
         queryKey: ["organizations", organizationId],
       });
+      setOpen(false);
+    },
+  });
+
+  const deleteIdpMutation = useMutation({
+    mutationFn: () =>
+      deleteOrganizationIdp(organizationId, originalSlug as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["organizations", organizationId],
+      });
+      setConfirmationClose();
       setOpen(false);
     },
   });
@@ -213,113 +228,125 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
     createIdpMutation.mutate(idp);
   };
 
+  const handleDelete = () => {
+    setConfirmationOpen({
+      title: `Delete ${idp.name} IDP`,
+      message: `Are you sure you want to delete this identity provider?
+      This may affect the ability of users in your organization to log in and
+      access training and other tools. This action cannot be undone.`,
+      onConfirm: () => {
+        deleteIdpMutation.mutate();
+      },
+      destructive: true,
+      confirmText: "Delete",
+    });
+  };
+
   return (
-    <>
-      <SlideOverForm onSubmit={handleSubmit} onClose={() => setOpen(false)}>
-        <SlideOverHeading
-          title={!isNew ? "Edit Identity Provider" : "Add Identity Provider"}
-          description={`Copy configuration values below to paste into your ${idp.protocol.toUpperCase()} provider.`}
-          setOpen={setOpen}
-        >
-          <div className="flex flex-col pt-2 text-gray-500">
-            <button
-              type="button"
-              onClick={() => setShowCopyableConfig((v) => !v)}
-              className="text-start text-sm text-secondary-600 hover:text-secondary-700 transition-colors inline-flex items-center gap-1"
-            >
-              <span>
-                {showCopyableConfig
-                  ? "Hide configuration values"
-                  : "Show configuration values"}
-              </span>
-              {showCopyableConfig ? (
-                <ChevronUpIcon className="h-4 w-4" />
-              ) : (
-                <ChevronDownIcon className="h-4 w-4" />
+    <SlideOverForm
+      onSubmit={handleSubmit}
+      onClose={() => setOpen(false)}
+      onDelete={handleDelete}
+    >
+      <SlideOverHeading
+        title={!isNew ? "Edit Identity Provider" : "Add Identity Provider"}
+        description={`Copy configuration values below to paste into your ${idp.protocol.toUpperCase()} provider.`}
+        setOpen={setOpen}
+      >
+        <div className="flex flex-col pt-2 text-gray-500">
+          <button
+            type="button"
+            onClick={() => setShowCopyableConfig((v) => !v)}
+            className="text-start text-sm text-secondary-600 hover:text-secondary-700 transition-colors inline-flex items-center gap-1"
+          >
+            <span>
+              {showCopyableConfig
+                ? "Hide configuration values"
+                : "Show configuration values"}
+            </span>
+            {showCopyableConfig ? (
+              <ChevronUpIcon className="h-4 w-4" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4" />
+            )}
+          </button>
+          <Transition show={showCopyableConfig}>
+            <div
+              className={classNames(
+                "flex flex-col gap-3 transition-all duration-500 ease-in-out max-h-32 overflow-hidden mt-3",
+                "data-[closed]:max-h-0 data-[closed]:mt-0 data-[closed]:opacity-0"
               )}
-            </button>
-            <Transition show={showCopyableConfig}>
-              <div
-                className={classNames(
-                  "flex flex-col gap-3 transition-all duration-500 ease-in-out max-h-32 overflow-hidden mt-3",
-                  "data-[closed]:max-h-0 data-[closed]:mt-0 data-[closed]:opacity-0"
-                )}
-              >
+            >
+              <IdpConfigValue
+                value={idp.slug ? SERVICE_PROVIDER_REDIRECT_URL(idp.slug) : ""}
+                label={`Redirect${idp.protocol === "saml" ? " / ACS" : ""} URL`}
+              />
+              {idp.protocol === "saml" && (
                 <IdpConfigValue
-                  value={
-                    idp.slug ? SERVICE_PROVIDER_REDIRECT_URL(idp.slug) : ""
-                  }
-                  label={`Redirect${
-                    idp.protocol === "saml" ? " / ACS" : ""
-                  } URL`}
-                />
-                {idp.protocol === "saml" && (
-                  <IdpConfigValue
-                    label="Entity ID"
-                    value={SERVICE_PROVIDER_ENTITY_ID}
-                  />
-                )}
-              </div>
-            </Transition>
-          </div>
-        </SlideOverHeading>
-        <SlideOverFormBody>
-          {INPUT_DATA.sort(orderSort).map((input) => (
-            <SlideOverField
-              key={input.id ?? input.name}
-              label={input.label}
-              name={input.name}
-              helpText={input.helpText}
-            >
-              {input.name === "domains" ? (
-                <MultilineTextInput
-                  key={input.name}
-                  name={input.name}
-                  value={idp.domains}
-                  required={input.required}
-                  onChange={handleChange}
-                />
-              ) : input.name === "unitMatchers" ? (
-                <UnitMatchersInput
-                  name="unitMatchers"
-                  value={idp.unitMatchers}
-                  onChange={handleChange}
-                  organizationId={organizationId}
-                />
-              ) : input.name === "defaultRoleGroups" ? (
-                <MultipleSelect
-                  key={input.name}
-                  prefix="organization_resources"
-                  value={idp.defaultRoleGroups}
-                  options={DEFAULT_ROLE_GROUPS.map((rg) => ({
-                    key: rg,
-                    label: rg,
-                  }))}
-                  onChange={(ids) =>
-                    handleChange({ target: { name: input.name, value: ids } })
-                  }
-                />
-              ) : input.name === "importedConfig" ? (
-                <IdpMetadataInput
-                  name={input.name}
-                  organizationId={organizationId}
-                  protocol={idp.protocol}
-                  value={idp.importedConfig}
-                  onChange={handleChange}
-                />
-              ) : (
-                <FormInput
-                  field={input}
-                  value={idp[input.name] ?? ""}
-                  onChange={handleChange}
-                  key={input.name}
+                  label="Entity ID"
+                  value={SERVICE_PROVIDER_ENTITY_ID}
                 />
               )}
-            </SlideOverField>
-          ))}
-        </SlideOverFormBody>
-      </SlideOverForm>
-    </>
+            </div>
+          </Transition>
+        </div>
+      </SlideOverHeading>
+      <SlideOverFormBody>
+        {INPUT_DATA.sort(orderSort).map((input) => (
+          <SlideOverField
+            key={input.id ?? input.name}
+            label={input.label}
+            name={input.name}
+            helpText={input.helpText}
+          >
+            {input.name === "domains" ? (
+              <MultilineTextInput
+                key={input.name}
+                name={input.name}
+                value={idp.domains}
+                required={input.required}
+                onChange={handleChange}
+              />
+            ) : input.name === "unitMatchers" ? (
+              <UnitMatchersInput
+                name="unitMatchers"
+                value={idp.unitMatchers}
+                onChange={handleChange}
+                organizationId={organizationId}
+              />
+            ) : input.name === "defaultRoleGroups" ? (
+              <MultipleSelect
+                key={input.name}
+                prefix="organization_resources"
+                value={idp.defaultRoleGroups}
+                options={DEFAULT_ROLE_GROUPS.map((rg) => ({
+                  key: rg,
+                  label: rg,
+                }))}
+                onChange={(ids) =>
+                  handleChange({ target: { name: input.name, value: ids } })
+                }
+              />
+            ) : input.name === "importedConfig" ? (
+              <IdpMetadataInput
+                name={input.name}
+                organizationId={organizationId}
+                protocol={idp.protocol}
+                value={idp.importedConfig}
+                onChange={handleChange}
+              />
+            ) : (
+              <FormInput
+                field={input}
+                value={idp[input.name] ?? ""}
+                onChange={handleChange}
+                key={input.name}
+              />
+            )}
+          </SlideOverField>
+        ))}
+      </SlideOverFormBody>
+    </SlideOverForm>
   );
 };
 

@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTrainingItems } from "../../../queries/training";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Dialog } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import TrainingItemTile from "./TrainingItemTile";
 import AddNew from "../../../components/forms/builder/AddNew";
 import { TrainingItem } from "../../../types/entities";
@@ -15,6 +13,7 @@ import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { LEVEL } from "../../../constants/permissions";
+import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 
 interface ManageItemsProps {
   setOpen: (open: boolean) => void;
@@ -116,28 +115,11 @@ const ManageItems: React.FC<ManageItemsProps> = ({
   return (
     <>
       <div className="flex flex-col h-screen">
-        {/* HEADER */}
-        <div className="bg-gray-50 px-4 py-6 sm:px-6">
-          <div className="flex items-start justify-between space-x-3">
-            <div className="space-y-1">
-              <Dialog.Title className="text-base font-semibold leading-6 text-gray-900">
-                {isManagingItems ? "All items" : "Select Items to Add"}
-              </Dialog.Title>
-              {/* <p className="text-sm text-gray-500">Select a course to view</p> */}
-            </div>
-            <div className="flex h-7 items-center">
-              <button
-                type="button"
-                className="relative text-gray-400 hover:text-gray-500"
-                onClick={() => setOpen(false)}
-              >
-                <span className="absolute -inset-2.5" />
-                <span className="sr-only">Close panel</span>
-                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <SlideOverHeading
+          title={isManagingItems ? "All items" : "Select Items to Add"}
+          description=""
+          setOpen={setOpen}
+        />
 
         <div className="px-4 py-4 sm:px-6">
           <FilterBar

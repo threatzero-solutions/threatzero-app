@@ -1,10 +1,19 @@
-import { createContext, Dispatch, PropsWithChildren, useRef } from "react";
+import {
+  createContext,
+  Dispatch,
+  PropsWithChildren,
+  useRef,
+  useState,
+} from "react";
 import { NavigationItem } from "../../types/core";
 import { ImmerReducer, useImmerReducer } from "use-immer";
 import { withAuthenticationRequired } from "../AuthProvider";
 import { createPortal } from "react-dom";
 import SuccessNotice from "../../components/layouts/notices/SuccessNotice";
 import InfoNotice from "../../components/layouts/notices/InfoNotice";
+import ConfirmationModal, {
+  ConfirmationModalProps,
+} from "../../components/layouts/modal/ConfirmationModal";
 
 export interface CoreState {
   mainNavigationItems: NavigationItem[];
@@ -12,6 +21,7 @@ export interface CoreState {
   showSuccessMessage?: boolean;
   infoMessage?: string;
   showInfoMessage?: boolean;
+  confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">;
 }
 
 export interface CoreAction {
@@ -21,6 +31,11 @@ export interface CoreAction {
 
 const INITIAL_STATE: CoreState = {
   mainNavigationItems: [],
+  confirmationOptions: {
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  },
 };
 
 export interface CoreContextType {
@@ -31,6 +46,10 @@ export interface CoreContextType {
   // OTHER
   setSuccess: (message?: string | null, timeout?: number) => void;
   setInfo: (message?: string | null, timeout?: number) => void;
+  setConfirmationOpen: (
+    confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">
+  ) => void;
+  setConfirmationClose: () => void;
 }
 
 export const CoreContext = createContext<CoreContextType>({
@@ -38,6 +57,8 @@ export const CoreContext = createContext<CoreContextType>({
   dispatch: () => {},
   setSuccess: () => {},
   setInfo: () => {},
+  setConfirmationOpen: () => {},
+  setConfirmationClose: () => {},
 });
 
 const coreReducer: ImmerReducer<CoreState, CoreAction> = (state, action) => {
@@ -59,6 +80,9 @@ const coreReducer: ImmerReducer<CoreState, CoreAction> = (state, action) => {
     case "DISMISS_INFO_MESSAGE":
       state.showInfoMessage = false;
       break;
+    case "SET_CONFIRMATION_OPTIONS":
+      state.confirmationOptions = action.payload;
+      break;
   }
 };
 
@@ -67,6 +91,8 @@ export const CoreContextProvider: React.FC<PropsWithChildren<any>> =
     const [state, dispatch] = useImmerReducer(coreReducer, INITIAL_STATE);
     const setSuccessTimeout = useRef<number>();
     const setInfoTimeout = useRef<number>();
+
+    const [confirmationOpen, setConfirmationOpen] = useState(false);
 
     const setSuccess = (message?: string | null, timeout?: number) => {
       if (message) {
@@ -102,6 +128,16 @@ export const CoreContextProvider: React.FC<PropsWithChildren<any>> =
       }
     };
 
+    const handleSetConfirmationOpen = (
+      confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">
+    ) => {
+      setConfirmationOpen(true);
+      dispatch({
+        type: "SET_CONFIRMATION_OPTIONS",
+        payload: confirmationOptions,
+      });
+    };
+
     return (
       <CoreContext.Provider
         value={{
@@ -109,11 +145,18 @@ export const CoreContextProvider: React.FC<PropsWithChildren<any>> =
           dispatch,
           setSuccess,
           setInfo,
+          setConfirmationOpen: handleSetConfirmationOpen,
+          setConfirmationClose: () => setConfirmationOpen(false),
         }}
       >
         {children}
         {createPortal(<SuccessNotice />, document.body)}
         {createPortal(<InfoNotice />, document.body)}
+        <ConfirmationModal
+          {...state.confirmationOptions}
+          open={confirmationOpen}
+          setOpen={setConfirmationOpen}
+        />
       </CoreContext.Provider>
     );
   });

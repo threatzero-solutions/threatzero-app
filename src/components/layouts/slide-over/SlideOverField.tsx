@@ -13,7 +13,7 @@ const SlideOverField: React.FC<SlideOverFieldProps> = ({
   children,
 }) => {
   return (
-    <div className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5">
+    <div className="space-y-2 px-4 sm:grid sm:grid-cols-4 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5">
       <div>
         <label
           htmlFor={name}
@@ -22,9 +22,14 @@ const SlideOverField: React.FC<SlideOverFieldProps> = ({
           {label}
         </label>
       </div>
-      <div className="sm:col-span-2 space-y-2">
+      <div className="sm:col-span-3 space-y-2">
         {children}
-        {helpText && <p className="text-sm text-gray-500">{helpText}</p>}
+        {helpText && (
+          <p
+            className="text-sm text-gray-500"
+            dangerouslySetInnerHTML={{ __html: helpText }}
+          />
+        )}
       </div>
     </div>
   );

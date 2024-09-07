@@ -91,6 +91,9 @@ export const updateOrganizationIdp = (
     updateOrganizationIdpDto
   );
 
+export const deleteOrganizationIdp = (id: Organization["id"], slug: string) =>
+  deleteOne(`/organizations/organizations/${id}/idps/`, slug);
+
 export const saveUnit = (unit: DeepPartial<Unit>) =>
   save<Unit>("/organizations/units/", unit);
 
