@@ -43,3 +43,20 @@ export interface ResendTrainingLinksDto {
   trainingTokenIds: string[];
   trainingUrlTemplate: string;
 }
+
+export interface UnitMatcherDto {
+  attributeId?: string;
+  externalName: string;
+  pattern: string;
+  unitSlug: string;
+}
+
+export interface OrganizationIdpDto {
+  slug: string;
+  name: string;
+  protocol: string;
+  domains: string[];
+  unitMatchers: UnitMatcherDto[];
+  defaultRoleGroups: string[];
+  importedConfig: Record<string, string>;
+}

@@ -44,17 +44,26 @@ export const findManyRaw = <T>(
 export const findMany = <T>(path: string, query: ItemFilterQueryParams = {}) =>
   findManyRaw<Paginated<T>>(path, query);
 
-export const insertOne = <T>(
+export const insertOne = <T, R = T>(
   path: string,
   entity: DeepPartial<T>,
   options: AxiosRequestConfig = {}
 ) =>
   axios
-    .post<T>(
+    .post<R>(
       `${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`,
       entity,
       options
     )
+    .then((res) => res.data);
+
+export const putOne = <T>(
+  path: string,
+  entity: DeepPartial<T>,
+  options: AxiosRequestConfig = {}
+) =>
+  axios
+    .put<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`, entity, options)
     .then((res) => res.data);
 
 export const updateOne = <T extends { id: string }>(

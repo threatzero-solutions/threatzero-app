@@ -17,6 +17,7 @@ import PillBadge from "../../../../components/PillBadge";
 import SafetyContactInput from "../../../../components/safety-management/SafetyContactInput";
 import PolicyProcedureInput from "../../../../components/safety-management/PolicyProcedureInput";
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import OrganizationIdpsInput from "../components/OrganizationIdpsInput";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
   {
@@ -82,9 +83,6 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
     name: "courses",
     label: "Training Courses",
     type: FieldType.SELECT,
-    elementProperties: {
-      rows: 3,
-    },
     required: false,
     order: 8,
   },
@@ -92,11 +90,16 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
     name: "resources",
     label: "Resources",
     type: FieldType.SELECT,
-    elementProperties: {
-      rows: 3,
-    },
     required: false,
     order: 9,
+  },
+  {
+    name: "idpSlugs",
+    label: "Identity Providers",
+    helpText: "Used to set up SSO logins for this organization.",
+    type: FieldType.SELECT,
+    required: false,
+    order: 10,
   },
 ];
 
@@ -180,7 +183,7 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
       o[
         event.target.name as keyof Omit<
           Organization,
-          "courses" | "resources" | "policiesAndProcedures"
+          "courses" | "resources" | "policiesAndProcedures" | "idpSlugs"
         >
       ] = value;
 
@@ -306,6 +309,15 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
                     }))}
                     onChange={(ids) => handleRelationChange("resources", ids)}
                   />
+                ) : input.name === "idpSlugs" ? (
+                  <>
+                    {organization.id && (
+                      <OrganizationIdpsInput
+                        organizationId={organization.id}
+                        idpSlugs={organization.idpSlugs ?? []}
+                      />
+                    )}
+                  </>
                 ) : (
                   <FormInput
                     field={input}

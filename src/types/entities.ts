@@ -35,6 +35,7 @@ export interface Organization extends OrganizationBase {
   groupId: string | null;
   courses?: TrainingCourse[];
   resources?: ResourceItem[];
+  idpSlugs: string[];
 }
 
 /** Represents a unit of an organization (ie school, office, college, etc.) */

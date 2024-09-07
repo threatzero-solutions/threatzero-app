@@ -71,10 +71,11 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
             ? JSON.stringify(errMsgRaw, null, 2)
             : `${errMsgRaw}`;
         setError(errMsg);
+        return;
       }
-    } else {
-      setError("Oops! Something went wrong.");
     }
+
+    setError("Oops! Something went wrong.");
   };
 
   const [queryClient] = useState(() => {
