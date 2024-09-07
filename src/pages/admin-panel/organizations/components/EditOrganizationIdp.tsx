@@ -46,7 +46,8 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
   {
     name: "slug",
     label: "Slug",
-    helpText: "The slug field must be unique.",
+    helpText:
+      "<strong>This field will automatically populate from the name.</strong> Similar to the name, the slug is used in the redirect URL and must be URL safe.",
     type: FieldType.TEXT,
     required: true,
     order: 1,
@@ -77,8 +78,12 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
   {
     name: "unitMatchers",
     label: "Unit Matchers",
-    helpText:
-      "Used during login to match a field passed from the identity provider to a unit.",
+    helpText: `Used during login to match a field passed from the identity provider to a unit.
+      <br/><br/>
+      <strong>External Name:</strong> The name of the attribute/claim passed in from the identity provider.<br/>
+      <strong>Pattern:</strong> The pattern (in Regular Expression format) to match the attribute/claim to the unit.<br/>
+      <strong>Unit:</strong> The unit to assign matching users to.<br/>
+      `,
     type: FieldType.SELECT,
     required: false,
     order: 4,
@@ -247,6 +252,8 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
       onSubmit={handleSubmit}
       onClose={() => setOpen(false)}
       onDelete={handleDelete}
+      hideDelete={isNew}
+      submitText={isNew ? "Add" : "Update"}
     >
       <SlideOverHeading
         title={!isNew ? "Edit Identity Provider" : "Add Identity Provider"}

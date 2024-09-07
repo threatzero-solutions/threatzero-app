@@ -45,7 +45,9 @@ const IdpRow: React.FC<{
           </button>
           <ol className="ml-2 pl-4 flex flex-col gap-2 border-l-2 border-l-secondary-400">
             {idp.domains.map((domain) => (
-              <li className="text-sm text-gray-500">{domain}</li>
+              <li className="text-sm text-gray-500" key={domain}>
+                {domain}
+              </li>
             ))}
           </ol>
         </>
