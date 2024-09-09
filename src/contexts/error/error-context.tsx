@@ -6,7 +6,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import ErrorPage from "../../pages/ErrorPage";
 
 export interface ErrorState {
-  errorMessage?: string;
+  errorMessage?: string | string[];
   showErrorMessage?: boolean;
 }
 
@@ -22,7 +22,7 @@ export interface ErrorContextType {
   state: ErrorState;
   dispatch: Dispatch<ErrorAction>;
 
-  setError: (error?: string | null, timeout?: number) => void;
+  setError: (error?: string | string[] | null, timeout?: number) => void;
 }
 
 export const ErrorContext = createContext<ErrorContextType>({
@@ -49,7 +49,7 @@ export const ErrorContextProvider: React.FC<PropsWithChildren<any>> = ({
   const [state, dispatch] = useImmerReducer(coreReducer, INITIAL_STATE);
   const setErrorTimeout = useRef<number>();
 
-  const setError = (error?: string | null, timeout?: number) => {
+  const setError = (error?: string | string[] | null, timeout?: number) => {
     if (error) {
       dispatch({
         type: "SHOW_ERROR_MESSAGE",

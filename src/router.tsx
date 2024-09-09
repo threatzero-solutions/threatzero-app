@@ -66,10 +66,17 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
       if (error.response.status >= 400 && error.response.status < 500) {
         const errMsgRaw =
           error.response?.data?.message ?? error.message ?? error;
-        const errMsg =
-          typeof errMsgRaw === "object"
-            ? JSON.stringify(errMsgRaw, null, 2)
-            : `${errMsgRaw}`;
+
+        const cleanErrMsg = (err: unknown) => {
+          return typeof err === "object"
+            ? JSON.stringify(err, null, 2)
+            : `${err}`.replace(/^./, (str) => str.toUpperCase());
+        };
+
+        const errMsg = Array.isArray(errMsgRaw)
+          ? errMsgRaw.map(cleanErrMsg)
+          : cleanErrMsg(errMsgRaw);
+
         setError(errMsg);
         return;
       }

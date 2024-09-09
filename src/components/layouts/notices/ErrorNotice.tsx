@@ -37,8 +37,16 @@ const ErrorNotice: React.FC = () => {
                   </div>
                   <div className="ml-3 w-0 flex-1 pt-0.5">
                     <p className="text-sm font-medium text-gray-900">Error</p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {state.errorMessage?.toString() || "Unknown error"}
+                    <p className="mt-1 text-sm text-gray-500 divide-y divide-gray-100">
+                      {state.errorMessage
+                        ? Array.isArray(state.errorMessage)
+                          ? state.errorMessage.map((e, i) => (
+                              <span key={i} className="block py-2">
+                                {e}
+                              </span>
+                            ))
+                          : state.errorMessage
+                        : "Unknown error"}
                     </p>
                   </div>
                   <div className="ml-4 flex flex-shrink-0">
