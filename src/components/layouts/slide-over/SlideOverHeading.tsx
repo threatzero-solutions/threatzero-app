@@ -1,6 +1,6 @@
 import { DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ReactNode } from "react";
+import { PropsWithChildren, ReactNode } from "react";
 
 interface SlideOverHeadingProps {
   title: ReactNode;
@@ -8,19 +8,21 @@ interface SlideOverHeadingProps {
   setOpen: (open: boolean) => void;
 }
 
-const SlideOverHeading: React.FC<SlideOverHeadingProps> = ({
+const SlideOverHeading: React.FC<PropsWithChildren<SlideOverHeadingProps>> = ({
   title,
   description,
   setOpen,
+  children,
 }) => {
   return (
     <div className="bg-gray-50 px-4 py-6 sm:px-6">
       <div className="flex items-start justify-between space-x-3">
-        <div className="space-y-1">
+        <div className="space-y-1 grow">
           <DialogTitle className="text-base font-semibold leading-6 text-gray-900">
             {title}
           </DialogTitle>
-          <p className="text-sm text-gray-500">{description}</p>
+          <p className="text-sm text-gray-500 w-full">{description}</p>
+          {children}
         </div>
         <div className="flex h-7 items-center">
           <button

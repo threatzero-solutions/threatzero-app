@@ -13,10 +13,10 @@ export interface Ordering {
   [key: string]: OrderOptions;
 }
 
-export interface SimpleChangeEvent<V> {
+export interface SimpleChangeEvent<V, K = string> {
   type?: string;
   target?: {
-    name: string;
+    name: K;
     value: V;
   } | null;
 }

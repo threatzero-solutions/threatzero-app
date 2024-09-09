@@ -17,7 +17,7 @@ import {
   TrainingSection,
   TrainingVisibility,
 } from "../../types/entities";
-import { orderSort } from "../../utils/core";
+import { orderSort, stripHtml } from "../../utils/core";
 import FormField from "../../components/forms/FormField";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -34,6 +34,7 @@ import { withRequirePermissions } from "../../guards/RequirePermissions";
 import SuccessButton from "../../components/layouts/buttons/SuccessButton";
 import { SimpleChangeEvent } from "../../types/core";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { CoreContext } from "../../contexts/core/core-context";
 
 type MetadataFieldType = Partial<Field> & { name: keyof TrainingMetadata };
 
@@ -110,6 +111,7 @@ const CourseBuilder = () => {
   const duplicateCourseLoaded = useRef(false);
 
   const { state, dispatch, setActiveCourse } = useContext(TrainingContext);
+  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -192,6 +194,7 @@ const CourseBuilder = () => {
       });
       setActiveCourse(undefined);
       navigate("/training/library/");
+      setConfirmationClose();
     },
   });
 
@@ -250,6 +253,19 @@ const CourseBuilder = () => {
     });
   };
 
+  const handleDelete = () => {
+    setConfirmationOpen({
+      title: `Delete ${stripHtml(course.metadata.title)}`,
+      message: `Are you sure you want to delete this course?
+      This action cannot be undone.`,
+      onConfirm: () => {
+        deleteCourseMutation.mutate();
+      },
+      destructive: true,
+      confirmText: "Delete",
+    });
+  };
+
   return (
     <>
       <BackButtonLink to={"/training/library/"} value={"Back to Library"} />
@@ -296,7 +312,7 @@ const CourseBuilder = () => {
               <button
                 type="button"
                 className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500"
-                onClick={() => deleteCourseMutation.mutate()}
+                onClick={handleDelete}
               >
                 Delete
               </button>

@@ -1,4 +1,11 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { Organization, Field, FieldType } from "../../../../types/entities";
 import { orderSort, slugify } from "../../../../utils/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +24,11 @@ import PillBadge from "../../../../components/PillBadge";
 import SafetyContactInput from "../../../../components/safety-management/SafetyContactInput";
 import PolicyProcedureInput from "../../../../components/safety-management/PolicyProcedureInput";
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import OrganizationIdpsInput from "../components/OrganizationIdpsInput";
+import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
+import { CoreContext } from "../../../../contexts/core/core-context";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
   {
@@ -82,9 +94,6 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
     name: "courses",
     label: "Training Courses",
     type: FieldType.SELECT,
-    elementProperties: {
-      rows: 3,
-    },
     required: false,
     order: 8,
   },
@@ -92,11 +101,16 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof Organization }> = [
     name: "resources",
     label: "Resources",
     type: FieldType.SELECT,
-    elementProperties: {
-      rows: 3,
-    },
     required: false,
     order: 9,
+  },
+  {
+    name: "idpSlugs",
+    label: "Identity Providers",
+    helpText: "Used to set up SSO logins for this organization.",
+    type: FieldType.SELECT,
+    required: false,
+    order: 10,
   },
 ];
 
@@ -117,6 +131,8 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
 
   const createNewSlug = useRef(true);
   const slugDebounceTimeout = useRef<number>();
+
+  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
   const { data: organizationData } = useQuery({
     queryKey: ["organizations", organizationProp?.id] as const,
@@ -155,7 +171,10 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
 
   const deleteOrganizationMutation = useMutation({
     mutationFn: deleteOrganization,
-    onSuccess: onMutateSuccess,
+    onSuccess: () => {
+      onMutateSuccess();
+      setConfirmationClose();
+    },
   });
 
   const handleChange = (
@@ -180,7 +199,7 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
       o[
         event.target.name as keyof Omit<
           Organization,
-          "courses" | "resources" | "policiesAndProcedures"
+          "courses" | "resources" | "policiesAndProcedures" | "idpSlugs"
         >
       ] = value;
 
@@ -210,147 +229,127 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
   };
 
   const handleDelete = () => {
-    deleteOrganizationMutation.mutate(organization.id);
+    setConfirmationOpen({
+      title: `Delete ${organization.name} Organization`,
+      message: `Are you sure you want to delete this organization?
+      This action cannot be undone.`,
+      onConfirm: () => {
+        deleteOrganizationMutation.mutate(organization.id);
+      },
+      destructive: true,
+      confirmText: "Delete",
+    });
   };
 
   return (
-    <form className="flex h-full flex-col" onSubmit={handleSubmit}>
-      <div className="flex-1">
-        <SlideOverHeading
-          title={isNew ? "Add organization" : "Edit organization"}
-          description="Organizations can be school districts, companies, institutions,
+    <SlideOverForm
+      onSubmit={handleSubmit}
+      onClose={() => setOpen(false)}
+      hideDelete={isNew}
+      onDelete={handleDelete}
+      submitText={isNew ? "Add" : "Update"}
+    >
+      <SlideOverHeading
+        title={isNew ? "Add organization" : "Edit organization"}
+        description="Organizations can be school districts, companies, institutions,
                 etc. These correlate to organizations registered in the identity
                 provider."
-          setOpen={setOpen}
-        />
+        setOpen={setOpen}
+      />
 
-        {/* Divider container */}
-        <div className="space-y-6 py-6 sm:space-y-0 sm:divide-y sm:divide-gray-200 sm:py-0">
-          {INPUT_DATA.sort(orderSort).map((input) => (
-            <div
-              key={input.name}
-              className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
-            >
-              <div>
-                <label
-                  htmlFor={input.name}
-                  className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
-                >
-                  {input.label}
-                </label>
-              </div>
-              <div className="sm:col-span-2 space-y-2">
-                {input.name === "safetyContact" ? (
-                  <SafetyContactInput
-                    value={organization.safetyContact}
-                    onChange={(e) =>
-                      setOrganization((o) => ({
-                        ...o,
-                        safetyContact: e.target?.value,
-                      }))
-                    }
-                  />
-                ) : input.name === "policiesAndProcedures" ? (
-                  <PolicyProcedureInput
-                    value={organization.policiesAndProcedures}
-                    onChange={(e) =>
-                      setOrganization((o) => ({
-                        ...o,
-                        policiesAndProcedures: e.target?.value ?? [],
-                      }))
-                    }
-                  />
-                ) : input.name === "courses" ? (
-                  <MultipleSelect
-                    prefix="organization_courses"
-                    value={
-                      organization.courses
-                        ?.filter((c) => c.id)
-                        .map((c) => c.id!) ?? []
-                    }
-                    options={(courses?.results ?? []).map((c) => ({
-                      key: c.id,
-                      label: (
-                        <span className="inline-flex items-center gap-2">
-                          {c.metadata.title}
-                          {c.metadata.tag && (
-                            <PillBadge
-                              color={"secondary"}
-                              value={c.metadata.tag}
-                              displayValue={c.metadata.tag}
-                            />
-                          )}
-                        </span>
-                      ),
-                    }))}
-                    onChange={(ids) => handleRelationChange("courses", ids)}
-                  />
-                ) : input.name === "resources" ? (
-                  <MultipleSelect
-                    prefix="organization_resources"
-                    value={
-                      organization.resources
-                        ?.filter((r) => r.id)
-                        .map((r) => r.id!) ?? []
-                    }
-                    options={(resources?.results ?? []).map((r) => ({
-                      key: r.id,
-                      label: (
-                        <div className="flex flex-col">
-                          <span>{r.title}</span>
-                          <span className="text-gray-500 text-xs">
-                            {r.description}
-                          </span>
-                        </div>
-                      ),
-                    }))}
-                    onChange={(ids) => handleRelationChange("resources", ids)}
-                  />
-                ) : (
-                  <FormInput
-                    field={input}
-                    onChange={handleChange}
-                    value={organization[input.name as keyof Organization] ?? ""}
+      <SlideOverFormBody>
+        {INPUT_DATA.sort(orderSort).map((input) => (
+          <SlideOverField
+            key={input.name}
+            label={input.label}
+            name={input.name}
+            helpText={input.helpText}
+          >
+            {input.name === "safetyContact" ? (
+              <SafetyContactInput
+                value={organization.safetyContact}
+                onChange={(e) =>
+                  setOrganization((o) => ({
+                    ...o,
+                    safetyContact: e.target?.value,
+                  }))
+                }
+              />
+            ) : input.name === "policiesAndProcedures" ? (
+              <PolicyProcedureInput
+                value={organization.policiesAndProcedures}
+                onChange={(e) =>
+                  setOrganization((o) => ({
+                    ...o,
+                    policiesAndProcedures: e.target?.value ?? [],
+                  }))
+                }
+              />
+            ) : input.name === "courses" ? (
+              <MultipleSelect
+                prefix="organization_courses"
+                value={
+                  organization.courses?.filter((c) => c.id).map((c) => c.id!) ??
+                  []
+                }
+                options={(courses?.results ?? []).map((c) => ({
+                  key: c.id,
+                  label: (
+                    <span className="inline-flex items-center gap-2">
+                      {c.metadata.title}
+                      {c.metadata.tag && (
+                        <PillBadge
+                          color={"secondary"}
+                          value={c.metadata.tag}
+                          displayValue={c.metadata.tag}
+                        />
+                      )}
+                    </span>
+                  ),
+                }))}
+                onChange={(ids) => handleRelationChange("courses", ids)}
+              />
+            ) : input.name === "resources" ? (
+              <MultipleSelect
+                prefix="organization_resources"
+                value={
+                  organization.resources
+                    ?.filter((r) => r.id)
+                    .map((r) => r.id!) ?? []
+                }
+                options={(resources?.results ?? []).map((r) => ({
+                  key: r.id,
+                  label: (
+                    <div className="flex flex-col">
+                      <span>{r.title}</span>
+                      <span className="text-gray-500 text-xs">
+                        {r.description}
+                      </span>
+                    </div>
+                  ),
+                }))}
+                onChange={(ids) => handleRelationChange("resources", ids)}
+              />
+            ) : input.name === "idpSlugs" ? (
+              <>
+                {organization.id && (
+                  <OrganizationIdpsInput
+                    organizationId={organization.id}
+                    idpSlugs={organization.idpSlugs ?? []}
                   />
                 )}
-                {input.helpText && (
-                  <p className="text-sm text-gray-500">{input.helpText}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex-shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
-        <div className="flex space-x-3">
-          {!isNew && (
-            <button
-              type="button"
-              className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500"
-              onClick={handleDelete}
-            >
-              Delete
-            </button>
-          )}
-          <div className="grow" />
-          <button
-            type="button"
-            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-          >
-            {isNew ? "Add" : "Save"}
-          </button>
-        </div>
-      </div>
-    </form>
+              </>
+            ) : (
+              <FormInput
+                field={input}
+                onChange={handleChange}
+                value={organization[input.name as keyof Organization] ?? ""}
+              />
+            )}
+          </SlideOverField>
+        ))}
+      </SlideOverFormBody>
+    </SlideOverForm>
   );
 };
 

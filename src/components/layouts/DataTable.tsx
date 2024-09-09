@@ -64,29 +64,35 @@ const DataTable: React.FC<DataTableProps> = ({
 
   return (
     <div className={className}>
-      <div>
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            {title && (
-              <h1 className="text-base font-semibold leading-6 text-gray-900">
-                {title}
-              </h1>
+      <div className="flex flex-col gap-4">
+        {(title || subtitle || action) && (
+          <div className="sm:flex sm:items-center">
+            <div className="sm:flex-auto">
+              {title && (
+                <h1 className="text-base font-semibold leading-6 text-gray-900">
+                  {title}
+                </h1>
+              )}
+              {subtitle && (
+                <p className="mt-2 text-sm text-gray-700">{subtitle}</p>
+              )}
+            </div>
+            {action && (
+              <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">{action}</div>
             )}
-            {subtitle && (
-              <p className="mt-2 text-sm text-gray-700">{subtitle}</p>
-            )}
-          </div>
-          <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">{action}</div>
-        </div>
-        {(searchOptions || filterOptions) && (
-          <div className="mt-4 -mb-4">
-            <FilterBar
-              searchOptions={searchOptions}
-              filterOptions={filterOptions}
-            />
           </div>
         )}
-        <div className="mt-8 flow-root">
+        {searchOptions || filterOptions ? (
+          <FilterBar
+            searchOptions={searchOptions}
+            filterOptions={filterOptions}
+          />
+        ) : title || subtitle || action ? (
+          <div></div>
+        ) : (
+          <></>
+        )}
+        <div className="flow-root">
           <div className="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
               <table className="min-w-full divide-y divide-gray-300">

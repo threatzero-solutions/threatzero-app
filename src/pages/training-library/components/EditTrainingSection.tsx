@@ -1,5 +1,3 @@
-import { Dialog } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
   ChangeEvent,
   FormEvent,
@@ -33,6 +31,10 @@ import {
 } from "../../../queries/training";
 import dayjs from "dayjs";
 import FormInput from "../../../components/forms/inputs/FormInput";
+import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
 
 type MetadataFieldType = Partial<Field> & { name: keyof TrainingMetadata };
 
@@ -263,36 +265,23 @@ const EditTrainingSection: React.FC = () => {
 
   return (
     <>
-      <form className="h-full flex flex-col" onSubmit={handleSubmit}>
-        <div className="flex-1">
-          {/* Header */}
-          <div className="bg-gray-50 px-4 py-6 sm:px-6">
-            <div className="flex items-start justify-between space-x-3">
-              <div className="space-y-1">
-                <Dialog.Title className="text-base font-semibold leading-6 text-gray-900">
-                  {isNew ? "Add" : "Edit"} section
-                </Dialog.Title>
-                <p className="text-sm text-gray-500">
-                  Use the preview below to see the resulting section tile
-                </p>
-              </div>
-              <div className="flex h-7 items-center">
-                <button
-                  type="button"
-                  className="relative text-gray-400 hover:text-gray-500"
-                  onClick={() => setOpen(false)}
-                >
-                  <span className="absolute -inset-2.5" />
-                  <span className="sr-only">Close panel</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider container */}
+      <SlideOverForm
+        onSubmit={handleSubmit}
+        onClose={() => setOpen(false)}
+        hideDelete={isNew}
+        onDelete={handleDelete}
+        submitText={isNew ? "Add" : "Update"}
+      >
+        <SlideOverHeading
+          title={isNew ? "Add section" : "Edit section"}
+          description={
+            "Use the preview below to see the resulting section tile"
+          }
+          setOpen={setOpen}
+        />
+        <SlideOverFormBody>
           {section && (
-            <div className="space-y-6 py-6 sm:space-y-0 sm:divide-y sm:divide-gray-200 sm:py-0">
+            <>
               <div className="p-4">
                 <p className="mb-2 text-sm font-medium text-gray-900">
                   Preview
@@ -306,73 +295,60 @@ const EditTrainingSection: React.FC = () => {
                   </div>
                 </div>
               </div>
+
               {METADATA_INPUT_DATA.sort(orderSort).map((input) => (
-                <div
+                <SlideOverField
                   key={input.name}
-                  className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
+                  label={input.label}
+                  name={input.name}
+                  helpText={input.helpText}
                 >
-                  <div>
-                    <label
-                      htmlFor={input.name}
-                      className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
-                    >
-                      {input.label}
-                    </label>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <FormInput
-                      field={input}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        handleMetadataChange(input, e)
-                      }
-                      value={
-                        section.metadata?.[input.name as keyof TrainingMetadata]
-                      }
-                      disabled={!section.items || section.items.length < 2}
-                      title={
-                        !section.items || section.items.length < 2
-                          ? "Section description and title only appear when a section contains multiple items."
-                          : undefined
-                      }
-                    />
-                  </div>
-                </div>
+                  <FormInput
+                    field={input}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      handleMetadataChange(input, e)
+                    }
+                    value={
+                      section.metadata?.[
+                        input.name as keyof TrainingMetadata
+                      ] ?? ""
+                    }
+                    disabled={!section.items || section.items.length < 2}
+                    title={
+                      !section.items || section.items.length < 2
+                        ? "Section description and title only appear when a section contains multiple items."
+                        : undefined
+                    }
+                  />
+                </SlideOverField>
               ))}
               {INPUT_DATA.sort(orderSort).map((input) => (
-                <div
+                <SlideOverField
                   key={input.name}
-                  className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
+                  label={input.label}
+                  name={input.name}
+                  helpText={input.helpText}
                 >
-                  <div>
-                    <label
-                      htmlFor={input.name}
-                      className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
-                    >
-                      {input.label}
-                    </label>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <FormInput
-                      field={input}
-                      onChange={handleChange}
-                      value={
-                        input.name === "expiresOn" &&
-                        dayjs(section.expiresOn).isBefore(
-                          dayjs(section.availableOn)
-                        )
-                          ? dayjs(section.availableOn)
-                              .add(1, "day")
-                              .format("YYYY-MM-DD")
-                          : section[input.name as keyof TrainingSection]
-                      }
-                      min={
-                        input.name === "expiresOn"
-                          ? dayjs(section.availableOn).format("YYYY-MM-DD")
-                          : undefined
-                      }
-                    />
-                  </div>
-                </div>
+                  <FormInput
+                    field={input}
+                    onChange={handleChange}
+                    value={
+                      input.name === "expiresOn" &&
+                      dayjs(section.expiresOn).isBefore(
+                        dayjs(section.availableOn)
+                      )
+                        ? dayjs(section.availableOn)
+                            .add(1, "day")
+                            .format("YYYY-MM-DD")
+                        : section[input.name as keyof TrainingSection] ?? ""
+                    }
+                    min={
+                      input.name === "expiresOn"
+                        ? dayjs(section.availableOn).format("YYYY-MM-DD")
+                        : undefined
+                    }
+                  />
+                </SlideOverField>
               ))}
 
               {/* SECTION ITEMS */}
@@ -417,40 +393,10 @@ const EditTrainingSection: React.FC = () => {
               ) : (
                 <div>Loading...</div>
               )}
-            </div>
+            </>
           )}
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex-shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
-          <div className="flex space-x-3">
-            {!isNew && (
-              <button
-                type="button"
-                className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500"
-                onClick={handleDelete}
-              >
-                Delete
-              </button>
-            )}
-            <div className="grow" />
-            <button
-              type="button"
-              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!section?.items || section.items.length < 1}
-              className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:hover:bg-secondary-600"
-            >
-              {isNew ? "Add" : "Update"}
-            </button>
-          </div>
-        </div>
-      </form>
+        </SlideOverFormBody>
+      </SlideOverForm>
       <SlideOver open={selectItemsOpen} setOpen={setSelectItemsOpen}>
         <ManageItems
           setOpen={setSelectItemsOpen}

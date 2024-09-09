@@ -1,5 +1,3 @@
-import { Dialog } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
   ChangeEvent,
   FormEvent,
@@ -17,7 +15,7 @@ import {
   TrainingMetadata,
   Video,
 } from "../../../../types/entities";
-import { classNames, orderSort } from "../../../../utils/core";
+import { orderSort } from "../../../../utils/core";
 import TrainingItemTile from "../TrainingItemTile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -34,6 +32,10 @@ import FormInput from "../../../../components/forms/inputs/FormInput";
 import { useDebounceValue } from "usehooks-ts";
 import { DraftFunction, useImmer } from "use-immer";
 import { EditableItem } from "../../../../types/training";
+import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
 
 dayjs.extend(duration);
 
@@ -262,36 +264,25 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
   };
 
   return (
-    <form className="h-full flex flex-col" onSubmit={handleSubmit}>
-      <div className="flex-1">
-        {/* Header */}
-        <div className="bg-gray-50 px-4 py-6 sm:px-6">
-          <div className="flex items-start justify-between space-x-3">
-            <div className="space-y-1">
-              <Dialog.Title className="text-base font-semibold leading-6 text-gray-900">
-                {isNew ? "Add" : "Edit"} Item
-              </Dialog.Title>
-              <p className="text-sm text-gray-500">
-                Use the preview below to see the resulting section tile
-              </p>
-            </div>
-            <div className="flex h-7 items-center">
-              <button
-                type="button"
-                className="relative text-gray-400 hover:text-gray-500"
-                onClick={() => setOpen(false)}
-              >
-                <span className="absolute -inset-2.5" />
-                <span className="sr-only">Close panel</span>
-                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        </div>
+    <SlideOverForm
+      onSubmit={handleSubmit}
+      onClose={handleCancel}
+      hideDelete={isNew}
+      onDelete={handleDelete}
+      submitText={isNew ? "Add" : "Update"}
+      closeText={isNew ? "Cancel" : "Close"}
+      isSaving={itemSaving}
+      lastUpdated={item?.updatedOn}
+    >
+      <SlideOverHeading
+        title={isNew ? "Add new item" : "Edit item"}
+        description={"Use the preview below to see the resulting item tile"}
+        setOpen={setOpen}
+      />
 
-        {/* Divider container */}
+      <SlideOverFormBody>
         {item && (
-          <div className="space-y-6 py-6 sm:space-y-0 sm:divide-y sm:divide-gray-200 sm:py-0">
+          <>
             <div className="p-4">
               <p className="mb-2 text-sm font-medium text-gray-900">Preview</p>
               <div className="overflow-hidden rounded-lg bg-gray-50">
@@ -301,110 +292,50 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
               </div>
             </div>
             {METADATA_INPUT_DATA.sort(orderSort).map((input) => (
-              <div
+              <SlideOverField
                 key={input.name}
-                className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
+                label={input.label}
+                name={input.name}
+                helpText={input.helpText}
               >
-                <div>
-                  <label
-                    htmlFor={input.name}
-                    className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
-                  >
-                    {input.label}
-                  </label>
-                </div>
-                <div className="sm:col-span-2">
-                  <FormInput
-                    field={input}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      handleMetadataChange(input, e)
-                    }
-                    value={
-                      item.metadata?.[input.name as keyof TrainingMetadata]
-                    }
-                  />
-                </div>
-              </div>
+                <FormInput
+                  field={input}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    handleMetadataChange(input, e)
+                  }
+                  value={
+                    item.metadata?.[input.name as keyof TrainingMetadata] ?? ""
+                  }
+                />
+              </SlideOverField>
             ))}
             {INPUT_DATA.sort(orderSort).map((input) => (
-              <div
+              <SlideOverField
                 key={input.name}
-                className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5"
+                label={input.label}
+                name={input.name}
+                helpText={input.helpText}
               >
-                <div>
-                  <label
-                    htmlFor={input.name}
-                    className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
-                  >
-                    {input.label}
-                  </label>
-                </div>
-                <div className="sm:col-span-2">
-                  {input.name === "estCompletionTime" ? (
-                    getEstCompletionTimeInput(input)
-                  ) : (
-                    <FormInput
-                      field={input}
-                      onChange={handleChange}
-                      value={item[input.name as keyof TrainingItem]}
-                    />
-                  )}
-                  {!!input.helpText && (
-                    <p className="mt-3 text-sm leading-6 text-gray-600">
-                      {input.helpText}
-                    </p>
-                  )}
-                </div>
-              </div>
+                {input.name === "estCompletionTime" ? (
+                  getEstCompletionTimeInput(input)
+                ) : (
+                  <FormInput
+                    field={input}
+                    onChange={handleChange}
+                    value={item[input.name as keyof TrainingItem] ?? ""}
+                  />
+                )}
+                {!!input.helpText && (
+                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                    {input.helpText}
+                  </p>
+                )}
+              </SlideOverField>
             ))}
-          </div>
+          </>
         )}
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex-shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
-        <div className="flex space-x-3 items-center">
-          {!isNew && (
-            <button
-              type="button"
-              className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500"
-              onClick={handleDelete}
-            >
-              Delete
-            </button>
-          )}
-          <button
-            type="button"
-            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-            onClick={handleCancel}
-          >
-            {isNew ? "Cancel" : "Close"}
-          </button>
-          <div className="grow" />
-          {item?.updatedOn && (
-            <span
-              className={classNames(
-                "text-xs italic text-gray-500",
-                itemSaving ? "animate-pulse" : ""
-              )}
-            >
-              {itemSaving
-                ? "Saving..."
-                : `Saved ${dayjs(item.updatedOn).fromNow()}`}
-            </span>
-          )}
-          <button
-            type="submit"
-            disabled={itemSaving}
-            className={classNames(
-              "block w-min rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-500/50"
-            )}
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </form>
+      </SlideOverFormBody>
+    </SlideOverForm>
   );
 };
 

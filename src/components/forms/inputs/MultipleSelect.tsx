@@ -61,7 +61,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
   });
 
   return (
-    <fieldset className="border-b-2 border-b-gray-200">
+    <fieldset className="border-b-2 border-b-gray-200 pb-2">
       <legend className="sr-only">{prefix} Multiple Select</legend>
       <div className="rounded bg-gray-100 px-4 py-2 relative flex items-start">
         <label
