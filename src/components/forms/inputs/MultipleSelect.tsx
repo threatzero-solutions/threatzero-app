@@ -4,7 +4,12 @@ import { classNames } from "../../../utils/core";
 
 interface MultipleSelectProps {
   prefix: string;
-  options: { key: string; label: ReactNode }[];
+  options: {
+    key: string;
+    label: ReactNode;
+    disabled?: boolean;
+    disabledText?: string;
+  }[];
   value?: string[];
   onChange?: (value: string[]) => void;
 }
@@ -18,7 +23,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
   const [selected, setSelected] = useImmer<string[]>([]);
   const optionKeys = options.map((o) => o.key);
   const allSelected = useMemo(
-    () => selected.length === optionKeys.length,
+    () => optionKeys.every((k) => selected.includes(k)),
     [selected.length, optionKeys.length]
   );
 
@@ -26,7 +31,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
     setSelected((selected) => {
       let newSelected = selected;
       if (allSelected) {
-        newSelected = [];
+        newSelected = options.filter((o) => o.disabled).map((o) => o.key);
       } else {
         newSelected = optionKeys;
       }
@@ -87,15 +92,19 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
             key={prefix + "_option_" + option.key}
             htmlFor={prefix + "_option_" + option.key}
             className={classNames(
-              "flex items-center items gap-3 cursor-pointer",
-              idx === 0 ? "pt-3" : idx === options.length - 1 ? "pb-3" : ""
+              "flex items-center items gap-3",
+              idx === 0 ? "pt-3" : idx === options.length - 1 ? "pb-3" : "",
+              option.disabled ? "opacity-50" : "cursor-pointer"
             )}
+            aria-disabled={option.disabled}
+            title={option.disabled ? option.disabledText : ""}
           >
             <input
               id={prefix + "_option_" + option.key}
               name={prefix + "_option_" + option.key}
               type="checkbox"
-              className="h-4 w-4 rounded cursor-pointer border-gray-300 text-secondary-600 focus:ring-secondary-600"
+              disabled={option.disabled}
+              className="h-4 w-4 rounded cursor-pointer border-gray-300 text-secondary-600 focus:ring-secondary-600 disabled:cursor-default disabled:text-gray-400"
               checked={selected.includes(option.key)}
               onChange={() => handleSelect(option.key)}
             />

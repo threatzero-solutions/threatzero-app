@@ -154,6 +154,7 @@ const EditLocation: React.FC<EditLocationProps> = ({
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={saveLocationMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add location" : "Edit location"}

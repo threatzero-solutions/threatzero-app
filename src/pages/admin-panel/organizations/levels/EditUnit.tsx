@@ -225,6 +225,7 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={saveUnitMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add unit" : "Edit unit"}

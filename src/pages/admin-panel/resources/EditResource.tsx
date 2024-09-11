@@ -156,6 +156,7 @@ const EditResource: React.FC<EditResourceProps> = ({
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={saveResourceMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add resource" : "Edit resource"}

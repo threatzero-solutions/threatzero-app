@@ -128,7 +128,14 @@ const FormInput = <
         );
       case FieldType.SELECT: {
         const selectParams = field.typeParams as SelectTypeOptions | undefined;
-        return <Select options={selectParams?.options ?? {}} {...attrs} />;
+        return (
+          <Select
+            options={Object.entries(selectParams?.options ?? {}).map(
+              ([key, label]) => ({ key, label })
+            )}
+            {...attrs}
+          />
+        );
       }
       case FieldType.RADIO: {
         const radioParams = field.typeParams as RadioTypeOptions | undefined;

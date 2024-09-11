@@ -73,7 +73,7 @@ const IdpMetadataInput = <K extends string | number | symbol = string>({
             onClick={() => setShowLoader((s) => !s)}
             className="self-start rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
           >
-            {showLoader ? "Cancel" : "Change"}
+            {showLoader ? "Cancel" : "Update"}
           </button>
         </>
       )}
