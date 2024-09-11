@@ -252,6 +252,7 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={saveOrganizationMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add organization" : "Edit organization"}

@@ -271,6 +271,7 @@ const EditTrainingSection: React.FC = () => {
         hideDelete={isNew}
         onDelete={handleDelete}
         submitText={isNew ? "Add" : "Update"}
+        isSaving={saveSectionMutation.isPending}
       >
         <SlideOverHeading
           title={isNew ? "Add section" : "Edit section"}

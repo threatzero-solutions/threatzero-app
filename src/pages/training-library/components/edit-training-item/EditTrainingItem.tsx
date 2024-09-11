@@ -5,7 +5,6 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import {
   Field,
@@ -141,8 +140,6 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
     }
   }, [itemProp, setItem]);
 
-  const [itemSaving, setItemSaving] = useState(false);
-
   const { state } = useContext(TrainingContext);
 
   const isNew = useMemo(() => item.id === undefined, [item.id]);
@@ -158,18 +155,13 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
           ["training-courses", state.activeCourse?.id],
         ].some((k) => q.queryKey.join("").includes(k.join(""))),
     });
-    setItemSaving(false);
   };
   const saveItemMutation = useMutation({
-    mutationFn: () => {
-      setItemSaving(true);
-      return saveTrainingItem(item);
-    },
+    mutationFn: () => saveTrainingItem(item),
     onSuccess: (d) => {
       setItem((item) => ({ ...item, ...d }));
       onMutateSuccess(d);
     },
-    onError: () => setItemSaving(false),
   });
   const deleteItemMutation = useMutation({
     mutationFn: deleteTrainingItem,
@@ -271,7 +263,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
       closeText={isNew ? "Cancel" : "Close"}
-      isSaving={itemSaving}
+      isSaving={saveItemMutation.isPending}
       lastUpdated={item?.updatedOn}
     >
       <SlideOverHeading

@@ -42,16 +42,13 @@ const SlideOverForm: React.FC<SlideOverFormProps> = ({
             </button>
           )}
           <div className="grow" />
-          {lastUpdated && (
-            <span
-              className={classNames(
-                "text-xs italic text-gray-500",
-                isSaving ? "animate-pulse" : ""
-              )}
-            >
+          {(lastUpdated || isSaving) && (
+            <span className="text-xs italic text-gray-500">
               {isSaving
                 ? "Updating..."
-                : `Updated ${dayjs(lastUpdated).fromNow()}`}
+                : lastUpdated
+                ? `Updated ${dayjs(lastUpdated).fromNow()}`
+                : ""}
             </span>
           )}
           <button
@@ -64,7 +61,11 @@ const SlideOverForm: React.FC<SlideOverFormProps> = ({
           {!readOnly && (
             <button
               type="submit"
-              className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className={classNames(
+                "inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400",
+                isSaving ? "animate-pulse" : ""
+              )}
+              disabled={isSaving}
             >
               {submitText}
             </button>

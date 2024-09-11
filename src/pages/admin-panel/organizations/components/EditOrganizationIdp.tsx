@@ -269,6 +269,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
       onDelete={handleDelete}
       hideDelete={isNew}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={createIdpMutation.isPending}
     >
       <SlideOverHeading
         title={!isNew ? "Edit Identity Provider" : "Add Identity Provider"}

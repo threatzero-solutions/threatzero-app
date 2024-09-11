@@ -128,6 +128,7 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
         onClose={() => setOpen(false)}
         submitText="Create"
         readOnly={readOnly}
+        isSaving={createTrainingTokenMutation.isPending}
       >
         <SlideOverHeading
           title={readOnly ? "View Training Invite" : "Create Training Invite"}

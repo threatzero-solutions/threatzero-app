@@ -180,6 +180,7 @@ const EditFieldGroup: React.FC = () => {
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={fieldGroupMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add new field group" : "Edit field group"}

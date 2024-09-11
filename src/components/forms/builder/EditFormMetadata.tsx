@@ -100,7 +100,11 @@ const EditFormMetadata: React.FC = () => {
   };
 
   return (
-    <SlideOverForm onSubmit={handleSubmit} onClose={() => setOpen(false)}>
+    <SlideOverForm
+      onSubmit={handleSubmit}
+      onClose={() => setOpen(false)}
+      isSaving={saveFormMutation.isPending}
+    >
       <SlideOverHeading
         title="Edit form metadata"
         description={"Metadata includes the title, subtitle, and description"}

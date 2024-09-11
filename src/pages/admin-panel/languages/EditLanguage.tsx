@@ -102,6 +102,7 @@ const EditLanguage: React.FC<EditLanguageProps> = ({
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={saveLanguageMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add language" : "Edit language"}

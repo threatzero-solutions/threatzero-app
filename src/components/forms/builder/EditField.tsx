@@ -379,6 +379,7 @@ const EditField: React.FC = () => {
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={fieldMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add new field" : "Edit field"}

@@ -120,6 +120,7 @@ const EditTrainingAudiences: React.FC<EditTrainingAudiencesProps> = ({
       hideDelete={isNew}
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
+      isSaving={saveAudienceMutation.isPending}
     >
       <SlideOverHeading
         title={isNew ? "Add audience" : "Edit audience"}
