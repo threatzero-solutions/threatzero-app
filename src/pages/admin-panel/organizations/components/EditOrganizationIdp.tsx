@@ -30,6 +30,7 @@ import UnitMatchersInput from "./UnitMatchersInput";
 import { Transition } from "@headlessui/react";
 import AudienceMatchersInput from "./AudienceMatchersInput";
 import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
+import Select from "../../../../components/forms/inputs/Select";
 
 const SERVICE_PROVIDER_ENTITY_ID =
   "https://auth.threatzero.org/realms/threatzero";
@@ -94,10 +95,18 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
   {
     name: "defaultRoleGroups",
     label: "Default Role Groups",
-    helpText: "Role groups that will be assigned to new users.",
+    helpText: "Role groups that will be assigned to all users.",
     type: FieldType.SELECT,
     required: false,
     order: 5,
+  },
+  {
+    name: "defaultAudience",
+    label: "Default Audience",
+    helpText: "Audience that will be assigned to all users.",
+    type: FieldType.SELECT,
+    required: false,
+    order: 6,
   },
   {
     name: "importedConfig",
@@ -105,7 +114,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
     helpText: "Import metadata from identity provider by URL or file.",
     type: FieldType.TEXT,
     required: true,
-    order: 6,
+    order: 7,
   },
 ];
 
@@ -124,6 +133,7 @@ const INITIAL_IDP: OrganizationIdpDto = {
   audienceMatchers: [],
   roleGroupMatchers: [],
   defaultRoleGroups: [],
+  defaultAudience: undefined,
   importedConfig: {},
 };
 
@@ -406,7 +416,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
             ) : input.name === "defaultRoleGroups" ? (
               <MultipleSelect
                 key={input.name}
-                prefix="organization_resources"
+                prefix="organization_default_role_groups"
                 value={idp.defaultRoleGroups}
                 options={(allowedRoleGroups ?? []).map((rg) => ({
                   key: rg,
@@ -418,6 +428,25 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                 onChange={(ids) =>
                   handleChange({ target: { name: input.name, value: ids } })
                 }
+              />
+            ) : input.name === "defaultAudience" ? (
+              <Select
+                key={input.name}
+                prefix="organization_default_audience"
+                value={idp.defaultAudience ?? ""}
+                options={organization.allowedAudiences.map((audience) => ({
+                  key: audience,
+                  label: audience,
+                }))}
+                onChange={(e) =>
+                  handleChange({
+                    target: {
+                      name: input.name,
+                      value: e.target.value || null,
+                    },
+                  })
+                }
+                showClear
               />
             ) : input.name === "importedConfig" ? (
               <IdpMetadataInput

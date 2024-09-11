@@ -317,11 +317,6 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
                     value={item[input.name as keyof TrainingItem] ?? ""}
                   />
                 )}
-                {!!input.helpText && (
-                  <p className="mt-3 text-sm leading-6 text-gray-600">
-                    {input.helpText}
-                  </p>
-                )}
               </SlideOverField>
             ))}
           </>
