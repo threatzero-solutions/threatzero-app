@@ -23,7 +23,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
   const [selected, setSelected] = useImmer<string[]>([]);
   const optionKeys = options.map((o) => o.key);
   const allSelected = useMemo(
-    () => optionKeys.every((k) => selected.includes(k)),
+    () => options.every((o) => o.disabled || selected.includes(o.key)),
     [selected.length, optionKeys.length]
   );
 
