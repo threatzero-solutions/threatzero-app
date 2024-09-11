@@ -31,9 +31,13 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
     setSelected((selected) => {
       let newSelected = selected;
       if (allSelected) {
-        newSelected = options.filter((o) => o.disabled).map((o) => o.key);
+        newSelected = options
+          .filter((o) => o.disabled && selected.includes(o.key))
+          .map((o) => o.key);
       } else {
-        newSelected = optionKeys;
+        newSelected = options
+          .filter((o) => !o.disabled || selected.includes(o.key))
+          .map((o) => o.key);
       }
 
       if (onChange) {
