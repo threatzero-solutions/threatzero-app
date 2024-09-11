@@ -199,7 +199,11 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
       o[
         event.target.name as keyof Omit<
           Organization,
-          "courses" | "resources" | "policiesAndProcedures" | "idpSlugs"
+          | "courses"
+          | "resources"
+          | "policiesAndProcedures"
+          | "idpSlugs"
+          | "allowedAudiences"
         >
       ] = value;
 
@@ -334,7 +338,7 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
               <>
                 {organization.id && (
                   <OrganizationIdpsInput
-                    organizationId={organization.id}
+                    organization={organization as Organization}
                     idpSlugs={organization.idpSlugs ?? []}
                   />
                 )}

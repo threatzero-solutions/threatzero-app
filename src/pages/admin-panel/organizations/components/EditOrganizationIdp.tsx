@@ -12,10 +12,11 @@ import { SimpleChangeEvent } from "../../../../types/core";
 import { useImmer } from "use-immer";
 import IdpMetadataInput from "./IdpMetadataInput";
 import { FormEvent, useContext, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createOrganizationIdp,
   deleteOrganizationIdp,
+  getOrganizationIdpRoleGroups,
   updateOrganizationIdp,
 } from "../../../../queries/organizations";
 import Input from "../../../../components/forms/inputs/Input";
@@ -27,12 +28,15 @@ import {
 import { CoreContext } from "../../../../contexts/core/core-context";
 import UnitMatchersInput from "./UnitMatchersInput";
 import { Transition } from "@headlessui/react";
+import AudienceMatchersInput from "./AudienceMatchersInput";
+import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
 
-const DEFAULT_ROLE_GROUPS = ["Training Participant"];
 const SERVICE_PROVIDER_ENTITY_ID =
   "https://auth.threatzero.org/realms/threatzero";
 const SERVICE_PROVIDER_REDIRECT_URL = (slug: string) =>
   `https://auth.threatzero.org/realms/threatzero/broker/${slug}/endpoint`;
+
+const DISABLED_ROLE_GROUPS = ["ThreatZero Administrator"];
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
   {
@@ -76,13 +80,12 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
     order: 3,
   },
   {
-    name: "unitMatchers",
-    label: "Unit Matchers",
-    helpText: `Used during login to match a field passed from the identity provider to a unit.
+    name: "attributeMatchers" as keyof OrganizationIdpDto,
+    label: "Attribute Matchers",
+    helpText: `Used during login to match a field passed from the identity provider to a user property.
       <br/><br/>
       <strong>External Name:</strong> The name of the attribute/claim passed in from the identity provider.<br/>
       <strong>Pattern:</strong> The pattern (in Regular Expression format) to match the attribute/claim to the unit.<br/>
-      <strong>Unit:</strong> The unit to assign matching users to.<br/>
       `,
     type: FieldType.SELECT,
     required: false,
@@ -107,7 +110,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
 ];
 
 interface EditOrganizationIdpProps {
-  organizationId: Organization["id"];
+  organization: Organization;
   idp: OrganizationIdpDto | undefined;
   setOpen: (open: boolean) => void;
 }
@@ -118,6 +121,8 @@ const INITIAL_IDP: OrganizationIdpDto = {
   protocol: "saml",
   domains: [],
   unitMatchers: [],
+  audienceMatchers: [],
+  roleGroupMatchers: [],
   defaultRoleGroups: [],
   importedConfig: {},
 };
@@ -149,8 +154,10 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
   );
 };
 
+const ATTRIBUTE_MATCHER_TYPES = ["Units", "Audiences", "Role Groups"];
+
 const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
-  organizationId,
+  organization,
   idp: idpProp,
   setOpen,
 }) => {
@@ -163,20 +170,28 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
 
   const [showCopyableConfig, setShowCopyableConfig] = useState(isNew);
 
+  const [selectedAttributeMatcherTab, setSelectedAttributeMatcherTab] =
+    useState(ATTRIBUTE_MATCHER_TYPES[0]);
+
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+
+  const { data: allowedRoleGroups } = useQuery({
+    queryKey: ["roleGroups", organization.id] as const,
+    queryFn: ({ queryKey }) => getOrganizationIdpRoleGroups(queryKey[1]),
+  });
 
   const queryClient = useQueryClient();
   const createIdpMutation = useMutation({
     mutationFn: (idp: OrganizationIdpDto) =>
       isNew
-        ? createOrganizationIdp(organizationId, idp)
-        : updateOrganizationIdp(organizationId, originalSlug as string, idp),
+        ? createOrganizationIdp(organization.id, idp)
+        : updateOrganizationIdp(organization.id, originalSlug as string, idp),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["organization-idps", organizationId, originalSlug],
+        queryKey: ["organization-idps", organization.id, originalSlug],
       });
       queryClient.invalidateQueries({
-        queryKey: ["organizations", organizationId],
+        queryKey: ["organizations", organization.id],
       });
       setOpen(false);
     },
@@ -184,10 +199,10 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
 
   const deleteIdpMutation = useMutation({
     mutationFn: () =>
-      deleteOrganizationIdp(organizationId, originalSlug as string),
+      deleteOrganizationIdp(organization.id, originalSlug as string),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["organizations", organizationId],
+        queryKey: ["organizations", organization.id],
       });
       setConfirmationClose();
       setOpen(false);
@@ -314,21 +329,90 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                 required={input.required}
                 onChange={handleChange}
               />
-            ) : input.name === "unitMatchers" ? (
-              <UnitMatchersInput
-                name="unitMatchers"
-                value={idp.unitMatchers}
-                onChange={handleChange}
-                organizationId={organizationId}
-              />
+            ) : input.name ===
+              ("attributeMatchers" as keyof OrganizationIdpDto) ? (
+              <div>
+                <div className="mb-2">
+                  <div className="sm:hidden">
+                    <label htmlFor="tabs" className="sr-only">
+                      Select a tab
+                    </label>
+                    {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
+                    <select
+                      id="tabs"
+                      name="tabs"
+                      defaultValue={ATTRIBUTE_MATCHER_TYPES[0]}
+                      className="block w-full rounded-md border-gray-300 focus:border-secondary-500 focus:ring-secondary-500"
+                    >
+                      {ATTRIBUTE_MATCHER_TYPES.map((tab) => (
+                        <option key={tab}>{tab}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="hidden sm:block">
+                    <nav aria-label="Tabs" className="flex space-x-4">
+                      {ATTRIBUTE_MATCHER_TYPES.map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          aria-current={
+                            selectedAttributeMatcherTab === tab
+                              ? "page"
+                              : undefined
+                          }
+                          className={classNames(
+                            selectedAttributeMatcherTab === tab
+                              ? "bg-secondary-100 text-secondary-700"
+                              : "text-gray-500 hover:text-gray-700",
+                            "rounded-md px-3 py-2 text-sm font-medium"
+                          )}
+                          onClick={() => setSelectedAttributeMatcherTab(tab)}
+                        >
+                          {tab}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                </div>
+                {selectedAttributeMatcherTab === "Units" ? (
+                  <UnitMatchersInput
+                    name="unitMatchers"
+                    value={idp.unitMatchers}
+                    onChange={handleChange}
+                    organizationId={organization.id}
+                  />
+                ) : selectedAttributeMatcherTab === "Audiences" ? (
+                  <AudienceMatchersInput
+                    name="audienceMatchers"
+                    value={idp.audienceMatchers}
+                    onChange={handleChange}
+                    allowedAudiences={organization.allowedAudiences}
+                  />
+                ) : selectedAttributeMatcherTab === "Role Groups" ? (
+                  <RoleGroupMatchersInput
+                    name="roleGroupMatchers"
+                    value={idp.roleGroupMatchers}
+                    onChange={handleChange}
+                    allowedRoleGroups={allowedRoleGroups ?? []}
+                    checkDisabled={(rg) =>
+                      DISABLED_ROLE_GROUPS.includes(rg.roleGroup)
+                    }
+                  />
+                ) : (
+                  <></>
+                )}
+              </div>
             ) : input.name === "defaultRoleGroups" ? (
               <MultipleSelect
                 key={input.name}
                 prefix="organization_resources"
                 value={idp.defaultRoleGroups}
-                options={DEFAULT_ROLE_GROUPS.map((rg) => ({
+                options={(allowedRoleGroups ?? []).map((rg) => ({
                   key: rg,
                   label: rg,
+                  disabled: DISABLED_ROLE_GROUPS.includes(rg),
+                  disabledText:
+                    "This role group can only be managed by identity admins.",
                 }))}
                 onChange={(ids) =>
                   handleChange({ target: { name: input.name, value: ids } })
@@ -337,7 +421,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
             ) : input.name === "importedConfig" ? (
               <IdpMetadataInput
                 name={input.name}
-                organizationId={organizationId}
+                organizationId={organization.id}
                 protocol={idp.protocol}
                 value={idp.importedConfig}
                 onChange={handleChange}

@@ -17,7 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AxiosError } from "axios";
 
 interface OrganizationIdpsInputProps {
-  organizationId: Organization["id"];
+  organization: Organization;
   idpSlugs: string[];
 }
 
@@ -96,7 +96,7 @@ const IdpRow: React.FC<{
 };
 
 const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
-  organizationId,
+  organization,
   idpSlugs,
 }) => {
   const [editIdpSliderOpen, setEditIdpSliderOpen] = useState(false);
@@ -123,13 +123,13 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
     }
     saveOrganizationMutation.mutate(
       {
-        id: organizationId,
+        id: organization.id,
         idpSlugs: [...(idpSlugs || []), slugToLink],
       },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["organizations", organizationId],
+            queryKey: ["organizations", organization.id],
           });
           close();
           setSlugToLink("");
@@ -141,13 +141,13 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
   const handleUnlinkIdp = (idpSlug: string) => {
     saveOrganizationMutation.mutate(
       {
-        id: organizationId,
+        id: organization.id,
         idpSlugs: idpSlugs.filter((slug) => slug !== idpSlug),
       },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["organizations", organizationId],
+            queryKey: ["organizations", organization.id],
           });
         },
       }
@@ -161,7 +161,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
           <IdpRow
             key={idpSlug}
             idpSlug={idpSlug}
-            organizationId={organizationId}
+            organizationId={organization.id}
             onSelect={(idp) => {
               setActiveIdp(idp);
               setEditIdpSliderOpen(true);
@@ -247,7 +247,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
       </div>
       <SlideOver open={editIdpSliderOpen} setOpen={setEditIdpSliderOpen}>
         <EditOrganizationIdp
-          organizationId={organizationId}
+          organization={organization}
           idp={activeIdp}
           setOpen={setEditIdpSliderOpen}
         />

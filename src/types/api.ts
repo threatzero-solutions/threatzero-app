@@ -44,11 +44,22 @@ export interface ResendTrainingLinksDto {
   trainingUrlTemplate: string;
 }
 
-export interface UnitMatcherDto {
+export interface BaseMatcherDto {
   attributeId?: string;
   externalName: string;
   pattern: string;
+}
+
+export interface UnitMatcherDto extends BaseMatcherDto {
   unitSlug: string;
+}
+
+export interface AudienceMatcherDto extends BaseMatcherDto {
+  audience: string;
+}
+
+export interface RoleGroupMatcherDto extends BaseMatcherDto {
+  roleGroup: string;
 }
 
 export interface OrganizationIdpDto {
@@ -57,6 +68,8 @@ export interface OrganizationIdpDto {
   protocol: string;
   domains: string[];
   unitMatchers: UnitMatcherDto[];
+  audienceMatchers: AudienceMatcherDto[];
+  roleGroupMatchers: RoleGroupMatcherDto[];
   defaultRoleGroups: string[];
   importedConfig: Record<string, string>;
 }

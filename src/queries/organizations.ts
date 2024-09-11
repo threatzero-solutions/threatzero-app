@@ -4,6 +4,7 @@ import { Unit, Organization, Location } from "../types/entities";
 import {
   deleteOne,
   findMany,
+  findManyRaw,
   findOneOrFail,
   insertOne,
   putOne,
@@ -27,6 +28,9 @@ export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
     `/organizations/organizations/${id}/idps/`,
     slug
   );
+
+export const getOrganizationIdpRoleGroups = (id: Organization["id"]) =>
+  findManyRaw<string[]>(`/organizations/organizations/${id}/idps/role-groups/`);
 
 export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);

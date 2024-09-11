@@ -1,4 +1,10 @@
-import { Listbox, Transition } from "@headlessui/react";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Transition,
+} from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import {
   SelectHTMLAttributes,
@@ -6,6 +12,7 @@ import {
   Fragment,
   useState,
   useEffect,
+  ReactNode,
 } from "react";
 import { classNames } from "../../../utils/core";
 
@@ -14,7 +21,12 @@ interface SelectProps
     SelectHTMLAttributes<HTMLSelectElement>,
     HTMLSelectElement
   > {
-  options: { [key: string]: string };
+  options: {
+    key: string;
+    label: ReactNode;
+    disabled?: boolean;
+    disabledText?: string;
+  }[];
   readOnly?: boolean;
 }
 
@@ -56,9 +68,11 @@ const Select: React.FC<SelectProps> = ({ options, ...attrs }) => {
       {({ open }) => (
         <>
           <div className="relative">
-            <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary-600 sm:text-sm sm:leading-6">
+            <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary-600 sm:text-sm sm:leading-6">
               <span className="block truncate">
-                {selected ? options[selected] : "Select one"}
+                {selected
+                  ? options.find(({ key }) => key === selected)?.label
+                  : "Select one"}
               </span>
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon
@@ -66,7 +80,7 @@ const Select: React.FC<SelectProps> = ({ options, ...attrs }) => {
                   aria-hidden="true"
                 />
               </span>
-            </Listbox.Button>
+            </ListboxButton>
 
             <Transition
               show={open}
@@ -75,21 +89,29 @@ const Select: React.FC<SelectProps> = ({ options, ...attrs }) => {
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
             >
-              <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                {Object.entries(options).map(([value, name]) => (
-                  <Listbox.Option
-                    key={value}
-                    className={({ active }) =>
+              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                {options.map(({ key, label, disabled, disabledText }) => (
+                  <ListboxOption
+                    key={key}
+                    className={({ focus }) =>
                       classNames(
-                        active && !readOnly
+                        focus && !readOnly
                           ? "bg-secondary-600 text-white"
                           : "text-gray-900",
                         "relative cursor-default select-none py-2 pl-3 pr-9"
                       )
                     }
-                    value={value}
+                    value={key}
+                    disabled={disabled}
+                    title={
+                      disabled
+                        ? disabledText
+                        : typeof label === "string"
+                        ? label
+                        : ""
+                    }
                   >
-                    {({ selected, active }) => (
+                    {({ selected, focus }) => (
                       <>
                         <span
                           className={classNames(
@@ -97,13 +119,13 @@ const Select: React.FC<SelectProps> = ({ options, ...attrs }) => {
                             "block truncate"
                           )}
                         >
-                          {name}
+                          {label}
                         </span>
 
                         {selected ? (
                           <span
                             className={classNames(
-                              active ? "text-white" : "text-secondary-600",
+                              focus ? "text-white" : "text-secondary-600",
                               "absolute inset-y-0 right-0 flex items-center pr-4"
                             )}
                           >
@@ -112,9 +134,9 @@ const Select: React.FC<SelectProps> = ({ options, ...attrs }) => {
                         ) : null}
                       </>
                     )}
-                  </Listbox.Option>
+                  </ListboxOption>
                 ))}
-              </Listbox.Options>
+              </ListboxOptions>
             </Transition>
           </div>
         </>
