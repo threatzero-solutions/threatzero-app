@@ -20,9 +20,9 @@ export const ViewLocations: React.FC = () => {
     Partial<Location> | undefined
   >();
 
-  const [locationsQuery, setLocationsQuery] = useImmer<ItemFilterQueryParams>(
-    {}
-  );
+  const [locationsQuery, setLocationsQuery] = useImmer<ItemFilterQueryParams>({
+    order: { ["unit.name"]: "ASC", name: "ASC" },
+  });
   const [debouncedLocationsQuery] = useDebounceValue(locationsQuery, 500);
 
   const { data: locations, isLoading: locationsLoading } = useQuery({

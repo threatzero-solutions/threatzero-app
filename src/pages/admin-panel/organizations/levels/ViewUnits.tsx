@@ -14,7 +14,9 @@ export const ViewUnits: React.FC = () => {
   const [editUnitSliderOpen, setEditUnitSliderOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<Partial<Unit> | undefined>();
 
-  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({});
+  const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
+    order: { ["organization.name"]: "ASC", name: "ASC" },
+  });
   const [debouncedUnitsQuery] = useDebounceValue(unitsQuery, 300);
 
   const { data: units, isLoading: unitsLoading } = useQuery({
