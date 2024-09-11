@@ -146,7 +146,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                   noSort
                                     ? "pointer-events-none hidden w-0"
                                     : "",
-                                  "ml-2 flex-none rounded transition-colors",
+                                  "ml-2 flex-none inline-flex items-center gap-0.5 rounded transition-colors",
                                   orderOptions?.order?.[key]
                                     ? "bg-gray-100 text-gray-900 group-hover:bg-gray-200"
                                     : "invisible text-gray-400 group-hover:visible group-focus:visible"
@@ -167,6 +167,15 @@ const DataTable: React.FC<DataTableProps> = ({
                                     aria-hidden="true"
                                   />
                                 )}
+                                {orderOptions?.order &&
+                                  Object.keys(orderOptions.order).length >
+                                    1 && (
+                                    <span className="text-xs leading-3 text-gray-500 mr-1 self-center">
+                                      {Object.keys(orderOptions.order).indexOf(
+                                        key
+                                      ) + 1}
+                                    </span>
+                                  )}
                               </span>
                             )}
                           </div>

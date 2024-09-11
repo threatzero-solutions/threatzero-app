@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useContext, useState } from "react";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditOrganizationIdp from "./EditOrganizationIdp";
 import { OrganizationIdpDto } from "../../../../types/api";
@@ -15,6 +15,7 @@ import { LEVEL } from "../../../../constants/permissions";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AxiosError } from "axios";
+import { CoreContext } from "../../../../contexts/core/core-context";
 
 interface OrganizationIdpsInputProps {
   organization: Organization;
@@ -87,7 +88,7 @@ const IdpRow: React.FC<{
           className="inline-flex items-center gap-1 cursor-pointer text-red-500 hover:text-red-700 transition-colors text-sm"
           onClick={() => onUnlink?.(idpSlug)}
         >
-          <span>Unlink</span>
+          <span>unlink</span>
           <MinusCircleIcon className="h-4 w-4" />
         </button>
       )}
@@ -104,6 +105,8 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
 
   const { hasPermissions } = useAuth();
   const hasAdminLevel = hasPermissions([LEVEL.ADMIN]);
+
+  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
   const [slugToLink, setSlugToLink] = useState<string>("");
 
@@ -139,19 +142,28 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
   };
 
   const handleUnlinkIdp = (idpSlug: string) => {
-    saveOrganizationMutation.mutate(
-      {
-        id: organization.id,
-        idpSlugs: idpSlugs.filter((slug) => slug !== idpSlug),
+    setConfirmationOpen({
+      title: `Unlink ${idpSlug} from ${organization.name}?`,
+      message: `Are you sure you want to unlink this IDP?`,
+      onConfirm: () => {
+        saveOrganizationMutation.mutate(
+          {
+            id: organization.id,
+            idpSlugs: idpSlugs.filter((slug) => slug !== idpSlug),
+          },
+          {
+            onSuccess: () => {
+              queryClient.invalidateQueries({
+                queryKey: ["organizations", organization.id],
+              });
+              setConfirmationClose();
+            },
+          }
+        );
       },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ["organizations", organization.id],
-          });
-        },
-      }
-    );
+      destructive: true,
+      confirmText: "Unlink",
+    });
   };
 
   return (

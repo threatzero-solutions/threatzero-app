@@ -17,7 +17,7 @@ export const ViewOrganizations: React.FC = () => {
   >();
 
   const [organizationsQuery, setOrganizationsQuery] =
-    useImmer<ItemFilterQueryParams>({});
+    useImmer<ItemFilterQueryParams>({ order: { name: "ASC" } });
   const [debouncedOrganizationsQuery] = useDebounceValue(
     organizationsQuery,
     300
