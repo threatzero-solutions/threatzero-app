@@ -71,5 +71,6 @@ export interface OrganizationIdpDto {
   audienceMatchers: AudienceMatcherDto[];
   roleGroupMatchers: RoleGroupMatcherDto[];
   defaultRoleGroups: string[];
+  defaultAudience?: string | null;
   importedConfig: Record<string, string>;
 }
