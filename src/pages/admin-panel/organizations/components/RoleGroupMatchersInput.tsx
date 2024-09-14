@@ -61,7 +61,7 @@ const RoleGroupMatchersInput = <K extends string | number | symbol>({
     e: SimpleChangeEvent<string | null | undefined>
   ) => {
     setMatchers((draft) => {
-      let value = e.target?.value;
+      const value = e.target?.value;
       draft[idx][key] = (value ?? "") as string;
     });
   };

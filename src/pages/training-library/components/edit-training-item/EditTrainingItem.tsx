@@ -175,7 +175,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
     if (debouncedItemToSave && autoSaveEnabled.current) {
       saveItemMutation.mutate();
     }
-  }, [debouncedItemToSave, saveItemMutation.mutate]);
+  }, [debouncedItemToSave, saveItemMutation]);
 
   const handleSetItem = (
     itemUpdate: SettableItem | DraftFunction<SettableItem>

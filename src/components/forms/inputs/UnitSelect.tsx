@@ -43,7 +43,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
 
   const selectedUnitsLength = Array.isArray(value)
     ? value.length
-    : !!value
+    : value
     ? 1
     : 0;
   const { data: unitData } = useQuery({

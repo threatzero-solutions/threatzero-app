@@ -26,7 +26,7 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
     const currentSection = getAvailableSection(sections);
 
     return currentSection ?? sections[0];
-  }, [sections?.[0]]);
+  }, [sections]);
 
   return !loading && featuredSection ? (
     <div className="bg-gradient-to-b from-gray-100 to-gray-200 rounded-lg p-4 -mx-4 shadow-xl">

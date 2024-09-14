@@ -94,7 +94,7 @@ export const filePreload = async (
                 files.find((f) => `${f.name}_${f.size}` === result.fileId),
               ] as const
           )
-          .filter(([_, f]) => !!f)
+          .filter((v) => !!v[1])
           .map(async ([result, file]) => {
             return axios
               .create()

@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { Field, FieldType, OpaqueToken } from "../../../../types/entities";
+import { Field, FieldType, TrainingToken } from "../../../../types/entities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createTrainingToken } from "../../../../queries/users";
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
@@ -53,7 +53,7 @@ const INPUT_DATA: Array<Partial<Field>> = [
 
 interface ManageTrainingInviteProps {
   setOpen: (open: boolean) => void;
-  trainingToken?: Partial<OpaqueToken>;
+  trainingToken?: Partial<TrainingToken>;
   readOnly?: boolean;
 }
 

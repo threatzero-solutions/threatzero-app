@@ -19,7 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useResolvedPath } from "react-router-dom";
-import { OpaqueToken } from "../../../types/entities";
+import { TrainingToken } from "../../../types/entities";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useContext, useState } from "react";
 import ManageTrainingInvite from "./training-invites/ManageTrainingInvite";
@@ -48,7 +48,7 @@ const UsersDashboard: React.FC = () => {
   const [manageTrainingTokenSliderOpen, setManageTrainingTokenSliderOpen] =
     useState(false);
   const [selectedTrainingToken, setSelectedTrainingToken] =
-    useState<OpaqueToken>();
+    useState<TrainingToken>();
 
   const watchTrainingPath = useResolvedPath("/watch-training/");
 
@@ -62,13 +62,13 @@ const UsersDashboard: React.FC = () => {
     queryFn: ({ queryKey }) => getTrainingTokens(queryKey[1]),
   });
 
-  const copyTrainingUrl = (token: OpaqueToken) => {
+  const copyTrainingUrl = (token: TrainingToken) => {
     const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
     navigator.clipboard.writeText(url);
     setSuccess("Copied training link to clipboard", 5000);
   };
 
-  const viewValue = (token: OpaqueToken) => {
+  const viewValue = (token: TrainingToken) => {
     setSelectedTrainingToken(token);
     setManageTrainingTokenSliderOpen(true);
   };

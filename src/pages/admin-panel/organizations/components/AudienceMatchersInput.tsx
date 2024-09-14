@@ -61,7 +61,7 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
     e: SimpleChangeEvent<string | null | undefined>
   ) => {
     setAudienceMatchers((draft) => {
-      let value = e.target?.value;
+      const value = e.target?.value;
       draft[idx][key] = (value ?? "") as string;
     });
   };

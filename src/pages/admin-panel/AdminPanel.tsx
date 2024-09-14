@@ -22,7 +22,7 @@ const AdminPanel: React.FC = () => {
 
 export const adminPanelPermissionOptions = {
   permissions: [LEVEL.ADMIN],
-  type: "all" as "all",
+  type: "all" as const,
 };
 
 export default withRequirePermissions(AdminPanel, adminPanelPermissionOptions);

@@ -420,12 +420,29 @@ export interface ResourceItem extends Base {
 
 // USERS
 
-export interface OpaqueToken extends Base {
+export interface OpaqueToken<V> extends Base {
   key: string;
-  value: Record<string, any>;
+  value: V;
 }
 
-export interface TrainingToken extends OpaqueToken {
+export interface ViewingUserTokenValue {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  unitSlug: string;
+  organizationSlug?: string;
+  audiences?: string[];
+  expiresOn?: Date;
+}
+
+export interface TrainingParticipantTokenValue extends ViewingUserTokenValue {
+  trainingCourseId: string;
+  trainingItemId: string;
+}
+
+export interface TrainingToken
+  extends OpaqueToken<TrainingParticipantTokenValue> {
   watchStat?: WatchStat | null;
 }
 

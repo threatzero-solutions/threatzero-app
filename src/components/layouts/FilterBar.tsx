@@ -47,7 +47,7 @@ const buildFilterValue = (filter: FilterBarFilter) => {
   return filter.many
     ? Array.isArray(filter.defaultValue)
       ? filter.defaultValue
-      : !!filter.defaultValue
+      : filter.defaultValue
       ? [filter.defaultValue]
       : []
     : filter.defaultValue ?? undefined;

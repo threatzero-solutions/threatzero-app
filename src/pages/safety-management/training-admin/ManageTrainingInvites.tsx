@@ -29,9 +29,9 @@ import {
 import { CoreContext } from "../../../contexts/core/core-context";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import {
-  OpaqueToken,
   TrainingCourse,
   TrainingItem,
+  TrainingToken,
 } from "../../../types/entities";
 import dayjs from "dayjs";
 import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
@@ -160,7 +160,7 @@ const ManageTrainingInvites: React.FC = () => {
   const [manageTrainingInviteSliderOpen, setManageTrainingInviteSliderOpen] =
     useState(false);
   const [selectedTrainingInvite, setSelectedTrainingInvite] =
-    useState<OpaqueToken>();
+    useState<TrainingToken>();
 
   const { hasMultipleUnitAccess, hasMultipleOrganizationAccess } = useAuth();
   const { setError } = useContext(ErrorContext);
@@ -289,7 +289,7 @@ const ManageTrainingInvites: React.FC = () => {
     setTokenValues((draft) => {
       let value = e.target?.value;
       if (key === "unitSlug" && value && typeof value !== "string") {
-        value = (value as any).slug;
+        value = (value as { slug: string }).slug;
       }
       draft[idx][key] = value;
     });
@@ -357,18 +357,18 @@ const ManageTrainingInvites: React.FC = () => {
     sendTrainingLinksMutation.mutate(preparedRequest);
   };
 
-  const copyTrainingUrl = (token: OpaqueToken) => {
+  const copyTrainingUrl = (token: TrainingToken) => {
     const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
     navigator.clipboard.writeText(url);
     setSuccess("Copied training link to clipboard", 5000);
   };
 
-  const viewInvite = (token: OpaqueToken) => {
+  const viewInvite = (token: TrainingToken) => {
     setSelectedTrainingInvite(token);
     setManageTrainingInviteSliderOpen(true);
   };
 
-  const handleResendInvite = (token: OpaqueToken) => {
+  const handleResendInvite = (token: TrainingToken) => {
     resendTrainingLinkMutation.mutate({
       trainingTokenIds: [token.id],
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
