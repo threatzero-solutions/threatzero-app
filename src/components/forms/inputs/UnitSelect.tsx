@@ -43,7 +43,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
 
   const selectedUnitsLength = Array.isArray(value)
     ? value.length
-    : !!value
+    : value
     ? 1
     : 0;
   const { data: unitData } = useQuery({
@@ -122,9 +122,9 @@ const UnitSelect = <M extends boolean | undefined = false>({
       <Combobox
         as="div"
         immediate
-        onChange={handleChange as any}
+        onChange={handleChange as (value: unknown) => void}
         value={
-          value ?? ((many ? [] : { name: "" }) as ConditionalUnit<M> as any)
+          value ?? ((many ? [] : { name: "" }) as ConditionalUnit<M> as unknown)
         }
         className="relative"
         aria-required={required}
@@ -136,7 +136,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
         )}
         <div className="relative">
           <ComboboxInput
-            className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+            className="w-full rounded-md border-0 bg-white py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
             onChange={handleQueryUnit}
             displayValue={(unit: Unit | string) =>
               many
@@ -153,7 +153,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
             <button
               type="button"
               onClick={() => handleChange(null as ConditionalUnit<M>)}
-              className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none"
+              className="absolute inset-y-1 right-1 bg-white flex items-center rounded-r-md px-2 focus:outline-none hover:opacity-80 transition-opacity"
             >
               <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
             </button>

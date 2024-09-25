@@ -4,8 +4,9 @@ import { SimpleChangeEvent } from "../../../../types/core";
 import DataTable from "../../../../components/layouts/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
 import React, { MouseEvent, useEffect } from "react";
-import { TrashIcon } from "@heroicons/react/20/solid";
+import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
 import Select from "../../../../components/forms/inputs/Select";
+import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
 
 interface AudienceMatchersInputProps<K extends string | number | symbol> {
   name: K;
@@ -61,7 +62,7 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
     e: SimpleChangeEvent<string | null | undefined>
   ) => {
     setAudienceMatchers((draft) => {
-      let value = e.target?.value;
+      const value = e.target?.value;
       draft[idx][key] = (value ?? "") as string;
     });
   };
@@ -81,8 +82,18 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
               key: "externalName",
             },
             {
+              label: "",
+              key: "matchesSeparator",
+              noSort: true,
+            },
+            {
               label: "Pattern",
               key: "pattern",
+            },
+            {
+              label: "",
+              key: "arrowSeparator",
+              noSort: true,
             },
             {
               label: "Audience",
@@ -105,6 +116,7 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
                 required
               />
             ),
+            matchesSeparator: <PuzzlePieceIcon className="w-4 h-4" />,
             pattern: (
               <Input
                 value={u.pattern ?? ""}
@@ -113,6 +125,7 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
                 required
               />
             ),
+            arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             audience: (
               <Select
                 value={u.audience}

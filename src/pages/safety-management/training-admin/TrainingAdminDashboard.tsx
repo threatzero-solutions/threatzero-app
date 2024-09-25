@@ -19,7 +19,7 @@ const TrainingAdminDashboard: React.FC = () => {
 
 export const trainingAdminPermissionOptions = {
   permissions: [WRITE.TRAINING_LINKS, READ.TRAINING_STATS],
-  type: "all" as "all",
+  type: "all" as const,
 };
 
 export default withRequirePermissions(

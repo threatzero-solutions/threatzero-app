@@ -44,7 +44,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
 
   const selectedOrganizationsLength = Array.isArray(value)
     ? value.length
-    : !!value
+    : value
     ? 1
     : 0;
   const { data: organizationData } = useQuery({

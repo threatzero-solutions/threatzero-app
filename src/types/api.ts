@@ -44,6 +44,11 @@ export interface ResendTrainingLinksDto {
   trainingUrlTemplate: string;
 }
 
+export interface SyncAttributeDto {
+  externalName: string;
+  internalName: string;
+}
+
 export interface BaseMatcherDto {
   attributeId?: string;
   externalName: string;
@@ -67,6 +72,7 @@ export interface OrganizationIdpDto {
   name: string;
   protocol: string;
   domains: string[];
+  syncAttributes?: SyncAttributeDto[];
   unitMatchers: UnitMatcherDto[];
   audienceMatchers: AudienceMatcherDto[];
   roleGroupMatchers: RoleGroupMatcherDto[];

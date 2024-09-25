@@ -36,10 +36,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
 }) => {
   const location = useLocation();
 
-  const firstItem = useMemo(
-    () => section.items?.[0]?.item,
-    [section.items?.[0]?.item]
-  );
+  const firstItem = useMemo(() => section.items?.[0]?.item, [section.items]);
   const singleItem = useMemo(
     () => section.items?.length === 1,
     [section.items]
@@ -77,7 +74,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
         state: { from: location },
       });
     },
-    [navigate, section.id, navigateDisabled]
+    [location, navigate, section.id, navigateDisabled]
   );
 
   return (

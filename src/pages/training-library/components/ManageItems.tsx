@@ -75,7 +75,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
             (i) => !existingItemSelection?.find((_i) => _i.id === i.id)
           )
         : itemsData?.results,
-    [itemsData, existingItemSelection, isManagingItems]
+    [itemsData, existingItemSelection, isSelecting, excludeSelected]
   );
 
   useEffect(() => {

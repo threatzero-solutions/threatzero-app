@@ -16,7 +16,7 @@ const Organizations: React.FC = () => {
 
 export const adminPanelPermissionOptions = {
 	permissions: [LEVEL.ADMIN, READ.ORGANIZATIONS],
-	type: "all" as "all",
+	type: "all" as const,
 };
 
 export default withRequirePermissions(

@@ -4,8 +4,9 @@ import { SimpleChangeEvent } from "../../../../types/core";
 import DataTable from "../../../../components/layouts/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
 import React, { MouseEvent, useEffect } from "react";
-import { TrashIcon } from "@heroicons/react/20/solid";
+import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
 import Select from "../../../../components/forms/inputs/Select";
+import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
 
 interface RoleGroupMatchersInputProps<K extends string | number | symbol> {
   name: K;
@@ -61,14 +62,14 @@ const RoleGroupMatchersInput = <K extends string | number | symbol>({
     e: SimpleChangeEvent<string | null | undefined>
   ) => {
     setMatchers((draft) => {
-      let value = e.target?.value;
+      const value = e.target?.value;
       draft[idx][key] = (value ?? "") as string;
     });
   };
 
   useEffect(() => {
     onChange?.({ target: { name, value: matchers } });
-  }, [matchers]);
+  }, [matchers, onChange, name]);
 
   return (
     <div className="flex flex-col">
@@ -81,8 +82,18 @@ const RoleGroupMatchersInput = <K extends string | number | symbol>({
               key: "externalName",
             },
             {
+              label: "",
+              key: "matchesSeparator",
+              noSort: true,
+            },
+            {
               label: "Pattern",
               key: "pattern",
+            },
+            {
+              label: "",
+              key: "arrowSeparator",
+              noSort: true,
             },
             {
               label: "Role Group",
@@ -106,6 +117,7 @@ const RoleGroupMatchersInput = <K extends string | number | symbol>({
                 readOnly={checkDisabled(u)}
               />
             ),
+            matchesSeparator: <PuzzlePieceIcon className="w-4 h-4" />,
             pattern: (
               <Input
                 value={u.pattern ?? ""}
@@ -115,6 +127,7 @@ const RoleGroupMatchersInput = <K extends string | number | symbol>({
                 readOnly={checkDisabled(u)}
               />
             ),
+            arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             roleGroup: (
               <Select
                 value={u.roleGroup}

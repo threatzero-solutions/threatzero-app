@@ -6,7 +6,8 @@ import Input from "../../../../components/forms/inputs/Input";
 import React, { MouseEvent, useEffect } from "react";
 import UnitSelect from "../../../../components/forms/inputs/UnitSelect";
 import { Organization, Unit } from "../../../../types/entities";
-import { TrashIcon } from "@heroicons/react/20/solid";
+import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
 
 interface UnitMatchersInputProps<K extends string | number | symbol> {
   name: K;
@@ -64,7 +65,7 @@ const UnitMatchersInput = <K extends string | number | symbol = string>({
     setUnitMatchers((draft) => {
       let value = e.target?.value;
       if (key === "unitSlug" && value && typeof value !== "string") {
-        value = (value as any).slug;
+        value = (value as Unit).slug;
       }
 
       draft[idx][key] = (value ?? "") as string;
@@ -73,7 +74,7 @@ const UnitMatchersInput = <K extends string | number | symbol = string>({
 
   useEffect(() => {
     onChange?.({ target: { name, value: unitMatchers } });
-  }, [unitMatchers]);
+  }, [unitMatchers, onChange, name]);
 
   return (
     <div className="flex flex-col">
@@ -86,8 +87,18 @@ const UnitMatchersInput = <K extends string | number | symbol = string>({
               key: "externalName",
             },
             {
+              label: "",
+              key: "matchesSeparator",
+              noSort: true,
+            },
+            {
               label: "Pattern",
               key: "pattern",
+            },
+            {
+              label: "",
+              key: "arrowSeparator",
+              noSort: true,
             },
             {
               label: "Unit",
@@ -110,6 +121,7 @@ const UnitMatchersInput = <K extends string | number | symbol = string>({
                 required
               />
             ),
+            matchesSeparator: <PuzzlePieceIcon className="w-4 h-4" />,
             pattern: (
               <Input
                 value={u.pattern ?? ""}
@@ -118,6 +130,7 @@ const UnitMatchersInput = <K extends string | number | symbol = string>({
                 required
               />
             ),
+            arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             unitSlug: (
               <UnitSelect
                 value={u.unitSlug}
