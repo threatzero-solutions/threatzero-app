@@ -31,6 +31,7 @@ import { Transition } from "@headlessui/react";
 import AudienceMatchersInput from "./AudienceMatchersInput";
 import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
 import Select from "../../../../components/forms/inputs/Select";
+import SyncAttributesInput from "./SyncAttributesInput";
 
 const SERVICE_PROVIDER_ENTITY_ID =
   "https://auth.threatzero.org/realms/threatzero";
@@ -81,6 +82,14 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
     order: 3,
   },
   {
+    name: "syncAttributes",
+    label: "Sync Attributes",
+    helpText: "Sync attributes from the identity provider to ThreatZero users.",
+    type: FieldType.SELECT,
+    required: false,
+    order: 4,
+  },
+  {
     name: "attributeMatchers" as keyof OrganizationIdpDto,
     label: "Attribute Matchers",
     helpText: `Used during login to match a field passed from the identity provider to a user property.
@@ -90,7 +99,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
       `,
     type: FieldType.SELECT,
     required: false,
-    order: 4,
+    order: 5,
   },
   {
     name: "defaultRoleGroups",
@@ -98,7 +107,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
     helpText: "Role groups that will be assigned to all users.",
     type: FieldType.SELECT,
     required: false,
-    order: 5,
+    order: 6,
   },
   {
     name: "defaultAudience",
@@ -106,7 +115,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
     helpText: "Audience that will be assigned to all users.",
     type: FieldType.SELECT,
     required: false,
-    order: 6,
+    order: 7,
   },
   {
     name: "importedConfig",
@@ -114,7 +123,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof OrganizationIdpDto }> = [
     helpText: "Import metadata from identity provider by URL or file.",
     type: FieldType.TEXT,
     required: true,
-    order: 7,
+    order: 8,
   },
 ];
 
@@ -338,6 +347,13 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                 name={input.name}
                 value={idp.domains}
                 required={input.required}
+                onChange={handleChange}
+              />
+            ) : input.name === "syncAttributes" ? (
+              <SyncAttributesInput
+                key={input.name}
+                name={input.name}
+                value={idp.syncAttributes}
                 onChange={handleChange}
               />
             ) : input.name ===
