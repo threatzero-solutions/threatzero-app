@@ -1,28 +1,20 @@
-import { READ, WRITE } from "../../../constants/permissions";
-import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import { Outlet } from "react-router-dom";
 import PageNavBar from "../../../components/layouts/PageNavBar";
+import { trainingAdminPermissionOptions } from "../../../constants/permission-options";
 
 const navigation = [
   { name: "Watch Stats", to: "watch-stats" },
   { name: "Invites", to: "invites" },
 ];
 
-const TrainingAdminDashboard: React.FC = () => {
+const TrainingAdminDashboard: React.FC = withRequirePermissions(() => {
   return (
     <>
       <PageNavBar navigation={navigation} />
       <Outlet />
     </>
   );
-};
+}, trainingAdminPermissionOptions);
 
-export const trainingAdminPermissionOptions = {
-  permissions: [WRITE.TRAINING_LINKS, READ.TRAINING_STATS],
-  type: "all" as const,
-};
-
-export default withRequirePermissions(
-  TrainingAdminDashboard,
-  trainingAdminPermissionOptions
-);
+export default TrainingAdminDashboard;

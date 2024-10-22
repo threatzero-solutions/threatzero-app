@@ -1,25 +1,17 @@
-import { READ, LEVEL } from "../../../constants/permissions";
-import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import { ViewLocations } from "./levels/ViewLocations";
 import { ViewUnits } from "./levels/ViewUnits";
 import { ViewOrganizations } from "./levels/ViewOrganizations";
+import { adminPanelPermissionOptions } from "../../../constants/permission-options";
 
-const Organizations: React.FC = () => {
-	return (
-		<div className="grid gap-24">
-			<ViewOrganizations />
-			<ViewUnits />
-			<ViewLocations />
-		</div>
-	);
-};
+const Organizations: React.FC = withRequirePermissions(() => {
+  return (
+    <div className="grid gap-24">
+      <ViewOrganizations />
+      <ViewUnits />
+      <ViewLocations />
+    </div>
+  );
+}, adminPanelPermissionOptions);
 
-export const adminPanelPermissionOptions = {
-	permissions: [LEVEL.ADMIN, READ.ORGANIZATIONS],
-	type: "all" as const,
-};
-
-export default withRequirePermissions(
-	Organizations,
-	adminPanelPermissionOptions,
-);
+export default Organizations;

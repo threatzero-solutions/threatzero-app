@@ -1,10 +1,4 @@
-import {
-  ComponentType,
-  Fragment,
-  PropsWithChildren,
-  useEffect,
-  useState,
-} from "react";
+import { Fragment, PropsWithChildren, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 
@@ -36,17 +30,6 @@ const RequirePermissions: React.FC<RequirePermissionsOptions> = ({
   ) : (
     <Navigate to={fallbackTo ?? "/"} />
   );
-};
-
-export const withRequirePermissions = <P extends object>(
-  Component: ComponentType<P>,
-  options: RequirePermissionsOptions
-): React.FC<P> => {
-  return (props: P) =>
-    RequirePermissions({
-      ...options,
-      children: <Component {...props} />,
-    });
 };
 
 export default RequirePermissions;

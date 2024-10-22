@@ -2,13 +2,13 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getTrainingSection } from "../../queries/training";
 import { useQuery } from "@tanstack/react-query";
 import BackButtonLink from "../../components/layouts/BackButtonLink";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
-import { READ } from "../../constants/permissions";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
 import TrainingItemTile from "./components/TrainingItemTile";
 import { orderSort } from "../../utils/core";
 import { useEffect } from "react";
+import { trainingItemPermissionsOptions } from "../../constants/permission-options";
 
-const ViewTrainingSection: React.FC = () => {
+const ViewTrainingSection: React.FC = withRequirePermissions(() => {
   const { sectionId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,13 +62,6 @@ const ViewTrainingSection: React.FC = () => {
       </div>
     </div>
   );
-};
+}, trainingItemPermissionsOptions);
 
-export const trainingItemPermissionsOptions = {
-  permissions: [READ.COURSES],
-};
-
-export default withRequirePermissions(
-  ViewTrainingSection,
-  trainingItemPermissionsOptions
-);
+export default ViewTrainingSection;

@@ -1,6 +1,5 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { LEVEL, WRITE } from "../../constants/permissions";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { useContext, useEffect, useMemo } from "react";
 import Form from "./Form";
 import { getForm, getForms, saveForm } from "../../queries/forms";
@@ -8,8 +7,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormsContext } from "../../contexts/forms/forms-context";
 import { Language } from "../../types/entities";
 import { getLanguages } from "../../queries/languages";
+import { formBuilderPermissionsOptions } from "../../constants/permission-options";
 
-const FormBuilder: React.FC = () => {
+const FormBuilder: React.FC = withRequirePermissions(() => {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -40,7 +40,7 @@ const FormBuilder: React.FC = () => {
     }
 
     return null;
-  }, [allForms, searchParams, isLoadingAllForms]);
+  }, [allForms, searchParams]);
 
   const queryClient = useQueryClient();
   const { data: form, isLoading: isLoadingSelectedForm } = useQuery({
@@ -95,8 +95,6 @@ const FormBuilder: React.FC = () => {
       />
     </div>
   );
-};
+}, formBuilderPermissionsOptions);
 
-export default withRequirePermissions(FormBuilder, {
-  permissions: [LEVEL.ADMIN, WRITE.FORMS],
-});
+export default FormBuilder;

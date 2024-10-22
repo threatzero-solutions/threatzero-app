@@ -12,7 +12,7 @@ import {
 } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { DeepPartial } from "../types/core";
-import { OrganizationIdpDto } from "../types/api";
+import { OrganizationIdpDto, OrganizationUser } from "../types/api";
 
 export const getOrganizations = (query?: ItemFilterQueryParams) =>
   findMany<Organization>("/organizations/organizations/", query);
@@ -21,7 +21,16 @@ export const getOrganization = (id?: string) =>
   findOneOrFail<Organization>("/organizations/organizations/", id);
 
 export const getOrganizationBySlug = (slug?: string) =>
-  getOrganizations({ slug }).then((res) => res.results[0]);
+  findOneOrFail<Organization>("/organizations/organizations/slug/", slug);
+
+export const getOrganizationUsers = (
+  id: Organization["id"] | undefined,
+  query?: ItemFilterQueryParams
+) =>
+  findMany<OrganizationUser>(
+    `/organizations/organizations/${id}/users/`,
+    query
+  );
 
 export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
   findOneOrFail<OrganizationIdpDto>(

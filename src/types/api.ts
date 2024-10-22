@@ -80,3 +80,12 @@ export interface OrganizationIdpDto {
   defaultAudience?: string | null;
   importedConfig: Record<string, string>;
 }
+
+export interface OrganizationUser {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  attributes: Record<string, string[]>;
+}

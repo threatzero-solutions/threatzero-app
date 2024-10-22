@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { READ, WRITE } from "../../../constants/permissions";
+import { WRITE } from "../../../constants/permissions";
 import {
   SafetyManagementResourceFilterOptions,
   getTipSubmissionStats,
@@ -16,13 +16,14 @@ import StatusPill from "../../tip-submission/components/StatusPill";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
 import EditableCell from "../../../components/layouts/EditableCell";
 import StatsDisplay from "../../../components/StatsDisplay";
-import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
+import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
 
 const DEFAULT_PAGE_SIZE = 10;
 
-const SafetyConcernsDashboard: React.FC = () => {
+const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
   const location = useLocation();
   const {
     hasPermissions,
@@ -247,13 +248,6 @@ const SafetyConcernsDashboard: React.FC = () => {
       />
     </div>
   );
-};
+}, safetyConcernPermissionsOptions);
 
-export const safetyConcernPermissionsOptions = {
-  permissions: [READ.TIPS],
-};
-
-export default withRequirePermissions(
-  SafetyConcernsDashboard,
-  safetyConcernPermissionsOptions
-);
+export default SafetyConcernsDashboard;

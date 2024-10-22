@@ -1,14 +1,14 @@
 import { NavLink, Outlet, useParams } from "react-router-dom";
 import { classNames } from "../../utils/core";
-import { READ } from "../../constants/permissions";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
+import { resourcePermissionsOptions } from "../../constants/permission-options";
 
 const tabs = [
   { name: "Videos", to: "./videos" },
   { name: "Documents", to: "./documents" },
 ];
 
-const ResourcePage: React.FC = () => {
+const ResourcePage: React.FC = withRequirePermissions(() => {
   const params = useParams();
   const title = params.category
     ? `${params.category.replace(/(^|\s)[a-z]/g, (c) =>
@@ -47,10 +47,6 @@ const ResourcePage: React.FC = () => {
       <Outlet />
     </>
   );
-};
+}, resourcePermissionsOptions);
 
-export const resourcePermissionsOptions = {
-  permissions: [READ.RESOURCES],
-};
-
-export default withRequirePermissions(ResourcePage, resourcePermissionsOptions);
+export default ResourcePage;

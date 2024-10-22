@@ -1,7 +1,7 @@
-import { LEVEL } from "../../constants/permissions";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { Outlet } from "react-router-dom";
 import PageNavBar from "../../components/layouts/PageNavBar";
+import { adminPanelPermissionOptions } from "../../constants/permission-options";
 
 const navigation = [
   { name: "Organizations", to: "organizations" },
@@ -11,18 +11,13 @@ const navigation = [
   { name: "Users", to: "users" },
 ];
 
-const AdminPanel: React.FC = () => {
+const AdminPanel: React.FC = withRequirePermissions(() => {
   return (
     <>
       <PageNavBar navigation={navigation} />
       <Outlet />
     </>
   );
-};
+}, adminPanelPermissionOptions);
 
-export const adminPanelPermissionOptions = {
-  permissions: [LEVEL.ADMIN],
-  type: "all" as const,
-};
-
-export default withRequirePermissions(AdminPanel, adminPanelPermissionOptions);
+export default AdminPanel;

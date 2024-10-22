@@ -38,6 +38,12 @@ import ManageTrainingInvites from "./pages/safety-management/training-admin/Mana
 import TrainingAdminDashboard from "./pages/safety-management/training-admin/TrainingAdminDashboard";
 import PublicRoot from "./components/layouts/PublicRoot";
 import Root from "./components/layouts/Root";
+// import MyOrganization from "./pages/my-organization/MyOrganization";
+// import MyOrganizationHome from "./pages/my-organization/MyOrganizationHome";
+// import MyOrganizationUsersRoot from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersRoot";
+// import MyOrganizationUsersAccessManagement from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersAccessManagement";
+// import MyOrganizationUsersAll from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersAll";
+// import MyOrganizationUsersTrainingMembership from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersTrainingMembership";
 
 export const router = createBrowserRouter(
   [
@@ -323,6 +329,47 @@ export const router = createBrowserRouter(
                     },
                   ],
                 },
+                // {
+                //   path: "my-organization",
+                //   handle: { title: "My Organization" },
+                //   element: <MyOrganization />,
+                //   children: [
+                //     {
+                //       path: "home",
+                //       element: <MyOrganizationHome />,
+                //     },
+                //     {
+                //       path: "users",
+                //       handle: { title: "Users" },
+                //       element: <MyOrganizationUsersRoot />,
+                //       children: [
+                //         {
+                //           path: "all",
+                //           handle: { title: "All" },
+                //           element: <MyOrganizationUsersAll />,
+                //         },
+                //         {
+                //           path: "access",
+                //           handle: { title: "Access Management" },
+                //           element: <MyOrganizationUsersAccessManagement />,
+                //         },
+                //         {
+                //           path: "training",
+                //           handle: { title: "Training Membership" },
+                //           element: <MyOrganizationUsersTrainingMembership />,
+                //         },
+                //         {
+                //           path: "*?",
+                //           loader: () => redirect("all"),
+                //         },
+                //       ],
+                //     },
+                //     {
+                //       path: "*?",
+                //       loader: () => redirect("home"),
+                //     },
+                //   ],
+                // },
                 {
                   path: "help-center",
                   handle: { title: "Help Center" },

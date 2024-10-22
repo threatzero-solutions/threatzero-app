@@ -12,18 +12,19 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Link, useLocation } from "react-router-dom";
-import { READ, WRITE } from "../../../constants/permissions";
+import { WRITE } from "../../../constants/permissions";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
 import EditableCell from "../../../components/layouts/EditableCell";
-import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
+import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
 
 dayjs.extend(relativeTime);
 
-const ViolentIncidentReportsDashboard: React.FC = () => {
+const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
   const location = useLocation();
   const {
     hasPermissions,
@@ -259,13 +260,6 @@ const ViolentIncidentReportsDashboard: React.FC = () => {
       />
     </div>
   );
-};
+}, violentIncidentReportPermissionsOptions);
 
-export const violentIncidentReportPermissionsOptions = {
-  permissions: [READ.VIOLENT_INCIDENT_REPORTS],
-};
-
-export default withRequirePermissions(
-  ViolentIncidentReportsDashboard,
-  violentIncidentReportPermissionsOptions
-);
+export default ViolentIncidentReportsDashboard;

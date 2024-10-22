@@ -1,7 +1,7 @@
 import { useContext, useMemo, Fragment } from "react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
-import { LEVEL, READ, WRITE } from "../../constants/permissions";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
+import { LEVEL, WRITE } from "../../constants/permissions";
 import { TrainingContext } from "../../contexts/training/training-context";
 import { trainingSectionSort } from "../../utils/training";
 import TrainingSections from "./components/TrainingSections";
@@ -19,12 +19,13 @@ import PillBadge from "../../components/PillBadge";
 import { TrainingVisibility } from "../../types/entities";
 import FeaturedSection from "./components/FeaturedSection";
 import { useAuth } from "../../contexts/AuthProvider";
+import { trainingLibraryPermissionsOptions } from "../../constants/permission-options";
 
 interface NewCourseOptions {
   duplicateCourseId?: string;
 }
 
-const TrainingLibrary: React.FC = () => {
+const TrainingLibrary: React.FC = withRequirePermissions(() => {
   const { state, dispatch, setActiveCourse } = useContext(TrainingContext);
   const { hasPermissions } = useAuth();
   const navigate = useNavigate();
@@ -203,13 +204,6 @@ const TrainingLibrary: React.FC = () => {
       )}
     </div>
   );
-};
+}, trainingLibraryPermissionsOptions);
 
-export const trainingLibraryPermissionsOptions = {
-  permissions: [READ.COURSES],
-};
-
-export default withRequirePermissions(
-  TrainingLibrary,
-  trainingLibraryPermissionsOptions
-);
+export default TrainingLibrary;

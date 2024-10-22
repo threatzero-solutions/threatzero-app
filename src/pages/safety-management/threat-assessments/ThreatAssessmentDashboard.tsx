@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { READ, WRITE } from "../../../constants/permissions";
-import { withRequirePermissions } from "../../../guards/RequirePermissions";
+import { WRITE } from "../../../constants/permissions";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -20,10 +20,11 @@ import EditableCell from "../../../components/layouts/EditableCell";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
+import { threatAssessmentPermissionsOptions } from "../../../constants/permission-options";
 
 dayjs.extend(relativeTime);
 
-const ThreatAssessmentDashboard: React.FC = () => {
+const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
   const location = useLocation();
   const {
     hasPermissions,
@@ -259,13 +260,6 @@ const ThreatAssessmentDashboard: React.FC = () => {
       />
     </div>
   );
-};
+}, threatAssessmentPermissionsOptions);
 
-export const threatAssessmentPermissionsOptions = {
-  permissions: [READ.THREAT_ASSESSMENTS],
-};
-
-export default withRequirePermissions(
-  ThreatAssessmentDashboard,
-  threatAssessmentPermissionsOptions
-);
+export default ThreatAssessmentDashboard;

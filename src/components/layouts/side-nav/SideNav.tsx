@@ -13,19 +13,22 @@ import {
 import UserMenu from "../../UserMenu";
 import SideNavLink from "./SideNavLink";
 import { NavigationItem } from "../../../types/core";
-import { trainingLibraryPermissionsOptions } from "../../../pages/training-library/TrainingLibrary";
 import { CoreContext } from "../../../contexts/core/core-context";
-import { adminPanelPermissionOptions } from "../../../pages/admin-panel/AdminPanel";
 import { NavLink } from "react-router-dom";
 import { classNames } from "../../../utils/core";
-import { resourcePermissionsOptions } from "../../resources/ResourcePage";
-import { safetyManagementPermissionOptions } from "../../../pages/safety-management/SafetyManagementRoot";
-import { violentIncidentReportPermissionsOptions } from "../../../pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
-import { safetyConcernPermissionsOptions } from "../../../pages/safety-management/safety-concerns/SafetyConcernsDashboard";
-import { threatAssessmentPermissionsOptions } from "../../../pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useNav } from "../../../utils/navigation";
-import { trainingAdminPermissionOptions } from "../../../pages/safety-management/training-admin/TrainingAdminDashboard";
+import {
+  trainingLibraryPermissionsOptions,
+  safetyManagementPermissionOptions,
+  safetyConcernPermissionsOptions,
+  threatAssessmentPermissionsOptions,
+  violentIncidentReportPermissionsOptions,
+  trainingAdminPermissionOptions,
+  resourcePermissionsOptions,
+  adminPanelPermissionOptions,
+  // myOrganizationPermissionOptions,
+} from "../../../constants/permission-options";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
   {
@@ -98,6 +101,11 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     to: "/admin-panel",
     permissionOptions: adminPanelPermissionOptions,
   },
+  // {
+  //   name: "My Organization",
+  //   to: "/my-organization",
+  //   permissionOptions: myOrganizationPermissionOptions,
+  // },
 ];
 
 const HelpCenterLink: React.FC = () => {

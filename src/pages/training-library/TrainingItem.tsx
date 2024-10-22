@@ -1,15 +1,19 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { emitVideoEvent, getTrainingItem } from "../../queries/training";
 import { useQuery } from "@tanstack/react-query";
-import VimeoPlayer from "react-player/vimeo";
 import BackButton from "../../components/layouts/BackButton";
-import { useCallback, useContext, useMemo } from "react";
-import { READ } from "../../constants/permissions";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { TrainingContext } from "../../contexts/training/training-context";
 import TrainingItemTile from "./components/TrainingItemTile";
 import { Video, VideoEventType } from "../../types/entities";
 import { ErrorBoundary } from "react-error-boundary";
 import { useAuth } from "../../contexts/AuthProvider";
+import VimeoPlayer, {
+  ProgressEventData,
+} from "../../components/media/VimeoPlayer";
+import type Vimeo from "@vimeo/player";
+import VideoProgress from "./components/VideoProgress";
+import { useImmer } from "use-immer";
 
 const VideoUnavailable: React.FC = () => (
   <div className="w-full h-full flex justify-center items-center bg-gray-900">
@@ -21,6 +25,16 @@ const TrainingItem: React.FC = () => {
   const { itemId } = useParams();
   const [searchParams] = useSearchParams();
   const { state } = useContext(TrainingContext);
+
+  const [videoProgress, setVideoProgress] = useImmer({
+    duration: 100,
+    seconds: 0,
+  });
+
+  const [videoDuration, setVideoDuration] = useState(100);
+  const [videoStartingTime, setVideoStartingTime] = useState<
+    number | undefined
+  >();
 
   const { authenticated } = useAuth();
 
@@ -41,7 +55,7 @@ const TrainingItem: React.FC = () => {
     return searchParams.get("watchId");
   }, [searchParams]);
 
-  const emitItemVideoEvent = useCallback(
+  const saveVideoProgress = useCallback(
     ({ type, data }: { type: VideoEventType; data?: unknown }) =>
       emitVideoEvent(
         {
@@ -55,7 +69,7 @@ const TrainingItem: React.FC = () => {
         },
         watchId
       ),
-    [itemId, sectionId]
+    [itemId, sectionId, watchId, state.activeCourse?.id]
   );
 
   const { data: item } = useQuery({
@@ -66,12 +80,44 @@ const TrainingItem: React.FC = () => {
 
   const handleVideoError = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: ...
-    (error: unknown, data?: any) => {
+    (error: unknown, data?: unknown) => {
       console.error("Error loading video", error, data);
-      emitItemVideoEvent({ type: VideoEventType.ERROR, data: { error } });
+      // emitItemVideoEvent({ type: VideoEventType.ERROR, data: { error } });
     },
-    [emitItemVideoEvent]
+    []
   );
+
+  const handleVideoProgress = (data: ProgressEventData) => {
+    setVideoProgress((draft) => {
+      draft.duration = data.totalDuration;
+      draft.seconds = data.maxProgressSeconds;
+    });
+  };
+
+  const handlePlayerReady = (player: Vimeo) => {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        player.pause().catch(() => {});
+      }
+    });
+
+    player.getDuration().then((duration) => {
+      setVideoDuration(duration);
+    });
+  };
+
+  useEffect(() => {
+    // TODO: Get saved progress
+    const progress = searchParams.get("progress");
+    if (progress) {
+      setVideoProgress((draft) => {
+        draft.seconds = +progress * videoDuration;
+        draft.duration = videoDuration;
+      });
+
+      setVideoStartingTime(+progress * videoDuration);
+    }
+  }, [searchParams, videoDuration, setVideoProgress]);
 
   return (
     <div>
@@ -87,82 +133,41 @@ const TrainingItem: React.FC = () => {
                     onError={handleVideoError}
                   >
                     <VimeoPlayer
-                      url={(item as Video).vimeoUrl}
+                      url={(item as Video).vimeoUrl ?? ""}
                       controls={true}
-                      width={"100%"}
-                      height={"100%"}
-                      config={{
-                        playerOptions: {
-                          responsive: true,
-                        },
-                      }}
-                      onPlay={() =>
-                        emitItemVideoEvent({ type: VideoEventType.PLAY })
-                      }
-                      onPause={() =>
-                        emitItemVideoEvent({ type: VideoEventType.PAUSE })
-                      }
-                      onProgress={(e) =>
-                        emitItemVideoEvent({
-                          type: VideoEventType.PROGRESS,
-                          data: e,
-                        })
-                      }
-                      onDuration={() =>
-                        emitItemVideoEvent({ type: VideoEventType.DURATION })
-                      }
-                      onEnded={() =>
-                        emitItemVideoEvent({ type: VideoEventType.END })
-                      }
+                      responsive={true}
+                      className="h-full w-full"
+                      onReady={handlePlayerReady}
                       onError={handleVideoError}
-                      onReady={() =>
-                        emitItemVideoEvent({ type: VideoEventType.READY })
-                      }
-                      onBuffer={() =>
-                        emitItemVideoEvent({ type: VideoEventType.BUFFER })
-                      }
-                      onBufferEnd={() =>
-                        emitItemVideoEvent({ type: VideoEventType.BUFFER_END })
-                      }
-                      onSeek={(seconds) =>
-                        emitItemVideoEvent({
-                          type: VideoEventType.SEEK,
-                          data: { seconds },
-                        })
-                      }
-                      onStart={() =>
-                        emitItemVideoEvent({ type: VideoEventType.START })
-                      }
-                      onClickPreview={(e) =>
-                        emitItemVideoEvent({
-                          type: VideoEventType.CLICK_PREVIEW,
-                          data: e,
-                        })
-                      }
-                      onDisablePIP={() =>
-                        emitItemVideoEvent({ type: VideoEventType.DISABLE_PIP })
-                      }
-                      onEnablePIP={() =>
-                        emitItemVideoEvent({ type: VideoEventType.ENABLE_PIP })
-                      }
+                      onProgress={handleVideoProgress}
+                      currentTime={videoStartingTime}
                     />
                   </ErrorBoundary>
                 ) : (
                   <VideoUnavailable />
                 )}
               </div>
-              <h1
-                className="text-2xl my-1 mt-4"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
-                dangerouslySetInnerHTML={{ __html: item.metadata.title }}
-              />
-              <p
-                className="text-gray-500 text-md"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
-                dangerouslySetInnerHTML={{
-                  __html: item.metadata.description ?? "",
-                }}
-              />
+              <div className="flex gap-2">
+                <div>
+                  <h1
+                    className="text-2xl my-1 mt-4"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
+                    dangerouslySetInnerHTML={{ __html: item.metadata.title }}
+                  />
+                  <p
+                    className="text-gray-500 text-md"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
+                    dangerouslySetInnerHTML={{
+                      __html: item.metadata.description ?? "",
+                    }}
+                  />
+                </div>
+                <VideoProgress
+                  duration={videoProgress.duration}
+                  currentTime={videoProgress.seconds}
+                  className="h-12 w-12 self-center shrink-0"
+                />
+              </div>
             </>
           ) : (
             <>
@@ -192,10 +197,6 @@ const TrainingItem: React.FC = () => {
       )}
     </div>
   );
-};
-
-export const trainingItemPermissionsOptions = {
-  permissions: [READ.COURSES],
 };
 
 export default TrainingItem;

@@ -29,12 +29,12 @@ import BackButtonLink from "../../components/layouts/BackButtonLink";
 import TrainingSections from "./components/TrainingSections";
 import AddNew from "../../components/forms/builder/AddNew";
 import AudiencesSelect from "./components/AudiencesSelect";
-import { LEVEL, WRITE } from "../../constants/permissions";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
 import SuccessButton from "../../components/layouts/buttons/SuccessButton";
 import { SimpleChangeEvent } from "../../types/core";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CoreContext } from "../../contexts/core/core-context";
+import { courseBuilderPermissionsOptions } from "../../constants/permission-options";
 
 type MetadataFieldType = Partial<Field> & { name: keyof TrainingMetadata };
 
@@ -97,7 +97,7 @@ const INITIAL_COURSE_STATE = {
   sections: [],
 };
 
-const CourseBuilder = () => {
+const CourseBuilder = withRequirePermissions(() => {
   const [course, setCourse] = useState<
     Partial<TrainingCourse> & {
       metadata: TrainingMetadata;
@@ -152,7 +152,12 @@ const CourseBuilder = () => {
         ...(state.activeCourse ?? {}),
       }));
     }
-  }, [courseToDuplicate, state.activeCourse, state.buildingNewCourse]);
+  }, [
+    courseToDuplicate,
+    duplicateCourseId,
+    state.activeCourse,
+    state.buildingNewCourse,
+  ]);
 
   const queryClient = useQueryClient();
   const saveCourseMutation = useMutation({
@@ -373,13 +378,6 @@ const CourseBuilder = () => {
       </div>
     </>
   );
-};
+}, courseBuilderPermissionsOptions);
 
-export const courseBuilderPermissionsOptions = {
-  permissions: [LEVEL.ADMIN, WRITE.COURSES],
-};
-
-export default withRequirePermissions(
-  CourseBuilder,
-  courseBuilderPermissionsOptions
-);
+export default CourseBuilder;
