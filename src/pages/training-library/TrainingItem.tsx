@@ -1,11 +1,11 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { emitVideoEvent, getTrainingItem } from "../../queries/training";
+import { getTrainingItem } from "../../queries/training";
 import { useQuery } from "@tanstack/react-query";
 import BackButton from "../../components/layouts/BackButton";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { TrainingContext } from "../../contexts/training/training-context";
 import TrainingItemTile from "./components/TrainingItemTile";
-import { Video, VideoEventType } from "../../types/entities";
+import { Video } from "../../types/entities";
 import { ErrorBoundary } from "react-error-boundary";
 import { useAuth } from "../../contexts/AuthProvider";
 import VimeoPlayer, {
@@ -14,6 +14,7 @@ import VimeoPlayer, {
 import type Vimeo from "@vimeo/player";
 import VideoProgress from "./components/VideoProgress";
 import { useImmer } from "use-immer";
+import { useDebounceCallback } from "usehooks-ts";
 
 const VideoUnavailable: React.FC = () => (
   <div className="w-full h-full flex justify-center items-center bg-gray-900">
@@ -55,12 +56,11 @@ const TrainingItem: React.FC = () => {
     return searchParams.get("watchId");
   }, [searchParams]);
 
-  const saveVideoProgress = useCallback(
-    ({ type, data }: { type: VideoEventType; data?: unknown }) =>
-      emitVideoEvent(
+  const saveVideoProgress = useDebounceCallback(
+    (progress: number) =>
+      console.debug(
         {
-          type,
-          eventData: data ?? {},
+          progress: progress,
           timestamp: new Date().toISOString(),
           url: window.location.href,
           itemId: itemId,
@@ -69,7 +69,11 @@ const TrainingItem: React.FC = () => {
         },
         watchId
       ),
-    [itemId, sectionId, watchId, state.activeCourse?.id]
+    500,
+    {
+      maxWait: 2000,
+      trailing: true,
+    }
   );
 
   const { data: item } = useQuery({
@@ -90,8 +94,10 @@ const TrainingItem: React.FC = () => {
   const handleVideoProgress = (data: ProgressEventData) => {
     setVideoProgress((draft) => {
       draft.duration = data.totalDuration;
-      draft.seconds = data.maxProgressSeconds;
+      draft.seconds = data.progressSeconds;
     });
+
+    saveVideoProgress(data.progressPercent);
   };
 
   const handlePlayerReady = (player: Vimeo) => {

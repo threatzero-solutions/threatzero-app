@@ -17,8 +17,10 @@ interface VimeoPlayerProps extends Vimeo.Options {
 }
 
 export interface ProgressEventData {
-  maxProgressSeconds: number;
+  progressSeconds: number;
+  progressPercent: number;
   currentSeconds: number;
+  currentPercent: number;
   totalDuration: number;
   hasSeeked: boolean;
 }
@@ -80,8 +82,10 @@ const VimeoPlayer: React.FC<VimeoPlayerProps> = ({
         }
 
         onProgress?.({
-          maxProgressSeconds: maxProgressSeconds.current,
+          progressSeconds: maxProgressSeconds.current,
+          progressPercent: maxProgressSeconds.current / data.duration,
           currentSeconds: data.seconds,
+          currentPercent: data.percent,
           totalDuration: data.duration,
           hasSeeked: hasSeeked.current,
         });
