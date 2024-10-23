@@ -1,12 +1,14 @@
 import { useContext, useMemo } from "react";
 import { TrainingContext } from "../../../contexts/training/training-context";
 import { TrainingCourse, TrainingVisibility } from "../../../types/entities";
-import { Dialog } from "@headlessui/react";
-import { EyeSlashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { DialogTitle } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { LEVEL, WRITE } from "../../../constants/permissions";
-import PillBadge from "../../../components/PillBadge";
 import { useAuth } from "../../../contexts/AuthProvider";
+import CourseVisibilityTag from "./CourseVisibilityTag";
+import CourseCustomTag from "./CourseCustomTag";
+import CourseActiveStatus from "./CourseActiveStatus";
 
 const ViewCourses: React.FC = () => {
   const { dispatch, setActiveCourse, state } = useContext(TrainingContext);
@@ -23,12 +25,18 @@ const ViewCourses: React.FC = () => {
 
   const handleActivateCourse = (course: TrainingCourse) => {
     setActiveCourse(course?.id);
+    navigate("/training/library/");
     setOpen(false);
   };
 
   const handleNewCourse = () => {
     dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: true });
     navigate("/training/library/manage/");
+    setOpen(false);
+  };
+
+  const handleManageCourse = (course: TrainingCourse) => {
+    navigate(`/training/library/manage?courseId=${course.id}`);
     setOpen(false);
   };
 
@@ -39,9 +47,9 @@ const ViewCourses: React.FC = () => {
         <div className="bg-gray-50 px-4 py-6 sm:px-6">
           <div className="flex items-start justify-between space-x-3">
             <div className="space-y-1">
-              <Dialog.Title className="text-base font-semibold leading-6 text-gray-900">
+              <DialogTitle className="text-base font-semibold leading-6 text-gray-900">
                 All Courses
-              </Dialog.Title>
+              </DialogTitle>
               <p className="text-sm text-gray-500">Select a course to view</p>
             </div>
             <div className="flex h-7 items-center">
@@ -65,42 +73,35 @@ const ViewCourses: React.FC = () => {
               key={course.id}
               className="relative flex justify-between gap-x-6 px-4 py-5 sm:px-6 lg:px-8"
             >
-              <div className="flex min-w-0 gap-x-4">
+              <div className="flex flex-col min-w-0 gap-y-2">
                 <div className="min-w-0 flex-auto">
-                  <div className="flex items-center flex-wrap gap-x-3">
-                    {isTrainingAdmin &&
-                      course.visibility === TrainingVisibility.HIDDEN && (
-                        <EyeSlashIcon
-                          className="h-5 w-5 text-purple-600"
-                          aria-hidden="true"
-                        />
-                      )}
-                    <p
-                      className="text-sm font-semibold leading-6 text-gray-900 line-clamp-1"
-                      // biome-ignore lint/security/noDangerouslySetInnerHtml: set by Admins only
-                      dangerouslySetInnerHTML={{
-                        __html: course.metadata.title,
-                      }}
-                    />
-                    {isTrainingAdmin && (
-                      <>
-                        {course.metadata.tag && (
-                          <PillBadge
-                            color={"secondary"}
-                            value={course.metadata.tag}
-                            displayValue={course.metadata.tag}
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
+                  <h3
+                    className="text-sm font-semibold leading-6 text-gray-900 line-clamp-1"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: set by Admins only
+                    dangerouslySetInnerHTML={{
+                      __html: course.metadata.title,
+                    }}
+                  />
                   <p
-                    className="mt-1 flex text-xs leading-5 text-gray-500 line-clamp-1"
+                    className="flex text-xs leading-5 text-gray-500 line-clamp-1"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: set by Admins only
                     dangerouslySetInnerHTML={{
                       __html: course.metadata.description ?? "",
                     }}
                   />
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {isTrainingAdmin &&
+                    course.visibility === TrainingVisibility.HIDDEN && (
+                      <CourseVisibilityTag visibility={course.visibility} />
+                    )}
+                  <CourseActiveStatus
+                    startDate={course.startDate}
+                    endDate={course.endDate}
+                  />
+                  {isTrainingAdmin && course.metadata.tag && (
+                    <CourseCustomTag tag={course.metadata.tag} />
+                  )}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-x-4">
@@ -112,6 +113,16 @@ const ViewCourses: React.FC = () => {
                   View course
                   <span className="sr-only">, {course.metadata.title}</span>
                 </button>
+                {isTrainingAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => handleManageCourse(course)}
+                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                  >
+                    Edit
+                    <span className="sr-only">, {course.metadata.title}</span>
+                  </button>
+                )}
               </div>
             </li>
           ))}

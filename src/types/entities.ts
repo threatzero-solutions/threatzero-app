@@ -76,15 +76,12 @@ export interface TrainingMetadata {
 export interface TrainingCourse extends Base {
   metadata: TrainingMetadata;
   visibility: TrainingVisibility;
+  startDate: Date | null;
+  endDate: Date | null;
   organizations: Organization[];
   sections: TrainingSection[];
   audiences: Audience[];
   presentableBy: Audience[];
-}
-
-export enum TrainingRepeats {
-  YEARLY = "yearly",
-  ONCE = "once",
 }
 
 /** A group of training items. */
@@ -94,7 +91,6 @@ export interface TrainingSection extends Base {
   items: TrainingSectionItem[] | null;
   availableOn: string;
   expiresOn: string | null;
-  repeats: TrainingRepeats;
   courseId: string | null;
 }
 
@@ -129,6 +125,19 @@ export interface Video extends TrainingItem {
   vimeoUrl?: string;
   encodingJobId: string | null;
   abrEnabled: boolean;
+}
+
+export interface ItemCompletion extends Base {
+  item?: TrainingItem;
+  section?: TrainingSection;
+  course?: TrainingCourse;
+  completed: boolean;
+  completedOn: Date | null;
+  progress: number;
+  organization?: Organization;
+  unit?: Unit;
+  user?: UserRepresentation;
+  url: string;
 }
 
 export enum TrackingStatus {

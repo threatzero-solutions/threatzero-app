@@ -1,6 +1,6 @@
 import { classNames } from "../../../../utils/core";
 
-const ViewPercentWatched: React.FC<{ percentWatched?: string }> = ({
+const ViewPercentWatched: React.FC<{ percentWatched?: string | number }> = ({
   percentWatched,
 }) => {
   const value = +(percentWatched ?? "0");

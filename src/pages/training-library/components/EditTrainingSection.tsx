@@ -12,7 +12,6 @@ import {
   InternalFieldType,
   TrainingItem,
   TrainingMetadata,
-  TrainingRepeats,
   TrainingSection,
   TrainingSectionItem,
   TrainingVisibility,
@@ -80,20 +79,6 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof TrainingSection }> = [
     required: false,
     order: 2,
   },
-  {
-    name: "repeats",
-    label: "Repeats",
-    helpText: "",
-    type: FieldType.SELECT,
-    typeParams: {
-      options: Object.values(TrainingRepeats).reduce((acc, value) => {
-        acc[value] = value;
-        return acc;
-      }, {} as Record<string, string>),
-    },
-    required: true,
-    order: 3,
-  },
 ];
 
 const EditTrainingSection: React.FC = () => {
@@ -131,7 +116,6 @@ const EditTrainingSection: React.FC = () => {
             },
             availableOn: new Date().toISOString(),
             expiresOn: null,
-            repeats: TrainingRepeats.YEARLY,
             items: [],
           }
     );

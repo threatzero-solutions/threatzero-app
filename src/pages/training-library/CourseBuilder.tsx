@@ -1,5 +1,6 @@
 import {
   FormEvent,
+  PropsWithChildren,
   useContext,
   useEffect,
   useMemo,
@@ -35,6 +36,9 @@ import { SimpleChangeEvent } from "../../types/core";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CoreContext } from "../../contexts/core/core-context";
 import { courseBuilderPermissionsOptions } from "../../constants/permission-options";
+import dayjs from "dayjs";
+import CourseVisibilityTag from "./components/CourseVisibilityTag";
+import CourseActiveStatus from "./components/CourseActiveStatus";
 
 type MetadataFieldType = Partial<Field> & { name: keyof TrainingMetadata };
 
@@ -71,19 +75,20 @@ const METADATA_INPUT_DATA: Array<MetadataFieldType> = [
   },
 ];
 
-const VISIBILITY_FIELD = {
-  name: "visibility",
-  label: "Visibility",
-  helpText: "Whether to show or hide when courses are displayed.",
-  type: FieldType.SELECT,
-  typeParams: {
-    options: Object.values(TrainingVisibility).reduce((acc, k) => {
-      acc[k] = k.replace(/(^[a-z])/i, (l) => l.toUpperCase());
-      return acc;
-    }, {} as Record<string, string>),
-  },
+const START_DATE_FIELD = {
+  name: "startDate",
+  label: "Start Date",
+  type: FieldType.DATE,
   required: true,
-  order: 3,
+  order: 4,
+};
+
+const END_DATE_FIELD = {
+  name: "endDate",
+  label: "End Date",
+  type: FieldType.DATE,
+  required: true,
+  order: 5,
 };
 
 const INITIAL_COURSE_STATE = {
@@ -95,6 +100,19 @@ const INITIAL_COURSE_STATE = {
   audiences: [],
   presentableBy: [],
   sections: [],
+};
+
+const CourseBuilderSection: React.FC<
+  PropsWithChildren<{ heading: string }>
+> = ({ heading, children }) => {
+  return (
+    <div>
+      <h3 className="text-base font-semibold text-gray-900 mb-2">{heading}</h3>
+      <div className="rounded-lg bg-white ring-1 ring-gray-900/5 p-4">
+        {children}
+      </div>
+    </div>
+  );
 };
 
 const CourseBuilder = withRequirePermissions(() => {
@@ -273,44 +291,119 @@ const CourseBuilder = withRequirePermissions(() => {
 
   return (
     <>
-      <BackButtonLink to={"/training/library/"} value={"Back to Library"} />
+      <div className="flex items-center justify-between">
+        <BackButtonLink to={"/training/library/"} value={"Back to Library"} />
+        <button
+          type="button"
+          onClick={() =>
+            dispatch({
+              type: "SET_VIEW_COURSES_SLIDER_OPEN",
+              payload: true,
+            })
+          }
+          className="w-max mb-2 rounded bg-secondary-100 px-2 py-1 text-sm font-semibold text-secondary-600 shadow-sm hover:bg-secondary-200"
+        >
+          See other courses &rarr;
+        </button>
+      </div>
       <div className="space-y-12">
         <form
           onSubmit={handleCourseSave}
           className="border-b border-gray-900/10 pb-4"
         >
           <div className="grid grid-cols-1 gap-y-4 pb-8">
-            {METADATA_INPUT_DATA.sort(orderSort).map((field) => (
-              <FormField
-                key={field.name}
-                field={field}
-                value={course.metadata[field.name] ?? ""}
-                onChange={(e) => handleMetadataChange(field, e)}
-                mediaUploadUrl=""
+            <div className="flex items-center gap-2">
+              <CourseVisibilityTag
+                visibility={course.visibility ?? TrainingVisibility.HIDDEN}
               />
-            ))}
+              {!isNew && (
+                <button
+                  type="button"
+                  className="text-gray-600 hover:text-gray-500 text-xs underline cursor-pointer"
+                  onClick={() => {
+                    saveCourseMutation.mutate({
+                      id: course.id,
+                      visibility:
+                        course.visibility === TrainingVisibility.HIDDEN
+                          ? TrainingVisibility.VISIBLE
+                          : TrainingVisibility.HIDDEN,
+                    });
+                  }}
+                >
+                  {course.visibility === TrainingVisibility.HIDDEN
+                    ? "Publish"
+                    : "Unpublish (hide)"}
+                </button>
+              )}
+            </div>
 
-            <FormField
-              key={"visibility"}
-              field={VISIBILITY_FIELD}
-              value={course.visibility ?? TrainingVisibility.HIDDEN}
-              onChange={handleChange}
-              mediaUploadUrl=""
-            />
+            <CourseBuilderSection heading="Overview">
+              <div className="space-y-4">
+                {METADATA_INPUT_DATA.sort(orderSort).map((field) => (
+                  <FormField
+                    key={field.name}
+                    field={field}
+                    value={course.metadata[field.name] ?? ""}
+                    onChange={(e) => handleMetadataChange(field, e)}
+                  />
+                ))}
+              </div>
+            </CourseBuilderSection>
 
-            <AudiencesSelect
-              name="audiences"
-              label="Primary audiences"
-              value={course.audiences}
-              onChange={handleChange}
-            />
+            <CourseBuilderSection heading="Availability">
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    key={"startDate"}
+                    field={START_DATE_FIELD}
+                    value={course.startDate ?? dayjs().format("YYYY-MM-DD")}
+                    onChange={handleChange}
+                    fillColumns={false}
+                  />
+                  <FormField
+                    key={"endDate"}
+                    field={END_DATE_FIELD}
+                    value={
+                      !course.startDate ||
+                      !course.endDate ||
+                      dayjs(course.endDate).isBefore(dayjs(course.startDate))
+                        ? dayjs(course.startDate ?? undefined)
+                            .add(1, "year")
+                            .format("YYYY-MM-DD")
+                        : course.endDate
+                    }
+                    onChange={handleChange}
+                    fillColumns={false}
+                  />
+                </div>
+                <div>
+                  <span className="text-xs italic text-gray-500 mr-1">
+                    Displays as:
+                  </span>
+                  <CourseActiveStatus
+                    startDate={course.startDate}
+                    endDate={course.endDate}
+                  />
+                </div>
+              </div>
+            </CourseBuilderSection>
 
-            <AudiencesSelect
-              name="presentableBy"
-              label="Presentable by"
-              value={course.presentableBy}
-              onChange={handleChange}
-            />
+            <CourseBuilderSection heading="Visibility">
+              <div className="space-y-4">
+                <AudiencesSelect
+                  name="audiences"
+                  label="Primary audiences"
+                  value={course.audiences}
+                  onChange={handleChange}
+                />
+                <AudiencesSelect
+                  name="presentableBy"
+                  label="Presentable by"
+                  value={course.presentableBy}
+                  onChange={handleChange}
+                />
+              </div>
+            </CourseBuilderSection>
           </div>
           <div className="flex">
             {!isNew && (

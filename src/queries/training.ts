@@ -2,6 +2,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import {
   Audience,
+  ItemCompletion,
   TrainingCourse,
   TrainingItem,
   TrainingSection,
@@ -9,7 +10,14 @@ import {
   VideoEvent,
 } from "../types/entities";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
-import { deleteOne, findMany, findOne, save } from "./utils";
+import {
+  deleteOne,
+  findMany,
+  findOne,
+  insertOne,
+  save,
+  updateOne,
+} from "./utils";
 
 export const getTrainingAudiences = (options: ItemFilterQueryParams = {}) =>
   findMany<Audience>("/training/audiences/", options);
@@ -40,6 +48,27 @@ export const getPresignedPutUrl = (key: string) =>
       }
     )
     .then((r) => r.data.signedUrl);
+
+export const getMyItemCompletion = (
+  itemId: string,
+  courseId: string | undefined,
+  watchId?: string | null
+) =>
+  findMany<ItemCompletion>(`/training/items/my-completions/`, {
+    params: { watch_id: watchId, ["item.id"]: itemId, ["course.id"]: courseId },
+  }).then((r) => r.results[0] ?? null);
+
+export const getMyItemCompletions = (
+  query: ItemFilterQueryParams,
+  watchId?: string | null
+) =>
+  findMany<ItemCompletion>(`/training/items/my-completions/`, {
+    ...query,
+    watch_id: watchId,
+  });
+
+export const getItemCompletions = (query: ItemFilterQueryParams) =>
+  findMany<ItemCompletion>("/training/items/completions/", query);
 
 // ------- MUTATIONS ---------
 
@@ -88,3 +117,45 @@ export const emitVideoEvent = async (
       event
     )
     .then((res) => res.data);
+
+export const createItemCompletion = async (
+  input: {
+    itemId: string;
+    sectionId?: string;
+    courseId: string | undefined;
+    url: string;
+  },
+  watchId?: string | null
+) =>
+  insertOne<ItemCompletion>(
+    "/training/items/my-completions/",
+    {
+      item: {
+        id: input.itemId,
+      },
+      section: input.sectionId ? { id: input.sectionId } : undefined,
+      course: { id: input.courseId },
+      url: input.url,
+    },
+    {
+      params: { watch_id: watchId },
+    }
+  );
+
+export const updateItemCompletion = async (
+  id: ItemCompletion["id"],
+  progress: number,
+  completed: boolean,
+  watchId?: string | null
+) =>
+  updateOne<ItemCompletion>(
+    "/training/items/my-completions/",
+    {
+      id,
+      progress,
+      completed,
+    },
+    {
+      params: { watch_id: watchId },
+    }
+  );

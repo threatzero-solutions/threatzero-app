@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { TrainingRepeats, TrainingSection } from "../../../types/entities";
+import { TrainingSection } from "../../../types/entities";
 import {
   Fragment,
   KeyboardEvent,
@@ -51,13 +51,30 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
   );
 
   const availability = useMemo(() => {
-    const parts = [section.availableOn, section.expiresOn];
-    const format =
-      section.repeats === TrainingRepeats.YEARLY ? "MMM DD" : "MMM DD, YYYY";
-    return parts
-      .filter((p) => p)
-      .map((p) => dayjs(p).format(format))
-      .join(" - ");
+    const defaultFormat = "MMM D, YYYY";
+
+    const availableOn = dayjs(section.availableOn);
+    const expiresOn = section.expiresOn ? dayjs(section.expiresOn) : null;
+
+    if (!expiresOn) {
+      return availableOn.format(defaultFormat);
+    }
+
+    if (availableOn.isSame(expiresOn, "year")) {
+      const yearSuffix = `, ${expiresOn.format("YYYY")}`;
+      if (availableOn.isSame(expiresOn, "month")) {
+        return `${availableOn.format("MMM D")} - ${expiresOn.format(
+          "D"
+        )}${yearSuffix}`;
+      }
+      return `${availableOn.format("MMM D")} - ${expiresOn.format(
+        "MMM D"
+      )}${yearSuffix}`;
+    }
+
+    return `${availableOn.format(defaultFormat)} - ${expiresOn.format(
+      defaultFormat
+    )}`;
   }, [section]);
 
   const navigateToSection = useCallback(

@@ -14,12 +14,14 @@ import {
   Transition,
 } from "@headlessui/react";
 import { classNames } from "../../utils/core";
-import { EyeSlashIcon, FolderOpenIcon } from "@heroicons/react/20/solid";
-import PillBadge from "../../components/PillBadge";
+import { FolderOpenIcon } from "@heroicons/react/20/solid";
 import { TrainingVisibility } from "../../types/entities";
 import FeaturedSection from "./components/FeaturedSection";
 import { useAuth } from "../../contexts/AuthProvider";
 import { trainingLibraryPermissionsOptions } from "../../constants/permission-options";
+import CourseVisibilityTag from "./components/CourseVisibilityTag";
+import CourseCustomTag from "./components/CourseCustomTag";
+import CourseActiveStatus from "./components/CourseActiveStatus";
 
 interface NewCourseOptions {
   duplicateCourseId?: string;
@@ -61,40 +63,6 @@ const TrainingLibrary: React.FC = withRequirePermissions(() => {
         state.activeCourse && (
           <div className="pb-5 flex items-center justify-between">
             <div className="grid">
-              {isTrainingAdmin &&
-                state.activeCourse.visibility === TrainingVisibility.HIDDEN && (
-                  <span className="w-max mb-2 rounded bg-purple-600 px-4 py-1 text-sm font-semibold text-white shadow-sm inline-flex items-center gap-2">
-                    <EyeSlashIcon className="h-4 w-4" />
-                    This course is hidden
-                  </span>
-                )}
-              <div className="flex items-center gap-4 flex-wrap">
-                <h1
-                  className="text-2xl font-bold text-gray-900"
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe
-                  dangerouslySetInnerHTML={{
-                    __html: state.activeCourse.metadata.title,
-                  }}
-                />
-                {isTrainingAdmin && (
-                  <>
-                    {state.activeCourse.metadata.tag && (
-                      <PillBadge
-                        color={"secondary"}
-                        value={state.activeCourse.metadata.tag}
-                        displayValue={state.activeCourse.metadata.tag}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-              <p
-                className="text-sm font-medium text-gray-500"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe
-                dangerouslySetInnerHTML={{
-                  __html: state.activeCourse.metadata.description ?? "",
-                }}
-              />
               <button
                 type="button"
                 onClick={() =>
@@ -103,10 +71,40 @@ const TrainingLibrary: React.FC = withRequirePermissions(() => {
                     payload: true,
                   })
                 }
-                className="w-max mt-2 rounded bg-secondary-50 px-2 py-1 text-sm font-semibold text-secondary-600 shadow-sm hover:bg-secondary-100"
+                className="w-max mb-2 rounded bg-secondary-100 px-2 py-1 text-sm font-semibold text-secondary-600 shadow-sm hover:bg-secondary-200"
               >
                 See other courses &rarr;
               </button>
+              <h1
+                className="text-2xl font-bold text-gray-900"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe
+                dangerouslySetInnerHTML={{
+                  __html: state.activeCourse.metadata.title,
+                }}
+              />
+              <p
+                className="text-sm font-medium text-gray-500"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe
+                dangerouslySetInnerHTML={{
+                  __html: state.activeCourse.metadata.description ?? "",
+                }}
+              />
+              <div className="flex gap-2 mt-3">
+                {isTrainingAdmin &&
+                  state.activeCourse.visibility ===
+                    TrainingVisibility.HIDDEN && (
+                    <CourseVisibilityTag
+                      visibility={state.activeCourse.visibility}
+                    />
+                  )}
+                <CourseActiveStatus
+                  startDate={state.activeCourse.startDate}
+                  endDate={state.activeCourse.endDate}
+                />
+                {isTrainingAdmin && state.activeCourse.metadata.tag && (
+                  <CourseCustomTag tag={state.activeCourse.metadata.tag} />
+                )}
+              </div>
             </div>
             <div className="mt-3 flex sm:ml-4 sm:mt-0">
               {isTrainingAdmin && (

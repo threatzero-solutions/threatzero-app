@@ -79,17 +79,20 @@ const FormInput = <
   loadedValue,
   ...inputAttrs
 }: FormInputProps<A>) => {
-  const attrs: FormInputAttributes = {
-    id: field.id,
-    "data-fieldid": field.id,
-    "data-fieldtype": field.type,
-    name: field.name,
-    type: field.type,
-    placeholder: field.placeholder ?? undefined,
-    ...extraAttributes,
-    ...inputAttrs,
-    ...field.elementProperties,
-  };
+  const attrs: FormInputAttributes = useMemo(
+    () => ({
+      id: field.id,
+      "data-fieldid": field.id,
+      "data-fieldtype": field.type,
+      name: field.name,
+      type: field.type,
+      placeholder: field.placeholder ?? undefined,
+      ...extraAttributes,
+      ...inputAttrs,
+      ...field.elementProperties,
+    }),
+    [inputAttrs, extraAttributes, field]
+  );
 
   if (field.required) {
     attrs.required = true;
@@ -178,14 +181,16 @@ const FormInput = <
       case InternalFieldType.HTML:
       case InternalFieldType.JSON:
         return (
-          <CodeMirror
-            extensions={[
-              attrs.type === InternalFieldType.JSON ? json() : html(),
-            ]}
-            {...(attrs as object)}
-            editable={!attrs.disabled}
-            readOnly={attrs.readOnly}
-          />
+          <div className="rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-gray-300 overflow-hidden">
+            <CodeMirror
+              extensions={[
+                attrs.type === InternalFieldType.JSON ? json() : html(),
+              ]}
+              {...(attrs as object)}
+              editable={!attrs.disabled}
+              readOnly={attrs.readOnly}
+            />
+          </div>
         );
       case FieldType.NONE:
         return <></>;

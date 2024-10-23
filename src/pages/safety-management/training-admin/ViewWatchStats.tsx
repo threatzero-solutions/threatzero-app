@@ -1,8 +1,5 @@
 import { useContext } from "react";
-import {
-  findWatchStats,
-  getWatchStatsCsv,
-} from "../../../queries/training-admin";
+import { getWatchStatsCsv } from "../../../queries/training-admin";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
@@ -11,9 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import { CoreContext } from "../../../contexts/core/core-context";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import ViewPercentWatched from "./components/ViewPercentWatched";
-import { dedup, stripHtml } from "../../../utils/core";
+import { stripHtml } from "../../../utils/core";
 import { useDebounceValue } from "usehooks-ts";
-import { getTrainingItems } from "../../../queries/training";
+import {
+  getItemCompletions,
+  getTrainingItems,
+} from "../../../queries/training";
+import dayjs from "dayjs";
 
 const ViewWatchStats: React.FC = () => {
   const [watchStatsQuery, setWatchStatsQuery] = useImmer<ItemFilterQueryParams>(
@@ -25,7 +26,7 @@ const ViewWatchStats: React.FC = () => {
 
   const { data: watchStats, isLoading: watchStatsLoading } = useQuery({
     queryKey: ["watch-stats", watchStatsQuery],
-    queryFn: () => findWatchStats(watchStatsQuery),
+    queryFn: () => getItemCompletions(watchStatsQuery),
   });
 
   const [trainingItemFilterQuery, setTrainingItemFilterQuery] =
@@ -99,51 +100,53 @@ const ViewWatchStats: React.FC = () => {
               label: "Year",
             },
             {
+              key: "completedOn",
+              label: "Completed On",
+            },
+            {
               key: "percentWatched",
               label: "Percent Watched",
             },
           ],
-          rows: dedup(
-            (watchStats?.results ?? []).map((r) => ({
-              ...r,
-              id: `${r.organizationSlug}|${r.unitSlug}|${r.userExternalId}|${r.trainingItemId}|${r.year}|${r.percentWatched}`,
-            })),
-            (r) => r.id
-          ).map((r) => ({
+          rows: (watchStats?.results ?? []).map((r) => ({
             id: r.id,
             lastName: (
               <span className="whitespace-nowrap">
-                {((r.lastName ?? "") + ", " + (r.firstName ?? "")).replace(
-                  /(^[,\s]+)|(^[,\s]+$)/g,
-                  ""
-                ) || "—"}
+                {(
+                  (r.user?.familyName ?? "") +
+                  ", " +
+                  (r.user?.givenName ?? "")
+                ).replace(/(^[,\s]+)|(^[,\s]+$)/g, "") || "—"}
               </span>
             ),
-            email: r.email || "—",
+            email: r.user?.email || "—",
             organizationName: (
               <span
                 className="line-clamp-2"
-                title={r.organizationName ?? undefined}
+                title={r.organization?.name ?? undefined}
               >
-                {r.organizationName || "—"}
+                {r.organization?.name || "—"}
               </span>
             ),
             unitName: (
-              <span className="line-clamp-2" title={r.unitName ?? undefined}>
-                {r.unitName || "—"}
+              <span className="line-clamp-2" title={r.unit?.name ?? undefined}>
+                {r.unit?.name || "—"}
               </span>
             ),
             trainingItemTitle: (
               <span
                 className="line-clamp-2"
-                title={stripHtml(r.trainingItemTitle) ?? undefined}
+                title={stripHtml(r.item?.metadata.title) ?? undefined}
               >
-                {stripHtml(r.trainingItemTitle) || "—"}
+                {stripHtml(r.item?.metadata.title) || "—"}
               </span>
             ),
-            year: r.year,
+            year: r.completedOn ? dayjs(r.completedOn).format("YYYY") : "—",
+            completedOn: r.completedOn
+              ? dayjs(r.completedOn).format("MMM D, YYYY")
+              : "—",
             percentWatched: (
-              <ViewPercentWatched percentWatched={r.percentWatched} />
+              <ViewPercentWatched percentWatched={r.progress * 100} />
             ),
           })),
         }}

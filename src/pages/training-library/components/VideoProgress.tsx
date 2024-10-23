@@ -23,8 +23,10 @@ const VideoProgress: React.FC<VideoProgressProps> = ({
     <svg viewBox="0 0 38 38" className={className}>
       <path
         className={classNames(
-          complete ? "fill-primary-400" : "fill-none",
-          "stroke-gray-200 stroke-[4] transition-all"
+          complete
+            ? "fill-primary-400 stroke-primary-400"
+            : "fill-none stroke-gray-200",
+          "stroke-[4] transition-all"
         )}
         style={{
           strokeLinecap: "round",
