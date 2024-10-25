@@ -40,7 +40,7 @@ export interface Organization extends OrganizationBase {
 }
 
 export interface CourseEnrollment extends Base {
-  organization: Organization;
+  organization?: Organization;
   course: TrainingCourse;
   startDate: Date | string | null;
   endDate: Date | string | null;
@@ -136,7 +136,7 @@ export interface Video extends TrainingItem {
 export interface ItemCompletion extends Base {
   item?: TrainingItem;
   section?: TrainingSection;
-  course?: TrainingCourse;
+  enrollment?: CourseEnrollment;
   completed: boolean;
   completedOn: Date | null;
   progress: number;

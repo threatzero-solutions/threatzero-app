@@ -47,6 +47,7 @@ import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 import { useDebounceValue } from "usehooks-ts";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import ViewPercentWatched from "./components/ViewPercentWatched";
+import { DeepPartial } from "react-hook-form";
 
 const CSV_HEADERS_MAPPER = new Map([
   ["firstname", "firstName"],
@@ -150,8 +151,9 @@ const ManageTrainingInvites: React.FC = () => {
       email: "",
     },
   ]);
+  const [selectedEnrollmentId] = useState<string | undefined>(undefined);
   const [selectedCourse, setSelectedCourse] = useState<
-    TrainingCourse | undefined | null
+    TrainingCourse | DeepPartial<TrainingCourse> | undefined | null
   >();
   const [selectedItem, setSelectedItem] = useState<
     TrainingItem | undefined | null
@@ -344,13 +346,18 @@ const ManageTrainingInvites: React.FC = () => {
       return;
     }
 
+    if (!selectedEnrollmentId) {
+      setError("Unable to send invites. Not fully implemented yet.", 5000);
+      return;
+    }
+
     const preparedRequest: SendTrainingLinksDto = {
       trainingTokenValues: tokenValues.map((t) => ({
         ...t,
         userId: t.email,
       })),
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
-      trainingCourseId: selectedCourse?.id,
+      courseEnrollmentId: selectedEnrollmentId,
       trainingItemId: selectedItem?.id,
     };
 

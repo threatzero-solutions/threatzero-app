@@ -58,11 +58,15 @@ export const getPresignedPutUrl = (key: string) =>
 
 export const getMyItemCompletion = (
   itemId: string,
-  courseId: string | undefined,
+  enrollmentId: string | undefined,
   watchId?: string | null
 ) =>
   findMany<ItemCompletion>(`/training/items/my-completions/`, {
-    params: { watch_id: watchId, ["item.id"]: itemId, ["course.id"]: courseId },
+    params: {
+      watch_id: watchId,
+      ["item.id"]: itemId,
+      ["enrollment.id"]: enrollmentId,
+    },
   }).then((r) => r.results[0] ?? null);
 
 export const getMyItemCompletions = (
@@ -129,7 +133,7 @@ export const createItemCompletion = async (
   input: {
     itemId: string;
     sectionId?: string;
-    courseId: string | undefined;
+    enrollmentId: string | undefined;
     url: string;
   },
   watchId?: string | null
@@ -141,7 +145,7 @@ export const createItemCompletion = async (
         id: input.itemId,
       },
       section: input.sectionId ? { id: input.sectionId } : undefined,
-      course: { id: input.courseId },
+      enrollment: { id: input.enrollmentId },
       url: input.url,
     },
     {

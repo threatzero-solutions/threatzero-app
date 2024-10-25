@@ -1,10 +1,12 @@
 import FormInput, { FormInputProps } from "./inputs/FormInput";
 import { classNames } from "../../utils/core";
 import { forwardRef } from "react";
+import { Field } from "../../types/entities";
 
 export interface FormFieldProps extends FormInputProps {
   onEdit?: () => void;
   fillColumns?: boolean;
+  field: Partial<Field>;
 }
 
 const FormField: React.FC<FormFieldProps> = forwardRef(

@@ -78,7 +78,7 @@ const TrainingItem: React.FC = () => {
   });
 
   const { data: itemCompletion } = useQuery({
-    queryKey: ["item-completion", state.activeCourse?.id, itemId] as const,
+    queryKey: ["item-completion", state.activeEnrollment?.id, itemId] as const,
     queryFn: ({ queryKey }) =>
       getMyItemCompletion(queryKey[2]!, queryKey[1], watchId).then((i) => {
         itemCompletionId.current = i?.id ?? null;
@@ -94,7 +94,7 @@ const TrainingItem: React.FC = () => {
         {
           itemId: itemId!,
           sectionId,
-          courseId: state.activeCourse?.id,
+          enrollmentId: state.activeEnrollment?.id,
           url: window.location.href,
         },
         watchId
