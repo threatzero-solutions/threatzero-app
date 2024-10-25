@@ -1,6 +1,6 @@
 import { useContext, useMemo } from "react";
 import { TrainingContext } from "../../../contexts/training/training-context";
-import { TrainingCourse, TrainingVisibility } from "../../../types/entities";
+import { CourseEnrollment, TrainingVisibility } from "../../../types/entities";
 import { DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
@@ -8,10 +8,12 @@ import { LEVEL, WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/AuthProvider";
 import CourseVisibilityTag from "./CourseVisibilityTag";
 import CourseCustomTag from "./CourseCustomTag";
-import CourseActiveStatus from "./CourseActiveStatus";
+import CourseAvailabilityDates from "./CourseActiveStatus";
+import { stripHtml } from "../../../utils/core";
 
-const ViewCourses: React.FC = () => {
-  const { dispatch, setActiveCourse, state } = useContext(TrainingContext);
+const ViewEnrollments: React.FC = () => {
+  const { dispatch, state, setActiveEnrollmentId } =
+    useContext(TrainingContext);
   const { hasPermissions } = useAuth();
   const navigate = useNavigate();
 
@@ -23,20 +25,14 @@ const ViewCourses: React.FC = () => {
   const setOpen = (open: boolean) =>
     dispatch({ type: "SET_VIEW_COURSES_SLIDER_OPEN", payload: open });
 
-  const handleActivateCourse = (course: TrainingCourse) => {
-    setActiveCourse(course?.id);
+  const handleActivateCourse = (enrollmentId: CourseEnrollment["id"]) => {
+    setActiveEnrollmentId(enrollmentId);
     navigate("/training/library/");
     setOpen(false);
   };
 
-  const handleNewCourse = () => {
-    dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: true });
-    navigate("/training/library/manage/");
-    setOpen(false);
-  };
-
-  const handleManageCourse = (course: TrainingCourse) => {
-    navigate(`/training/library/manage?courseId=${course.id}`);
+  const handleManageOrganizations = () => {
+    navigate("/admin-panel/organizations/");
     setOpen(false);
   };
 
@@ -48,7 +44,7 @@ const ViewCourses: React.FC = () => {
           <div className="flex items-start justify-between space-x-3">
             <div className="space-y-1">
               <DialogTitle className="text-base font-semibold leading-6 text-gray-900">
-                All Courses
+                My Course Enrollments
               </DialogTitle>
               <p className="text-sm text-gray-500">Select a course to view</p>
             </div>
@@ -68,9 +64,9 @@ const ViewCourses: React.FC = () => {
 
         {/* COURSES */}
         <ul className="divide-y divide-gray-100">
-          {state.courses?.map((course) => (
+          {state.enrollments?.map((enrollment) => (
             <li
-              key={course.id}
+              key={enrollment.id}
               className="relative flex justify-between gap-x-6 px-4 py-5 sm:px-6 lg:px-8"
             >
               <div className="flex flex-col min-w-0 gap-y-2">
@@ -79,50 +75,45 @@ const ViewCourses: React.FC = () => {
                     className="text-sm font-semibold leading-6 text-gray-900 line-clamp-1"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: set by Admins only
                     dangerouslySetInnerHTML={{
-                      __html: course.metadata.title,
+                      __html: enrollment.course.metadata.title,
                     }}
                   />
                   <p
                     className="flex text-xs leading-5 text-gray-500 line-clamp-1"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: set by Admins only
                     dangerouslySetInnerHTML={{
-                      __html: course.metadata.description ?? "",
+                      __html: enrollment.course.metadata.description ?? "",
                     }}
                   />
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {isTrainingAdmin &&
-                    course.visibility === TrainingVisibility.HIDDEN && (
-                      <CourseVisibilityTag visibility={course.visibility} />
+                    enrollment.course.visibility ===
+                      TrainingVisibility.HIDDEN && (
+                      <CourseVisibilityTag
+                        visibility={enrollment.course.visibility}
+                      />
                     )}
-                  <CourseActiveStatus
-                    startDate={course.startDate}
-                    endDate={course.endDate}
+                  <CourseAvailabilityDates
+                    startDate={enrollment.startDate}
+                    endDate={enrollment.endDate}
                   />
-                  {isTrainingAdmin && course.metadata.tag && (
-                    <CourseCustomTag tag={course.metadata.tag} />
+                  {isTrainingAdmin && enrollment.course.metadata.tag && (
+                    <CourseCustomTag tag={enrollment.course.metadata.tag} />
                   )}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-x-4">
                 <button
                   type="button"
-                  onClick={() => handleActivateCourse(course)}
+                  onClick={() => handleActivateCourse(enrollment.id)}
                   className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 >
                   View course
-                  <span className="sr-only">, {course.metadata.title}</span>
+                  <span className="sr-only">
+                    , {stripHtml(enrollment.course.metadata.title)}
+                  </span>
                 </button>
-                {isTrainingAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => handleManageCourse(course)}
-                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                  >
-                    Edit
-                    <span className="sr-only">, {course.metadata.title}</span>
-                  </button>
-                )}
               </div>
             </li>
           ))}
@@ -143,10 +134,10 @@ const ViewCourses: React.FC = () => {
           {isTrainingAdmin && (
             <button
               type="button"
-              onClick={() => handleNewCourse()}
+              onClick={() => handleManageOrganizations()}
               className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             >
-              + Create New Course
+              Manage Organization Course Enrollments
             </button>
           )}
         </div>
@@ -155,4 +146,4 @@ const ViewCourses: React.FC = () => {
   );
 };
 
-export default ViewCourses;
+export default ViewEnrollments;

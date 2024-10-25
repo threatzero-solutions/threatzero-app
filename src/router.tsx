@@ -9,7 +9,7 @@ import TrainingItem from "./pages/training-library/TrainingItem";
 import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
 import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
-import CourseBuilder from "./pages/training-library/CourseBuilder";
+import CourseBuilder from "./pages/admin-panel/courses/CourseBuilder";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
 import PublicLayout from "./components/layouts/PublicLayout";
 import MyDashboard from "./pages/my-dashboard/MyDashboard";
@@ -38,6 +38,8 @@ import ManageTrainingInvites from "./pages/safety-management/training-admin/Mana
 import TrainingAdminDashboard from "./pages/safety-management/training-admin/TrainingAdminDashboard";
 import PublicRoot from "./components/layouts/PublicRoot";
 import Root from "./components/layouts/Root";
+import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
+import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
 // import MyOrganization from "./pages/my-organization/MyOrganization";
 // import MyOrganizationHome from "./pages/my-organization/MyOrganizationHome";
 // import MyOrganizationUsersRoot from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersRoot";
@@ -252,6 +254,24 @@ export const router = createBrowserRouter(
                       path: "organizations",
                       handle: { title: "Organizations" },
                       element: <Organizations />,
+                    },
+                    {
+                      path: "courses",
+                      handle: { title: "Courses" },
+                      children: [
+                        {
+                          path: "",
+                          element: <ViewCourses />,
+                        },
+                        {
+                          path: "preview/:id",
+                          element: <PreviewCourse />,
+                        },
+                        {
+                          path: ":id",
+                          element: <CourseBuilder />,
+                        },
+                      ],
                     },
                     {
                       path: "forms",

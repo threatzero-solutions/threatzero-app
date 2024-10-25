@@ -16,6 +16,7 @@ interface AudiencesSelectProps {
   onChange?: (event: SimpleChangeEvent<Audience[]>) => void;
   name?: string;
   label?: string;
+  required?: boolean;
 }
 
 const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
@@ -23,6 +24,7 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
   onChange,
   name,
   label,
+  required = false,
 }) => {
   const [audienceQuery, setAudienceQuery] = useState("");
   const [viewAudiencesSliderOpen, setViewAudiencesSliderOpen] = useState(false);
@@ -134,22 +136,22 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
         </Combobox>
         <div className="flex justify-between mt-3">
           <div className="flex gap-2 flex-wrap">
-            {value && value.length > 0 ? (
-              value.map((a) => (
-                <PillBadge
-                  key={a.id}
-                  value={a}
-                  displayValue={humanizeSlug(a.slug)}
-                  color="blue"
-                  isRemovable={true}
-                  onRemove={() => handleRemoveAudience(a)}
-                />
-              ))
-            ) : (
-              <span className="text-sm text-gray-400 italic">
-                Please select at least one audience
-              </span>
-            )}
+            {value && value.length > 0
+              ? value.map((a) => (
+                  <PillBadge
+                    key={a.id}
+                    value={a}
+                    displayValue={humanizeSlug(a.slug)}
+                    color="blue"
+                    isRemovable={true}
+                    onRemove={() => handleRemoveAudience(a)}
+                  />
+                ))
+              : required && (
+                  <span className="text-sm text-gray-400 italic">
+                    Please select at least one audience
+                  </span>
+                )}
           </div>
           <button
             type="button"

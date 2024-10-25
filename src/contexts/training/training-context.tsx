@@ -8,29 +8,32 @@ import React, {
 } from "react";
 import {
   Audience,
+  CourseEnrollment,
   TrainingCourse,
   TrainingSection,
 } from "../../types/entities";
 import SlideOver from "../../components/layouts/slide-over/SlideOver";
-import ViewCourses from "../../pages/training-library/components/ViewCourses";
+import ViewEnrollments from "../../pages/training-library/components/ViewEnrollments";
 import ViewTrainingAudiences from "../../pages/training-library/components/ViewTrainingAudiences";
 import { useQuery } from "@tanstack/react-query";
-import { getTrainingCourse, getTrainingCourses } from "../../queries/training";
+import {
+  getMyCourseEnrollments,
+  getTrainingCourse,
+} from "../../queries/training";
 import EditTrainingSection from "../../pages/training-library/components/EditTrainingSection";
 import ManageItems from "../../pages/training-library/components/ManageItems";
 import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
-import { useSearchParams } from "react-router-dom";
 import { useLocalStorage } from "usehooks-ts";
 import { useAuth, withAuthenticationRequired } from "../AuthProvider";
+import { sortEnrollmentsByScoreFn } from "../../utils/training";
 
 export interface TrainingState {
-  buildingNewCourse: boolean;
-
   activeSection?: TrainingSection;
   activeCourse?: TrainingCourse;
   activeAudience?: Audience;
 
-  courses?: TrainingCourse[];
+  enrollments?: CourseEnrollment[];
+  activeEnrollment?: CourseEnrollment;
 
   viewCoursesSliderOpen?: boolean;
   editSectionSliderOpen?: boolean;
@@ -42,13 +45,11 @@ export interface TrainingState {
 
 export interface TrainingAction {
   type: string;
-  // biome-ignore lint/suspicious/noExplicitAny: ...
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
 }
 
-const INITIAL_STATE: TrainingState = {
-  buildingNewCourse: false,
-};
+const INITIAL_STATE: TrainingState = {};
 
 export interface TrainingContextType {
   // REDUCER
@@ -60,7 +61,7 @@ export interface TrainingContextType {
     React.SetStateAction<Partial<TrainingSection> | undefined>
   >;
 
-  setActiveCourse: (courseId?: string) => void;
+  setActiveEnrollmentId: Dispatch<React.SetStateAction<string | null>>;
 }
 
 export const TrainingContext = createContext<TrainingContextType>({
@@ -69,7 +70,7 @@ export const TrainingContext = createContext<TrainingContextType>({
 
   setSectionEditing: () => {},
 
-  setActiveCourse: () => {},
+  setActiveEnrollmentId: () => {},
 });
 
 const trainingReducer = (
@@ -77,30 +78,30 @@ const trainingReducer = (
   action: TrainingAction
 ): TrainingState => {
   switch (action.type) {
-    case "SET_BUILDING_NEW_COURSE":
+    case "SET_ACTIVE_COURSE":
       return {
         ...state,
-        buildingNewCourse: action.payload,
+        activeCourse: action.payload,
       };
     case "SET_ACTIVE_SECTION":
       return {
         ...state,
         activeSection: action.payload,
       };
-    case "SET_ACTIVE_COURSE":
+    case "SET_ACTIVE_ENROLLMENT":
       return {
         ...state,
-        activeCourse: action.payload,
+        activeEnrollment: action.payload,
       };
     case "SET_ACTIVE_AUDIENCE":
       return {
         ...state,
         activeAudience: action.payload,
       };
-    case "SET_COURSES":
+    case "SET_ENROLLMENTS":
       return {
         ...state,
-        courses: action.payload,
+        enrollments: action.payload,
       };
     case "SET_VIEW_COURSES_SLIDER_OPEN":
       return {
@@ -139,7 +140,7 @@ const SLIDE_OVER_DATA: {
   {
     name: "viewCoursesSliderOpen",
     dispatchType: "SET_VIEW_COURSES_SLIDER_OPEN",
-    Component: ViewCourses,
+    Component: ViewEnrollments,
   },
   {
     name: "editSectionSliderOpen",
@@ -165,86 +166,75 @@ const SLIDE_OVER_DATA: {
 
 export const TrainingContextProvider: React.FC<PropsWithChildren> =
   withAuthenticationRequired(({ children }) => {
-    const [activeCourseId, setActiveCourseId] = useLocalStorage<string | null>(
-      "training_activeCourseId",
-      null
-    );
+    const [activeEnrollmentId, setActiveEnrollmentId] = useLocalStorage<
+      string | null
+    >("training_activeEnrollmentId", null);
     const [sectionEditing, setSectionEditing] =
       useState<Partial<TrainingSection>>();
 
     const [state, dispatch] = useReducer(trainingReducer, INITIAL_STATE);
-    const [searchParams] = useSearchParams();
 
     const { accessTokenClaims } = useAuth();
 
-    const { data: courses } = useQuery({
-      queryKey: ["training-courses"],
-      queryFn: () => getTrainingCourses({ limit: 100 }),
+    const { data: enrollments } = useQuery({
+      queryKey: ["my-course-enrollments"],
+      queryFn: () => getMyCourseEnrollments(),
+    });
+
+    const { data: activeCourse } = useQuery({
+      queryKey: ["training-course", state.activeEnrollment?.course.id] as const,
+      queryFn: ({ queryKey }) => getTrainingCourse(queryKey[1]),
+      enabled: !!state.activeEnrollment?.course.id,
     });
 
     useEffect(() => {
       dispatch({
-        type: "SET_COURSES",
-        payload: courses?.results,
+        type: "SET_ENROLLMENTS",
+        payload: enrollments,
       });
-    }, [courses?.results]);
-
-    const { data: lastActiveCourse } = useQuery({
-      queryKey: ["training-courses", activeCourseId],
-      queryFn: () =>
-        getTrainingCourse(activeCourseId ?? undefined).then((c) => {
-          if (!c) {
-            setActiveCourseId(null);
-          }
-          return c;
-        }),
-      enabled: !!activeCourseId,
-    });
+    }, [enrollments]);
 
     useEffect(() => {
-      if (searchParams.has("courseId")) {
-        setActiveCourseId(searchParams.get("courseId"));
-        dispatch({ type: "SET_BUILDING_NEW_COURSE", payload: false });
-      }
-    }, [searchParams, setActiveCourseId]);
+      dispatch({
+        type: "SET_ACTIVE_ENROLLMENT",
+        payload:
+          activeEnrollmentId === null
+            ? null
+            : state.enrollments?.find(
+                (enrollment) => enrollment.id === activeEnrollmentId
+              ),
+      });
+    }, [state.enrollments, activeEnrollmentId]);
 
     useEffect(() => {
       dispatch({
         type: "SET_ACTIVE_COURSE",
-        payload: activeCourseId === null ? null : lastActiveCourse,
+        payload: activeCourse,
       });
-    }, [lastActiveCourse, activeCourseId]);
+    }, [activeCourse]);
 
     useEffect(() => {
-      if (activeCourseId !== null) {
+      if (activeEnrollmentId !== null) {
         return;
       }
 
       // If course not preselected, pick the first course matching one of the user's audiences.
       // Note: Users will most often only have a single audience.
-      const userAudiences = accessTokenClaims?.audiences;
-      if (Array.isArray(userAudiences) && userAudiences.length > 0) {
-        const c = courses?.results.find((c) =>
-          c.audiences.some((a) => userAudiences.includes(a.slug))
-        );
-        if (c?.id) {
-          setActiveCourseId(c.id);
-          return;
-        }
-      }
+      const userAudiences = Array.isArray(accessTokenClaims?.audiences)
+        ? accessTokenClaims?.audiences
+        : [];
 
-      setActiveCourseId(courses?.results[0]?.id ?? null);
+      const sortedEnrollments = (enrollments ?? []).sort(
+        sortEnrollmentsByScoreFn(userAudiences)
+      );
+
+      setActiveEnrollmentId(sortedEnrollments[0]?.id ?? null);
     }, [
-      courses,
+      enrollments,
       accessTokenClaims,
-      activeCourseId,
-      courses?.results[0]?.id,
-      setActiveCourseId,
+      activeEnrollmentId,
+      setActiveEnrollmentId,
     ]);
-
-    const setActiveCourse = (courseId?: string | null) => {
-      setActiveCourseId(courseId ?? null);
-    };
 
     return (
       <TrainingContext.Provider
@@ -253,7 +243,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
           dispatch,
           sectionEditing,
           setSectionEditing,
-          setActiveCourse,
+          setActiveEnrollmentId,
         }}
       >
         {children}

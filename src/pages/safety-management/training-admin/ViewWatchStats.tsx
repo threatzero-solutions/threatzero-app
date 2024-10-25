@@ -96,7 +96,7 @@ const ViewWatchStats: React.FC = () => {
               label: "Training Item",
             },
             {
-              key: "year",
+              key: "course.startDate",
               label: "Year",
             },
             {
@@ -141,7 +141,9 @@ const ViewWatchStats: React.FC = () => {
                 {stripHtml(r.item?.metadata.title) || "—"}
               </span>
             ),
-            year: r.completedOn ? dayjs(r.completedOn).format("YYYY") : "—",
+            ["course.startDate"]: r.course?.startDate
+              ? dayjs(r.course?.startDate).format("YYYY")
+              : "—",
             completedOn: r.completedOn
               ? dayjs(r.completedOn).format("MMM D, YYYY")
               : "—",

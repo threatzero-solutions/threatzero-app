@@ -89,3 +89,13 @@ export interface OrganizationUser {
   email: string;
   attributes: Record<string, string[]>;
 }
+
+export const DurationUnits = [
+  "years",
+  "months",
+  "days",
+  "hours",
+  "minutes",
+  "seconds",
+];
+export type DurationObject = Record<(typeof DurationUnits)[number], number>;

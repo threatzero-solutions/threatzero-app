@@ -4,7 +4,7 @@ import {
   ResourceType,
 } from "../types/entities";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
-import { deleteOne, findMany, findOne, save } from "./utils";
+import { deleteOne, findMany, findOneById, save } from "./utils";
 
 export interface GetResourceItemOptions extends ItemFilterQueryParams {
   category?: ResourceItemCategory;
@@ -15,7 +15,7 @@ export const getResourceItems = (query?: GetResourceItemOptions) =>
   findMany<ResourceItem>("/resources/", query);
 
 export const getResourceItem = (id: string) =>
-  findOne<ResourceItem>("/resources/", id);
+  findOneById<ResourceItem>("/resources/", id);
 
 // MUTATIONS
 

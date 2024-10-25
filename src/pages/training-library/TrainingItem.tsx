@@ -28,7 +28,7 @@ import VideoProgress from "./components/VideoProgress";
 import { useImmer } from "use-immer";
 import { useDebounceCallback } from "usehooks-ts";
 
-const COMPLETION_THRESHOLD = 0.95;
+const COMPLETION_THRESHOLD = 0.85;
 
 const VideoUnavailable: React.FC = () => (
   <div className="w-full h-full flex justify-center items-center bg-gray-900">

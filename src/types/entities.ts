@@ -33,10 +33,18 @@ export interface OrganizationBase extends Base {
 /** Represents an organization (ie district, company, etc.) */
 export interface Organization extends OrganizationBase {
   groupId: string | null;
-  courses?: TrainingCourse[];
+  enrollments?: CourseEnrollment[];
   resources?: ResourceItem[];
   idpSlugs: string[];
   allowedAudiences: string[];
+}
+
+export interface CourseEnrollment extends Base {
+  organization: Organization;
+  course: TrainingCourse;
+  startDate: Date | string | null;
+  endDate: Date | string | null;
+  visibility: TrainingVisibility;
 }
 
 /** Represents a unit of an organization (ie school, office, college, etc.) */
@@ -76,9 +84,7 @@ export interface TrainingMetadata {
 export interface TrainingCourse extends Base {
   metadata: TrainingMetadata;
   visibility: TrainingVisibility;
-  startDate: Date | null;
-  endDate: Date | null;
-  organizations: Organization[];
+  enrollments: CourseEnrollment[];
   sections: TrainingSection[];
   audiences: Audience[];
   presentableBy: Audience[];

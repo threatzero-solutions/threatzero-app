@@ -13,6 +13,7 @@ import {
   useState,
   useEffect,
   ReactNode,
+  ChangeEvent,
 } from "react";
 import { classNames } from "../../../utils/core";
 
@@ -55,7 +56,7 @@ const Select: React.FC<SelectProps> = ({ options, showClear, ...attrs }) => {
         value: v,
         getAttribute: (key: keyof typeof attrs) => attrs[key],
       },
-    } as any);
+    } as unknown as ChangeEvent<HTMLSelectElement>);
   };
 
   return (

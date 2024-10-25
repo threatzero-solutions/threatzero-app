@@ -11,8 +11,9 @@ const InputRadioOptions: React.FC<{
   options: InputRadioOption[];
   onSelect?: (id: string) => void;
   defaultSelection?: string;
+  hideOnInactive?: boolean;
   ref?: React.RefObject<HTMLObjectElement>;
-}> = ({ options, onSelect, ref, defaultSelection }) => {
+}> = ({ options, onSelect, ref, defaultSelection, hideOnInactive = false }) => {
   const defaultIdx =
     (defaultSelection && options.findIndex((o) => o.id === defaultSelection)) ||
     0;
@@ -53,16 +54,19 @@ const InputRadioOptions: React.FC<{
               >
                 {mediaOption.name}
               </label>
-              {mediaOption.children && (
-                <div
-                  className={classNames(
-                    "text-gray-500 mt-2 grid grid-cols-1",
-                    idx !== idxSelected ? "opacity-50 pointer-events-none" : ""
-                  )}
-                >
-                  {mediaOption.children}
-                </div>
-              )}
+              {mediaOption.children &&
+                (!hideOnInactive || idx === idxSelected) && (
+                  <div
+                    className={classNames(
+                      "text-gray-500 mt-2 grid grid-cols-1",
+                      idx !== idxSelected
+                        ? "opacity-50 pointer-events-none"
+                        : ""
+                    )}
+                  >
+                    {mediaOption.children}
+                  </div>
+                )}
             </div>
           </div>
         ))}

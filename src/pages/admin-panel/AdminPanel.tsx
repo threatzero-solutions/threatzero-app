@@ -5,6 +5,7 @@ import { adminPanelPermissionOptions } from "../../constants/permission-options"
 
 const navigation = [
   { name: "Organizations", to: "organizations" },
+  { name: "Courses", to: "courses" },
   { name: "Forms", to: "forms" },
   { name: "Resources", to: "resources" },
   { name: "Languages", to: "languages" },

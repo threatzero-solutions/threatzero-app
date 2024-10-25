@@ -60,7 +60,7 @@ const DataTable: React.FC<DataTableProps> = ({
     if (rowsRef.current && !isLoading) {
       setRowsHeight(rowsRef.current.clientHeight);
     }
-  }, [isLoading, rowsRef.current]);
+  }, [isLoading]);
 
   return (
     <div className={className}>

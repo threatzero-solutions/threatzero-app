@@ -3,6 +3,7 @@ import { API_BASE_URL } from "../contexts/core/constants";
 import {
   Audience,
   ItemCompletion,
+  Organization,
   TrainingCourse,
   TrainingItem,
   TrainingSection,
@@ -14,10 +15,16 @@ import {
   deleteOne,
   findMany,
   findOne,
+  findOneById,
   insertOne,
   save,
   updateOne,
 } from "./utils";
+
+export const getMyCourseEnrollments = () =>
+  findOne<Organization>("/organizations/organizations/mine/").then(
+    (organization) => organization?.enrollments ?? []
+  );
 
 export const getTrainingAudiences = (options: ItemFilterQueryParams = {}) =>
   findMany<Audience>("/training/audiences/", options);
@@ -26,16 +33,16 @@ export const getTrainingCourses = (options: ItemFilterQueryParams = {}) =>
   findMany<TrainingCourse>("/training/courses/", options);
 
 export const getTrainingCourse = (id?: string) =>
-  findOne<TrainingCourse>("/training/courses/", id);
+  findOneById<TrainingCourse>("/training/courses/", id);
 
 export const getTrainingSection = (id?: string) =>
-  findOne<TrainingSection>("/training/sections/", id);
+  findOneById<TrainingSection>("/training/sections/", id);
 
 export const getTrainingItems = (options: ItemFilterQueryParams = {}) =>
   findMany<TrainingItem>("/training/items/", options);
 
 export const getTrainingItem = (id?: string, watchId?: string | null) =>
-  findOne<TrainingItem>(`/training/items/${watchId ? "watch/" : ""}`, id, {
+  findOneById<TrainingItem>(`/training/items/${watchId ? "watch/" : ""}`, id, {
     params: { watch_id: watchId },
   });
 

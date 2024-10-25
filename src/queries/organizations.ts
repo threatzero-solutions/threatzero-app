@@ -5,7 +5,7 @@ import {
   deleteOne,
   findMany,
   findManyRaw,
-  findOneOrFail,
+  findOneByIdOrFail,
   insertOne,
   putOne,
   save,
@@ -18,10 +18,10 @@ export const getOrganizations = (query?: ItemFilterQueryParams) =>
   findMany<Organization>("/organizations/organizations/", query);
 
 export const getOrganization = (id?: string) =>
-  findOneOrFail<Organization>("/organizations/organizations/", id);
+  findOneByIdOrFail<Organization>("/organizations/organizations/", id);
 
 export const getOrganizationBySlug = (slug?: string) =>
-  findOneOrFail<Organization>("/organizations/organizations/slug/", slug);
+  findOneByIdOrFail<Organization>("/organizations/organizations/slug/", slug);
 
 export const getOrganizationUsers = (
   id: Organization["id"] | undefined,
@@ -33,7 +33,7 @@ export const getOrganizationUsers = (
   );
 
 export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
-  findOneOrFail<OrganizationIdpDto>(
+  findOneByIdOrFail<OrganizationIdpDto>(
     `/organizations/organizations/${id}/idps/`,
     slug
   );

@@ -235,7 +235,8 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
     >
   ) => {
     if (!e.target) return;
-    let { name, value } = e.target;
+    const { name } = e.target;
+    let { value } = e.target;
 
     if (name === "slug") {
       value = slugify(value as string, false);
@@ -252,6 +253,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
     }
 
     setIdp((i) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       i[name] = value as any;
 
       if (createNewSlug.current && name === "name") {
