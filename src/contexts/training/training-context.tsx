@@ -62,6 +62,7 @@ export interface TrainingContextType {
   >;
 
   setActiveEnrollmentId: Dispatch<React.SetStateAction<string | null>>;
+  courseLoading: boolean;
 }
 
 export const TrainingContext = createContext<TrainingContextType>({
@@ -71,6 +72,7 @@ export const TrainingContext = createContext<TrainingContextType>({
   setSectionEditing: () => {},
 
   setActiveEnrollmentId: () => {},
+  courseLoading: true,
 });
 
 const trainingReducer = (
@@ -181,7 +183,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
       queryFn: () => getMyCourseEnrollments(),
     });
 
-    const { data: activeCourse } = useQuery({
+    const { data: activeCourse, isPending: courseLoading } = useQuery({
       queryKey: ["training-course", state.activeEnrollment?.course.id] as const,
       queryFn: ({ queryKey }) => getTrainingCourse(queryKey[1]),
       enabled: !!state.activeEnrollment?.course.id,
@@ -196,26 +198,33 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
 
     useEffect(() => {
       dispatch({
-        type: "SET_ACTIVE_ENROLLMENT",
-        payload:
-          activeEnrollmentId === null
-            ? null
-            : state.enrollments?.find(
-                (enrollment) => enrollment.id === activeEnrollmentId
-              ),
-      });
-    }, [state.enrollments, activeEnrollmentId]);
-
-    useEffect(() => {
-      dispatch({
         type: "SET_ACTIVE_COURSE",
         payload: activeCourse,
       });
     }, [activeCourse]);
 
+    // Automatically select enrollment.
     useEffect(() => {
-      if (activeEnrollmentId !== null) {
+      if (!enrollments) {
         return;
+      }
+
+      const setActiveEnrollment = (enrollment: CourseEnrollment | null) => {
+        dispatch({
+          type: "SET_ACTIVE_ENROLLMENT",
+          payload: enrollment,
+        });
+      };
+
+      if (activeEnrollmentId) {
+        const foundEnrollment = enrollments.find(
+          (enrollment) => enrollment.id === activeEnrollmentId
+        );
+
+        if (foundEnrollment) {
+          setActiveEnrollment(foundEnrollment);
+          return;
+        }
       }
 
       // If course not preselected, pick the first course matching one of the user's audiences.
@@ -224,15 +233,17 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
         ? accessTokenClaims?.audiences
         : [];
 
-      const sortedEnrollments = (enrollments ?? []).sort(
+      const sortedEnrollments = enrollments.sort(
         sortEnrollmentsByScoreFn(userAudiences)
       );
 
-      setActiveEnrollmentId(sortedEnrollments[0]?.id ?? null);
+      const chosenEnrollment = sortedEnrollments[0];
+      setActiveEnrollment(chosenEnrollment);
+      setActiveEnrollmentId(chosenEnrollment?.id ?? null);
     }, [
       enrollments,
-      accessTokenClaims,
       activeEnrollmentId,
+      accessTokenClaims?.audiences,
       setActiveEnrollmentId,
     ]);
 
@@ -244,6 +255,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
           sectionEditing,
           setSectionEditing,
           setActiveEnrollmentId,
+          courseLoading,
         }}
       >
         {children}

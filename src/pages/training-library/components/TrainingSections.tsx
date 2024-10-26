@@ -5,14 +5,16 @@ interface TrainingSectionsProps {
   sections?: TrainingSection[];
   fallback?: React.ReactNode;
   onEditSection?: (section?: Partial<TrainingSection>) => void;
+  loading?: boolean;
 }
 
 const TrainingSections: React.FC<TrainingSectionsProps> = ({
   sections,
   fallback,
   onEditSection,
+  loading,
 }) => {
-  return sections ? (
+  return sections && !loading ? (
     <>
       <div
         role="grid"

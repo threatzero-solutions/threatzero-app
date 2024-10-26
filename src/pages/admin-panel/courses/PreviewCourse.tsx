@@ -9,7 +9,7 @@ import BackButtonLink from "../../../components/layouts/BackButtonLink";
 const PreviewCourse: React.FC = () => {
   const params = useParams();
 
-  const { data: course } = useQuery({
+  const { data: course, isPending: coursePending } = useQuery({
     queryKey: ["training-courses", params.id],
     queryFn: () => getTrainingCourse(params.id!),
     enabled: !!params.id,
@@ -23,6 +23,7 @@ const PreviewCourse: React.FC = () => {
       </span>
       <ViewTrainingCourse
         course={course}
+        loading={coursePending}
         enrollment={
           course && {
             id: "preview",

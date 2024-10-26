@@ -7,7 +7,7 @@ import { trainingLibraryPermissionsOptions } from "../../constants/permission-op
 import ViewTrainingCourse from "./components/ViewTrainingCourse";
 
 const TrainingLibrary: React.FC = withRequirePermissions(() => {
-  const { state, dispatch } = useContext(TrainingContext);
+  const { state, dispatch, courseLoading } = useContext(TrainingContext);
   const { hasPermissions } = useAuth();
 
   const isTrainingAdmin = useMemo(
@@ -19,6 +19,7 @@ const TrainingLibrary: React.FC = withRequirePermissions(() => {
     <ViewTrainingCourse
       course={state.activeCourse}
       enrollment={state.activeEnrollment}
+      loading={courseLoading}
       showMultipleEnrollments={
         !!state.enrollments && state.enrollments.length > 0
       }

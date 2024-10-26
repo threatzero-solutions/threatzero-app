@@ -18,6 +18,7 @@ import TrainingSections from "./TrainingSections";
 interface TrainingCourseProps {
   enrollment: CourseEnrollment | undefined | null;
   course: TrainingCourse | undefined | null;
+  loading?: boolean;
   showMultipleEnrollments?: boolean;
   onSeeOtherCourses?: () => void;
   isTrainingAdmin?: boolean;
@@ -28,6 +29,7 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
     ({
       enrollment,
       course,
+      loading,
       showMultipleEnrollments = false,
       onSeeOtherCourses,
       isTrainingAdmin = false,
@@ -84,7 +86,7 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
               </div>
             </div>
           )}
-          {course === null ? (
+          {!course && !loading ? (
             <div className="text-center h-full flex flex-col items-center justify-center">
               <FolderOpenIcon
                 className="h-12 w-12 text-gray-400"
@@ -107,12 +109,9 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
             </div>
           ) : (
             <>
-              <FeaturedSection
-                sections={sections}
-                loading={course === undefined}
-              />
+              <FeaturedSection sections={sections} loading={loading} />
               <h2 className="mt-12 text-xl text-gray-700">All Content</h2>
-              <TrainingSections sections={sections} />
+              <TrainingSections sections={sections} loading={loading} />
             </>
           )}
         </div>
