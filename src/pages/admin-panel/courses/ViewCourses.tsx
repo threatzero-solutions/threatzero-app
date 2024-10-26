@@ -8,11 +8,20 @@ import DataTable from "../../../components/layouts/DataTable";
 import { DocumentDuplicateIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/20/solid";
 import { EyeIcon } from "@heroicons/react/20/solid";
+import { useImmer } from "use-immer";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { useDebounceValue } from "usehooks-ts";
 
 const ViewCourses: React.FC = () => {
-  const { data: courses } = useQuery({
-    queryKey: ["training-courses"],
-    queryFn: () => getTrainingCourses({ limit: 100 }),
+  const [courseFilterOptions, setCourseFilterOptions] =
+    useImmer<ItemFilterQueryParams>({});
+  const [debouncedCourseFilterOptions] = useDebounceValue(
+    courseFilterOptions,
+    300
+  );
+  const { data: courses, isLoading: coursesLoading } = useQuery({
+    queryKey: ["training-courses", debouncedCourseFilterOptions] as const,
+    queryFn: ({ queryKey }) => getTrainingCourses(queryKey[1]),
   });
 
   return (
@@ -20,6 +29,7 @@ const ViewCourses: React.FC = () => {
       <DataTable
         title="All Courses"
         subtitle="Organizations can be enrolled in any number of these courses to access their training content."
+        isLoading={coursesLoading}
         data={{
           headers: [
             {
@@ -108,6 +118,24 @@ const ViewCourses: React.FC = () => {
             + Create New Course
           </Link>
         }
+        paginationOptions={{
+          currentOffset: courses?.offset,
+          total: courses?.count,
+          limit: courses?.limit,
+          setOffset: (offset) =>
+            setCourseFilterOptions((q) => {
+              q.offset = offset;
+            }),
+        }}
+        searchOptions={{
+          searchQuery: courseFilterOptions.search ?? "",
+          setSearchQuery: (q) => {
+            setCourseFilterOptions((options) => {
+              options.search = q;
+              options.offset = 0;
+            });
+          },
+        }}
       />
     </>
   );
