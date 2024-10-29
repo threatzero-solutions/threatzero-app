@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { FolderOpenIcon } from "@heroicons/react/20/solid";
 import { trainingLibraryPermissionsOptions } from "../../../constants/permission-options";
@@ -8,7 +7,6 @@ import {
   TrainingCourse,
   TrainingVisibility,
 } from "../../../types/entities";
-import { trainingSectionSort } from "../../../utils/training";
 import CourseAvailabilityDates from "./CourseActiveStatus";
 import CourseCustomTag from "./CourseCustomTag";
 import CourseVisibilityTag from "./CourseVisibilityTag";
@@ -34,14 +32,6 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
       onSeeOtherCourses,
       isTrainingAdmin = false,
     }) => {
-      const sections = useMemo(() => {
-        if (!course?.sections) {
-          return;
-        }
-
-        return course.sections.sort(trainingSectionSort);
-      }, [course?.sections]);
-
       return (
         <div className="flex flex-col px-5 h-full">
           {showMultipleEnrollments && course && (
@@ -109,9 +99,17 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
             </div>
           ) : (
             <>
-              <FeaturedSection sections={sections} loading={loading} />
+              <FeaturedSection
+                enrollment={enrollment}
+                sections={course?.sections}
+                loading={loading}
+              />
               <h2 className="mt-12 text-xl text-gray-700">All Content</h2>
-              <TrainingSections sections={sections} loading={loading} />
+              <TrainingSections
+                enrollment={enrollment}
+                sections={course?.sections}
+                loading={loading}
+              />
             </>
           )}
         </div>

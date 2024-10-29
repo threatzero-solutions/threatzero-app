@@ -1,3 +1,5 @@
+import { DurationObject } from "./api";
+
 export interface Base {
   id: string;
   createdOn: string;
@@ -95,8 +97,7 @@ export interface TrainingSection extends Base {
   metadata: TrainingMetadata;
   order: number;
   items: TrainingSectionItem[] | null;
-  availableOn: string;
-  expiresOn: string | null;
+  duration: DurationObject;
   courseId: string | null;
 }
 

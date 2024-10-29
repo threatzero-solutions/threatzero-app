@@ -155,6 +155,7 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
                               .format("YYYY-MM-DD")
                           )
                         }
+                        allowedUnits={["years", "months", "days"]}
                       />
                     )}
                   />

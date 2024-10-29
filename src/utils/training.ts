@@ -1,29 +1,83 @@
 import dayjs, { Dayjs } from "dayjs";
 import { CourseEnrollment, TrainingSection } from "../types/entities";
-import { TrainingAvailability } from "../types/training";
+import {
+  FeaturedWindow,
+  SectionAndWindow,
+  TrainingAvailability,
+} from "../types/training";
+import { orderSort } from "./core";
+import duration from "dayjs/plugin/duration";
 
-export const trainingSectionSort = (a: TrainingSection, b: TrainingSection) => {
-  const diff = dayjs(a.availableOn).diff(b.availableOn, "day");
-  if (diff !== 0) {
-    return diff;
+dayjs.extend(duration);
+
+function* buildSectionFeaturedWindows(
+  enrollment: CourseEnrollment | undefined,
+  sections: TrainingSection[]
+): IterableIterator<SectionAndWindow> {
+  if (!enrollment) {
+    return;
   }
 
-  return a.order - b.order;
-};
+  let lastEnd = dayjs(enrollment.startDate);
+  for (const section of sections.sort(orderSort)) {
+    const nextEnd = lastEnd.add(dayjs.duration(section.duration));
 
-export const isSectionAvailable = (section: TrainingSection) => {
-  const today = dayjs();
+    yield {
+      window: {
+        featuredOn: lastEnd,
+        featuredUntil: nextEnd.subtract(1),
+      },
+      section,
+    };
+
+    lastEnd = nextEnd;
+  }
+}
+
+const isInFeaturedWindow = (window: FeaturedWindow, today?: Dayjs) => {
+  today = today || dayjs();
   return (
-    (today.isSame(section.availableOn, "day") ||
-      today.isAfter(section.availableOn, "day")) &&
-    (!section.expiresOn ||
-      today.isBefore(section.expiresOn, "day") ||
-      today.isSame(section.expiresOn, "day"))
+    (today.isSame(window.featuredOn, "day") ||
+      today.isAfter(window.featuredOn, "day")) &&
+    (today.isBefore(window.featuredUntil, "day") ||
+      today.isSame(window.featuredUntil, "day"))
   );
 };
 
-export const getAvailableSection = (sections: TrainingSection[]) =>
-  sections.find(isSectionAvailable);
+export const getNextAvailableSection = (
+  enrollment: CourseEnrollment | undefined,
+  sections: TrainingSection[]
+): Partial<SectionAndWindow> => {
+  for (const { window, section } of buildSectionFeaturedWindows(
+    enrollment,
+    sections
+  )) {
+    if (window && isInFeaturedWindow(window)) {
+      return { window, section };
+    }
+  }
+
+  return { section: sections[0], window: null };
+};
+
+export const getSectionFeaturedWindows = (
+  enrollment: CourseEnrollment | undefined,
+  sections: TrainingSection[]
+) => {
+  const featuredWindows = new Map<TrainingSection["id"], SectionAndWindow>();
+
+  for (const { window, section } of buildSectionFeaturedWindows(
+    enrollment,
+    sections
+  )) {
+    if (!section) {
+      continue;
+    }
+    featuredWindows.set(section.id, { section, window });
+  }
+
+  return featuredWindows;
+};
 
 export const getCourseAvailability = (
   startDate: string | null | undefined | Date | Dayjs,

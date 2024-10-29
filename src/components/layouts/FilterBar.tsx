@@ -113,7 +113,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         return acc;
       }, opts)
     );
-  }, [filterOptions?.filters]);
+  }, [filterOptions?.filters, setFilterValues, setStoredOptions]);
 
   const handleSetFilter = (
     e: React.MouseEvent<HTMLButtonElement>,
@@ -133,7 +133,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         newValue = draft[f.key];
 
         if (!value || !Array.isArray(prevValue)) {
-          newValue = [];
+          newValue = !value ? [] : [value];
         } else {
           if (!prevValue.includes(value)) {
             newValue = [...prevValue, value];

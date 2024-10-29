@@ -9,7 +9,10 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { classNames } from "../../../utils/core";
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
+import { DEFAULT_THUMBNAIL_URL } from "../../../constants/core";
+import VideoProgress from "./VideoProgress";
+import { TrainingContext } from "../../../contexts/training/training-context";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -35,6 +38,7 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
   selected,
   navigateDisabled,
 }) => {
+  const { state } = useContext(TrainingContext);
   const [isHover, setIsHover] = useState(false);
   const params = useParams();
   const navigate = useNavigate();
@@ -54,6 +58,21 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
       }
     );
   }, [navigate, item?.id, navigateDisabled, params.sectionId, location]);
+
+  const completionProps = useMemo(() => {
+    const completion = state.itemCompletionsMap?.get(item.id ?? "");
+    if (completion) {
+      return {
+        duration: 1,
+        currentTime: completion.progress,
+      };
+    } else {
+      return {
+        duration: 1,
+        currentTime: 0,
+      };
+    }
+  }, [state.itemCompletionsMap, item.id]);
 
   return (
     <div
@@ -87,7 +106,7 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
                 : "w-full h-full",
               "absolute object-cover transition-all duration-300 ease-out inset-0"
             )}
-            src={item?.thumbnailUrl ?? undefined}
+            src={item?.thumbnailUrl ?? DEFAULT_THUMBNAIL_URL}
             alt={item?.metadata?.title}
           />
         </div>
@@ -115,6 +134,9 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
               </span>
             </p>
             <div className="grow" />
+            {!dense && completionProps && (
+              <VideoProgress {...completionProps} className="h-10 w-10" />
+            )}
             <div className="flex gap-2 ml-4">
               {onRemoveItem &&
                 (selected === undefined || selected === true) && (

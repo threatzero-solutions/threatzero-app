@@ -218,22 +218,10 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
             </button>
           </Link>
         }
-        orderOptions={{
-          order: tableFilterOptions.order,
-          setOrder: (k, v) => {
-            setTableFilterOptions((options) => {
-              options.order = { [k]: v };
-              options.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={tableFilterOptions}
+        setItemFilterQuery={setTableFilterOptions}
         paginationOptions={{
-          currentOffset: assessments?.offset ?? 0,
-          total: assessments?.count ?? 0,
-          limit: assessments?.limit ?? 1,
-
-          setOffset: (offset) =>
-            setTableFilterOptions((options) => ({ ...options, offset })),
+          ...assessments,
         }}
         searchOptions={{
           setSearchQuery: (q) =>
@@ -248,6 +236,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
             {
               key: "status",
               label: "Status",
+              defaultValue: tableFilterOptions.status as string | undefined,
               options: Object.values(AssessmentStatus).map((status) => ({
                 value: status,
                 label: fromStatus(status),

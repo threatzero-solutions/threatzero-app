@@ -118,23 +118,10 @@ export const ViewLocations: React.FC = () => {
         isLoading={locationsLoading}
         title="Locations"
         subtitle="View, add or edit specific locations that belong to an organizational unit."
-        orderOptions={{
-          order: locationsQuery.order,
-          setOrder: (k, v) => {
-            setLocationsQuery((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={locationsQuery}
+        setItemFilterQuery={setLocationsQuery}
         paginationOptions={{
-          currentOffset: locations?.offset,
-          total: locations?.count,
-          limit: locations?.limit,
-          setOffset: (offset) =>
-            setLocationsQuery((q) => {
-              q.offset = offset;
-            }),
+          ...locations,
         }}
         searchOptions={{
           searchQuery: locationsQuery.search ?? "",

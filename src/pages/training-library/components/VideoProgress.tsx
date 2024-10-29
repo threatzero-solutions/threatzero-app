@@ -1,5 +1,6 @@
 // import "./VideoProgress.css"; // Import necessary styles
 
+import { COMPLETION_THRESHOLD } from "../../../constants/core";
 import { classNames } from "../../../utils/core";
 
 interface VideoProgressProps {
@@ -13,10 +14,10 @@ const VideoProgress: React.FC<VideoProgressProps> = ({
   className,
   duration,
   currentTime,
-  completionThreshold = 0.95,
+  completionThreshold = COMPLETION_THRESHOLD,
 }) => {
   const circumference = 2 * Math.PI * 16;
-  const progress = (currentTime / duration) * circumference;
+  const progress = (currentTime / (duration || 1)) * circumference;
   const complete = progress >= circumference * completionThreshold;
 
   return (

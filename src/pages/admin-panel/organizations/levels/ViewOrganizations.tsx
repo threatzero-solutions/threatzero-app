@@ -72,23 +72,10 @@ export const ViewOrganizations: React.FC = () => {
         isLoading={organizationsLoading}
         title="Organizations"
         subtitle="View, add or edit top-level organizations (i.e. school districts, companies)."
-        orderOptions={{
-          order: organizationsQuery.order,
-          setOrder: (k, v) => {
-            setOrganizationsQuery((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={organizationsQuery}
+        setItemFilterQuery={setOrganizationsQuery}
         paginationOptions={{
-          currentOffset: organizations?.offset,
-          total: organizations?.count,
-          limit: organizations?.limit,
-          setOffset: (offset) =>
-            setOrganizationsQuery((q) => {
-              q.offset = offset;
-            }),
+          ...organizations,
         }}
         searchOptions={{
           searchQuery: organizationsQuery.search ?? "",

@@ -79,23 +79,10 @@ export const ViewUnits: React.FC = () => {
         isLoading={unitsLoading}
         title="Units"
         subtitle="View, add or edit organizational units (i.e. schools, offices)."
-        orderOptions={{
-          order: unitsQuery.order,
-          setOrder: (k, v) => {
-            setUnitsQuery((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={unitsQuery}
+        setItemFilterQuery={setUnitsQuery}
         paginationOptions={{
-          currentOffset: units?.offset,
-          total: units?.count,
-          limit: units?.limit,
-          setOffset: (offset) =>
-            setUnitsQuery((q) => {
-              q.offset = offset;
-            }),
+          ...units,
         }}
         searchOptions={{
           searchQuery: unitsQuery.search ?? "",

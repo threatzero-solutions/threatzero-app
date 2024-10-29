@@ -35,6 +35,8 @@ import { CoreContext } from "../../../contexts/core/core-context";
 import { courseBuilderPermissionsOptions } from "../../../constants/permission-options";
 import CourseVisibilityTag from "../../training-library/components/CourseVisibilityTag";
 import { Controller, FieldPath, useForm } from "react-hook-form";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import EditTrainingSection from "../../training-library/components/EditTrainingSection";
 
 type CourseFieldType = Partial<Field> & { name: FieldPath<TrainingCourse> };
 
@@ -103,10 +105,14 @@ const CourseBuilderSection: React.FC<
 
 const CourseBuilder = withRequirePermissions(() => {
   const [courseSaveSuccessful, setCourseSaveSuccessful] = useState(false);
+  const [sectionEditSliderOpen, setSectionEditSliderOpen] = useState(false);
+  const [editingSectionId, setEditingSectionId] = useState<
+    string | undefined
+  >();
 
   const courseSaveTimeout = useRef<number>();
 
-  const { dispatch } = useContext(TrainingContext);
+  const { dispatch, courseLoading } = useContext(TrainingContext);
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
   const navigate = useNavigate();
@@ -206,14 +212,8 @@ const CourseBuilder = withRequirePermissions(() => {
   };
 
   const handleEditSection = (section?: Partial<TrainingSection>) => {
-    dispatch({
-      type: "SET_ACTIVE_SECTION",
-      payload: section,
-    });
-    dispatch({
-      type: "SET_EDIT_SECTION_SLIDER_OPEN",
-      payload: true,
-    });
+    setEditingSectionId(section?.id);
+    setSectionEditSliderOpen(true);
   };
 
   const handleDelete = () => {
@@ -350,7 +350,8 @@ const CourseBuilder = withRequirePermissions(() => {
                 <button
                   type="button"
                   onClick={() => handleEditSection()}
-                  className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                  disabled={isNew}
+                  className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50"
                 >
                   + New Section
                 </button>
@@ -360,16 +361,34 @@ const CourseBuilder = withRequirePermissions(() => {
           <TrainingSections
             sections={courseData?.sections}
             onEditSection={handleEditSection}
+            loading={courseLoading}
             fallback={
-              <AddNew
-                contentName="section"
-                pluralContentName="sections"
-                onAdd={() => handleEditSection()}
-              />
+              !isNew ? (
+                <AddNew
+                  contentName="section"
+                  pluralContentName="sections"
+                  onAdd={() => handleEditSection()}
+                />
+              ) : (
+                <span className="text-sm italic text-gray-600 col-span-full text-center">
+                  Finish creating course to start adding sections.
+                </span>
+              )
             }
           />
         </div>
       </div>
+      <SlideOver
+        open={sectionEditSliderOpen}
+        setOpen={setSectionEditSliderOpen}
+      >
+        <EditTrainingSection
+          setOpen={setSectionEditSliderOpen}
+          courseId={courseId}
+          sectionId={editingSectionId}
+          sectionCount={courseData?.sections?.length}
+        />
+      </SlideOver>
     </>
   );
 }, courseBuilderPermissionsOptions);

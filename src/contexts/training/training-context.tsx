@@ -4,13 +4,13 @@ import React, {
   PropsWithChildren,
   useEffect,
   useReducer,
-  useState,
 } from "react";
 import {
   Audience,
   CourseEnrollment,
+  ItemCompletion,
   TrainingCourse,
-  TrainingSection,
+  TrainingItem,
 } from "../../types/entities";
 import SlideOver from "../../components/layouts/slide-over/SlideOver";
 import ViewEnrollments from "../../pages/training-library/components/ViewEnrollments";
@@ -18,6 +18,7 @@ import ViewTrainingAudiences from "../../pages/training-library/components/ViewT
 import { useQuery } from "@tanstack/react-query";
 import {
   getMyCourseEnrollments,
+  getMyItemCompletions,
   getTrainingCourse,
 } from "../../queries/training";
 import EditTrainingSection from "../../pages/training-library/components/EditTrainingSection";
@@ -28,12 +29,16 @@ import { useAuth, withAuthenticationRequired } from "../AuthProvider";
 import { sortEnrollmentsByScoreFn } from "../../utils/training";
 
 export interface TrainingState {
-  activeSection?: TrainingSection;
   activeCourse?: TrainingCourse;
   activeAudience?: Audience;
 
+  editingSectionId?: string;
+
   enrollments?: CourseEnrollment[];
   activeEnrollment?: CourseEnrollment;
+
+  itemCompletions?: ItemCompletion[];
+  itemCompletionsMap?: Map<TrainingItem["id"], ItemCompletion>;
 
   viewCoursesSliderOpen?: boolean;
   editSectionSliderOpen?: boolean;
@@ -56,11 +61,6 @@ export interface TrainingContextType {
   state: TrainingState;
   dispatch: Dispatch<TrainingAction>;
 
-  sectionEditing?: Partial<TrainingSection>;
-  setSectionEditing: Dispatch<
-    React.SetStateAction<Partial<TrainingSection> | undefined>
-  >;
-
   setActiveEnrollmentId: Dispatch<React.SetStateAction<string | null>>;
   courseLoading: boolean;
 }
@@ -68,8 +68,6 @@ export interface TrainingContextType {
 export const TrainingContext = createContext<TrainingContextType>({
   state: INITIAL_STATE,
   dispatch: () => {},
-
-  setSectionEditing: () => {},
 
   setActiveEnrollmentId: () => {},
   courseLoading: true,
@@ -85,15 +83,19 @@ const trainingReducer = (
         ...state,
         activeCourse: action.payload,
       };
-    case "SET_ACTIVE_SECTION":
-      return {
-        ...state,
-        activeSection: action.payload,
-      };
     case "SET_ACTIVE_ENROLLMENT":
       return {
         ...state,
         activeEnrollment: action.payload,
+      };
+    case "SET_EDITING_SECTION":
+      return {
+        ...state,
+        editingSectionId:
+          typeof action.payload !== "boolean"
+            ? action.payload
+            : state.editingSectionId,
+        editSectionSliderOpen: action.payload !== false,
       };
     case "SET_ACTIVE_AUDIENCE":
       return {
@@ -129,6 +131,18 @@ const trainingReducer = (
       return {
         ...state,
         manageItemsSliderOpen: action.payload,
+      };
+    case "SET_ITEM_COMPLETIONS":
+      return {
+        ...state,
+        itemCompletions: action.payload,
+        itemCompletionsMap:
+          action.payload && Array.isArray(action.payload)
+            ? (action.payload as ItemCompletion[]).reduce((acc, completion) => {
+                completion.item?.id && acc.set(completion.item.id, completion);
+                return acc;
+              }, new Map<TrainingItem["id"], ItemCompletion>())
+            : undefined,
       };
   }
   return state;
@@ -171,8 +185,6 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
     const [activeEnrollmentId, setActiveEnrollmentId] = useLocalStorage<
       string | null
     >("training_activeEnrollmentId", null);
-    const [sectionEditing, setSectionEditing] =
-      useState<Partial<TrainingSection>>();
 
     const [state, dispatch] = useReducer(trainingReducer, INITIAL_STATE);
 
@@ -184,9 +196,19 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
     });
 
     const { data: activeCourse, isPending: courseLoading } = useQuery({
-      queryKey: ["training-course", state.activeEnrollment?.course.id] as const,
+      queryKey: [
+        "training-courses",
+        state.activeEnrollment?.course.id,
+      ] as const,
       queryFn: ({ queryKey }) => getTrainingCourse(queryKey[1]),
       enabled: !!state.activeEnrollment?.course.id,
+    });
+
+    const { data: itemCompletions } = useQuery({
+      queryKey: ["item-completions", activeEnrollmentId] as const,
+      queryFn: ({ queryKey }) =>
+        getMyItemCompletions({ "enrollment.id": queryKey[1], limit: 100 }),
+      enabled: !!activeEnrollmentId,
     });
 
     useEffect(() => {
@@ -202,6 +224,13 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
         payload: activeCourse,
       });
     }, [activeCourse]);
+
+    useEffect(() => {
+      dispatch({
+        type: "SET_ITEM_COMPLETIONS",
+        payload: itemCompletions?.results,
+      });
+    }, [itemCompletions]);
 
     // Automatically select enrollment.
     useEffect(() => {
@@ -252,8 +281,6 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
         value={{
           state,
           dispatch,
-          sectionEditing,
-          setSectionEditing,
           setActiveEnrollmentId,
           courseLoading,
         }}

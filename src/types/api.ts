@@ -97,5 +97,7 @@ export const DurationUnits = [
   "hours",
   "minutes",
   "seconds",
-];
-export type DurationObject = Record<(typeof DurationUnits)[number], number>;
+] as const;
+export type DurationObject = Partial<
+  Record<(typeof DurationUnits)[number], number>
+>;

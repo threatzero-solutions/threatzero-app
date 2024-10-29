@@ -21,8 +21,6 @@ import { useAuth } from "../../../contexts/AuthProvider";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
 
-const DEFAULT_PAGE_SIZE = 10;
-
 const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
   const location = useLocation();
   const {
@@ -203,25 +201,10 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
         notFoundDetail="No safety concerns found."
         title="View Safety Concerns"
         subtitle="Sort and filter through safety concern submissions."
-        orderOptions={{
-          order: tableFilterOptions.order,
-          setOrder: (k, v) => {
-            setTableFilterOptions((options) => {
-              options.order = { [k]: v };
-              options.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={tableFilterOptions}
+        setItemFilterQuery={setTableFilterOptions}
         paginationOptions={{
-          currentOffset: tips?.offset ?? 0,
-          pageSize: DEFAULT_PAGE_SIZE,
-          total: tips?.count ?? 0,
-          limit: tips?.limit ?? 1,
-
-          setOffset: (offset) =>
-            setTableFilterOptions((options) => {
-              options.offset = offset;
-            }),
+          ...tips,
         }}
         searchOptions={{
           setSearchQuery: (q) =>
@@ -236,6 +219,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
             {
               key: "status",
               label: "Status",
+              defaultValue: tableFilterOptions.status as string | undefined,
               options: Object.values(TipStatus).map((status) => ({
                 value: status,
                 label: fromStatus(status),

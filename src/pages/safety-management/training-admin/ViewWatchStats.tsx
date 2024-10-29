@@ -164,23 +164,10 @@ const ViewWatchStats: React.FC = () => {
             Download (.csv)
           </button>
         }
-        orderOptions={{
-          order: watchStatsQuery.order,
-          setOrder: (k, v) => {
-            setWatchStatsQuery((options) => {
-              options.order = { [k]: v };
-              options.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={watchStatsQuery}
+        setItemFilterQuery={setWatchStatsQuery}
         paginationOptions={{
-          currentOffset: watchStats?.offset,
-          total: watchStats?.count,
-          limit: watchStats?.limit,
-          setOffset: (offset) =>
-            setWatchStatsQuery((q) => {
-              q.offset = offset;
-            }),
+          ...watchStats,
         }}
         filterOptions={{
           filters: [

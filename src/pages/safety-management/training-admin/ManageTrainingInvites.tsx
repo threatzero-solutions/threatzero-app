@@ -704,23 +704,10 @@ const ManageTrainingInvites: React.FC = () => {
               Download (.csv)
             </button>
           }
-          orderOptions={{
-            order: itemFilterOptions.order,
-            setOrder: (k, v) => {
-              setItemFilterOptions((options) => {
-                options.order = { [k]: v };
-                options.offset = 0;
-              });
-            },
-          }}
+          itemFilterQuery={trainingItemFilterQuery}
+          setItemFilterQuery={setTrainingItemFilterQuery}
           paginationOptions={{
-            currentOffset: trainingInvites?.offset,
-            total: trainingInvites?.count,
-            limit: trainingInvites?.limit,
-            setOffset: (offset) =>
-              setItemFilterOptions((q) => {
-                q.offset = offset;
-              }),
+            ...trainingInvites,
           }}
           filterOptions={{
             filters: [

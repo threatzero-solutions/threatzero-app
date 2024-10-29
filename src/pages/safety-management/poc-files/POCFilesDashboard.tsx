@@ -63,23 +63,10 @@ const POCFilesDashboard: React.FC = () => {
         isLoading={pocFilesLoading}
         title="Person of Concern (PoC) Files"
         subtitle="View, add or edit files for persons of concern."
-        orderOptions={{
-          order: pocFilesQuery.order,
-          setOrder: (k, v) => {
-            setPocFilesQuery((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={pocFilesQuery}
+        setItemFilterQuery={setPocFilesQuery}
         paginationOptions={{
-          currentOffset: pocFiles?.offset,
-          total: pocFiles?.count,
-          limit: pocFiles?.limit,
-          setOffset: (offset) =>
-            setPocFilesQuery((q) => {
-              q.offset = offset;
-            }),
+          ...pocFiles,
         }}
         searchOptions={{
           searchQuery: pocFilesQuery.search ?? "",

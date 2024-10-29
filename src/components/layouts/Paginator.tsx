@@ -1,6 +1,7 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import { useMemo } from "react";
 import { classNames } from "../../utils/core";
+import { Paginated } from "../../types/entities";
 
 export interface PageOptions {
   limit: number;
@@ -8,11 +9,10 @@ export interface PageOptions {
   search?: string;
 }
 
-export interface PaginatorProps {
+export type CurrentPage = Partial<Omit<Paginated<unknown>, "results">>;
+
+export interface PaginatorProps extends CurrentPage {
   pageSize?: number;
-  currentOffset?: number;
-  total?: number;
-  limit?: number;
   setOffset: (offset: number) => void;
 }
 
@@ -22,8 +22,8 @@ export const DEFAULT_PAGE_SIZE = 10;
 
 const Paginator: React.FC<PaginatorProps> = ({
   pageSize,
-  currentOffset,
-  total,
+  offset: currentOffset,
+  count: total,
   limit,
   setOffset,
 }) => {

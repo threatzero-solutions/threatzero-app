@@ -62,11 +62,9 @@ export const getMyItemCompletion = (
   watchId?: string | null
 ) =>
   findMany<ItemCompletion>(`/training/items/my-completions/`, {
-    params: {
-      watch_id: watchId,
-      ["item.id"]: itemId,
-      ["enrollment.id"]: enrollmentId,
-    },
+    watch_id: watchId,
+    ["item.id"]: itemId,
+    ["enrollment.id"]: enrollmentId,
   }).then((r) => r.results[0] ?? null);
 
 export const getMyItemCompletions = (
@@ -94,6 +92,21 @@ export const saveTrainingSection = (section: Partial<TrainingSection>) =>
 
 export const deleteTrainingSection = async (id?: string) =>
   deleteOne("/training/sections/", id);
+
+export const swapTrainingSectionOrders = async (
+  sectionA: Partial<TrainingSection>,
+  sectionB: Partial<TrainingSection>
+) =>
+  Promise.all([
+    updateOne<TrainingSection>("/training/sections/", {
+      id: sectionA.id,
+      order: sectionB.order,
+    }),
+    updateOne<TrainingSection>("/training/sections/", {
+      id: sectionB.id,
+      order: sectionA.order,
+    }),
+  ]);
 
 export const saveTrainingItem = async (item: Partial<TrainingItem & Video>) => {
   // TODO: Add support for other items.

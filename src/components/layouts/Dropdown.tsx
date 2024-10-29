@@ -8,7 +8,13 @@ import {
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { Fragment, MouseEventHandler, ReactNode } from "react";
 import { classNames } from "../../utils/core";
-import { flip, offset, Placement, useFloating } from "@floating-ui/react";
+import {
+  flip,
+  offset,
+  Placement,
+  useFloating,
+  UseFloatingOptions,
+} from "@floating-ui/react";
 
 export interface DropdownAction {
   id: string | number;
@@ -25,7 +31,7 @@ export interface DropdownActionGroup {
   hidden?: boolean;
 }
 
-interface DropdownProps {
+interface DropdownProps extends UseFloatingOptions {
   value?: string;
   valueIcon?: ReactNode;
   iconOnly?: boolean;
@@ -43,7 +49,7 @@ const Action: React.FC<{ action: DropdownAction }> = ({ action }) => {
       {({ focus }) => (
         <button
           type="button"
-          // disabled={action.disabled}
+          disabled={action.disabled}
           onClick={action.disabled ? (e) => e.preventDefault() : action.action}
           className={classNames(
             focus && !action.disabled
@@ -86,10 +92,12 @@ const Dropdown: React.FC<DropdownProps> = ({
   placement = "bottom-end",
   showDividers,
   disabled,
+  ...floatingProps
 }) => {
   const { refs, floatingStyles } = useFloating({
     middleware: [flip(), offset({ mainAxis: 8 })],
     placement,
+    ...floatingProps,
   });
 
   return (

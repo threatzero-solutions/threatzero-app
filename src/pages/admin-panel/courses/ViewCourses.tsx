@@ -11,10 +11,11 @@ import { EyeIcon } from "@heroicons/react/20/solid";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
+import dayjs from "dayjs";
 
 const ViewCourses: React.FC = () => {
   const [courseFilterOptions, setCourseFilterOptions] =
-    useImmer<ItemFilterQueryParams>({});
+    useImmer<ItemFilterQueryParams>({ order: { createdOn: "DESC" } });
   const [debouncedCourseFilterOptions] = useDebounceValue(
     courseFilterOptions,
     300
@@ -34,7 +35,11 @@ const ViewCourses: React.FC = () => {
           headers: [
             {
               label: "Title",
-              key: "title",
+              key: "metadata.title",
+            },
+            {
+              label: "Created On",
+              key: "createdOn",
             },
             {
               label: <span className="sr-only">Actions</span>,
@@ -45,7 +50,7 @@ const ViewCourses: React.FC = () => {
           ],
           rows: (courses?.results ?? []).map((course) => ({
             id: course.id,
-            title: (
+            ["metadata.title"]: (
               <div className="flex flex-col min-w-0 gap-y-2">
                 <div className="min-w-0 flex-auto">
                   <h3
@@ -73,6 +78,7 @@ const ViewCourses: React.FC = () => {
                 </div>
               </div>
             ),
+            createdOn: dayjs(course.createdOn).format("MMM D, YYYY"),
             actions: (
               <div className="flex items-center w-full justify-end gap-2">
                 <Link
@@ -110,6 +116,8 @@ const ViewCourses: React.FC = () => {
             ),
           })),
         }}
+        itemFilterQuery={courseFilterOptions}
+        setItemFilterQuery={setCourseFilterOptions}
         action={
           <Link
             to="new"
@@ -119,13 +127,7 @@ const ViewCourses: React.FC = () => {
           </Link>
         }
         paginationOptions={{
-          currentOffset: courses?.offset,
-          total: courses?.count,
-          limit: courses?.limit,
-          setOffset: (offset) =>
-            setCourseFilterOptions((q) => {
-              q.offset = offset;
-            }),
+          ...courses,
         }}
         searchOptions={{
           searchQuery: courseFilterOptions.search ?? "",

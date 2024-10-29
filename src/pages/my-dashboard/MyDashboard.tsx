@@ -1,5 +1,3 @@
-import { useContext } from "react";
-import { TrainingContext } from "../../contexts/training/training-context";
 import FeaturedSection from "../training-library/components/FeaturedSection";
 import { useAuth } from "../../contexts/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
@@ -10,8 +8,6 @@ import {
 import { stripPhoneNumber } from "../../utils/core";
 
 const MyDashboard: React.FC = () => {
-  const { state } = useContext(TrainingContext);
-
   const { keycloak } = useAuth();
 
   const { data: myOrganization, isLoading: organizationLoading } = useQuery({
@@ -119,12 +115,7 @@ const MyDashboard: React.FC = () => {
           </p>
         </div>
       </div>
-      <FeaturedSection
-        loading={state.activeCourse === undefined}
-        sections={state.activeCourse?.sections}
-        title="Featured Training"
-        showAllTrainingLink
-      />
+      <FeaturedSection title="Featured Training" showAllTrainingLink />
     </div>
   );
 };

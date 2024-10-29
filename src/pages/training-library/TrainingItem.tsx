@@ -5,7 +5,7 @@ import {
   getTrainingItem,
   updateItemCompletion,
 } from "../../queries/training";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import BackButton from "../../components/layouts/BackButton";
 import {
   useCallback,
@@ -27,8 +27,7 @@ import type Vimeo from "@vimeo/player";
 import VideoProgress from "./components/VideoProgress";
 import { useImmer } from "use-immer";
 import { useDebounceCallback } from "usehooks-ts";
-
-const COMPLETION_THRESHOLD = 0.85;
+import { COMPLETION_THRESHOLD } from "../../constants/core";
 
 const VideoUnavailable: React.FC = () => (
   <div className="w-full h-full flex justify-center items-center bg-gray-900">
@@ -41,6 +40,7 @@ const TrainingItem: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { state } = useContext(TrainingContext);
   const itemCompletionId = useRef<string | null | undefined>(undefined);
+  const queryClient = useQueryClient();
 
   const [videoProgress, setVideoProgress] = useImmer({
     duration: 100,
@@ -78,7 +78,7 @@ const TrainingItem: React.FC = () => {
   });
 
   const { data: itemCompletion } = useQuery({
-    queryKey: ["item-completion", state.activeEnrollment?.id, itemId] as const,
+    queryKey: ["item-completions", state.activeEnrollment?.id, itemId] as const,
     queryFn: ({ queryKey }) =>
       getMyItemCompletion(queryKey[2]!, queryKey[1], watchId).then((i) => {
         itemCompletionId.current = i?.id ?? null;
@@ -183,6 +183,14 @@ const TrainingItem: React.FC = () => {
       setVideoStartingTime(+progress * videoDuration);
     }
   }, [itemCompletion, videoDuration, setVideoProgress]);
+
+  useEffect(() => {
+    return () => {
+      queryClient.invalidateQueries({
+        queryKey: ["item-completions", state.activeEnrollment?.id],
+      });
+    };
+  }, [queryClient, state.activeEnrollment?.id]);
 
   return (
     <div>

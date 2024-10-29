@@ -1,15 +1,34 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { classNames } from "../../utils/core";
 import Paginator, { PaginatorProps } from "./Paginator";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import {
+  ChevronDownIcon,
+  ChevronUpDownIcon,
+  ChevronUpIcon,
+} from "@heroicons/react/20/solid";
 import { OrderOptions, Ordering } from "../../types/core";
 
 import FilterBar, { FilterBarFilterOptions } from "./FilterBar";
 import { SearchInputProps } from "../forms/inputs/SearchInput";
+import { ItemFilterQueryParams } from "../../hooks/use-item-filter-query";
+import { DraftFunction } from "use-immer";
 
 export interface DataTableOrderOptions {
+  hidden?: boolean;
   order?: Ordering;
   setOrder?: (key: string, value: OrderOptions) => void;
+}
+
+export interface DataTablePaginatorOptions
+  extends Omit<PaginatorProps, "setOffset"> {
+  setOffset?: (offset: number) => void;
 }
 
 interface DataTableProps {
@@ -33,10 +52,14 @@ interface DataTableProps {
   };
   isLoading?: boolean;
   notFoundDetail?: ReactNode;
-  paginationOptions?: PaginatorProps;
+  paginationOptions?: DataTablePaginatorOptions;
   searchOptions?: SearchInputProps;
   filterOptions?: FilterBarFilterOptions;
   orderOptions?: DataTableOrderOptions;
+  itemFilterQuery?: ItemFilterQueryParams;
+  setItemFilterQuery?: (
+    query: ItemFilterQueryParams | DraftFunction<ItemFilterQueryParams>
+  ) => void;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -48,10 +71,12 @@ const DataTable: React.FC<DataTableProps> = ({
   data,
   isLoading,
   notFoundDetail,
-  paginationOptions,
+  paginationOptions: paginationOptionsProp,
   orderOptions,
   searchOptions,
   filterOptions,
+  itemFilterQuery,
+  setItemFilterQuery,
 }) => {
   const rowsRef = useRef<HTMLTableSectionElement>(null);
 
@@ -61,6 +86,66 @@ const DataTable: React.FC<DataTableProps> = ({
       setRowsHeight(rowsRef.current.clientHeight);
     }
   }, [isLoading]);
+
+  const currentOrder = useMemo(
+    () => orderOptions?.order ?? itemFilterQuery?.order,
+    [orderOptions, itemFilterQuery]
+  );
+
+  const orderEnabled = useMemo(
+    () =>
+      !orderOptions?.hidden &&
+      (!!orderOptions?.setOrder || !!setItemFilterQuery),
+    [orderOptions, setItemFilterQuery]
+  );
+
+  const doUpdateSort = useCallback(
+    (key: string, value: OrderOptions) => {
+      if (orderOptions?.setOrder) {
+        orderOptions.setOrder(key, value);
+        return;
+      }
+
+      setItemFilterQuery?.((options) => {
+        if (options.order) {
+          if (value !== undefined && value !== null) {
+            options.order[key] = value;
+          } else {
+            Reflect.deleteProperty(options.order, key);
+          }
+        }
+        options.offset = 0;
+      });
+    },
+    [setItemFilterQuery, orderOptions]
+  );
+
+  const handleUpdateSort = (key: string, noSort?: boolean) => {
+    if (noSort || orderOptions?.hidden || !currentOrder) return;
+
+    const thisOrder = currentOrder[key];
+    const nextOrder =
+      thisOrder === "ASC" ? "DESC" : thisOrder === "DESC" ? undefined : "ASC";
+    doUpdateSort(key, nextOrder);
+  };
+
+  const paginationOptions = useMemo(() => {
+    if (paginationOptionsProp) {
+      if (paginationOptionsProp.setOffset) {
+        return paginationOptionsProp as PaginatorProps;
+      }
+
+      if (setItemFilterQuery) {
+        return {
+          ...paginationOptionsProp,
+          setOffset: (offset) =>
+            setItemFilterQuery((q) => {
+              q.offset = offset;
+            }),
+        };
+      }
+    }
+  }, [paginationOptionsProp, setItemFilterQuery]);
 
   return (
     <div className={className}>
@@ -128,52 +213,53 @@ const DataTable: React.FC<DataTableProps> = ({
                                 ? "cursor-pointer"
                                 : ""
                             )}
-                            onClick={() =>
-                              !noSort &&
-                              orderOptions?.setOrder?.(
-                                key,
-                                orderOptions?.order?.[key] === "ASC"
-                                  ? "DESC"
-                                  : "ASC"
-                              )
-                            }
+                            onClick={() => handleUpdateSort(key, noSort)}
                             onKeyUp={() => {}}
                           >
                             {label}
-                            {!!orderOptions?.setOrder && (
+                            {orderEnabled && (
                               <span
                                 className={classNames(
                                   noSort
                                     ? "pointer-events-none hidden w-0"
-                                    : "",
+                                    : "cursor-pointer",
                                   "ml-2 flex-none inline-flex items-center gap-0.5 rounded transition-colors",
-                                  orderOptions?.order?.[key]
-                                    ? "bg-gray-100 text-gray-900 group-hover:bg-gray-200"
-                                    : "invisible text-gray-400 group-hover:visible group-focus:visible"
+                                  currentOrder?.[key]
+                                    ? "bg-gray-200 text-gray-900 group-hover:bg-gray-300"
+                                    : "text-gray-300 group-hover:text-gray-600"
                                 )}
                               >
-                                {orderOptions?.order?.[key] !== "ASC" ? (
+                                {currentOrder?.[key] === "DESC" ? (
                                   <ChevronDownIcon
                                     className={classNames(
                                       dense ? "h-4 w-4" : "h-5 w-5"
                                     )}
                                     aria-hidden="true"
                                   />
-                                ) : (
+                                ) : currentOrder?.[key] === "ASC" ? (
                                   <ChevronUpIcon
                                     className={classNames(
                                       dense ? "h-4 w-4" : "h-5 w-5"
                                     )}
                                     aria-hidden="true"
                                   />
+                                ) : (
+                                  <ChevronUpDownIcon
+                                    className={classNames(
+                                      dense ? "h-4 w-4" : "h-5 w-5"
+                                    )}
+                                    aria-hidden="true"
+                                  />
                                 )}
-                                {orderOptions?.order &&
-                                  Object.keys(orderOptions.order).length >
-                                    1 && (
+                                {currentOrder &&
+                                  Object.values(currentOrder).filter((v) => !!v)
+                                    .length > 1 &&
+                                  !!currentOrder[key] && (
                                     <span className="text-xs leading-3 text-gray-500 mr-1 self-center">
-                                      {Object.keys(orderOptions.order).indexOf(
-                                        key
-                                      ) + 1}
+                                      {Object.entries(currentOrder)
+                                        .filter(([, v]) => !!v)
+                                        .map(([k]) => k)
+                                        .indexOf(key) + 1}
                                     </span>
                                   )}
                               </span>

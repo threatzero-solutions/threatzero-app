@@ -156,23 +156,10 @@ const UsersDashboard: React.FC = () => {
             + New Training Token
           </button>
         }
-        orderOptions={{
-          order: itemFilterOptions.order,
-          setOrder: (k, v) => {
-            setItemFilterOptions((options) => {
-              options.order = { [k]: v };
-              options.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={itemFilterOptions}
+        setItemFilterQuery={setItemFilterOptions}
         paginationOptions={{
-          currentOffset: trainingTokens?.offset,
-          total: trainingTokens?.count,
-          limit: trainingTokens?.limit,
-          setOffset: (offset) =>
-            setItemFilterOptions((q) => {
-              q.offset = offset;
-            }),
+          ...trainingTokens,
         }}
       />
 

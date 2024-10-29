@@ -214,23 +214,10 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
             </button>
           </Link>
         }
-        orderOptions={{
-          order: tableFilterOptions.order,
-          setOrder: (k, v) => {
-            setTableFilterOptions((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={tableFilterOptions}
+        setItemFilterQuery={setTableFilterOptions}
         paginationOptions={{
-          currentOffset: violentIncidentReports?.offset,
-          total: violentIncidentReports?.count,
-          limit: violentIncidentReports?.limit,
-          setOffset: (offset) =>
-            setTableFilterOptions((q) => {
-              q.offset = offset;
-            }),
+          ...violentIncidentReports,
         }}
         searchOptions={{
           searchQuery: tableFilterOptions.search ?? "",
@@ -246,6 +233,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
             {
               key: "status",
               label: "Status",
+              defaultValue: tableFilterOptions.status as string | undefined,
               options: Object.values(ViolentIncidentReportStatus).map(
                 (status) => ({
                   value: status,
