@@ -79,6 +79,8 @@ export interface AuthContextType {
   interceptorReady: boolean;
   hasMultipleUnitAccess: boolean;
   hasMultipleOrganizationAccess: boolean;
+  myOrganizationSlug?: string;
+  myUnitSlug?: string;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -254,6 +256,18 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     [keycloak]
   );
 
+  const accessTokenClaims = useMemo(() => keycloak?.tokenParsed, [keycloak]);
+
+  const myOrganizationSlug = useMemo(
+    () => accessTokenClaims?.organization,
+    [accessTokenClaims]
+  );
+
+  const myUnitSlug = useMemo(
+    () => accessTokenClaims?.unit,
+    [accessTokenClaims]
+  );
+
   // Commonly used permission types.
   const hasMultipleUnitAccess = useMemo(
     () =>
@@ -276,10 +290,12 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         authenticated,
         addEventListener,
         hasPermissions,
-        accessTokenClaims: keycloak?.tokenParsed,
+        accessTokenClaims,
         interceptorReady,
         hasMultipleUnitAccess,
         hasMultipleOrganizationAccess,
+        myOrganizationSlug,
+        myUnitSlug,
       }}
     >
       {keycloak ? (

@@ -21,6 +21,7 @@ import { CoreContext } from "../../../../contexts/core/core-context";
 import CourseEnrollmentsInput from "../components/CourseEnrollmentsInput";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useDebounceCallback } from "usehooks-ts";
+import { useAuth } from "../../../../contexts/AuthProvider";
 
 interface EditOrganizationProps {
   setOpen: (open: boolean) => void;
@@ -34,6 +35,7 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
   const isNew = useMemo(() => !organizationProp, [organizationProp]);
 
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+  const { myOrganizationSlug } = useAuth();
 
   const { data: organizationData } = useQuery({
     queryKey: ["organizations", organizationProp?.id] as const,
@@ -80,10 +82,15 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
   });
 
   const queryClient = useQueryClient();
-  const onMutateSuccess = () => {
+  const onMutateSuccess = (data?: Organization) => {
     queryClient.invalidateQueries({
       queryKey: ["organizations"],
     });
+    if (data && myOrganizationSlug === data.slug) {
+      queryClient.invalidateQueries({
+        queryKey: ["my-course-enrollments"],
+      });
+    }
     setOpen(false);
   };
   const saveOrganizationMutation = useMutation({

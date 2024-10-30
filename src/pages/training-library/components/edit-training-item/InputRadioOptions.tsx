@@ -28,9 +28,10 @@ const InputRadioOptions: React.FC<{
     });
   }, [defaultIdx]);
 
-  useEffect(() => {
+  const handleSelect = (idx: number) => {
+    setIdxSelected(idx);
     onSelect?.(options[idxSelected].id);
-  }, [idxSelected, options, onSelect]);
+  };
 
   return (
     <fieldset>
@@ -43,7 +44,7 @@ const InputRadioOptions: React.FC<{
                 name={mediaOption.id}
                 type="radio"
                 checked={idx === idxSelected}
-                onChange={() => setIdxSelected(idx)}
+                onChange={() => handleSelect(idx)}
                 className="h-4 w-4 border-gray-300 text-secondary-600 focus:ring-secondary-600"
               />
             </div>

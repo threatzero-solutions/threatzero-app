@@ -1,10 +1,14 @@
 import { useState } from "react";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import { CourseEnrollment } from "../../../../types/entities";
+import {
+  CourseEnrollment,
+  TrainingVisibility,
+} from "../../../../types/entities";
 import CourseAvailabilityDates from "../../../training-library/components/CourseActiveStatus";
-import { stripHtml } from "../../../../utils/core";
+import { classNames, stripHtml } from "../../../../utils/core";
 import EditCourseEnrollment from "./EditCourseEnrollment";
 import { useFormContext, useFieldArray, DeepPartial } from "react-hook-form";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
 
 interface CourseEnrollmentsInputProps {
   name: string;
@@ -43,30 +47,63 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
       <div className="flex flex-col gap-2">
         {fields.map((enrollment, index) => (
           <div
-            className="w-full flex flex-col gap-2 shadow-sm rounded-md ring-1 ring-inset ring-gray-300 py-4 px-6"
+            className="flex shadow-sm rounded-md ring-1 ring-inset ring-gray-300 py-4 px-6"
             key={enrollment.keyId}
           >
-            <div className="flex flex-col">
-              <button
-                type="button"
-                className="w-max cursor-pointer text-gray-900 hover:text-gray-600 transition-colors"
-                onClick={() => handleEditEnrollment(index)}
-              >
-                <span className="text-sm font-semibold">
-                  {stripHtml(enrollment.course?.metadata?.title)}
-                </span>{" "}
-                <span className="text-xs">(edit)</span>
-              </button>
-              <span className="text-xs text-gray-500">
-                {stripHtml(enrollment.course?.metadata?.description)}
-              </span>
+            <div className="flex flex-col gap-2 grow">
+              <div className="flex flex-col">
+                <button
+                  type="button"
+                  className="w-max cursor-pointer text-gray-900 hover:text-gray-600 transition-colors"
+                  onClick={() => handleEditEnrollment(index)}
+                >
+                  <span className="text-sm font-semibold">
+                    {stripHtml(enrollment.course?.metadata?.title)}
+                  </span>{" "}
+                  <span className="text-xs">(edit)</span>
+                </button>
+                <span className="text-xs text-gray-500">
+                  {stripHtml(enrollment.course?.metadata?.description)}
+                </span>
+              </div>
+              <CourseAvailabilityDates
+                startDate={enrollment.startDate}
+                endDate={enrollment.endDate}
+                format="dates"
+                showOnBlank="Start date is blank"
+              />
             </div>
-            <CourseAvailabilityDates
-              startDate={enrollment.startDate}
-              endDate={enrollment.endDate}
-              format="dates"
-              showOnBlank="Start date is blank"
-            />
+            <div
+              className={classNames(
+                "self-center inline-flex gap-1 items-center text-xs font-semibold text-white rounded px-2 py-1 w-max transition-colors cursor-pointer",
+                enrollment.visibility === TrainingVisibility.VISIBLE
+                  ? "bg-secondary-500 hover:bg-secondary-600"
+                  : "bg-purple-500 hover:bg-purple-600"
+              )}
+              title={
+                enrollment.visibility === TrainingVisibility.VISIBLE
+                  ? "Click to hide"
+                  : "Click to make visible"
+              }
+              onClick={() =>
+                update(index, {
+                  ...enrollment,
+                  visibility:
+                    enrollment.visibility === TrainingVisibility.VISIBLE
+                      ? TrainingVisibility.HIDDEN
+                      : TrainingVisibility.VISIBLE,
+                })
+              }
+            >
+              {enrollment.visibility === TrainingVisibility.VISIBLE ? (
+                <EyeIcon className="h-5 w-5" />
+              ) : (
+                <EyeSlashIcon className="h-5 w-5" />
+              )}
+              {enrollment.visibility === TrainingVisibility.VISIBLE
+                ? "Visible"
+                : "Hidden"}
+            </div>
           </div>
         ))}
         <button

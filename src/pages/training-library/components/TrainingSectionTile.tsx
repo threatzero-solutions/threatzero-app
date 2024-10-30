@@ -74,10 +74,17 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
       return "";
     }
 
+    const { featuredOn, featuredUntil } = featuredWindow;
+
+    if (!featuredOn.isValid()) {
+      return "";
+    }
+
     const defaultFormat = "MMM D, YYYY";
 
-    // TODO: Get availableOn based on enrollment start and other sections
-    const { featuredOn, featuredUntil } = featuredWindow;
+    if (!featuredUntil.isValid()) {
+      return featuredOn.format(defaultFormat);
+    }
 
     if (featuredOn.isSame(featuredUntil, "year")) {
       const yearSuffix = `, ${featuredUntil.format("YYYY")}`;

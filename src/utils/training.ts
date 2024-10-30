@@ -48,16 +48,24 @@ export const getNextAvailableSection = (
   enrollment: CourseEnrollment | undefined,
   sections: TrainingSection[]
 ): Partial<SectionAndWindow> => {
+  const firstSectionAndWindow: Partial<SectionAndWindow> = {};
+
   for (const { window, section } of buildSectionFeaturedWindows(
     enrollment,
     sections
   )) {
+    // Store first section and window as default.
+    if (!firstSectionAndWindow.section) {
+      firstSectionAndWindow.section = section;
+      firstSectionAndWindow.window = window;
+    }
+
     if (window && isInFeaturedWindow(window)) {
-      return { window, section };
+      return { section, window };
     }
   }
 
-  return { section: sections[0], window: null };
+  return firstSectionAndWindow;
 };
 
 export const getSectionFeaturedWindows = (

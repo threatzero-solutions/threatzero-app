@@ -1,6 +1,6 @@
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
 import { CourseEnrollment, FieldType } from "../../../../types/entities";
-import { ChangeEvent, useMemo } from "react";
+import { ChangeEvent, useContext, useEffect, useMemo, useState } from "react";
 import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
 import FormInput from "../../../../components/forms/inputs/FormInput";
@@ -11,6 +11,8 @@ import { Controller, DeepPartial, useForm } from "react-hook-form";
 import InputRadioOptions from "../../../training-library/components/edit-training-item/InputRadioOptions";
 import DurationInput from "../../../../components/forms/inputs/DurationInput";
 import duration from "dayjs/plugin/duration";
+import { DurationObject } from "../../../../types/api";
+import { CoreContext } from "../../../../contexts/core/core-context";
 
 dayjs.extend(duration);
 
@@ -25,6 +27,19 @@ const asLargestDuration = (duration: duration.Duration) => {
   return { days: 1 };
 };
 
+const asDuration = (
+  startDate: string | Date | undefined | null,
+  endDate: string | Date | undefined | null
+) =>
+  endDate && dayjs(endDate).isValid()
+    ? asLargestDuration(dayjs.duration(dayjs(endDate).diff(dayjs(startDate))))
+    : undefined;
+
+const asDate = (
+  startDate: string | Date | undefined | null,
+  duration: DurationObject
+) => dayjs(startDate).add(dayjs.duration(duration));
+
 interface EditCourseEnrollmentProps {
   enrollment?: DeepPartial<CourseEnrollment>;
   setOpen: (open: boolean) => void;
@@ -34,11 +49,13 @@ interface EditCourseEnrollmentProps {
   onRemove: (idx?: number) => void;
 }
 
-const DEFAULT_START_DATE = dayjs().startOf("year").format("YYYY-MM-DD");
-const DEFAULT_END_DATE = dayjs()
-  .startOf("year")
-  .add(1, "year")
-  .format("YYYY-MM-DD");
+const DEFAULT_FORMAT = "YYYY-MM-DD";
+
+const DAYJS_DEFAULT_START_DATE = dayjs().startOf("month").add(1, "month");
+const DEFAULT_START_DATE = DAYJS_DEFAULT_START_DATE.format(DEFAULT_FORMAT);
+const DEFAULT_END_DATE = DAYJS_DEFAULT_START_DATE.add(1, "year").format(
+  DEFAULT_FORMAT
+);
 
 const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
   enrollment: enrollmentProp,
@@ -48,6 +65,11 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
   onUpdate,
   onRemove,
 }) => {
+  const [selectedEndDateType, setSelectedEndDateType] =
+    useState<string>("relative-end-date");
+
+  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+
   const { register, getValues, setValue, watch, control } = useForm({
     defaultValues: enrollmentProp ?? {
       startDate: DEFAULT_START_DATE,
@@ -58,6 +80,19 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
   const isNew = useMemo(() => !enrollmentProp, [enrollmentProp]);
   const startDate = watch("startDate");
   const endDate = watch("endDate");
+
+  const defaultEndDateType = useMemo(() => {
+    const st = enrollmentProp?.startDate;
+    const ed = enrollmentProp?.endDate;
+    if (!st || !ed) {
+      return "relative-end-date";
+    }
+    const duration = asDuration(st, ed);
+    if (duration && asDate(st, duration).isSame(dayjs(ed), "day")) {
+      return "relative-end-date";
+    }
+    return "absolute-end-date";
+  }, [enrollmentProp]);
 
   const handleSaveEnrollment = () => {
     const enrollment = getValues();
@@ -70,8 +105,47 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
   };
 
   const handleRemoveEnrollment = () => {
-    onRemove(index);
-    setOpen(false);
+    setConfirmationOpen({
+      title: "Remove Course Enrollment",
+      message: (
+        <span className="grid grid-cols-1">
+          <span>Are you sure you want to remove this enrollment?</span>
+          <span className="font-bold mt-2">
+            Upon saving the organization, this enrollment will be deleted, which
+            will affect watch stats and viewer access.
+          </span>
+          <span className="italic text-xs text-gray-400 mt-3">
+            Removal isn't final until the organization is saved. If you remove
+            an enrollment but later click "Cancel" instead of saving the
+            organization, the enrollment will be restored.
+          </span>
+        </span>
+      ),
+      confirmText: "Remove",
+      destructive: true,
+      cancelText: "Go Back",
+      onConfirm: () => {
+        onRemove(index);
+        setOpen(false);
+        setConfirmationClose();
+      },
+    });
+  };
+
+  useEffect(() => {
+    setSelectedEndDateType(defaultEndDateType);
+  }, [defaultEndDateType]);
+
+  const handleInputSelect = (selection: string) => {
+    setSelectedEndDateType(selection);
+    if (selection === "relative-end-date") {
+      const fromDuration = asDuration(startDate, endDate);
+      fromDuration &&
+        setValue(
+          "endDate",
+          asDate(startDate, fromDuration).format(DEFAULT_FORMAT)
+        );
+    }
   };
 
   return (
@@ -108,10 +182,21 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
           <FormInput
             {...register("startDate", {
               onChange: (e: ChangeEvent<HTMLInputElement>) => {
-                if (dayjs(e.target.value).isAfter(dayjs(endDate))) {
+                if (selectedEndDateType === "relative-end-date") {
+                  // Keep existing duration when changing start date.
+                  const existingDuration = asDuration(startDate, endDate);
+                  existingDuration &&
+                    setValue(
+                      "endDate",
+                      asDate(e.target.value, existingDuration).format(
+                        DEFAULT_FORMAT
+                      )
+                    );
+                } else if (dayjs(e.target.value).isAfter(dayjs(endDate))) {
+                  // If not using durations, just make sure end date is always after start date.
                   setValue(
                     "endDate",
-                    dayjs(e.target.value).add(1, "year").format("YYYY-MM-DD")
+                    dayjs(e.target.value).add(1, "year").format(DEFAULT_FORMAT)
                   );
                 }
               },
@@ -129,6 +214,8 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
         >
           <InputRadioOptions
             hideOnInactive
+            defaultSelection={defaultEndDateType}
+            onSelect={handleInputSelect}
             options={[
               {
                 id: "relative-end-date",
@@ -139,20 +226,10 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
                     name="endDate"
                     render={({ field }) => (
                       <DurationInput
-                        value={
-                          field.value && dayjs(field.value).isValid()
-                            ? asLargestDuration(
-                                dayjs.duration(
-                                  dayjs(field.value).diff(dayjs(startDate))
-                                )
-                              )
-                            : undefined
-                        }
+                        value={asDuration(startDate, field.value)}
                         onChange={(duration) =>
                           field.onChange(
-                            dayjs(startDate)
-                              .add(dayjs.duration(duration))
-                              .format("YYYY-MM-DD")
+                            asDate(startDate, duration).format(DEFAULT_FORMAT)
                           )
                         }
                         allowedUnits={["years", "months", "days"]}
@@ -169,7 +246,7 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
                     {...register("endDate")}
                     min={
                       dayjs(startDate).isValid()
-                        ? dayjs(startDate).add(1, "day").format("YYYY-MM-DD")
+                        ? dayjs(startDate).add(1, "day").format(DEFAULT_FORMAT)
                         : undefined
                     }
                     field={{
