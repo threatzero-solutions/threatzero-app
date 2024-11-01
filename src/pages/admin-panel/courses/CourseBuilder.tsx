@@ -1,10 +1,4 @@
-import {
-  PropsWithChildren,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 import { TrainingContext } from "../../../contexts/training/training-context";
 import {
   Audience,
@@ -37,6 +31,7 @@ import CourseVisibilityTag from "../../training-library/components/CourseVisibil
 import { Controller, FieldPath, useForm } from "react-hook-form";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import EditTrainingSection from "../../training-library/components/EditTrainingSection";
+import LargeFormSection from "../../../components/forms/LargeFormSection";
 
 type CourseFieldType = Partial<Field> & { name: FieldPath<TrainingCourse> };
 
@@ -88,19 +83,6 @@ const INITIAL_COURSE_STATE: PartialCourse = {
   audiences: [],
   presentableBy: [],
   sections: [],
-};
-
-const CourseBuilderSection: React.FC<
-  PropsWithChildren<{ heading: string }>
-> = ({ heading, children }) => {
-  return (
-    <div>
-      <h3 className="text-base font-semibold text-gray-900 mb-2">{heading}</h3>
-      <div className="rounded-lg bg-white ring-1 ring-gray-900/5 p-4">
-        {children}
-      </div>
-    </div>
-  );
 };
 
 const CourseBuilder = withRequirePermissions(() => {
@@ -263,7 +245,7 @@ const CourseBuilder = withRequirePermissions(() => {
               )}
             </div>
 
-            <CourseBuilderSection heading="Overview">
+            <LargeFormSection heading="Overview" defaultOpen>
               <div className="space-y-4">
                 {METADATA_INPUT_DATA.map((field) => (
                   <FormField
@@ -274,9 +256,9 @@ const CourseBuilder = withRequirePermissions(() => {
                   />
                 ))}
               </div>
-            </CourseBuilderSection>
+            </LargeFormSection>
 
-            <CourseBuilderSection heading="Visibility">
+            <LargeFormSection heading="Visibility">
               <div className="space-y-4">
                 <Controller
                   control={control}
@@ -305,7 +287,7 @@ const CourseBuilder = withRequirePermissions(() => {
                   )}
                 />
               </div>
-            </CourseBuilderSection>
+            </LargeFormSection>
           </div>
           <div className="flex">
             {!isNew && (

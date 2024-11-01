@@ -9,6 +9,9 @@ import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useOrganizationFilters } from "../../../../hooks/use-organization-filters";
+import { PencilSquareIcon } from "@heroicons/react/20/solid";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
 
 export const ViewUnits: React.FC = () => {
   const [editUnitSliderOpen, setEditUnitSliderOpen] = useState(false);
@@ -54,8 +57,8 @@ export const ViewUnits: React.FC = () => {
               key: "organization.name",
             },
             {
-              label: <span className="sr-only">Edit</span>,
-              key: "edit",
+              label: <span className="sr-only">Actions</span>,
+              key: "actions",
               align: "right",
             },
           ],
@@ -64,15 +67,16 @@ export const ViewUnits: React.FC = () => {
             name: unit.name,
             slug: unit.slug,
             ["organization.name"]: unit.organization?.name,
-            edit: (
-              <button
-                type="button"
-                className="text-secondary-600 hover:text-secondary-900 font-medium"
-                onClick={() => handleEditUnit(unit)}
-              >
-                Edit
-                <span className="sr-only">, {unit.id}</span>
-              </button>
+            actions: (
+              <ButtonGroup className="w-full justify-end">
+                <IconButton
+                  icon={PencilSquareIcon}
+                  className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                  text="Edit"
+                  type="button"
+                  onClick={() => handleEditUnit(unit)}
+                />
+              </ButtonGroup>
             ),
           })),
         }}

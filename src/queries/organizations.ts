@@ -1,14 +1,22 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
-import { Unit, Organization, Location } from "../types/entities";
+import {
+  Unit,
+  Organization,
+  Location,
+  LmsTrainingToken,
+  LmsTrainingTokenValue,
+} from "../types/entities";
 import {
   deleteOne,
+  download,
   findMany,
   findManyRaw,
   findOneByIdOrFail,
   insertOne,
   putOne,
   save,
+  updateOne,
 } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { DeepPartial } from "../types/core";
@@ -22,6 +30,18 @@ export const getOrganization = (id?: string) =>
 
 export const getOrganizationBySlug = (slug?: string) =>
   findOneByIdOrFail<Organization>("/organizations/organizations/slug/", slug);
+
+export const getOrganizationLmsTokens = (
+  id: Organization["id"],
+  query?: ItemFilterQueryParams
+) =>
+  findMany<LmsTrainingToken>(
+    `/organizations/organizations/${id}/lms-tokens/`,
+    query
+  );
+
+export const getLmsScormPackage = (id: Organization["id"], key: string) =>
+  download(`/organizations/organizations/${id}/lms-tokens/scorm`, { key });
 
 export const getOrganizationUsers = (
   id: Organization["id"] | undefined,
@@ -66,6 +86,30 @@ export const saveOrganization = (organization: DeepPartial<Organization>) =>
 
 export const deleteOrganization = (id: string | undefined) =>
   deleteOne("/organizations/organizations/", id);
+
+export const createOrganizationLmsToken = (
+  id: Organization["id"],
+  createLmsTokenValue: DeepPartial<LmsTrainingTokenValue>
+) =>
+  insertOne(
+    `/organizations/organizations/${id}/lms-tokens/`,
+    createLmsTokenValue
+  );
+
+export const setOrganizationLmsTokenExpirations = (
+  id: Organization["id"],
+  query: ItemFilterQueryParams,
+  expiration: Date | null
+) =>
+  updateOne<{ id: never; expiration: Date | null }>(
+    `/organizations/organizations/${id}/lms-tokens/expiration`,
+    {
+      expiration,
+    },
+    {
+      params: query,
+    }
+  );
 
 export type ImportOrganizationIdpMetadataPayload =
   | {

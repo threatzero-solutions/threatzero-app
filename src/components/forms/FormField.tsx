@@ -1,31 +1,62 @@
 import FormInput, { FormInputProps } from "./inputs/FormInput";
 import { classNames } from "../../utils/core";
-import { forwardRef } from "react";
+import { forwardRef, ReactNode } from "react";
 import { Field } from "../../types/entities";
 
 export interface FormFieldProps extends FormInputProps {
   onEdit?: () => void;
   fillColumns?: boolean;
   field: Partial<Field>;
+  input?: ReactNode;
+  helpTextFirst?: boolean;
+  action?: ReactNode;
 }
 
+const HelpText: React.FC<{ helpText: string; className?: string }> = ({
+  helpText,
+  className,
+}) => {
+  return (
+    <p
+      className={classNames(className, "text-sm leading-6 text-gray-600")}
+      dangerouslySetInnerHTML={{ __html: helpText }}
+    />
+  );
+};
+
 const FormField: React.FC<FormFieldProps> = forwardRef(
-  ({ field, onEdit, fillColumns = true, ...fieldAttrs }, ref) => {
+  (
+    {
+      field,
+      onEdit,
+      fillColumns = true,
+      input,
+      helpTextFirst = false,
+      action,
+      ...fieldAttrs
+    },
+    ref
+  ) => {
     return (
       <div className={classNames(fillColumns ? "col-span-full" : "")}>
-        <label
-          htmlFor={field.name}
-          className="block text-sm font-medium leading-6 text-gray-900"
-          dangerouslySetInnerHTML={{ __html: field.label ?? "" }}
-        />
-        <div className="mt-2">
-          <FormInput ref={ref} field={field} {...fieldAttrs} />
+        <div className="w-full flex items-center gap-1">
+          <div className="grow">
+            <label
+              htmlFor={field.name}
+              className="block text-sm font-medium leading-6 text-gray-900"
+              dangerouslySetInnerHTML={{ __html: field.label ?? "" }}
+            />
+            {helpTextFirst && field.helpText && (
+              <HelpText helpText={field.helpText} className="mb-3" />
+            )}
+          </div>
+          {action}
         </div>
-        {field.helpText && (
-          <p
-            className="mt-3 text-sm leading-6 text-gray-600"
-            dangerouslySetInnerHTML={{ __html: field.helpText }}
-          />
+        <div className="mt-2">
+          {input || <FormInput ref={ref} field={field} {...fieldAttrs} />}
+        </div>
+        {!helpTextFirst && field.helpText && (
+          <HelpText helpText={field.helpText} className="mt-3" />
         )}
         {onEdit && (
           <button

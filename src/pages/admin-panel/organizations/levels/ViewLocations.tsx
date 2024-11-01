@@ -13,6 +13,13 @@ import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
 import { useOrganizationFilters } from "../../../../hooks/use-organization-filters";
+import {
+  LinkIcon,
+  PencilSquareIcon,
+  QrCodeIcon,
+} from "@heroicons/react/20/solid";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
 
 export const ViewLocations: React.FC = () => {
   const [editLocationSliderOpen, setEditLocationSliderOpen] = useState(false);
@@ -69,13 +76,8 @@ export const ViewLocations: React.FC = () => {
               key: "unit.name",
             },
             {
-              label: <span className="sr-only">QR Code</span>,
-              key: "qrCode",
-              noSort: true,
-            },
-            {
-              label: <span className="sr-only">Edit</span>,
-              key: "edit",
+              label: <span className="sr-only">Actions</span>,
+              key: "actions",
               align: "right",
               noSort: true,
             },
@@ -85,33 +87,31 @@ export const ViewLocations: React.FC = () => {
             name: location.name,
             locationId: location.locationId,
             ["unit.name"]: location.unit.name,
-            qrCode: (
-              <span>
-                <Link
+            actions: (
+              <ButtonGroup className="w-full justify-end">
+                <IconButton
+                  as={Link}
+                  icon={LinkIcon}
                   to={`/sos/?loc_id=${location.locationId}`}
-                  className="text-secondary-600 hover:text-secondary-900 font-medium"
-                >
-                  SOS Link
-                </Link>
-                <span> / </span>
-                <button
+                  target="_blank"
+                  className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                  text="SOS Link"
+                />
+                <IconButton
+                  icon={QrCodeIcon}
+                  className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                  text="QR Code"
                   type="button"
-                  className="text-secondary-600 hover:text-secondary-900 font-medium"
                   onClick={() => handleDownloadQRCode(location.locationId)}
-                >
-                  QR Code
-                </button>
-              </span>
-            ),
-            edit: (
-              <button
-                type="button"
-                className="text-secondary-600 hover:text-secondary-900 font-medium"
-                onClick={() => handleEditLocation(location)}
-              >
-                Edit
-                <span className="sr-only">, {location.id}</span>
-              </button>
+                />
+                <IconButton
+                  icon={PencilSquareIcon}
+                  className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                  text="Edit"
+                  type="button"
+                  onClick={() => handleEditLocation(location)}
+                />
+              </ButtonGroup>
             ),
           })),
         }}

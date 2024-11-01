@@ -439,6 +439,7 @@ export interface ResourceItem extends Base {
 export interface OpaqueToken<V> extends Base {
   key: string;
   value: V;
+  expiresOn: Date | null;
 }
 
 export interface ViewingUserTokenValue {
@@ -461,6 +462,16 @@ export interface TrainingToken
   extends OpaqueToken<TrainingParticipantTokenValue> {
   watchStat?: WatchStat | null;
 }
+
+export interface LmsTrainingTokenValue {
+  enrollmentId: string;
+  trainingItemId: string;
+  unitId?: string;
+  organizationId: string;
+  lmsName?: string;
+}
+
+export interface LmsTrainingToken extends OpaqueToken<LmsTrainingTokenValue> {}
 
 export interface WatchStat {
   trainingItemId: string;

@@ -88,7 +88,7 @@ const DataTable: React.FC<DataTableProps> = ({
   }, [isLoading]);
 
   const currentOrder = useMemo(
-    () => orderOptions?.order ?? itemFilterQuery?.order,
+    () => orderOptions?.order ?? itemFilterQuery?.order ?? {},
     [orderOptions, itemFilterQuery]
   );
 
@@ -107,13 +107,16 @@ const DataTable: React.FC<DataTableProps> = ({
       }
 
       setItemFilterQuery?.((options) => {
-        if (options.order) {
-          if (value !== undefined && value !== null) {
-            options.order[key] = value;
-          } else {
-            Reflect.deleteProperty(options.order, key);
-          }
+        if (!options.order) {
+          options.order = {};
         }
+
+        if (value !== undefined && value !== null) {
+          options.order[key] = value;
+        } else {
+          Reflect.deleteProperty(options.order, key);
+        }
+
         options.offset = 0;
       });
     },
@@ -121,7 +124,7 @@ const DataTable: React.FC<DataTableProps> = ({
   );
 
   const handleUpdateSort = (key: string, noSort?: boolean) => {
-    if (noSort || orderOptions?.hidden || !currentOrder) return;
+    if (noSort || orderOptions?.hidden) return;
 
     const thisOrder = currentOrder[key];
     const nextOrder =

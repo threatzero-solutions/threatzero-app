@@ -5,7 +5,7 @@ import {
   getOrganizationBySlug,
   getUnitBySlug,
 } from "../../queries/organizations";
-import { stripPhoneNumber } from "../../utils/core";
+import SafetyContactBody from "../../components/safety-management/SafetyContactBody";
 
 const MyDashboard: React.FC = () => {
   const { keycloak } = useAuth();
@@ -61,24 +61,7 @@ const MyDashboard: React.FC = () => {
                   />
                 ))
             ) : mySafetyContact ? (
-              <>
-                <span className="text-lg">
-                  {mySafetyContact.name}
-                  {mySafetyContact.title ? ` - ${mySafetyContact.title}` : ""}
-                </span>
-                <a
-                  href={`mailto:${mySafetyContact.email}`}
-                  className="text-secondary-600 hover:text-secondary-500 transition-colors"
-                >
-                  {mySafetyContact.email}
-                </a>
-                <a
-                  href={`tel:${stripPhoneNumber(mySafetyContact.phone)}`}
-                  className="text-secondary-600 hover:text-secondary-500 transition-colors"
-                >
-                  {mySafetyContact.phone}
-                </a>
-              </>
+              <SafetyContactBody value={mySafetyContact} />
             ) : (
               "Safety contact not found."
             )}

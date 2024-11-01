@@ -7,40 +7,35 @@ import {
   deleteOrganization,
   getOrganization,
 } from "../../../../queries/organizations";
-import FormInput from "../../../../components/forms/inputs/FormInput";
 import { getResourceItems } from "../../../../queries/media";
 import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
 import SafetyContactInput from "../../../../components/safety-management/SafetyContactInput";
 import PolicyProcedureInput from "../../../../components/safety-management/PolicyProcedureInput";
-import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
 import OrganizationIdpsInput from "../components/OrganizationIdpsInput";
-import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
-import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
 import { CoreContext } from "../../../../contexts/core/core-context";
 import CourseEnrollmentsInput from "../components/CourseEnrollmentsInput";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useDebounceCallback } from "usehooks-ts";
 import { useAuth } from "../../../../contexts/AuthProvider";
+import { useNavigate, useParams } from "react-router-dom";
+import LargeFormSection from "../../../../components/forms/LargeFormSection";
+import FormField from "../../../../components/forms/FormField";
+import BackButtonLink from "../../../../components/layouts/BackButtonLink";
+import SuccessButton from "../../../../components/layouts/buttons/SuccessButton";
 
-interface EditOrganizationProps {
-  setOpen: (open: boolean) => void;
-  organization?: Partial<Organization>;
-}
+const EditOrganization: React.FC = () => {
+  const navigate = useNavigate();
+  const params = useParams();
 
-const EditOrganization: React.FC<EditOrganizationProps> = ({
-  setOpen,
-  organization: organizationProp,
-}) => {
-  const isNew = useMemo(() => !organizationProp, [organizationProp]);
+  const isNew = useMemo(() => params.id === "new", [params.id]);
 
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
   const { myOrganizationSlug } = useAuth();
 
   const { data: organizationData } = useQuery({
-    queryKey: ["organizations", organizationProp?.id] as const,
+    queryKey: ["organizations", params.id] as const,
     queryFn: ({ queryKey }) => getOrganization(queryKey[1]),
-    enabled: !!organizationProp?.id,
+    enabled: !!params.id,
     refetchOnWindowFocus: false,
   });
 
@@ -91,7 +86,6 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
         queryKey: ["my-course-enrollments"],
       });
     }
-    setOpen(false);
   };
   const saveOrganizationMutation = useMutation({
     mutationFn: saveOrganization,
@@ -103,6 +97,7 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
     onSuccess: () => {
       onMutateSuccess();
       setConfirmationClose();
+      navigate("../");
     },
   });
 
@@ -128,130 +123,173 @@ const EditOrganization: React.FC<EditOrganizationProps> = ({
 
   return (
     <FormProvider {...formMethods}>
-      <SlideOverForm
+      <BackButtonLink to={"../"} value={"Back to Organizations"} />
+      <form
         onSubmit={handleSubmit(handleSave)}
-        onClose={() => setOpen(false)}
-        hideDelete={isNew}
-        onDelete={handleDelete}
-        submitText={isNew ? "Add" : "Update"}
-        isSaving={saveOrganizationMutation.isPending}
+        className="border-b border-gray-900/10 pb-4"
       >
-        <SlideOverHeading
-          title={isNew ? "Add organization" : "Edit organization"}
-          description="Organizations can be school districts, companies, institutions,
-                etc. These correlate to organizations registered in the identity
-                provider."
-          setOpen={setOpen}
-        />
-        {/* BASIC INFO */}
-        <SlideOverFormBody>
-          <SlideOverField
-            label="Name"
-            name="name"
-            helpText="A friendly name for the organization."
-          >
-            <FormInput required type="text" {...register("name")} />
-          </SlideOverField>
-          <SlideOverField
-            label="Slug"
-            name="slug"
-            helpText="The slug field must be unique."
-          >
-            <FormInput required type="text" {...register("slug")} />
-          </SlideOverField>
-          <SlideOverField label="Address (Optional)" name="address">
-            <FormInput type="textarea" {...register("address")} />
-          </SlideOverField>
-          <SlideOverField
-            label="Group ID"
-            name="groupId"
-            helpText="This id correlates with the organization's Group ID in the identity provider."
-          >
-            <FormInput
-              type="text"
-              disabled
-              placeholder="Automatically generated"
-              defaultValue={groupId ?? ""}
-            />
-          </SlideOverField>
+        <div className="grid grid-cols-1 gap-y-4 pb-8">
+          <LargeFormSection heading="General" defaultOpen>
+            <div className="space-y-4">
+              <FormField
+                required
+                type="text"
+                {...register("name")}
+                field={{
+                  name: "name",
+                  label: "Name",
+                  helpText: "A friendly name for the organization.",
+                }}
+              />
+              <FormField
+                required
+                type="text"
+                {...register("slug")}
+                field={{
+                  label: "Slug",
+                  name: "slug",
+                  helpText: "The slug field must be unique.",
+                }}
+              />
+              <FormField
+                type="textarea"
+                {...register("address")}
+                field={{
+                  label: "Address (Optional)",
+                  name: "address",
+                }}
+              />
+              <FormField
+                type="text"
+                disabled
+                placeholder="Automatically generated"
+                defaultValue={groupId ?? ""}
+                field={{
+                  label: "Group ID",
+                  name: "groupId",
+                  helpText:
+                    "This id correlates with the organization's Group ID in the identity provider.",
+                }}
+              />
+            </div>
+          </LargeFormSection>
 
-          {/* SAFETY CONTACT AND POLICIES */}
-          <SlideOverField label="Safety Contact" name="safetyContact">
-            <Controller
-              name="safetyContact"
-              control={control}
-              render={({ field }) => (
-                <SafetyContactInput
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target?.value)}
-                />
-              )}
-            />
-          </SlideOverField>
-          <SlideOverField
-            label="Policies & Procedures"
-            name="policiesAndProcedures"
-          >
-            <Controller
-              name="policiesAndProcedures"
-              control={control}
-              render={({ field }) => (
-                <PolicyProcedureInput
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target?.value)}
-                />
-              )}
-            />
-          </SlideOverField>
+          <LargeFormSection heading="Safety Management">
+            <div className="space-y-6">
+              <Controller
+                name="safetyContact"
+                control={control}
+                render={({ field }) => (
+                  <SafetyContactInput
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target?.value)}
+                  />
+                )}
+              />
+              <Controller
+                name="policiesAndProcedures"
+                control={control}
+                render={({ field }) => (
+                  <PolicyProcedureInput
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target?.value)}
+                  />
+                )}
+              />
+            </div>
+          </LargeFormSection>
 
-          {/* ENROLLMENT AND RESOURCE INFO */}
-          <SlideOverField label="Course Enrollments" name="enrollments">
-            <CourseEnrollmentsInput name="enrollments" />
-          </SlideOverField>
-          <SlideOverField label="Resources" name="resources">
-            <Controller
-              name="resources"
-              control={control}
-              render={({ field }) => (
-                <MultipleSelect
-                  prefix="organization_resources"
-                  value={
-                    field.value?.filter((r) => r.id).map((r) => r.id!) ?? []
-                  }
-                  options={(resources?.results ?? []).map((r) => ({
-                    key: r.id,
-                    label: (
-                      <div className="flex flex-col">
-                        <span>{r.title}</span>
-                        <span className="text-gray-500 text-xs">
-                          {r.description}
-                        </span>
-                      </div>
-                    ),
-                  }))}
-                  onChange={(ids) => field.onChange(ids.map((id) => ({ id })))}
-                />
-              )}
-            />
-          </SlideOverField>
+          <LargeFormSection heading="Training">
+            <div className="space-y-6">
+              <CourseEnrollmentsInput
+                name="enrollments"
+                label="Course Enrollments"
+                helpText="Enroll this organizaton in courses to grant them access to the correct training."
+                organizationId={id}
+              />
+              <FormField
+                field={{
+                  name: "resources",
+                  label: "Resources",
+                  helpText:
+                    "Select resources that this organization will have access to.",
+                }}
+                helpTextFirst
+                input={
+                  <Controller
+                    name="resources"
+                    control={control}
+                    render={({ field }) => (
+                      <MultipleSelect
+                        prefix="organization_resources"
+                        value={
+                          field.value?.filter((r) => r.id).map((r) => r.id!) ??
+                          []
+                        }
+                        options={(resources?.results ?? []).map((r) => ({
+                          key: r.id,
+                          label: (
+                            <div className="flex flex-col">
+                              <span>{r.title}</span>
+                              <span className="text-gray-500 text-xs">
+                                {r.description}
+                              </span>
+                            </div>
+                          ),
+                        }))}
+                        onChange={(ids) =>
+                          field.onChange(ids.map((id) => ({ id })))
+                        }
+                      />
+                    )}
+                  />
+                }
+              />
+            </div>
+          </LargeFormSection>
 
-          {/* IDENTITY PROVIDERS */}
-          <SlideOverField
-            label="Identity Providers"
-            name="idpSlugs"
-            helpText="Used to set up SSO logins for this organization."
+          <LargeFormSection heading="User Accounts">
+            <div className="6">
+              <FormField
+                field={{
+                  label: "Identity Providers",
+                  name: "idpSlugs",
+                  helpText: "Used to set up SSO logins for this organization.",
+                }}
+                helpTextFirst
+                input={
+                  <>
+                    {id && (
+                      <OrganizationIdpsInput
+                        organization={organizationData as Organization}
+                        idpSlugs={idpSlugs ?? []}
+                      />
+                    )}
+                  </>
+                }
+              />
+            </div>
+          </LargeFormSection>
+        </div>
+        <div className="flex">
+          {!isNew && (
+            <button
+              type="button"
+              className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500"
+              onClick={handleDelete}
+            >
+              Delete
+            </button>
+          )}
+          <div className="grow" />
+          <SuccessButton
+            isLoading={saveOrganizationMutation.isPending}
+            isSuccess={saveOrganizationMutation.isSuccess}
           >
-            <>
-              {id && (
-                <OrganizationIdpsInput
-                  organization={organizationData as Organization}
-                  idpSlugs={idpSlugs ?? []}
-                />
-              )}
-            </>
-          </SlideOverField>
-        </SlideOverFormBody>
-      </SlideOverForm>
+            {isNew ? "Create" : "Save"}
+          </SuccessButton>
+        </div>
+      </form>
     </FormProvider>
   );
 };

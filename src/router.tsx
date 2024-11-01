@@ -40,6 +40,7 @@ import PublicRoot from "./components/layouts/PublicRoot";
 import Root from "./components/layouts/Root";
 import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
 import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
+import EditOrganization from "./pages/admin-panel/organizations/levels/EditOrganization";
 // import MyOrganization from "./pages/my-organization/MyOrganization";
 // import MyOrganizationHome from "./pages/my-organization/MyOrganizationHome";
 // import MyOrganizationUsersRoot from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersRoot";
@@ -253,7 +254,16 @@ export const router = createBrowserRouter(
                     {
                       path: "organizations",
                       handle: { title: "Organizations" },
-                      element: <Organizations />,
+                      children: [
+                        {
+                          path: "",
+                          element: <Organizations />,
+                        },
+                        {
+                          path: ":id",
+                          element: <EditOrganization />,
+                        },
+                      ],
                     },
                     {
                       path: "courses",

@@ -1,8 +1,6 @@
 import { useContext, useMemo } from "react";
 import { TrainingContext } from "../../../contexts/training/training-context";
 import { CourseEnrollment, TrainingVisibility } from "../../../types/entities";
-import { DialogTitle } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/AuthProvider";
@@ -10,6 +8,7 @@ import CourseVisibilityTag from "./CourseVisibilityTag";
 import CourseCustomTag from "./CourseCustomTag";
 import CourseAvailabilityDates from "./CourseActiveStatus";
 import { stripHtml } from "../../../utils/core";
+import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 
 const ViewEnrollments: React.FC = () => {
   const { dispatch, state, setActiveEnrollmentId } =
@@ -40,27 +39,11 @@ const ViewEnrollments: React.FC = () => {
     <div className="flex flex-col h-full">
       <div className="flex-1">
         {/* HEADER */}
-        <div className="bg-gray-50 px-4 py-6 sm:px-6">
-          <div className="flex items-start justify-between space-x-3">
-            <div className="space-y-1">
-              <DialogTitle className="text-base font-semibold leading-6 text-gray-900">
-                My Course Enrollments
-              </DialogTitle>
-              <p className="text-sm text-gray-500">Select a course to view</p>
-            </div>
-            <div className="flex h-7 items-center">
-              <button
-                type="button"
-                className="relative text-gray-400 hover:text-gray-500"
-                onClick={() => setOpen(false)}
-              >
-                <span className="absolute -inset-2.5" />
-                <span className="sr-only">Close panel</span>
-                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <SlideOverHeading
+          title="My Course Enrollments"
+          description="Select a course to view"
+          setOpen={setOpen}
+        />
 
         {/* COURSES */}
         <ul className="divide-y divide-gray-100">

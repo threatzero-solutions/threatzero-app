@@ -2,20 +2,36 @@ import { useState } from "react";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import {
   CourseEnrollment,
+  type Organization,
   TrainingVisibility,
 } from "../../../../types/entities";
 import CourseAvailabilityDates from "../../../training-library/components/CourseActiveStatus";
 import { classNames, stripHtml } from "../../../../utils/core";
 import EditCourseEnrollment from "./EditCourseEnrollment";
 import { useFormContext, useFieldArray, DeepPartial } from "react-hook-form";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowRightEndOnRectangleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/20/solid";
+import FormField from "../../../../components/forms/FormField";
+import Block from "../../../../components/layouts/content/Block";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
+import LmsIntegrationsInput from "./lms-integrations/LmsIntegrationsInput";
 
 interface CourseEnrollmentsInputProps {
   name: string;
+  label?: string;
+  helpText?: string;
+  organizationId: Organization["id"];
 }
 
 const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
   name,
+  label = "Course Enrollments",
+  helpText,
+  organizationId,
 }) => {
   const [editCourseEnrollmentSliderOpen, setEditCourseEnrollmentSliderOpen] =
     useState(false);
@@ -44,76 +60,99 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        {fields.map((enrollment, index) => (
-          <div
-            className="flex shadow-sm rounded-md ring-1 ring-inset ring-gray-300 py-4 px-6"
-            key={enrollment.keyId}
-          >
-            <div className="flex flex-col gap-2 grow">
-              <div className="flex flex-col">
-                <button
-                  type="button"
-                  className="w-max cursor-pointer text-gray-900 hover:text-gray-600 transition-colors"
-                  onClick={() => handleEditEnrollment(index)}
-                >
-                  <span className="text-sm font-semibold">
-                    {stripHtml(enrollment.course?.metadata?.title)}
-                  </span>{" "}
-                  <span className="text-xs">(edit)</span>
-                </button>
-                <span className="text-xs text-gray-500">
-                  {stripHtml(enrollment.course?.metadata?.description)}
-                </span>
-              </div>
-              <CourseAvailabilityDates
-                startDate={enrollment.startDate}
-                endDate={enrollment.endDate}
-                format="dates"
-                showOnBlank="Start date is blank"
-              />
-            </div>
-            <div
-              className={classNames(
-                "self-center inline-flex gap-1 items-center text-xs font-semibold text-white rounded px-2 py-1 w-max transition-colors cursor-pointer",
-                enrollment.visibility === TrainingVisibility.VISIBLE
-                  ? "bg-secondary-500 hover:bg-secondary-600"
-                  : "bg-purple-500 hover:bg-purple-600"
-              )}
-              title={
-                enrollment.visibility === TrainingVisibility.VISIBLE
-                  ? "Click to hide"
-                  : "Click to make visible"
-              }
-              onClick={() =>
-                update(index, {
-                  ...enrollment,
-                  visibility:
-                    enrollment.visibility === TrainingVisibility.VISIBLE
-                      ? TrainingVisibility.HIDDEN
-                      : TrainingVisibility.VISIBLE,
-                })
-              }
-            >
-              {enrollment.visibility === TrainingVisibility.VISIBLE ? (
-                <EyeIcon className="h-5 w-5" />
-              ) : (
-                <EyeSlashIcon className="h-5 w-5" />
-              )}
-              {enrollment.visibility === TrainingVisibility.VISIBLE
-                ? "Visible"
-                : "Hidden"}
-            </div>
+      <FormField
+        field={{
+          name,
+          label,
+          helpText,
+        }}
+        helpTextFirst
+        action={
+          <IconButton
+            icon={ArrowRightEndOnRectangleIcon}
+            className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+            text="Enroll in New Course"
+            type="button"
+            onClick={() => handleEditEnrollment()}
+          />
+        }
+        input={
+          <div className="flex flex-col gap-2">
+            {fields.map((enrollment, index) => (
+              <Block
+                className="flex flex-col gap-4 bg-gray-50"
+                key={enrollment.keyId}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 grow">
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="w-max cursor-pointer text-gray-900 hover:text-gray-600 transition-colors"
+                        onClick={() => handleEditEnrollment(index)}
+                      >
+                        <span className="text-sm font-semibold">
+                          {stripHtml(enrollment.course?.metadata?.title)}
+                        </span>{" "}
+                        <span className="text-xs">(edit)</span>
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        {stripHtml(enrollment.course?.metadata?.description)}
+                      </span>
+                    </div>
+                    <CourseAvailabilityDates
+                      startDate={enrollment.startDate}
+                      endDate={enrollment.endDate}
+                      format="dates"
+                      showOnBlank="Start date is blank"
+                    />
+                  </div>
+                  <ButtonGroup>
+                    <IconButton
+                      icon={
+                        enrollment.visibility === TrainingVisibility.VISIBLE
+                          ? EyeIcon
+                          : EyeSlashIcon
+                      }
+                      className={classNames(
+                        "text-white",
+                        enrollment.visibility === TrainingVisibility.VISIBLE
+                          ? "bg-secondary-500 hover:bg-secondary-600"
+                          : "bg-purple-500 hover:bg-purple-600"
+                      )}
+                      text={
+                        enrollment.visibility === TrainingVisibility.VISIBLE
+                          ? "Visible"
+                          : "Hidden"
+                      }
+                      type="button"
+                      title={
+                        enrollment.visibility === TrainingVisibility.VISIBLE
+                          ? "Click to hide"
+                          : "Click to make visible"
+                      }
+                      onClick={() =>
+                        update(index, {
+                          ...enrollment,
+                          visibility:
+                            enrollment.visibility === TrainingVisibility.VISIBLE
+                              ? TrainingVisibility.HIDDEN
+                              : TrainingVisibility.VISIBLE,
+                        })
+                      }
+                    />
+                  </ButtonGroup>
+                </div>
+                <LmsIntegrationsInput
+                  organizationId={organizationId}
+                  enrollmentId={enrollment.id}
+                  courseId={enrollment.course?.id}
+                />
+              </Block>
+            ))}
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => handleEditEnrollment()}
-          className="self-end rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-        >
-          Enroll In New Course
-        </button>
-      </div>
+        }
+      />
       <SlideOver
         open={editCourseEnrollmentSliderOpen}
         setOpen={setEditCourseEnrollmentSliderOpen}

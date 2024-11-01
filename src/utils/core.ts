@@ -79,13 +79,18 @@ export const pathJoin = (...args: string[]) => {
   return args.join("/").replace(/\/+/g, "/");
 };
 
-export const stripHtml = (html: string | undefined | null) => {
+export function stripHtml(html: string): string;
+export function stripHtml(html: undefined | null): undefined | null;
+export function stripHtml(
+  html: string | undefined | null
+): string | undefined | null;
+export function stripHtml(html: string | undefined | null) {
   if (!html) {
     return html;
   }
   const doc = new DOMParser().parseFromString(html, "text/html");
   return doc.body.textContent || "";
-};
+}
 
 export const camelToSnake = (str: string) =>
   str.replace(/[A-Z][a-z0-9]+/g, (match) => `_${match.toLowerCase()}`);

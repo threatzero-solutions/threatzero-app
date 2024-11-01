@@ -12,6 +12,7 @@ import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
 import dayjs from "dayjs";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 
 const ViewCourses: React.FC = () => {
   const [courseFilterOptions, setCourseFilterOptions] =
@@ -80,7 +81,7 @@ const ViewCourses: React.FC = () => {
             ),
             createdOn: dayjs(course.createdOn).format("MMM D, YYYY"),
             actions: (
-              <div className="flex items-center w-full justify-end gap-2">
+              <ButtonGroup className="w-full justify-end">
                 <Link
                   to={`preview/${course.id}`}
                   className="flex gap-1 items-center w-max rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
@@ -112,7 +113,7 @@ const ViewCourses: React.FC = () => {
                     Duplicate {course.metadata.title}
                   </span>
                 </Link>
-              </div>
+              </ButtonGroup>
             ),
           })),
         }}

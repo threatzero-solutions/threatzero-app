@@ -1,21 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { getOrganizations } from "../../../../queries/organizations";
 import DataTable from "../../../../components/layouts/DataTable";
-import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import EditOrganization from "./EditOrganization";
-import { Organization } from "../../../../types/entities";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
 import { useImmer } from "use-immer";
+import { Link } from "react-router-dom";
+import { PencilSquareIcon } from "@heroicons/react/20/solid";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
 
 export const ViewOrganizations: React.FC = () => {
-  const [editOrganizationSliderOpen, setEditOrganizationSliderOpen] =
-    useState(false);
-  const [selectedOrganization, setSelectedOrganization] = useState<
-    Partial<Organization> | undefined
-  >();
-
   const [organizationsQuery, setOrganizationsQuery] =
     useImmer<ItemFilterQueryParams>({ order: { name: "ASC" } });
   const [debouncedOrganizationsQuery] = useDebounceValue(
@@ -27,11 +21,6 @@ export const ViewOrganizations: React.FC = () => {
     queryKey: ["organizations", debouncedOrganizationsQuery] as const,
     queryFn: ({ queryKey }) => getOrganizations(queryKey[1]),
   });
-
-  const handleEditOrganization = (organization?: Organization) => {
-    setSelectedOrganization(organization);
-    setEditOrganizationSliderOpen(true);
-  };
 
   return (
     <>
@@ -47,8 +36,8 @@ export const ViewOrganizations: React.FC = () => {
               key: "slug",
             },
             {
-              label: <span className="sr-only">Edit</span>,
-              key: "edit",
+              label: <span className="sr-only">Actions</span>,
+              key: "actions",
               align: "right",
               noSort: true,
             },
@@ -57,15 +46,16 @@ export const ViewOrganizations: React.FC = () => {
             id: organization.id,
             name: organization.name,
             slug: organization.slug,
-            edit: (
-              <button
-                type="button"
-                className="text-secondary-600 hover:text-secondary-900 font-medium"
-                onClick={() => handleEditOrganization(organization)}
-              >
-                Edit
-                <span className="sr-only">, {organization.id}</span>
-              </button>
+            actions: (
+              <ButtonGroup className="w-full justify-end">
+                <IconButton
+                  as={Link}
+                  icon={PencilSquareIcon}
+                  to={organization.id}
+                  className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                  text="Edit"
+                />
+              </ButtonGroup>
             ),
           })),
         }}
@@ -88,24 +78,14 @@ export const ViewOrganizations: React.FC = () => {
         }}
         notFoundDetail="No organizations found."
         action={
-          <button
-            type="button"
+          <Link
+            to="new"
             className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-            onClick={() => handleEditOrganization()}
           >
             + Add New Organization
-          </button>
+          </Link>
         }
       />
-      <SlideOver
-        open={editOrganizationSliderOpen}
-        setOpen={setEditOrganizationSliderOpen}
-      >
-        <EditOrganization
-          setOpen={setEditOrganizationSliderOpen}
-          organization={selectedOrganization}
-        />
-      </SlideOver>
     </>
   );
 };

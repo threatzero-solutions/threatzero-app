@@ -555,25 +555,25 @@ const ManageTrainingInvites: React.FC = () => {
             headers: [
               {
                 label: "Name",
-                key: "lastName",
+                key: "value.lastName",
               },
               {
                 label: "Email",
-                key: "email",
+                key: "value.email",
               },
               {
                 label: "Organization",
-                key: "organizationSlug",
+                key: "value.organizationSlug",
                 hidden: !hasMultipleOrganizationAccess,
               },
               {
                 label: "Unit",
-                key: "unitSlug",
+                key: "value.unitSlug",
                 hidden: !hasMultipleUnitAccess,
               },
               {
                 label: "Training Item",
-                key: "trainingItemId",
+                key: "value.trainingItemId",
                 noSort: true,
               },
               {
@@ -582,7 +582,7 @@ const ManageTrainingInvites: React.FC = () => {
               },
               {
                 label: "Expires",
-                key: "expiresOn",
+                key: "value.expiresOn",
               },
               {
                 label: "Percent Watched",
@@ -604,7 +604,7 @@ const ManageTrainingInvites: React.FC = () => {
             ],
             rows: (trainingInvites?.results ?? []).map((t) => ({
               id: t.id,
-              lastName: (
+              ["value.lastName"]: (
                 <span className="whitespace-nowrap">
                   {(
                     (t.value.lastName ?? "") +
@@ -613,7 +613,7 @@ const ManageTrainingInvites: React.FC = () => {
                   ).replace(/(^[,\s]+)|(^[,\s]+$)/g, "") || "—"}
                 </span>
               ),
-              email: (
+              ["value.email"]: (
                 <button
                   type="button"
                   className="text-secondary-600 hover:text-secondary-900 font-medium"
@@ -624,11 +624,11 @@ const ManageTrainingInvites: React.FC = () => {
                   <span className="sr-only">, {t.id}</span>
                 </button>
               ),
-              organizationSlug: (
+              ["value.organizationSlug"]: (
                 <ViewOrganization organizationSlug={t.value.organizationSlug} />
               ),
-              unitSlug: <ViewUnit unitSlug={t.value.unitSlug} />,
-              trainingItemId: (
+              ["value.unitSlug"]: <ViewUnit unitSlug={t.value.unitSlug} />,
+              ["value.trainingItemId"]: (
                 <ViewTrainingItem trainingItemId={t.value.trainingItemId} />
               ),
               createdOn: (
@@ -636,7 +636,7 @@ const ManageTrainingInvites: React.FC = () => {
                   {dayjs(t.createdOn).fromNow()}
                 </span>
               ),
-              expiresOn: (
+              ["value.expiresOn"]: (
                 <span title={dayjs(t.value.expiresOn).format("MMM D, YYYY")}>
                   {dayjs(t.value.expiresOn).fromNow()}
                 </span>
@@ -704,15 +704,15 @@ const ManageTrainingInvites: React.FC = () => {
               Download (.csv)
             </button>
           }
-          itemFilterQuery={trainingItemFilterQuery}
-          setItemFilterQuery={setTrainingItemFilterQuery}
+          itemFilterQuery={itemFilterOptions}
+          setItemFilterQuery={setItemFilterOptions}
           paginationOptions={{
             ...trainingInvites,
           }}
           filterOptions={{
             filters: [
               {
-                key: "trainingItemId",
+                key: "value.trainingItemId",
                 label: "Training Item",
                 many: true,
                 options: trainingItems?.results.map((t) => ({
@@ -737,6 +737,14 @@ const ManageTrainingInvites: React.FC = () => {
               ...(organizationFilters.filters ?? []),
             ],
             setQuery: setItemFilterOptions,
+          }}
+          searchOptions={{
+            searchQuery: itemFilterOptions.search ?? "",
+            setSearchQuery: (sq) =>
+              setItemFilterOptions((q) => {
+                q.search = sq;
+                q.offset = 0;
+              }),
           }}
         />
       </div>

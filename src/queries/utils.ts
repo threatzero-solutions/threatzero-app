@@ -103,3 +103,16 @@ export const deleteOne = (path: string, id?: string) =>
   id
     ? axios.delete(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id}`)
     : Promise.reject(new Error("ID must not be empty."));
+
+export const download = (
+  path: string,
+  query?: Record<string, unknown>,
+  options?: AxiosRequestConfig
+) =>
+  axios
+    .get(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`, {
+      params: query,
+      responseType: "blob",
+      ...options,
+    })
+    .then((res) => res.data);
