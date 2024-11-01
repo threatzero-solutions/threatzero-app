@@ -310,7 +310,9 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
             .flatMap((s) => s.items?.map((i) => i.item))
             .filter((i) => !!i)
             .reduce((arr, i) => {
-              arr.set(i.id, i);
+              if (i) {
+                arr.set(i.id, i);
+              }
               return arr;
             }, new Map<TrainingItem["id"], TrainingItem>())
             .values() ?? []
