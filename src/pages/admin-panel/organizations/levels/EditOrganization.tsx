@@ -206,6 +206,7 @@ const EditOrganization: React.FC = () => {
                 label="Course Enrollments"
                 helpText="Enroll this organizaton in courses to grant them access to the correct training."
                 organizationId={id}
+                accessSettings={organizationData?.trainingAccessSettings}
               />
               <FormField
                 field={{

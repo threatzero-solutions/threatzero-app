@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import SlideOverFormBody from "../../../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../../../components/layouts/slide-over/SlideOverHeading";
-import { LmsTrainingToken, TrainingItem } from "../../../../../types/entities";
+import {
+  LmsTrainingToken,
+  Organization,
+  TrainingItem,
+} from "../../../../../types/entities";
 import {
   getTrainingCourse,
   getTrainingItem,
@@ -10,34 +14,37 @@ import { DEFAULT_THUMBNAIL_URL } from "../../../../../constants/core";
 import ButtonGroup from "../../../../../components/layouts/buttons/ButtonGroup";
 import {
   ArrowDownTrayIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   ClockIcon,
   LockClosedIcon,
   LockOpenIcon,
   PlusCircleIcon,
+  XMarkIcon,
 } from "@heroicons/react/20/solid";
 import IconButton from "../../../../../components/layouts/buttons/IconButton";
 import dayjs from "dayjs";
-import { Fragment, useContext, useMemo } from "react";
+import { Fragment, useCallback, useContext, useEffect, useMemo } from "react";
 import { classNames, slugify, stripHtml } from "../../../../../utils/core";
 import {
   createOrganizationLmsToken,
   getLmsScormPackage,
+  saveOrganization,
   setOrganizationLmsTokenExpirations,
 } from "../../../../../queries/organizations";
-import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import {
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+  Transition,
+} from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { CoreContext } from "../../../../../contexts/core/core-context";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import SlideOverFormActionButtons from "../../../../../components/layouts/slide-over/SlideOverFormActionButtons";
-
-interface ManageScormPackagesProps {
-  setOpen: (open: boolean) => void;
-  lmsTokens: LmsTrainingToken[];
-  organizationId: string | undefined;
-  enrollmentId: string | undefined;
-  courseId: string | undefined;
-}
+import Input from "../../../../../components/forms/inputs/Input";
+import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
 
 const DEFAULT_EXPIRED_DATE = dayjs().startOf("day").subtract(1, "day");
 const DEFAULT_EXPIRATION_DATE = DEFAULT_EXPIRED_DATE.add(1, "year");
@@ -294,13 +301,28 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
   );
 };
 
+interface ManageScormPackagesProps {
+  setOpen: (open: boolean) => void;
+  lmsTokens: LmsTrainingToken[];
+  organizationId: string | undefined;
+  enrollmentId: string | undefined;
+  courseId: string | undefined;
+  accessSettings?: Organization["trainingAccessSettings"];
+}
+
 const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
-  setOpen,
+  setOpen: setOpenProp,
   lmsTokens,
   organizationId,
   enrollmentId,
   courseId,
+  accessSettings: trainingAccessSettings,
 }) => {
+  const [showOrgLmsSettings, setShowOrgLmsSettings] = useLocalStorage(
+    "threatzero.organizations.show-lms-settings",
+    true
+  );
+
   const { data: allItems } = useQuery({
     queryKey: ["training-course", courseId, "items"],
     queryFn: () =>
@@ -347,13 +369,156 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
     },
   });
 
+  const {
+    register: registerAccessSetting,
+    control: accessSettingControl,
+    watch: watchAccessSettings,
+    handleSubmit: handleAccessSettingsSubmit,
+    formState: {
+      isDirty: accessSettingsIsDirty,
+      isValid: accessSettingsIsValid,
+    },
+  } = useForm({
+    defaultValues: trainingAccessSettings ?? {},
+  });
+
+  const updateOrganizationMutation = useMutation({
+    mutationFn: (data: Pick<Organization, "id" | "trainingAccessSettings">) =>
+      saveOrganization(data),
+  });
+
+  const handleUpdateOrganization = useCallback(() => {
+    if (!organizationId || !accessSettingsIsDirty || !accessSettingsIsValid)
+      return;
+    handleAccessSettingsSubmit((data) =>
+      updateOrganizationMutation.mutate({
+        id: organizationId,
+        trainingAccessSettings: data,
+      })
+    )();
+  }, [
+    organizationId,
+    accessSettingsIsDirty,
+    accessSettingsIsValid,
+    updateOrganizationMutation,
+    handleAccessSettingsSubmit,
+  ]);
+
+  const debounceUpdateOrganizationAccessSettings = useDebounceCallback(
+    handleUpdateOrganization,
+    1000
+  );
+
+  useEffect(() => {
+    const { unsubscribe } = watchAccessSettings(() => {
+      debounceUpdateOrganizationAccessSettings();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [watchAccessSettings, debounceUpdateOrganizationAccessSettings]);
+
+  const setOpen = (open: boolean) => {
+    // Manipulate the setOpen function to only invalidate the organizations
+    // query when the slide over is closed. This is because invalidating the
+    // query will rerender the page and close the slider.
+    setOpenProp(open);
+    if (!open) {
+      setTimeout(
+        () =>
+          queryClient.invalidateQueries({
+            queryKey: ["organizations", organizationId],
+          }),
+        300
+      );
+    }
+  };
+
+  const {
+    fields,
+    append: addAllowedDomain,
+    remove: removeAllowedDomain,
+  } = useFieldArray({
+    control: accessSettingControl,
+    name: "allowedOrigins",
+  });
+
   return (
     <div className="flex h-screen flex-col">
       <SlideOverHeading
         title="Manage Scorm Packages"
         description="A SCORM package allows an external LMS to import our training content. Here you can automatically create a SCORM package for any training item or revoke access to an existing SCORM integration."
         setOpen={setOpen}
-      />
+      >
+        <div className="flex flex-col pt-2 text-gray-500">
+          <button
+            type="button"
+            onClick={() => setShowOrgLmsSettings((v) => !v)}
+            className="text-start text-sm text-secondary-600 hover:text-secondary-700 transition-colors inline-flex items-center gap-1"
+          >
+            <span>
+              {showOrgLmsSettings
+                ? "Hide access settings"
+                : "Show access settings"}
+            </span>
+            {showOrgLmsSettings ? (
+              <ChevronUpIcon className="h-4 w-4" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4" />
+            )}
+          </button>
+          <Transition show={showOrgLmsSettings}>
+            <div
+              className={classNames(
+                "flex flex-col gap-3 transition-all duration-500 ease-in-out max-h-32 overflow-hidden mt-3",
+                "data-[closed]:max-h-0 data-[closed]:mt-0 data-[closed]:opacity-0"
+              )}
+            >
+              <div className="flex flex-col gap-1">
+                <span className="text-xs">Allowed LMS Domains</span>
+                {fields.map((field, idx) => (
+                  <div className="relative w-full" key={field.id}>
+                    <Input
+                      type="text"
+                      className="w-full pr-10"
+                      required
+                      {...registerAccessSetting(`allowedOrigins.${idx}.value`, {
+                        validate: (value) => {
+                          try {
+                            if (value === "*") return true;
+                            if (!value) return false;
+                            new URL(value);
+                            return true;
+                          } catch (e) {
+                            return false;
+                          }
+                        },
+                      })}
+                    />
+                    <button
+                      type="button"
+                      className="cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 group"
+                    >
+                      <XMarkIcon
+                        className="size-4 text-gray-400 group-hover:text-gray-500 transition-colors"
+                        onClick={() => removeAllowedDomain(idx)}
+                      />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="text-xs text-secondary-500 hover:enabled:text-secondary-600 transition-colors text-start"
+                  onClick={() => addAllowedDomain({ value: "" })}
+                >
+                  + Add Domain
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </SlideOverHeading>
       <SlideOverFormBody>
         {lmsTokens.map((lmsToken) => (
           <div

@@ -13,12 +13,14 @@ interface LmsIntegrationsInputProps {
   organizationId: Organization["id"] | undefined;
   enrollmentId: CourseEnrollment["id"] | undefined;
   courseId: TrainingCourse["id"] | undefined;
+  accessSettings?: Organization["trainingAccessSettings"];
 }
 
 const LmsIntegrationsInput: React.FC<LmsIntegrationsInputProps> = ({
   organizationId,
   enrollmentId,
   courseId,
+  accessSettings,
 }) => {
   const [scormPackagesSliderOpen, setScormPackagesSliderOpen] = useState(false);
 
@@ -67,6 +69,7 @@ const LmsIntegrationsInput: React.FC<LmsIntegrationsInputProps> = ({
             enrollmentId={enrollmentId}
             courseId={courseId}
             organizationId={organizationId}
+            accessSettings={accessSettings}
           />
         </SlideOver>
       </>

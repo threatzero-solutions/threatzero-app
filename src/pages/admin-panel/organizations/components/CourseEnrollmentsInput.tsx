@@ -25,6 +25,7 @@ interface CourseEnrollmentsInputProps {
   label?: string;
   helpText?: string;
   organizationId: Organization["id"];
+  accessSettings?: Organization["trainingAccessSettings"];
 }
 
 const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
@@ -32,6 +33,7 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
   label = "Course Enrollments",
   helpText,
   organizationId,
+  accessSettings,
 }) => {
   const [editCourseEnrollmentSliderOpen, setEditCourseEnrollmentSliderOpen] =
     useState(false);
@@ -147,6 +149,7 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
                   organizationId={organizationId}
                   enrollmentId={enrollment.id}
                   courseId={enrollment.course?.id}
+                  accessSettings={accessSettings}
                 />
               </Block>
             ))}

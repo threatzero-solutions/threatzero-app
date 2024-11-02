@@ -1,5 +1,6 @@
 import { DetailedHTMLProps, forwardRef, InputHTMLAttributes } from "react";
 import { classNames } from "../../../utils/core";
+import { Input as HLInput } from "@headlessui/react";
 
 type InputProps = DetailedHTMLProps<
   InputHTMLAttributes<HTMLInputElement>,
@@ -9,7 +10,7 @@ type InputProps = DetailedHTMLProps<
 const Input: React.FC<InputProps> = forwardRef(
   ({ className, ...attrs }, ref) => {
     return (
-      <input
+      <HLInput
         {...attrs}
         ref={ref}
         className={classNames(

@@ -32,6 +32,14 @@ export interface OrganizationBase extends Base {
   policiesAndProcedures: OrganizationPolicyFile[];
 }
 
+export interface AllowedOrigin {
+  value: string;
+}
+
+export interface OrganizationTrainingAccessSettings {
+  allowedOrigins?: AllowedOrigin[];
+}
+
 /** Represents an organization (ie district, company, etc.) */
 export interface Organization extends OrganizationBase {
   groupId: string | null;
@@ -39,6 +47,7 @@ export interface Organization extends OrganizationBase {
   resources?: ResourceItem[];
   idpSlugs: string[];
   allowedAudiences: string[];
+  trainingAccessSettings: OrganizationTrainingAccessSettings | null;
 }
 
 export interface CourseEnrollment extends Base {
