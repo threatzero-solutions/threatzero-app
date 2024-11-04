@@ -148,3 +148,15 @@ export const formatPhoneNumber = (phoneNumber: string) => {
 export const stripPhoneNumber = (phoneNumber: string) => {
   return phoneNumber.replace(/[^+\d]/g, "");
 };
+
+export const simulateDownload = (
+  data: Blob | MediaSource,
+  filename: string
+) => {
+  const a = document.createElement("a");
+  a.setAttribute("href", window.URL.createObjectURL(data));
+  a.setAttribute("download", filename);
+  document.body.append(a);
+  a.click();
+  a.remove();
+};

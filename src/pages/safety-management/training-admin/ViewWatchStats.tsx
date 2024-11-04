@@ -1,20 +1,20 @@
 import { useContext } from "react";
-import { getWatchStatsCsv } from "../../../queries/training-admin";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import DataTable from "../../../components/layouts/DataTable";
-import { useQuery } from "@tanstack/react-query";
-import { CoreContext } from "../../../contexts/core/core-context";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import ViewPercentWatched from "./components/ViewPercentWatched";
-import { stripHtml } from "../../../utils/core";
+import { simulateDownload, stripHtml } from "../../../utils/core";
 import { useDebounceValue } from "usehooks-ts";
 import {
   getItemCompletions,
+  getItemCompletionsCsv,
   getTrainingItems,
 } from "../../../queries/training";
 import dayjs from "dayjs";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 
 const ViewWatchStats: React.FC = () => {
   const [watchStatsQuery, setWatchStatsQuery] = useImmer<ItemFilterQueryParams>(
@@ -22,7 +22,7 @@ const ViewWatchStats: React.FC = () => {
   );
 
   const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
-  const { setInfo } = useContext(CoreContext);
+  const { setInfo } = useContext(AlertContext);
 
   const { data: watchStats, isLoading: watchStatsLoading } = useQuery({
     queryKey: ["watch-stats", watchStatsQuery],
@@ -49,18 +49,20 @@ const ViewWatchStats: React.FC = () => {
     unitKey: "unitSlug",
   });
 
+  const itemCompletionsCsvMutation = useMutation({
+    mutationFn: (query: ItemFilterQueryParams) => getItemCompletionsCsv(query),
+    onSuccess: (data) => {
+      simulateDownload(new Blob([data]), "watch-stats.csv");
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
   const handleDownloadWatchStatsCsv = () => {
     setInfo("Downloading CSV...");
-    getWatchStatsCsv(watchStatsQuery).then((response) => {
-      const a = document.createElement("a");
-      a.setAttribute("href", window.URL.createObjectURL(new Blob([response])));
-      a.setAttribute("download", "watch-stats.csv");
-      document.body.append(a);
-      a.click();
-      a.remove();
-
-      setTimeout(() => setInfo(), 2000);
-    });
+    itemCompletionsCsvMutation.mutate(watchStatsQuery);
   };
 
   return (
@@ -74,25 +76,29 @@ const ViewWatchStats: React.FC = () => {
         data={{
           headers: [
             {
-              key: "lastName",
-              label: "Name",
+              key: "user.familyName",
+              label: "Last Name",
             },
             {
-              key: "email",
+              key: "user.givenName",
+              label: "First Name",
+            },
+            {
+              key: "user.email",
               label: "Email",
             },
             {
-              key: "organizationName",
+              key: "organization.name",
               label: "Organization",
               hidden: !hasMultipleOrganizationAccess,
             },
             {
-              key: "unitName",
+              key: "unit.name",
               label: "Unit",
               hidden: !hasMultipleUnitAccess,
             },
             {
-              key: "trainingItemTitle",
+              key: "item.metadata.title",
               label: "Training Item",
             },
             {
@@ -104,23 +110,16 @@ const ViewWatchStats: React.FC = () => {
               label: "Completed On",
             },
             {
-              key: "percentWatched",
+              key: "progress",
               label: "Percent Watched",
             },
           ],
           rows: (watchStats?.results ?? []).map((r) => ({
             id: r.id,
-            lastName: (
-              <span className="whitespace-nowrap">
-                {(
-                  (r.user?.familyName ?? "") +
-                  ", " +
-                  (r.user?.givenName ?? "")
-                ).replace(/(^[,\s]+)|(^[,\s]+$)/g, "") || "—"}
-              </span>
-            ),
-            email: r.user?.email || "—",
-            organizationName: (
+            ["user.familyName"]: r.user?.familyName || "—",
+            ["user.givenName"]: r.user?.givenName || "—",
+            ["user.email"]: r.user?.email || "—",
+            ["organization.name"]: (
               <span
                 className="line-clamp-2"
                 title={r.organization?.name ?? undefined}
@@ -128,12 +127,12 @@ const ViewWatchStats: React.FC = () => {
                 {r.organization?.name || "—"}
               </span>
             ),
-            unitName: (
+            ["unit.name"]: (
               <span className="line-clamp-2" title={r.unit?.name ?? undefined}>
                 {r.unit?.name || "—"}
               </span>
             ),
-            trainingItemTitle: (
+            ["item.metadata.title"]: (
               <span
                 className="line-clamp-2"
                 title={stripHtml(r.item?.metadata.title) ?? undefined}
@@ -147,13 +146,12 @@ const ViewWatchStats: React.FC = () => {
             completedOn: r.completedOn
               ? dayjs(r.completedOn).format("MMM D, YYYY")
               : "—",
-            percentWatched: (
-              <ViewPercentWatched percentWatched={r.progress * 100} />
-            ),
+            progress: <ViewPercentWatched percentWatched={r.progress * 100} />,
           })),
         }}
         title="All Training Watch Stats"
         subtitle="Sort and filter through watch stats."
+        dense
         isLoading={watchStatsLoading}
         action={
           <button

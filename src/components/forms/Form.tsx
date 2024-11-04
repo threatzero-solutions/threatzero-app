@@ -32,7 +32,7 @@ import { deleteForm, newDraftForm, saveForm } from "../../queries/forms";
 import { produce } from "immer";
 import Steps from "./Steps";
 import React from "react";
-import { ErrorContext } from "../../contexts/error/error-context";
+import { AlertContext } from "../../contexts/alert/alert-context";
 import SlideOver from "../layouts/slide-over/SlideOver";
 import SelectLanguage from "../languages/SelectLanguage";
 import { DeepPartial } from "../../types/core";
@@ -125,7 +125,7 @@ const Form: React.FC<FormProps> = ({
   );
 
   const { dispatch: formsDispatch } = useContext(FormsContext);
-  const { setError } = useContext(ErrorContext);
+  const { setError } = useContext(AlertContext);
 
   const published = useMemo(() => form?.state === FormState.PUBLISHED, [form]);
 

@@ -13,6 +13,7 @@ import {
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import {
   deleteOne,
+  download,
   findMany,
   findOne,
   findOneById,
@@ -78,6 +79,9 @@ export const getMyItemCompletions = (
 
 export const getItemCompletions = (query: ItemFilterQueryParams) =>
   findMany<ItemCompletion>("/training/items/completions/", query);
+
+export const getItemCompletionsCsv = (query: ItemFilterQueryParams) =>
+  download("/training/items/completions/csv/", query);
 
 // ------- MUTATIONS ---------
 

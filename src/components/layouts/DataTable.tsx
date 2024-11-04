@@ -44,6 +44,7 @@ interface DataTableProps {
       align?: "left" | "center" | "right";
       noSort?: boolean;
       hidden?: boolean;
+      sortKey?: string;
     }[];
     rows: {
       id: string;
@@ -188,7 +189,7 @@ const DataTable: React.FC<DataTableProps> = ({
                   <tr>
                     {data?.headers
                       .filter((h) => !h.hidden)
-                      .map(({ label, key, align, noSort }, idx) => (
+                      .map(({ label, key, align, noSort, sortKey }, idx) => (
                         <th
                           key={key}
                           scope="col"
@@ -216,7 +217,9 @@ const DataTable: React.FC<DataTableProps> = ({
                                 ? "cursor-pointer"
                                 : ""
                             )}
-                            onClick={() => handleUpdateSort(key, noSort)}
+                            onClick={() =>
+                              handleUpdateSort(sortKey ?? key, noSort)
+                            }
                             onKeyUp={() => {}}
                           >
                             {label}
@@ -227,19 +230,19 @@ const DataTable: React.FC<DataTableProps> = ({
                                     ? "pointer-events-none hidden w-0"
                                     : "cursor-pointer",
                                   "ml-2 flex-none inline-flex items-center gap-0.5 rounded transition-colors",
-                                  currentOrder?.[key]
+                                  currentOrder[sortKey ?? key]
                                     ? "bg-gray-200 text-gray-900 group-hover:bg-gray-300"
                                     : "text-gray-300 group-hover:text-gray-600"
                                 )}
                               >
-                                {currentOrder?.[key] === "DESC" ? (
+                                {currentOrder[sortKey ?? key] === "DESC" ? (
                                   <ChevronDownIcon
                                     className={classNames(
                                       dense ? "h-4 w-4" : "h-5 w-5"
                                     )}
                                     aria-hidden="true"
                                   />
-                                ) : currentOrder?.[key] === "ASC" ? (
+                                ) : currentOrder[sortKey ?? key] === "ASC" ? (
                                   <ChevronUpIcon
                                     className={classNames(
                                       dense ? "h-4 w-4" : "h-5 w-5"
@@ -254,15 +257,14 @@ const DataTable: React.FC<DataTableProps> = ({
                                     aria-hidden="true"
                                   />
                                 )}
-                                {currentOrder &&
-                                  Object.values(currentOrder).filter((v) => !!v)
-                                    .length > 1 &&
-                                  !!currentOrder[key] && (
+                                {Object.values(currentOrder).filter((v) => !!v)
+                                  .length > 1 &&
+                                  !!currentOrder[sortKey ?? key] && (
                                     <span className="text-xs leading-3 text-gray-500 mr-1 self-center">
                                       {Object.entries(currentOrder)
                                         .filter(([, v]) => !!v)
                                         .map(([k]) => k)
-                                        .indexOf(key) + 1}
+                                        .indexOf(sortKey ?? key) + 1}
                                     </span>
                                   )}
                               </span>

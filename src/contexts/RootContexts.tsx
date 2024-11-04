@@ -1,13 +1,13 @@
 import { PropsWithChildren } from "react";
 import { CoreContextProvider } from "./core/core-context";
-import { ErrorContextProvider } from "./error/error-context";
+import { AlertContextProvider } from "./alert/alert-context";
 import { FormsContextProvider } from "./forms/forms-context";
 import QueryContext from "./QueryContext";
 import { TrainingContextProvider } from "./training/training-context";
 
 export const RootContexts: React.FC<PropsWithChildren> = ({ children }) => {
   return (
-    <ErrorContextProvider>
+    <AlertContextProvider>
       <QueryContext>
         <CoreContextProvider>
           <FormsContextProvider>
@@ -15,6 +15,6 @@ export const RootContexts: React.FC<PropsWithChildren> = ({ children }) => {
           </FormsContextProvider>
         </CoreContextProvider>
       </QueryContext>
-    </ErrorContextProvider>
+    </AlertContextProvider>
   );
 };

@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { ErrorContextProvider } from "../../contexts/error/error-context";
+import { AlertContextProvider } from "../../contexts/alert/alert-context";
 import { FormsContextProvider } from "../../contexts/forms/forms-context";
 import QueryContext from "../../contexts/QueryContext";
 import { useTitles } from "../../hooks/use-titles";
@@ -9,7 +9,7 @@ const PublicRoot: React.FC = () => {
   useTitles();
 
   return (
-    <ErrorContextProvider>
+    <AlertContextProvider>
       <QueryContext>
         <FormsContextProvider>
           <PublicLayout>
@@ -17,7 +17,7 @@ const PublicRoot: React.FC = () => {
           </PublicLayout>
         </FormsContextProvider>
       </QueryContext>
-    </ErrorContextProvider>
+    </AlertContextProvider>
   );
 };
 

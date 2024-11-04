@@ -32,6 +32,7 @@ import AudienceMatchersInput from "./AudienceMatchersInput";
 import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
 import Select from "../../../../components/forms/inputs/Select";
 import SyncAttributesInput from "./SyncAttributesInput";
+import { AlertContext } from "../../../../contexts/alert/alert-context";
 
 const SERVICE_PROVIDER_ENTITY_ID =
   "https://auth.threatzero.org/realms/threatzero";
@@ -150,7 +151,7 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
   value,
   label,
 }) => {
-  const { setSuccess } = useContext(CoreContext);
+  const { setSuccess } = useContext(AlertContext);
 
   return (
     <div className="flex flex-col gap-1">

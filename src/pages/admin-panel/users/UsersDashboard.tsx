@@ -23,7 +23,7 @@ import { TrainingToken } from "../../../types/entities";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useContext, useState } from "react";
 import ManageTrainingInvite from "./training-invites/ManageTrainingInvite";
-import { CoreContext } from "../../../contexts/core/core-context";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 
 dayjs.extend(relativeTime);
 
@@ -52,7 +52,7 @@ const UsersDashboard: React.FC = () => {
 
   const watchTrainingPath = useResolvedPath("/watch-training/");
 
-  const { setSuccess } = useContext(CoreContext);
+  const { setSuccess } = useContext(AlertContext);
 
   const [itemFilterOptions, setItemFilterOptions] =
     useImmer<ItemFilterQueryParams>({});

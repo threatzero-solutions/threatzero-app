@@ -25,7 +25,12 @@ import {
 import IconButton from "../../../../../components/layouts/buttons/IconButton";
 import dayjs from "dayjs";
 import { Fragment, useCallback, useContext, useEffect, useMemo } from "react";
-import { classNames, slugify, stripHtml } from "../../../../../utils/core";
+import {
+  classNames,
+  simulateDownload,
+  slugify,
+  stripHtml,
+} from "../../../../../utils/core";
 import {
   createOrganizationLmsToken,
   getLmsScormPackage,
@@ -45,6 +50,7 @@ import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import SlideOverFormActionButtons from "../../../../../components/layouts/slide-over/SlideOverFormActionButtons";
 import Input from "../../../../../components/forms/inputs/Input";
 import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
+import { AlertContext } from "../../../../../contexts/alert/alert-context";
 
 const DEFAULT_EXPIRED_DATE = dayjs().startOf("day").subtract(1, "day");
 const DEFAULT_EXPIRATION_DATE = DEFAULT_EXPIRED_DATE.add(1, "year");
@@ -91,8 +97,8 @@ const TrainingItemDisplay: React.FC<{
 const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
   lmsToken,
 }) => {
-  const { setInfo, setConfirmationOpen, setConfirmationClose } =
-    useContext(CoreContext);
+  const { setInfo } = useContext(AlertContext);
+  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
   const { data: item, isLoading: itemLoading } = useQuery({
     queryKey: ["trainingItem", lmsToken.value.trainingItemId] as const,
@@ -158,26 +164,27 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
     })();
   };
 
+  const downloadLmsScormPackageMutation = useMutation({
+    mutationFn: (lmsToken: LmsTrainingToken) =>
+      getLmsScormPackage(lmsToken.value.organizationId, lmsToken.key),
+    onSuccess: (data) => {
+      const trainingTitle = item
+        ? slugify(stripHtml(item.metadata.title)).slice(0, 50)
+        : "training";
+      simulateDownload(
+        new Blob([data]),
+        `threatzero_${trainingTitle}_scorm.zip`
+      );
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
   const handleDownloadScormPackage = () => {
     setInfo("Downloading SCORM package...");
-    getLmsScormPackage(lmsToken.value.organizationId, lmsToken.key).then(
-      (response) => {
-        const a = document.createElement("a");
-        a.setAttribute(
-          "href",
-          window.URL.createObjectURL(new Blob([response]))
-        );
-        const trainingTitle = item
-          ? slugify(stripHtml(item.metadata.title)).slice(0, 50)
-          : "training";
-        a.setAttribute("download", `threatzero_${trainingTitle}_scorm.zip`);
-        document.body.append(a);
-        a.click();
-        a.remove();
-
-        setTimeout(() => setInfo(), 2000);
-      }
-    );
+    downloadLmsScormPackageMutation.mutate(lmsToken);
   };
 
   return (
@@ -356,11 +363,15 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
   const createLmsTokenMutation = useMutation({
     mutationFn: (itemId: TrainingItem["id"]) =>
       organizationId
-        ? createOrganizationLmsToken(organizationId, {
-            trainingItemId: itemId,
+        ? createOrganizationLmsToken(
             organizationId,
-            enrollmentId,
-          })
+            {
+              trainingItemId: itemId,
+              organizationId,
+              enrollmentId,
+            },
+            DEFAULT_EXPIRATION_DATE.toDate()
+          )
         : Promise.reject("No organization ID."),
     onSuccess: () => {
       queryClient.invalidateQueries({

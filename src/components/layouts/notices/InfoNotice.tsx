@@ -2,10 +2,10 @@ import { Fragment, useContext } from "react";
 import { Transition } from "@headlessui/react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { CoreContext } from "../../../contexts/core/core-context";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 
 const InfoNotice: React.FC = () => {
-  const { state, dispatch } = useContext(CoreContext);
+  const { state, dispatch } = useContext(AlertContext);
 
   return (
     <>
@@ -46,7 +46,7 @@ const InfoNotice: React.FC = () => {
                       type="button"
                       className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2"
                       onClick={() => {
-                        dispatch({ type: "DISMISS_SUCCESS_MESSAGE" });
+                        dispatch({ type: "DISMISS_INFO_MESSAGE" });
                       }}
                     >
                       <span className="sr-only">Close</span>

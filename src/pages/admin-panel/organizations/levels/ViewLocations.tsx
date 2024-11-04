@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useContext, useState } from "react";
 import {
   generateQrCode,
   getLocations,
@@ -20,8 +20,12 @@ import {
 } from "@heroicons/react/20/solid";
 import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../../components/layouts/buttons/IconButton";
+import { simulateDownload } from "../../../../utils/core";
+import { AlertContext } from "../../../../contexts/alert/alert-context";
 
 export const ViewLocations: React.FC = () => {
+  const { setInfo } = useContext(AlertContext);
+
   const [editLocationSliderOpen, setEditLocationSliderOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<
     Partial<Location> | undefined
@@ -49,13 +53,21 @@ export const ViewLocations: React.FC = () => {
     setEditLocationSliderOpen(true);
   };
 
+  const downloadQrCodeMutation = useMutation({
+    mutationFn: generateQrCode,
+    onSuccess: ({ locationId, data }) => {
+      simulateDownload(data, `sos-qr-code-${locationId}.png`);
+
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
   const handleDownloadQRCode = (locationId: string) => {
-    generateQrCode(locationId).then((imgData) => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(imgData);
-      a.download = `sos-qr-code-${locationId}.png`;
-      a.click();
-    });
+    setInfo("Downloading QR code...");
+    downloadQrCodeMutation.mutate(locationId);
   };
 
   return (

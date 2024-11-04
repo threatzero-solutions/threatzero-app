@@ -18,7 +18,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useAuth } from "../../../contexts/AuthProvider";
-import { ErrorContext } from "../../../contexts/error/error-context";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 import { useResolvedPath } from "react-router-dom";
 import {
   getTrainingInvites,
@@ -26,7 +26,6 @@ import {
   resendTrainingLinks,
   sendTrainingLinks,
 } from "../../../queries/training-admin";
-import { CoreContext } from "../../../contexts/core/core-context";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import {
   TrainingCourse,
@@ -41,7 +40,7 @@ import {
   getOrganizationBySlug,
   getUnitBySlug,
 } from "../../../queries/organizations";
-import { stripHtml } from "../../../utils/core";
+import { simulateDownload, stripHtml } from "../../../utils/core";
 import CourseSelect from "../../../components/forms/inputs/CourseSelect";
 import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 import { useDebounceValue } from "usehooks-ts";
@@ -165,8 +164,8 @@ const ManageTrainingInvites: React.FC = () => {
     useState<TrainingToken>();
 
   const { hasMultipleUnitAccess, hasMultipleOrganizationAccess } = useAuth();
-  const { setError } = useContext(ErrorContext);
-  const { setSuccess, setInfo } = useContext(CoreContext);
+  const { setError } = useContext(AlertContext);
+  const { setSuccess, setInfo } = useContext(AlertContext);
 
   const watchTrainingPath = useResolvedPath("/watch-training/");
 
@@ -382,20 +381,25 @@ const ManageTrainingInvites: React.FC = () => {
     });
   };
 
+  const downloadTrainingLinksCsvMutation = useMutation({
+    mutationFn: (args: {
+      trainingUrlTemplate: string;
+      query: ItemFilterQueryParams;
+    }) => getTrainingInvitesCsv(args.trainingUrlTemplate, args.query),
+    onSuccess: (data) => {
+      simulateDownload(new Blob([data]), "training-links.csv");
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
   const handleDownloadTrainingLinksCsv = () => {
     setInfo("Downloading CSV...");
-    getTrainingInvitesCsv(
-      `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
-      itemFilterOptions
-    ).then((response) => {
-      const a = document.createElement("a");
-      a.setAttribute("href", window.URL.createObjectURL(new Blob([response])));
-      a.setAttribute("download", "training-links.csv");
-      document.body.append(a);
-      a.click();
-      a.remove();
-
-      setTimeout(() => setInfo(), 2000);
+    downloadTrainingLinksCsvMutation.mutate({
+      trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
+      query: itemFilterOptions,
     });
   };
 
@@ -582,11 +586,11 @@ const ManageTrainingInvites: React.FC = () => {
               },
               {
                 label: "Expires",
-                key: "value.expiresOn",
+                key: "expiresOn",
               },
               {
                 label: "Percent Watched",
-                key: "watchStat.percentWatched",
+                key: "completion.progress",
                 align: "right",
               },
               {
@@ -636,14 +640,16 @@ const ManageTrainingInvites: React.FC = () => {
                   {dayjs(t.createdOn).fromNow()}
                 </span>
               ),
-              ["value.expiresOn"]: (
-                <span title={dayjs(t.value.expiresOn).format("MMM D, YYYY")}>
-                  {dayjs(t.value.expiresOn).fromNow()}
+              expiresOn: (
+                <span title={dayjs(t.expiresOn).format("MMM D, YYYY")}>
+                  {dayjs(t.expiresOn).fromNow()}
                 </span>
               ),
-              ["watchStat.percentWatched"]: (
+              ["completion.progress"]: (
                 <ViewPercentWatched
-                  percentWatched={t.watchStat?.percentWatched}
+                  percentWatched={
+                    t.completion?.progress && t.completion.progress * 100
+                  }
                 />
               ),
               link: (

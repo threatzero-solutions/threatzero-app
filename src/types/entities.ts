@@ -469,7 +469,7 @@ export interface TrainingParticipantTokenValue extends ViewingUserTokenValue {
 
 export interface TrainingToken
   extends OpaqueToken<TrainingParticipantTokenValue> {
-  watchStat?: WatchStat | null;
+  completion?: ItemCompletion | null;
 }
 
 export interface LmsTrainingTokenValue {

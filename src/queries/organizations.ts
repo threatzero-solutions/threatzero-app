@@ -76,7 +76,7 @@ export const generateQrCode = async (locationId: string) => {
     .get(url, {
       responseType: "blob",
     })
-    .then((res) => res.data);
+    .then((res) => ({ locationId, data: res.data }));
 };
 
 // ------------- MUTATIONS -------------
@@ -89,11 +89,13 @@ export const deleteOrganization = (id: string | undefined) =>
 
 export const createOrganizationLmsToken = (
   id: Organization["id"],
-  createLmsTokenValue: DeepPartial<LmsTrainingTokenValue>
+  createLmsTokenValue: DeepPartial<LmsTrainingTokenValue>,
+  expiresOn?: Date
 ) =>
   insertOne(
     `/organizations/organizations/${id}/lms-tokens/`,
-    createLmsTokenValue
+    createLmsTokenValue,
+    { params: { expiresOn } }
   );
 
 export const setOrganizationLmsTokenExpirations = (

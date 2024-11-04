@@ -5,11 +5,11 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { PropsWithChildren, useContext, useState } from "react";
-import { ErrorContext } from "./error/error-context";
+import { AlertContext } from "./alert/alert-context";
 import { AxiosError } from "axios";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
-  const { setError } = useContext(ErrorContext);
+  const { setError } = useContext(AlertContext);
 
   const handleError = (error: unknown) => {
     console.error(error);

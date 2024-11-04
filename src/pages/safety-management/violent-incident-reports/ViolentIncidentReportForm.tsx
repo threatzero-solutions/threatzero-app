@@ -19,7 +19,7 @@ import {
   ViolentIncidentReportStatus,
 } from "../../../types/entities";
 import Form from "../../../components/forms/Form";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import StatusPill from "./components/StatusPill";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import { VIOLENT_INCIDENT_REPORT_FORM_SLUG } from "../../../constants/forms";
@@ -32,6 +32,8 @@ import { API_BASE_URL } from "../../../contexts/core/constants";
 import EditableCell from "../../../components/layouts/EditableCell";
 import { DeepPartial } from "../../../types/core";
 import { useAuth } from "../../../contexts/AuthProvider";
+import { simulateDownload } from "../../../utils/core";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/violent-incident-reports/submissions/presigned-upload-urls`;
 
@@ -41,6 +43,8 @@ const ViolentIncidentReportForm: React.FC = () => {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const { setInfo } = useContext(AlertContext);
   const { hasPermissions } = useAuth();
 
   const isEditing = useMemo(() => searchParams.has("edit"), [searchParams]);
@@ -121,6 +125,18 @@ const ViolentIncidentReportForm: React.FC = () => {
     [violentIncidentReportMutation.mutate, params.reportId]
   );
 
+  const downloadViolentIncidentReportToPdfMutation = useMutation({
+    mutationFn: violentIncidentReportToPdf,
+    onSuccess: (data) => {
+      simulateDownload(new Blob([data]), "violent-incident-report.pdf");
+
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
   const violentIncidentReportActions: DropdownAction[] = useMemo(
     () => [
       {
@@ -133,21 +149,9 @@ const ViolentIncidentReportForm: React.FC = () => {
         id: "pdf",
         value: "Download as PDF",
         action: () => {
-          violentIncidentReportToPdf(violentIncidentReport?.id).then(
-            (response) => {
-              const a = document.createElement("a");
-              a.setAttribute(
-                "href",
-                window.URL.createObjectURL(new Blob([response]))
-              );
-              a.setAttribute("download", "violent-incident-report.pdf");
-
-              document.body.append(a);
-
-              a.click();
-
-              a.remove();
-            }
+          setInfo("Downloading as PDF...");
+          downloadViolentIncidentReportToPdfMutation.mutate(
+            violentIncidentReport?.id
           );
         },
         hidden: !violentIncidentReport,
@@ -165,6 +169,8 @@ const ViolentIncidentReportForm: React.FC = () => {
       canAlterViolentIncidentReport,
       isEditing,
       setIsEditing,
+      downloadViolentIncidentReportToPdfMutation,
+      setInfo,
     ]
   );
 
