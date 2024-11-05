@@ -28,7 +28,8 @@ import {
 } from "../../../queries/training-admin";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import {
-  TrainingCourse,
+  CourseEnrollment,
+  Organization,
   TrainingItem,
   TrainingToken,
 } from "../../../types/entities";
@@ -41,14 +42,26 @@ import {
   getUnitBySlug,
 } from "../../../queries/organizations";
 import { simulateDownload, stripHtml } from "../../../utils/core";
-import CourseSelect from "../../../components/forms/inputs/CourseSelect";
 import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 import { useDebounceValue } from "usehooks-ts";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import ViewPercentWatched from "./components/ViewPercentWatched";
 import { DeepPartial } from "react-hook-form";
+import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
+import EnrollmentSelect from "../../../components/forms/inputs/EnrollmentSelect";
+import Papa, { ParseResult } from "papaparse";
 
-const CSV_HEADERS_MAPPER = new Map([
+interface InviteCsvRow {
+  firstName: string;
+  lastName: string;
+  email: string;
+  organizationSlug: string;
+  unitSlug: string;
+  enrollmentId: string;
+  trainingItemId: string;
+}
+
+const CSV_HEADERS_MAPPER = new Map<string, InviteCsvRow[keyof InviteCsvRow]>([
   ["firstname", "firstName"],
   ["lastname", "lastName"],
   ["email", "email"],
@@ -56,22 +69,24 @@ const CSV_HEADERS_MAPPER = new Map([
   ["familyname", "lastName"],
   ["emailaddress", "email"],
   ["surname", "lastName"],
+  ["organization", "organizationSlug"],
+  ["organizationslug", "organizationSlug"],
   ["unit", "unitSlug"],
+  ["unitslug", "unitSlug"],
   ["school", "unitSlug"],
-  ["course", "trainingCourseId"],
-  ["courseid", "trainingCourseId"],
-  ["trainingcourseid", "trainingCourseId"],
+  ["enrollment", "enrollmentId"],
+  ["enrollmentid", "enrollmentId"],
+  ["courseenrollmentid", "enrollmentId"],
+  ["courseenrollment", "enrollmentId"],
+  ["trainingcourseenrollmentid", "enrollmentId"],
+  ["trainingcourseenrollment", "enrollmentId"],
   ["item", "trainingItemId"],
   ["trainingitem", "trainingItemId"],
   ["trainingitemid", "trainingItemId"],
 ]);
 
-const normalizeHeaders = (headers: string[]) => {
-  return headers.map(
-    (h) =>
-      CSV_HEADERS_MAPPER.get(h.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()) || h
-  );
-};
+const normalizeHeader = (h: string) =>
+  CSV_HEADERS_MAPPER.get(h.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()) || h;
 
 const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
   trainingItemId,
@@ -150,9 +165,11 @@ const ManageTrainingInvites: React.FC = () => {
       email: "",
     },
   ]);
-  const [selectedEnrollmentId] = useState<string | undefined>(undefined);
-  const [selectedCourse, setSelectedCourse] = useState<
-    TrainingCourse | DeepPartial<TrainingCourse> | undefined | null
+  const [selectedOrganization, setSelectedOrganization] = useState<
+    Organization | undefined | null
+  >();
+  const [selectedEnrollment, setSelectedEnrollment] = useState<
+    CourseEnrollment | DeepPartial<CourseEnrollment> | undefined | null
   >();
   const [selectedItem, setSelectedItem] = useState<
     TrainingItem | undefined | null
@@ -191,15 +208,23 @@ const ManageTrainingInvites: React.FC = () => {
   });
 
   const { data: allTrainingItems } = useQuery({
-    queryKey: ["training-course-items", selectedCourse] as const,
+    queryKey: [
+      "training-course-items",
+      selectedEnrollment?.course?.id,
+    ] as const,
     queryFn: ({ queryKey }) =>
-      getTrainingCourse(queryKey[1]?.id).then((c) =>
-        c?.sections.reduce((arr, s) => {
-          arr.push(...(s.items?.map((i) => i.item) ?? []));
-          return arr;
-        }, [] as TrainingItem[])
+      getTrainingCourse(queryKey[1]).then((c) =>
+        Array.from(
+          c?.sections
+            .flatMap((s) => s.items?.map((i) => i.item) ?? [])
+            .reduce((arr, i) => {
+              arr.set(i.id, i);
+              return arr;
+            }, new Map<TrainingItem["id"], TrainingItem>())
+            .values() ?? []
+        )
       ),
-    enabled: !!selectedCourse,
+    enabled: !!selectedEnrollment?.course?.id,
   });
 
   const organizationFilters = useOrganizationFilters({
@@ -224,63 +249,91 @@ const ManageTrainingInvites: React.FC = () => {
     );
   }, [allTrainingItems, itemSearchQuery]);
 
-  const handleCSVUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const inviteCSVUploadFn = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result;
-      if (!text || typeof text !== "string") {
-        return;
-      }
-      const lines = text.split("\n").filter((l) => l.trim().length > 0);
-      const headers = normalizeHeaders(lines.shift()?.split(",") || []);
-      setTokenValues(() =>
-        lines.map((line) => {
-          const {
-            firstName,
-            lastName,
-            email,
-            unitSlug,
-            trainingCourseId: _trainingCourseId,
-            trainingItemId: _trainingItemId,
-          } = Object.fromEntries(
-            headers.map((h, i) => [h, line.split(",")[i]])
-          );
 
-          if (!selectedCourse && _trainingCourseId) {
-            getTrainingCourse(_trainingCourseId).then((c) => {
-              setSelectedCourse(c);
-
-              if (!selectedItem && _trainingItemId) {
-                setSelectedItem(
-                  c?.sections.reduce((acc, s) => {
-                    if (!acc) {
-                      acc = s.items
-                        ?.map((i) => i.item)
-                        .find((i) => i.id === _trainingItemId);
-                    }
-
-                    return acc;
-                  }, undefined as TrainingItem | undefined)
-                );
-              }
-            });
-          }
-
-          return {
-            firstName,
-            lastName,
-            email,
-            unitSlug,
-          };
+    const { data: rows } = await new Promise<ParseResult<InviteCsvRow>>(
+      (resolve) =>
+        Papa.parse<InviteCsvRow, File>(file, {
+          header: true,
+          transformHeader: normalizeHeader,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results),
         })
-      );
+    );
+
+    let organizationSlugFromCsv: string | undefined = undefined;
+    let enrollmentIdFromCsv: string | undefined = undefined;
+    let trainingItemIdFromCsv: string | undefined = undefined;
+
+    const results: {
+      organization?: Organization;
+      enrollment?: CourseEnrollment;
+      item?: TrainingItem;
+      tokenValues: Partial<TrainingParticipantRepresentation>[];
+    } = {
+      tokenValues: [],
     };
-    reader.readAsText(file);
+
+    for (const row of rows) {
+      if (row.organizationSlug && !organizationSlugFromCsv) {
+        organizationSlugFromCsv = row.organizationSlug;
+
+        if (row.enrollmentId && !enrollmentIdFromCsv) {
+          enrollmentIdFromCsv = row.enrollmentId;
+
+          if (row.trainingItemId && !trainingItemIdFromCsv) {
+            trainingItemIdFromCsv = row.trainingItemId;
+          }
+        }
+      }
+
+      results.tokenValues.push({
+        firstName: row.firstName,
+        lastName: row.lastName,
+        email: row.email,
+        unitSlug: row.unitSlug,
+      });
+    }
+
+    if (organizationSlugFromCsv) {
+      results.organization = await getOrganizationBySlug(
+        organizationSlugFromCsv
+      );
+
+      if (enrollmentIdFromCsv) {
+        results.enrollment = results.organization.enrollments?.find(
+          (e) => e.id === enrollmentIdFromCsv
+        );
+
+        if (trainingItemIdFromCsv) {
+          const course = await getTrainingCourse(
+            results.enrollment?.course?.id
+          );
+          results.item = course?.sections
+            .flatMap((s) => s.items?.map((i) => i.item) ?? [])
+            .find((i) => i.id === trainingItemIdFromCsv);
+        }
+      }
+    }
+
+    return results;
   };
+
+  const inviteCSVUploadMutation = useMutation({
+    mutationFn: inviteCSVUploadFn,
+    onSuccess: (data) => {
+      if (data) {
+        setTokenValues(data.tokenValues);
+        setSelectedOrganization(data.organization);
+        setSelectedEnrollment(data.enrollment);
+        setSelectedItem(data.item);
+      }
+    },
+  });
 
   const handleUpdateInvite = (
     idx: number,
@@ -318,7 +371,8 @@ const ManageTrainingInvites: React.FC = () => {
     onSuccess: () => {
       setSuccess("Invites successfully sent!", 5000);
       setTokenValues([{ firstName: "", lastName: "", email: "" }]);
-      setSelectedCourse(undefined);
+      setSelectedOrganization(undefined);
+      setSelectedEnrollment(undefined);
       setSelectedItem(undefined);
       queryClient.invalidateQueries({ queryKey: ["training-invites"] });
     },
@@ -335,18 +389,13 @@ const ManageTrainingInvites: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!selectedCourse) {
-      setError("No training course selected.", 5000);
+    if (!selectedEnrollment?.id) {
+      setError("No course enrollment selected.", 5000);
       return;
     }
 
     if (!selectedItem) {
       setError("No training item selected.", 5000);
-      return;
-    }
-
-    if (!selectedEnrollmentId) {
-      setError("Unable to send invites. Not fully implemented yet.", 5000);
       return;
     }
 
@@ -356,7 +405,7 @@ const ManageTrainingInvites: React.FC = () => {
         userId: t.email,
       })),
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
-      courseEnrollmentId: selectedEnrollmentId,
+      courseEnrollmentId: selectedEnrollment.id,
       trainingItemId: selectedItem?.id,
     };
 
@@ -411,8 +460,81 @@ const ManageTrainingInvites: React.FC = () => {
             Manage Training Invites
           </h1>
         </div>
-        <form className="flex flex-col gap-6" onSubmit={onSubmitSendInvites}>
+        <form className="flex flex-col gap-4" onSubmit={onSubmitSendInvites}>
           {/* SEND NEW INVITES */}
+          <div className="sm:flex sm:items-center">
+            <div className="sm:flex-auto">
+              <h1 className="text-base font-semibold leading-6 text-gray-900">
+                Send New Invites
+              </h1>
+              <p className="mt-2 text-sm text-gray-700">
+                Send members of your organization email invites to watch
+                specific trainings.
+              </p>
+            </div>
+            <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+                + Upload From CSV
+                <input
+                  type="file"
+                  onChange={inviteCSVUploadMutation.mutate}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+          {hasMultipleOrganizationAccess && (
+            <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+              <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+                Select an organization
+              </label>
+              <div className="mt-2 sm:col-span-2 sm:mt-0">
+                <OrganizationSelect
+                  value={selectedOrganization}
+                  onChange={(e) =>
+                    setSelectedOrganization(
+                      e.target?.value as Organization | undefined
+                    )
+                  }
+                  required
+                />
+              </div>
+            </div>
+          )}
+          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              Select a course enrollment
+            </label>
+            <div className="mt-2 sm:col-span-2 sm:mt-0">
+              <EnrollmentSelect
+                value={selectedEnrollment}
+                onChange={(e) => setSelectedEnrollment(e.target?.value)}
+                immediate
+                required
+                disabled={!selectedOrganization}
+                organizationId={selectedOrganization?.id}
+              />
+            </div>
+          </div>
+          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              Select a training item
+            </label>
+            <div className="mt-2 sm:col-span-2 sm:mt-0">
+              <Autocomplete
+                value={selectedItem ?? null}
+                onChange={setSelectedItem}
+                onRemove={() => setSelectedItem(null)}
+                setQuery={setItemSearchQuery}
+                options={filteredTrainingItems}
+                placeholder="Search for training item in course..."
+                displayValue={(i) => stripHtml(i?.metadata.title) ?? ""}
+                required
+                immediate
+                disabled={!selectedEnrollment}
+              />
+            </div>
+          </div>
           <DataTable
             data={{
               headers: [
@@ -477,6 +599,14 @@ const ManageTrainingInvites: React.FC = () => {
                       )
                     }
                     required={true}
+                    queryFilter={
+                      hasMultipleOrganizationAccess && selectedOrganization
+                        ? {
+                            ["organization.id"]: selectedOrganization.id,
+                          }
+                        : undefined
+                    }
+                    disabled={!selectedOrganization}
                   />
                 ),
                 delete: (
@@ -486,18 +616,6 @@ const ManageTrainingInvites: React.FC = () => {
                 ),
               })),
             }}
-            title="Send New Invites"
-            subtitle="Send members of your organization email invites to watch specific trainings."
-            action={
-              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
-                + Upload From CSV
-                <input
-                  type="file"
-                  onChange={handleCSVUpload}
-                  className="hidden"
-                />
-              </label>
-            }
           />
           <button
             type="button"
@@ -506,37 +624,6 @@ const ManageTrainingInvites: React.FC = () => {
           >
             + Add Invite
           </button>
-          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-              Select a training course
-            </label>
-            <div className="mt-2 sm:col-span-2 sm:mt-0">
-              <CourseSelect
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target?.value)}
-                immediate
-                required
-              />
-            </div>
-          </div>{" "}
-          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-              Select a training item
-            </label>
-            <div className="mt-2 sm:col-span-2 sm:mt-0">
-              <Autocomplete
-                value={selectedItem ?? null}
-                onChange={setSelectedItem}
-                onRemove={() => setSelectedItem(null)}
-                setQuery={setItemSearchQuery}
-                options={filteredTrainingItems}
-                placeholder="Search for training item in course..."
-                displayValue={(i) => stripHtml(i?.metadata.title) ?? ""}
-                required
-                immediate
-              />
-            </div>
-          </div>
           <div className="flex flex-col items-center gap-3">
             <p className="text-sm text-gray-700">
               Click "Send Invites" to immediately send training invites via

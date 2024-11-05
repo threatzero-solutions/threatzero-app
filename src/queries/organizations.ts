@@ -12,6 +12,7 @@ import {
   download,
   findMany,
   findManyRaw,
+  findOneById,
   findOneByIdOrFail,
   insertOne,
   putOne,
@@ -31,6 +32,11 @@ export const getOrganization = (id?: string) =>
 
 export const getOrganizationBySlug = (slug?: string) =>
   findOneByIdOrFail<Organization>("/organizations/organizations/slug/", slug);
+
+export const getCourseEnrollments = (id?: Organization["id"]) =>
+  findOneById<Organization>("/organizations/organizations/", id).then(
+    (organization) => organization?.enrollments ?? []
+  );
 
 export const getOrganizationLmsTokens = (
   id: Organization["id"],
@@ -73,7 +79,10 @@ export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);
 
 export const getUnitBySlug = (slug?: string) =>
-  getUnits({ slug }).then((res) => res.results[0]);
+  getUnits({ slug }).then((res) => {
+    if (res.results.length) return res.results[0];
+    throw new Error('Unit not found by slug "' + slug + '"');
+  });
 
 export const getLocations = (query?: ItemFilterQueryParams) =>
   findMany<Location>("/organizations/locations/", query);

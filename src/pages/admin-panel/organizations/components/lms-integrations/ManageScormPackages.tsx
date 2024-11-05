@@ -326,7 +326,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                   to: "bottom end",
                   gap: 2,
                 }}
-                className="text-xs font-semibold rounded-md bg-secondary-500 text-white flex flex-col items-stretch"
+                className="text-xs font-semibold rounded-md bg-gray-500 text-white flex flex-col items-stretch"
               >
                 <MenuItem>
                   <IconButton
