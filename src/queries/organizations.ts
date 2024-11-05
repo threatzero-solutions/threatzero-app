@@ -40,8 +40,15 @@ export const getOrganizationLmsTokens = (
     query
   );
 
-export const getLmsScormPackage = (id: Organization["id"], key: string) =>
-  download(`/organizations/organizations/${id}/lms-tokens/scorm`, { key });
+export const getLmsScormPackage = (
+  id: Organization["id"],
+  key: string,
+  version?: "1.2" | "2004"
+) =>
+  download(`/organizations/organizations/${id}/lms-tokens/scorm`, {
+    key,
+    version,
+  });
 
 export const getOrganizationUsers = (
   id: Organization["id"] | undefined,

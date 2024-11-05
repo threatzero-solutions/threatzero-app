@@ -38,6 +38,10 @@ import {
   setOrganizationLmsTokenExpirations,
 } from "../../../../../queries/organizations";
 import {
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
   Popover,
   PopoverButton,
   PopoverPanel,
@@ -165,8 +169,14 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
   };
 
   const downloadLmsScormPackageMutation = useMutation({
-    mutationFn: (lmsToken: LmsTrainingToken) =>
-      getLmsScormPackage(lmsToken.value.organizationId, lmsToken.key),
+    mutationFn: ({
+      lmsToken,
+      version,
+    }: {
+      lmsToken: LmsTrainingToken;
+      version: "1.2" | "2004";
+    }) =>
+      getLmsScormPackage(lmsToken.value.organizationId, lmsToken.key, version),
     onSuccess: (data) => {
       const trainingTitle = item
         ? slugify(stripHtml(item.metadata.title)).slice(0, 50)
@@ -182,9 +192,12 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
     },
   });
 
-  const handleDownloadScormPackage = () => {
+  const handleDownloadScormPackage = (version: "1.2" | "2004" = "1.2") => {
     setInfo("Downloading SCORM package...");
-    downloadLmsScormPackageMutation.mutate(lmsToken);
+    downloadLmsScormPackageMutation.mutate({
+      lmsToken,
+      version,
+    });
   };
 
   return (
@@ -289,19 +302,51 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
           />
         </ButtonGroup>
         <ButtonGroup>
-          <IconButton
-            icon={ArrowDownTrayIcon}
-            text="Download SCORM"
-            type="button"
-            className="bg-secondary-500 text-white enabled:hover:bg-secondary-600 ring-transparent disabled:opacity-50 disabled:cursor-default"
-            onClick={() => handleDownloadScormPackage()}
-            disabled={expired}
-            title={
-              expired
-                ? "Grant access to enable download"
-                : "Download SCORM package (.zip)"
-            }
-          />
+          {/* TODO: Add optional menu of buttons on the side to select other scorm versions. */}
+          <div>
+            <IconButton
+              icon={ArrowDownTrayIcon}
+              text="Download SCORM"
+              type="button"
+              className="bg-secondary-500 text-white enabled:hover:bg-secondary-600 ring-transparent disabled:opacity-50 disabled:cursor-default rounded-e-none"
+              onClick={() => handleDownloadScormPackage()}
+              disabled={expired}
+              title={
+                expired
+                  ? "Grant access to enable download"
+                  : "Download SCORM package (.zip)"
+              }
+            />
+            <Menu>
+              <MenuButton className="rounded-md bg-secondary-500 text-white enabled:hover:bg-secondary-600 disabled:opacity-50 disabled:cursor-default ring-transparent rounded-s-none p-1.5 transition-colors border-s">
+                <ChevronDownIcon className="size-4" />
+              </MenuButton>
+              <MenuItems
+                anchor={{
+                  to: "bottom end",
+                  gap: 2,
+                }}
+                className="text-xs font-semibold rounded-md bg-secondary-500 text-white flex flex-col items-stretch"
+              >
+                <MenuItem>
+                  <IconButton
+                    icon={ArrowDownTrayIcon}
+                    text="Version 1.2 (Default)"
+                    className="transition-colors enabled:hover:bg-secondary-600 rounded-none shadow-none ring-transparent"
+                    onClick={() => handleDownloadScormPackage("1.2")}
+                  />
+                </MenuItem>
+                <MenuItem>
+                  <IconButton
+                    icon={ArrowDownTrayIcon}
+                    text="Version 2004"
+                    className="transition-colors enabled:hover:bg-secondary-600 rounded-none shadow-none ring-transparent"
+                    onClick={() => handleDownloadScormPackage("2004")}
+                  />
+                </MenuItem>
+              </MenuItems>
+            </Menu>
+          </div>
         </ButtonGroup>
       </div>
     </div>

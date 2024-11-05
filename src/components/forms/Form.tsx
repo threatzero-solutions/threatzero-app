@@ -223,7 +223,7 @@ const Form: React.FC<FormProps> = ({
 
     const type = event.target.getAttribute("data-fieldtype");
 
-    // biome-ignore lint/suspicious/noExplicitAny:
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let newValue: any = value;
     if (type === FieldType.CHECKBOX) {
       newValue = event.target.checked;
