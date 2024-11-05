@@ -21,6 +21,7 @@ import {
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { DeepPartial } from "../types/core";
 import { OrganizationIdpDto, OrganizationUser } from "../types/api";
+import { ScormVersion } from "../types/training";
 
 export const getOrganizations = (query?: ItemFilterQueryParams) =>
   findMany<Organization>("/organizations/organizations/", query);
@@ -43,7 +44,7 @@ export const getOrganizationLmsTokens = (
 export const getLmsScormPackage = (
   id: Organization["id"],
   key: string,
-  version?: "1.2" | "2004"
+  version?: ScormVersion
 ) =>
   download(`/organizations/organizations/${id}/lms-tokens/scorm`, {
     key,

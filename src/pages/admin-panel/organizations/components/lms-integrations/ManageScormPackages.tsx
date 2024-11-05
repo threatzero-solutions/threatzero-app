@@ -55,6 +55,7 @@ import SlideOverFormActionButtons from "../../../../../components/layouts/slide-
 import Input from "../../../../../components/forms/inputs/Input";
 import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
 import { AlertContext } from "../../../../../contexts/alert/alert-context";
+import { ScormVersion } from "../../../../../types/training";
 
 const DEFAULT_EXPIRED_DATE = dayjs().startOf("day").subtract(1, "day");
 const DEFAULT_EXPIRATION_DATE = DEFAULT_EXPIRED_DATE.add(1, "year");
@@ -174,7 +175,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
       version,
     }: {
       lmsToken: LmsTrainingToken;
-      version: "1.2" | "2004";
+      version: ScormVersion;
     }) =>
       getLmsScormPackage(lmsToken.value.organizationId, lmsToken.key, version),
     onSuccess: (data) => {
@@ -192,7 +193,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
     },
   });
 
-  const handleDownloadScormPackage = (version: "1.2" | "2004" = "1.2") => {
+  const handleDownloadScormPackage = (version: ScormVersion = "1.2") => {
     setInfo("Downloading SCORM package...");
     downloadLmsScormPackageMutation.mutate({
       lmsToken,
@@ -302,7 +303,6 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
           />
         </ButtonGroup>
         <ButtonGroup>
-          {/* TODO: Add optional menu of buttons on the side to select other scorm versions. */}
           <div>
             <IconButton
               icon={ArrowDownTrayIcon}
@@ -339,9 +339,17 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                 <MenuItem>
                   <IconButton
                     icon={ArrowDownTrayIcon}
-                    text="Version 2004"
+                    text="Version 2004 (3rd Edition)"
                     className="transition-colors enabled:hover:bg-secondary-600 rounded-none shadow-none ring-transparent"
-                    onClick={() => handleDownloadScormPackage("2004")}
+                    onClick={() => handleDownloadScormPackage("2004.3")}
+                  />
+                </MenuItem>
+                <MenuItem>
+                  <IconButton
+                    icon={ArrowDownTrayIcon}
+                    text="Version 2004 (4th Edition)"
+                    className="transition-colors enabled:hover:bg-secondary-600 rounded-none shadow-none ring-transparent"
+                    onClick={() => handleDownloadScormPackage("2004.4")}
                   />
                 </MenuItem>
               </MenuItems>
