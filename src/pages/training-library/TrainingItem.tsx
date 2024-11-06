@@ -187,7 +187,11 @@ const TrainingItem: React.FC = () => {
   useEffect(() => {
     return () => {
       queryClient.invalidateQueries({
-        queryKey: ["item-completions", state.activeEnrollment?.id],
+        predicate: (q) =>
+          !!q.queryKey[1] &&
+          typeof q.queryKey[1] === "object" &&
+          (q.queryKey[1] as Record<string, string>)["enrollment.id"] ===
+            state.activeEnrollment?.id,
       });
     };
   }, [queryClient, state.activeEnrollment?.id]);

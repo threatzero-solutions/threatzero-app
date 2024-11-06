@@ -84,7 +84,8 @@ const VimeoPlayer: React.FC<VimeoPlayerProps> = ({
         onProgress?.({
           progressSeconds: maxProgressSeconds.current,
           progressPercent:
-            Math.ceil((maxProgressSeconds.current / data.duration) * 100) / 100,
+            Math.ceil((maxProgressSeconds.current / data.duration) * 10000) /
+            10000,
           currentSeconds: data.seconds,
           currentPercent: data.percent,
           totalDuration: data.duration,
