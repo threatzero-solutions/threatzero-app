@@ -407,6 +407,7 @@ const ManageTrainingInvites: React.FC = () => {
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
       courseEnrollmentId: selectedEnrollment.id,
       trainingItemId: selectedItem?.id,
+      organizationId: selectedOrganization?.id,
     };
 
     sendTrainingLinksMutation.mutate(preparedRequest);

@@ -37,6 +37,7 @@ export interface SendTrainingLinksDto {
   trainingUrlTemplate: string;
   courseEnrollmentId: string;
   trainingItemId: string;
+  organizationId?: string;
 }
 
 export interface ResendTrainingLinksDto {
