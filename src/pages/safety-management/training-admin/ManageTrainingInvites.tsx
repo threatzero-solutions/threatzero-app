@@ -512,7 +512,9 @@ const ManageTrainingInvites: React.FC = () => {
                 onChange={(e) => setSelectedEnrollment(e.target?.value)}
                 immediate
                 required
-                disabled={!selectedOrganization}
+                disabled={
+                  hasMultipleOrganizationAccess && !selectedOrganization
+                }
                 organizationId={selectedOrganization?.id}
               />
             </div>
@@ -607,7 +609,9 @@ const ManageTrainingInvites: React.FC = () => {
                           }
                         : undefined
                     }
-                    disabled={!selectedOrganization}
+                    disabled={
+                      hasMultipleOrganizationAccess && !selectedOrganization
+                    }
                   />
                 ),
                 delete: (
