@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { Organization } from "../../../../types/entities";
 import { slugify } from "../../../../utils/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,13 +15,15 @@ import OrganizationIdpsInput from "../components/OrganizationIdpsInput";
 import { CoreContext } from "../../../../contexts/core/core-context";
 import CourseEnrollmentsInput from "../components/CourseEnrollmentsInput";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { useDebounceCallback } from "usehooks-ts";
 import { useAuth } from "../../../../contexts/AuthProvider";
 import { useNavigate, useParams } from "react-router-dom";
 import LargeFormSection from "../../../../components/forms/LargeFormSection";
 import FormField from "../../../../components/forms/FormField";
 import BackButtonLink from "../../../../components/layouts/BackButtonLink";
 import SuccessButton from "../../../../components/layouts/buttons/SuccessButton";
+import { useAutoSlug } from "../../../../hooks/use-auto-slug";
+import { ArrowPathIcon } from "@heroicons/react/20/solid";
+import Input from "../../../../components/forms/inputs/Input";
 
 const EditOrganization: React.FC = () => {
   const navigate = useNavigate();
@@ -33,43 +35,26 @@ const EditOrganization: React.FC = () => {
   const { myOrganizationSlug } = useAuth();
 
   const { data: organizationData } = useQuery({
-    queryKey: ["organizations", params.id] as const,
-    queryFn: ({ queryKey }) => getOrganization(queryKey[1]),
-    enabled: !!params.id,
+    queryKey: ["organization", "id", params.id] as const,
+    queryFn: ({ queryKey }) => getOrganization(queryKey[2]),
+    enabled: !!params.id && params.id !== "new",
     refetchOnWindowFocus: false,
   });
 
   const formMethods = useForm({
     values: organizationData,
   });
-  const { handleSubmit, register, control, watch, setValue, getFieldState } =
-    formMethods;
+  const { handleSubmit, register, control, watch } = formMethods;
 
   const id = watch("id");
   const name = watch("name");
-  const slug = watch("slug");
   const groupId = watch("groupId");
   const idpSlugs = watch("idpSlugs");
-  const { isTouched: slugIsTouched } = getFieldState("slug");
 
-  useEffect(() => {
-    if (name && !slugIsTouched && !organizationData?.slug) {
-      setValue("slug", slugify(name));
-    }
-  }, [name, slugIsTouched, setValue, organizationData?.slug]);
-
-  const formatSlug = useCallback(
-    (sl: string) => {
-      if (!sl || sl === slugify(sl)) return;
-      setValue("slug", slugify(sl));
-    },
-    [setValue]
-  );
-  const debounceFormatSlug = useDebounceCallback(formatSlug, 1000);
-
-  useEffect(() => {
-    debounceFormatSlug(slug);
-  }, [slug, debounceFormatSlug]);
+  const { registerSlug, resetSlug } = useAutoSlug({
+    ...formMethods,
+    defaultSlug: organizationData?.slug,
+  });
 
   const { data: resources } = useQuery({
     queryKey: ["resource-items", { limit: 100 }] as const,
@@ -77,25 +62,29 @@ const EditOrganization: React.FC = () => {
   });
 
   const queryClient = useQueryClient();
-  const onMutateSuccess = (data?: Organization) => {
-    queryClient.invalidateQueries({
-      queryKey: ["organizations"],
-    });
-    if (data && myOrganizationSlug === data.slug) {
-      queryClient.invalidateQueries({
-        queryKey: ["my-course-enrollments"],
-      });
-    }
-  };
   const saveOrganizationMutation = useMutation({
     mutationFn: saveOrganization,
-    onSuccess: onMutateSuccess,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["organizations"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "id", data.id],
+      });
+      if (myOrganizationSlug === data.slug) {
+        queryClient.invalidateQueries({
+          queryKey: ["my-course-enrollments"],
+        });
+      }
+    },
   });
 
   const deleteOrganizationMutation = useMutation({
     mutationFn: deleteOrganization,
     onSuccess: () => {
-      onMutateSuccess();
+      queryClient.invalidateQueries({
+        queryKey: ["organizations"],
+      });
       setConfirmationClose();
       navigate("../");
     },
@@ -142,14 +131,29 @@ const EditOrganization: React.FC = () => {
                 }}
               />
               <FormField
-                required
-                type="text"
-                {...register("slug")}
                 field={{
                   label: "Slug",
-                  name: "slug",
                   helpText: "The slug field must be unique.",
                 }}
+                input={
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      required
+                      {...registerSlug()}
+                      className="w-full pr-7"
+                    />
+                    <button
+                      type="button"
+                      className="group absolute right-2 top-1/2 -translate-y-1/2 disabled:opacity-50"
+                      title="Generate slug from name"
+                      onClick={() => resetSlug()}
+                      disabled={!name}
+                    >
+                      <ArrowPathIcon className="size-4 group-hover:group-enabled:rotate-180 duration-500 transition-transform" />
+                    </button>
+                  </div>
+                }
               />
               <FormField
                 type="textarea"

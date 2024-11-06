@@ -78,6 +78,9 @@ export const getOrganizationIdpRoleGroups = (id: Organization["id"]) =>
 export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);
 
+export const getUnit = (id?: Unit["id"]) =>
+  findOneByIdOrFail<Unit>("/organizations/units/", id);
+
 export const getUnitBySlug = (slug?: string) =>
   getUnits({ slug }).then((res) => {
     if (res.results.length) return res.results[0];

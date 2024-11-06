@@ -492,7 +492,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
       setTimeout(
         () =>
           queryClient.invalidateQueries({
-            queryKey: ["organizations", organizationId],
+            queryKey: ["organization", "id", organizationId],
           }),
         300
       );

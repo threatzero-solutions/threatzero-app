@@ -135,7 +135,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
       {
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["organizations", organization.id],
+            queryKey: ["organization", "id", organization.id],
           });
           close();
           setSlugToLink("");
@@ -157,7 +157,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
           {
             onSuccess: () => {
               queryClient.invalidateQueries({
-                queryKey: ["organizations", organization.id],
+                queryKey: ["organization", "id", organization.id],
               });
               setConfirmationClose();
             },

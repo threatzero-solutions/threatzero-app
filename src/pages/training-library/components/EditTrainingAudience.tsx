@@ -4,7 +4,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { Audience, Field, FieldType } from "../../../types/entities";
@@ -20,6 +19,7 @@ import SlideOverField from "../../../components/layouts/slide-over/SlideOverFiel
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import { useDebounceCallback } from "usehooks-ts";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Audience }> = [
   {
@@ -49,15 +49,13 @@ const EditTrainingAudiences: React.FC<EditTrainingAudiencesProps> = ({
 
   const isNew = useMemo(() => !audienceProp, [audienceProp]);
 
-  const slugDebounceTimeout = useRef<number>();
-
   const queryClient = useQueryClient();
   const onMutateSuccess = () => {
     queryClient.invalidateQueries({
       queryKey: ["training-audiences"],
     });
     queryClient.invalidateQueries({
-      queryKey: ["training-courses", state.activeCourse?.id],
+      queryKey: ["training-course", "id", state.activeCourse?.id],
     });
     setOpen(false);
   };
@@ -78,20 +76,17 @@ const EditTrainingAudiences: React.FC<EditTrainingAudiencesProps> = ({
     }));
   }, [audienceProp, state.activeAudience]);
 
+  const debouncedSetAudience = useDebounceCallback(setAudience, 1000);
+
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    let value = event.target.value;
+    const value = event.target.value;
     if (event.target.name === "slug") {
-      value = slugify(value, false);
-
-      clearTimeout(slugDebounceTimeout.current);
-      slugDebounceTimeout.current = setTimeout(() => {
-        setAudience((a) => ({
-          ...a,
-          slug: slugify(value),
-        }));
-      }, 1000);
+      debouncedSetAudience((a) => ({
+        ...a,
+        slug: slugify(slugify(value, false)),
+      }));
     }
 
     setAudience((a) => ({

@@ -50,9 +50,11 @@ const CourseSelect: React.FC<CourseSelectProps> = ({
 }) => {
   const [coursesQuery, setCoursesQuery] = useImmer<ItemFilterQueryParams>({});
   const { data: allCourses } = useQuery({
-    queryKey: ["training-courses", coursesQuery, queryFilter] as const,
-    queryFn: ({ queryKey }) =>
-      getTrainingCourses({ ...queryKey[1], ...queryFilter }),
+    queryKey: [
+      "training-courses",
+      { ...coursesQuery, ...queryFilter },
+    ] as const,
+    queryFn: ({ queryKey }) => getTrainingCourses(queryKey[1]),
   });
 
   const { hasPermissions } = useAuth();

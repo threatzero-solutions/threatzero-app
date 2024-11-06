@@ -25,6 +25,8 @@ export const ViewLanguages: React.FC = () => {
     queryFn: ({ queryKey }) => getLanguages(queryKey[1]),
   });
 
+  /*************  ✨ Codeium Command ⭐  *************/
+  /******  d5736b23-724c-4ce5-a190-a1ca75679811  *******/
   const handleEditLanguage = (language?: Language) => {
     setSelectedLanguage(language);
     setEditLanguageSliderOpen(true);

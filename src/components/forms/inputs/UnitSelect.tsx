@@ -65,9 +65,9 @@ const UnitSelect = <M extends boolean | undefined = false>({
   });
 
   const { data: selectedUnit } = useQuery({
-    queryKey: ["units", value] as const,
+    queryKey: ["unit", "slug", value] as const,
     queryFn: ({ queryKey }) =>
-      getUnitBySlug(queryKey[1] as string).catch(() => null),
+      getUnitBySlug(queryKey[2] as string).catch(() => null),
     enabled: !!value && typeof value === "string",
   });
 

@@ -101,10 +101,12 @@ const EditResource: React.FC<EditResourceProps> = ({
   const queryClient = useQueryClient();
   const onMutateSuccess = () => {
     queryClient.invalidateQueries({
-      queryKey: ["resource-items", resourceItem.category, resourceItem.type],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ["resource-items-all"],
+      predicate: (q) =>
+        q.queryKey[1] !== null &&
+        typeof q.queryKey[1] === "object" &&
+        (q.queryKey[1] as Record<string, string>).category ===
+          resourceItem.category &&
+        (q.queryKey[1] as Record<string, string>).type === resourceItem.type,
     });
     setOpen(false);
   };

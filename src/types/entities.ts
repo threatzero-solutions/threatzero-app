@@ -51,7 +51,7 @@ export interface Organization extends OrganizationBase {
 }
 
 export interface CourseEnrollment extends Base {
-  organization?: Organization;
+  // organization?: Organization;
   course: TrainingCourse;
   startDate: Date | string | null;
   endDate: Date | string | null;
@@ -440,7 +440,7 @@ export interface ResourceItem extends Base {
   description?: string;
   type: ResourceType;
   category: ResourceItemCategory;
-  organizations: Organization[];
+  // organizations: Organization[];
 }
 
 // USERS

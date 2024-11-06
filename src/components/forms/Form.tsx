@@ -4,7 +4,6 @@ import {
   useEffect,
   useContext,
   useMemo,
-  useRef,
   ReactNode,
   useCallback,
 } from "react";
@@ -36,6 +35,7 @@ import { AlertContext } from "../../contexts/alert/alert-context";
 import SlideOver from "../layouts/slide-over/SlideOver";
 import SelectLanguage from "../languages/SelectLanguage";
 import { DeepPartial } from "../../types/core";
+import { useDebounceCallback } from "usehooks-ts";
 
 export interface FormAction {
   id: string;
@@ -156,7 +156,6 @@ const Form: React.FC<FormProps> = ({
     return actions;
   }, [actionsProp]);
 
-  const autoExecuteTimeout = useRef<number>();
   const autoExecuteAction = useMemo(
     () => formActions?.find((a) => a.autoExecute),
     [formActions]
@@ -210,6 +209,34 @@ const Form: React.FC<FormProps> = ({
     setFieldResponsesLoaded(!!submission);
   }, [submission, fieldResponsesLoaded]);
 
+  const handleAutoExecute = useCallback(
+    async (action: FormAction) => {
+      setAutoExecuteLoading(true);
+      if (!action.action) {
+        action.ref?.current?.click();
+      } else {
+        try {
+          await action.action();
+        } catch (e) {
+          setError(`${e}`);
+        }
+        if (action.autoExecuteLoading === undefined) {
+          setTimeout(
+            () => setAutoExecuteLoading(false),
+            AUTO_EXECUTE_LOADING_MS
+          );
+        }
+      }
+    },
+    [setError, setAutoExecuteLoading]
+  );
+
+  const debouncedAutoExecute = useDebounceCallback(
+    handleAutoExecute,
+    autoExecuteAction?.autoExecuteDebounceTime ??
+      DEFAULT_AUTO_EXECUTE_DEBOUNCE_TIME
+  );
+
   const handleChange = (event: Partial<ChangeEvent<HTMLInputElement>>) => {
     if (!form || !event.target) {
       return;
@@ -242,25 +269,7 @@ const Form: React.FC<FormProps> = ({
     );
 
     if (autoExecuteAction) {
-      clearTimeout(autoExecuteTimeout.current);
-      autoExecuteTimeout.current = setTimeout(async () => {
-        setAutoExecuteLoading(true);
-        if (!autoExecuteAction.action) {
-          autoExecuteAction.ref?.current?.click();
-        } else {
-          try {
-            await autoExecuteAction.action();
-          } catch (e) {
-            setError(`${e}`);
-          }
-          if (autoExecuteAction.autoExecuteLoading === undefined) {
-            setTimeout(
-              () => setAutoExecuteLoading(false),
-              AUTO_EXECUTE_LOADING_MS
-            );
-          }
-        }
-      }, autoExecuteAction.autoExecuteDebounceTime ?? DEFAULT_AUTO_EXECUTE_DEBOUNCE_TIME);
+      debouncedAutoExecute(autoExecuteAction);
     }
   };
 

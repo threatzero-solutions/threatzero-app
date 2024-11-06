@@ -64,7 +64,7 @@ const ResourceItem: React.FC = () => {
   const params = useParams();
 
   const { data: resource, isLoading } = useQuery({
-    queryKey: ["resource-items", params.category, params.id],
+    queryKey: ["resource-item", "id", params.id],
     queryFn: ({ queryKey }) => getResourceItem(queryKey[2] as string),
     refetchOnWindowFocus: false,
     enabled: !!params.id,

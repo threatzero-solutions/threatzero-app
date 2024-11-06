@@ -22,7 +22,7 @@ export const ViewResources: React.FC = () => {
   const [debouncedItemFilterOptions] = useDebounceValue(itemFilterOptions, 300);
 
   const { data: resources, isLoading: resourcesLoading } = useQuery({
-    queryKey: ["resource-items-all", debouncedItemFilterOptions] as const,
+    queryKey: ["resource-items", debouncedItemFilterOptions] as const,
     queryFn: ({ queryKey }) => getResourceItems(queryKey[1]),
   });
 

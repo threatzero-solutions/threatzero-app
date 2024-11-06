@@ -11,14 +11,18 @@ const MyDashboard: React.FC = () => {
   const { keycloak } = useAuth();
 
   const { data: myOrganization, isLoading: organizationLoading } = useQuery({
-    queryKey: ["organizations", keycloak!.tokenParsed!.organization] as const,
-    queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[1]),
+    queryKey: [
+      "organization",
+      "slug",
+      keycloak!.tokenParsed!.organization,
+    ] as const,
+    queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[2]),
     enabled: !!keycloak?.tokenParsed?.organization,
   });
 
   const { data: myUnit, isLoading: unitLoading } = useQuery({
-    queryKey: ["units", keycloak!.tokenParsed!.unit] as const,
-    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[1]),
+    queryKey: ["unit", "slug", keycloak!.tokenParsed!.unit] as const,
+    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[2]),
     enabled: !!keycloak?.tokenParsed?.unit,
   });
 

@@ -197,17 +197,20 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
 
     const { data: activeCourse, isPending: courseLoading } = useQuery({
       queryKey: [
-        "training-courses",
+        "training-course",
+        "id",
         state.activeEnrollment?.course.id,
       ] as const,
-      queryFn: ({ queryKey }) => getTrainingCourse(queryKey[1]),
+      queryFn: ({ queryKey }) => getTrainingCourse(queryKey[2]),
       enabled: !!state.activeEnrollment?.course.id,
     });
 
     const { data: itemCompletions } = useQuery({
-      queryKey: ["item-completions", activeEnrollmentId] as const,
-      queryFn: ({ queryKey }) =>
-        getMyItemCompletions({ "enrollment.id": queryKey[1], limit: 100 }),
+      queryKey: [
+        "item-completions",
+        { "enrollment.id": activeEnrollmentId, limit: 100 },
+      ] as const,
+      queryFn: ({ queryKey }) => getMyItemCompletions(queryKey[1]),
       enabled: !!activeEnrollmentId,
     });
 

@@ -131,13 +131,13 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
     }) => swapTrainingSectionOrders(data.sectionA, data.sectionB),
     onSuccess: ([dataA, dataB]) => {
       queryClient.invalidateQueries({
-        queryKey: ["training-sections", dataA.id],
+        queryKey: ["training-section", "id", dataA.id],
       });
       queryClient.invalidateQueries({
-        queryKey: ["training-sections", dataB.id],
+        queryKey: ["training-section", "id", dataB.id],
       });
       queryClient.invalidateQueries({
-        queryKey: ["training-courses", dataA.courseId],
+        queryKey: ["training-course", "id", dataA.courseId],
       });
     },
   });

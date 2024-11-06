@@ -57,13 +57,11 @@ const ResourceDocuments: React.FC = () => {
   const category = params.category as ResourceItemCategory;
 
   const { data: documents, isLoading } = useQuery({
-    queryKey: ["resource-items", category, ResourceType.DOCUMENT],
-    queryFn: () =>
-      getResourceItems({
-        category: category,
-        type: ResourceType.DOCUMENT,
-        limit: 250,
-      }),
+    queryKey: [
+      "resource-items",
+      { category, type: ResourceType.DOCUMENT, limit: 250 },
+    ] as const,
+    queryFn: ({ queryKey }) => getResourceItems(queryKey[1]),
   });
 
   return (

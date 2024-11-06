@@ -58,8 +58,8 @@ const EditTrainingSection: React.FC<EditTrainingSectionProps> = ({
   const [selectItemsOpen, setSelectItemsOpen] = useState(false);
 
   const { data: section } = useQuery({
-    queryKey: ["training-sections", sectionId] as const,
-    queryFn: ({ queryKey }) => getTrainingSection(queryKey[1]),
+    queryKey: ["training-section", "id", sectionId] as const,
+    queryFn: ({ queryKey }) => getTrainingSection(queryKey[2]),
     enabled: !!sectionId,
   });
 
@@ -105,10 +105,10 @@ const EditTrainingSection: React.FC<EditTrainingSectionProps> = ({
   const queryClient = useQueryClient();
   const onMutateSuccess = () => {
     queryClient.invalidateQueries({
-      queryKey: ["training-sections", section?.id],
+      queryKey: ["training-section", "id", section?.id],
     });
     queryClient.invalidateQueries({
-      queryKey: ["training-courses", courseId],
+      queryKey: ["training-course", "id", courseId],
     });
     setOpen(false);
   };

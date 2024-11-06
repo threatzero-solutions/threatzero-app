@@ -1,4 +1,4 @@
-import { useContext, useMemo, useRef, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { TrainingContext } from "../../../contexts/training/training-context";
 import {
   Audience,
@@ -32,6 +32,7 @@ import { Controller, FieldPath, useForm } from "react-hook-form";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import EditTrainingSection from "../../training-library/components/EditTrainingSection";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
+import { useDebounceCallback } from "usehooks-ts";
 
 type CourseFieldType = Partial<Field> & { name: FieldPath<TrainingCourse> };
 
@@ -92,8 +93,6 @@ const CourseBuilder = withRequirePermissions(() => {
     string | undefined
   >();
 
-  const courseSaveTimeout = useRef<number>();
-
   const { dispatch, courseLoading } = useContext(TrainingContext);
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
@@ -104,15 +103,15 @@ const CourseBuilder = withRequirePermissions(() => {
   const isNew = useMemo(() => params.id === "new", [params.id]);
 
   const { data: course } = useQuery({
-    queryKey: ["training-courses", params.id],
-    queryFn: () => getTrainingCourse(params.id!),
+    queryKey: ["training-course", "id", params.id] as const,
+    queryFn: ({ queryKey }) => getTrainingCourse(queryKey[2]),
     enabled: !!params.id && !isNew,
     refetchOnWindowFocus: false,
   });
 
   const duplicateCourseId = searchParams.get("duplicate_course_id");
   const { data: courseToDuplicate } = useQuery({
-    queryKey: ["training-courses", duplicateCourseId],
+    queryKey: ["training-course", "id", duplicateCourseId],
     enabled: !!duplicateCourseId && isNew,
     queryFn: () => getTrainingCourse(duplicateCourseId!),
     refetchOnWindowFocus: false,
@@ -154,23 +153,24 @@ const CourseBuilder = withRequirePermissions(() => {
   const title = watch("metadata.title");
   const visibility = watch("visibility");
 
+  const debouncedSetCourseSaveSuccessful = useDebounceCallback(
+    setCourseSaveSuccessful,
+    5000
+  );
+
   const queryClient = useQueryClient();
   const saveCourseMutation = useMutation({
     mutationFn: saveTrainingCourse,
     onSuccess: (data) => {
       // Show course save successful check icon.
       setCourseSaveSuccessful(true);
-      clearTimeout(courseSaveTimeout.current);
-      courseSaveTimeout.current = setTimeout(() => {
-        setCourseSaveSuccessful(false);
-      }, 5000);
+      debouncedSetCourseSaveSuccessful(false);
 
       queryClient.invalidateQueries({
         queryKey: ["training-courses"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["training-courses", data.id],
-        exact: true,
+        queryKey: ["training-course", "id", data.id],
       });
       navigate(`../${data.id}`);
       setSearchParams({}, { replace: true });

@@ -3,15 +3,15 @@ import ViewTrainingCourse from "../../training-library/components/ViewTrainingCo
 import { getTrainingCourse } from "../../../queries/training";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
-import { Organization, TrainingVisibility } from "../../../types/entities";
+import { TrainingVisibility } from "../../../types/entities";
 import BackButtonLink from "../../../components/layouts/BackButtonLink";
 
 const PreviewCourse: React.FC = () => {
   const params = useParams();
 
   const { data: course, isPending: coursePending } = useQuery({
-    queryKey: ["training-courses", params.id],
-    queryFn: () => getTrainingCourse(params.id!),
+    queryKey: ["training-course", "id", params.id] as const,
+    queryFn: ({ queryKey }) => getTrainingCourse(queryKey[2]),
     enabled: !!params.id,
   });
 
@@ -34,7 +34,6 @@ const PreviewCourse: React.FC = () => {
               .add(1, "year")
               .format("YYYY-MM-DD"),
             visibility: TrainingVisibility.VISIBLE,
-            organization: {} as Organization,
             createdOn: dayjs().format(),
             updatedOn: dayjs().format(),
           }

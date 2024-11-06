@@ -85,8 +85,12 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
   }, [userIdAsEmail, trainingTokenValue.email]);
 
   const { data: trainingItem, isLoading: trainingItemLoading } = useQuery({
-    queryKey: ["training-items", trainingTokenValue.trainingItemId] as const,
-    queryFn: ({ queryKey }) => getTrainingItem(`${queryKey[1]}`),
+    queryKey: [
+      "training-item",
+      "id",
+      trainingTokenValue.trainingItemId,
+    ] as const,
+    queryFn: ({ queryKey }) => getTrainingItem(`${queryKey[2]}`),
     enabled: !!trainingTokenValue.trainingItemId,
   });
 

@@ -1,16 +1,9 @@
-import { useImmer } from "use-immer";
-import { SyncAttributeDto } from "../../../../types/api";
-import { SimpleChangeEvent } from "../../../../types/core";
+import { OrganizationIdpDto, SyncAttributeDto } from "../../../../types/api";
 import DataTable from "../../../../components/layouts/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
-import { MouseEvent, useEffect } from "react";
+import { MouseEvent } from "react";
 import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
-
-interface SyncAttributesInputProps<K extends string | number | symbol> {
-  name: K;
-  value?: SyncAttributeDto[];
-  onChange?: (e: SimpleChangeEvent<SyncAttributeDto[], K>) => void;
-}
+import { useFieldArray, useFormContext } from "react-hook-form";
 
 const AddAttributeButton: React.FC<{
   value?: string;
@@ -27,41 +20,17 @@ const AddAttributeButton: React.FC<{
   );
 };
 
-const SyncAttributesInput = <K extends string | number | symbol>({
-  name,
-  value,
-  onChange,
-}: SyncAttributesInputProps<K>) => {
-  const [attributes, setAttributes] = useImmer<SyncAttributeDto[]>(value ?? []);
+const DEFAULT_SYNC_ATTRIBUTE: SyncAttributeDto = {
+  externalName: "",
+  internalName: "",
+};
 
-  const handleAddAttribute = () => {
-    setAttributes((draft) => {
-      draft.push({
-        externalName: "",
-        internalName: "",
-      });
-    });
-  };
-
-  const handleRemoveAttribute = (idx: number) => {
-    setAttributes((draft) => {
-      draft.splice(idx, 1);
-    });
-  };
-
-  const handleUpdateAttribute = (
-    idx: number,
-    key: keyof SyncAttributeDto,
-    e: SimpleChangeEvent<string | null | undefined>
-  ) => {
-    setAttributes((draft) => {
-      draft[idx][key] = e.target?.value ?? "";
-    });
-  };
-
-  useEffect(() => {
-    onChange?.({ target: { name, value: attributes } });
-  }, [attributes, onChange, name]);
+const SyncAttributesInput: React.FC = () => {
+  const { control } = useFormContext<OrganizationIdpDto>();
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "syncAttributes",
+  });
 
   return (
     <div className="flex flex-col">
@@ -89,27 +58,31 @@ const SyncAttributesInput = <K extends string | number | symbol>({
               noSort: true,
             },
           ],
-          rows: attributes.map((a, idx) => ({
+          rows: fields.map((field, idx) => ({
             id: `${idx}`,
             externalName: (
               <Input
-                value={a.externalName ?? ""}
+                value={field.externalName ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateAttribute(idx, "externalName", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, externalName: e.target.value })
+                }
                 required
               />
             ),
             arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             internalName: (
               <Input
-                value={a.internalName ?? ""}
+                value={field.internalName ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateAttribute(idx, "internalName", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, internalName: e.target.value })
+                }
                 required
               />
             ),
             delete: (
-              <button type="button" onClick={() => handleRemoveAttribute(idx)}>
+              <button type="button" onClick={() => remove(idx)}>
                 <TrashIcon className="w-4 h-4" />
               </button>
             ),
@@ -118,12 +91,12 @@ const SyncAttributesInput = <K extends string | number | symbol>({
         notFoundDetail={
           <AddAttributeButton
             value="+ Add a sync attribute"
-            onClick={handleAddAttribute}
+            onClick={() => append(DEFAULT_SYNC_ATTRIBUTE)}
           />
         }
       />
-      {attributes.length > 0 && (
-        <AddAttributeButton onClick={handleAddAttribute} />
+      {fields.length > 0 && (
+        <AddAttributeButton onClick={() => append(DEFAULT_SYNC_ATTRIBUTE)} />
       )}
     </div>
   );

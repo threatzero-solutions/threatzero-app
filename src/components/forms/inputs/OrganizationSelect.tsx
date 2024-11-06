@@ -62,9 +62,9 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
   });
 
   const { data: selectedOrganization } = useQuery({
-    queryKey: ["organizations", value] as const,
+    queryKey: ["organization", "slug", value] as const,
     queryFn: ({ queryKey }) =>
-      getOrganizationBySlug(queryKey[1] as string).catch(() => null),
+      getOrganizationBySlug(queryKey[2] as string).catch(() => null),
     enabled: !!value && typeof value === "string",
   });
 

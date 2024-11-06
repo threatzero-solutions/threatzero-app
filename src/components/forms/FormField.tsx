@@ -24,7 +24,7 @@ const HelpText: React.FC<{ helpText: string; className?: string }> = ({
   );
 };
 
-const FormField: React.FC<FormFieldProps> = forwardRef(
+const FormField = forwardRef(
   (
     {
       field,
@@ -34,7 +34,7 @@ const FormField: React.FC<FormFieldProps> = forwardRef(
       helpTextFirst = false,
       action,
       ...fieldAttrs
-    },
+    }: FormFieldProps,
     ref
   ) => {
     return (
