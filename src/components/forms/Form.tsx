@@ -319,7 +319,11 @@ const Form: React.FC<FormProps> = ({
       newDraftMutation.mutate({ formId: form.id, languageId: language.id });
     }
 
-    setSearchParams((p) => ({ ...p, v: 0, language: language.code }));
+    setSearchParams((p) => {
+      p.set("v", "0");
+      p.set("language", language.code);
+      return p;
+    });
   };
 
   const handlePublish = () => {
@@ -418,10 +422,10 @@ const Form: React.FC<FormProps> = ({
                         ),
                         disabled: !!submission || l.id === form.language?.id,
                         action: () =>
-                          setSearchParams((p) => ({
-                            ...p,
-                            language: l?.code ?? "",
-                          })),
+                          setSearchParams((p) => {
+                            p.set("language", l?.code ?? "");
+                            return p;
+                          }),
                       })),
                       {
                         id: "new",
@@ -479,11 +483,10 @@ const Form: React.FC<FormProps> = ({
                           <PillBadge color="gray" displayValue={<i>Draft</i>} />
                         ),
                         action: () =>
-                          setSearchParams((p) => ({
-                            ...p,
-                            v,
-                            language: form.language?.code,
-                          })),
+                          setSearchParams((p) => {
+                            p.set("language", form.language?.code ?? "");
+                            return p;
+                          }),
                       })),
                       {
                         id: "new",
