@@ -51,7 +51,7 @@ const DataTable2 = <T extends object>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    // isMultiSortEvent: () => true,
+    isMultiSortEvent: () => true,
     manualSorting: true,
     state: {
       sorting:
