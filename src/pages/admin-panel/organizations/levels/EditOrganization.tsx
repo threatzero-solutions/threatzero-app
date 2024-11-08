@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { Organization } from "../../../../types/entities";
 import { slugify } from "../../../../utils/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,6 +24,7 @@ import SuccessButton from "../../../../components/layouts/buttons/SuccessButton"
 import { useAutoSlug } from "../../../../hooks/use-auto-slug";
 import { ArrowPathIcon } from "@heroicons/react/20/solid";
 import Input from "../../../../components/forms/inputs/Input";
+import { useInterval } from "usehooks-ts";
 
 const EditOrganization: React.FC = () => {
   const navigate = useNavigate();
@@ -34,12 +35,25 @@ const EditOrganization: React.FC = () => {
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
   const { myOrganizationSlug } = useAuth();
 
-  const { data: organizationData } = useQuery({
+  const { data: organizationData, refetch } = useQuery({
     queryKey: ["organization", "id", params.id] as const,
     queryFn: ({ queryKey }) => getOrganization(queryKey[2]),
-    enabled: !!params.id && params.id !== "new",
+    enabled: !isNew,
     refetchOnWindowFocus: false,
   });
+
+  // Group ID is generated asynchronously, so easiest thing is to refetch every 500ms
+  // until it is generated.
+  const [refetchAttempts, setRefetchAttempts] = useState(0);
+  useInterval(
+    () => {
+      setRefetchAttempts((prev) => prev + 1);
+      refetch();
+    },
+    organizationData && !organizationData.groupId && refetchAttempts < 5
+      ? 500
+      : null
+  );
 
   const formMethods = useForm({
     values: organizationData,
@@ -48,7 +62,6 @@ const EditOrganization: React.FC = () => {
 
   const id = watch("id");
   const name = watch("name");
-  const groupId = watch("groupId");
   const idpSlugs = watch("idpSlugs");
 
   const { registerSlug, resetSlug } = useAutoSlug({
@@ -76,6 +89,8 @@ const EditOrganization: React.FC = () => {
           queryKey: ["my-course-enrollments"],
         });
       }
+
+      navigate(`../${data.id}`);
     },
   });
 
@@ -158,6 +173,7 @@ const EditOrganization: React.FC = () => {
               <FormField
                 type="textarea"
                 {...register("address")}
+                rows={3}
                 field={{
                   label: "Address (Optional)",
                   name: "address",
@@ -166,8 +182,12 @@ const EditOrganization: React.FC = () => {
               <FormField
                 type="text"
                 disabled
-                placeholder="Automatically generated"
-                defaultValue={groupId ?? ""}
+                placeholder={
+                  organizationData
+                    ? "Automatically generating..."
+                    : "Automatically generated"
+                }
+                value={organizationData?.groupId ?? ""}
                 field={{
                   label: "Group ID",
                   name: "groupId",
