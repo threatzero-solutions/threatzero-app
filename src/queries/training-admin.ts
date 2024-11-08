@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { ResendTrainingLinksDto, SendTrainingLinksDto } from "../types/api";
-import { TrainingToken, WatchStat } from "../types/entities";
+import { TrainingToken } from "../types/entities";
 import { download, findMany } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
@@ -41,11 +41,3 @@ export const getTrainingInvitesCsv = (
     },
     options
   );
-
-export const findWatchStats = (query?: ItemFilterQueryParams) =>
-  findMany<WatchStat>("/training-admin/watch-stats/", query);
-
-export const getWatchStatsCsv = (
-  query?: ItemFilterQueryParams,
-  options: AxiosRequestConfig = {}
-) => download("/training-admin/watch-stats/csv/", query, options);

@@ -4,7 +4,7 @@ import PageNavBar from "../../../components/layouts/PageNavBar";
 import { trainingAdminPermissionOptions } from "../../../constants/permission-options";
 
 const navigation = [
-  { name: "Watch Stats", to: "watch-stats" },
+  { name: "Training Completions", to: "training-completions" },
   { name: "Invites", to: "invites" },
 ];
 

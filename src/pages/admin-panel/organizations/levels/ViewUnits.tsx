@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { getUnits } from "../../../../queries/organizations";
-import DataTable from "../../../../components/layouts/DataTable";
 import { Unit } from "../../../../types/entities";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditUnit from "./EditUnit";
@@ -12,6 +11,11 @@ import { useOrganizationFilters } from "../../../../hooks/use-organization-filte
 import { PencilSquareIcon } from "@heroicons/react/20/solid";
 import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../../components/layouts/buttons/IconButton";
+import { createColumnHelper } from "@tanstack/react-table";
+import DataTable2 from "../../../../components/layouts/DataTable2";
+import dayjs from "dayjs";
+
+const columnHelper = createColumnHelper<Unit>();
 
 export const ViewUnits: React.FC = () => {
   const [editUnitSliderOpen, setEditUnitSliderOpen] = useState(false);
@@ -39,66 +43,54 @@ export const ViewUnits: React.FC = () => {
     setEditUnitSliderOpen(true);
   };
 
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: "Name",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("slug", {
+        header: "Slug",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("organization.name", {
+        id: "organization.name",
+        header: "Organization",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("createdOn", {
+        header: "Created On",
+        cell: (info) => dayjs(info.getValue()).format("ll"),
+      }),
+      columnHelper.display({
+        id: "actions",
+        cell: (info) => (
+          <ButtonGroup className="w-full justify-end">
+            <IconButton
+              icon={PencilSquareIcon}
+              className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+              text="Edit"
+              type="button"
+              onClick={() => handleEditUnit(info.row.original)}
+            />
+          </ButtonGroup>
+        ),
+        enableSorting: false,
+      }),
+    ],
+    []
+  );
+
   return (
     <>
-      <DataTable
-        data={{
-          headers: [
-            {
-              label: "Name",
-              key: "name",
-            },
-            {
-              label: "Slug",
-              key: "slug",
-            },
-            {
-              label: "Organization",
-              key: "organization.name",
-            },
-            {
-              label: <span className="sr-only">Actions</span>,
-              key: "actions",
-              align: "right",
-            },
-          ],
-          rows: (units?.results ?? []).map((unit) => ({
-            id: unit.id,
-            name: unit.name,
-            slug: unit.slug,
-            ["organization.name"]: unit.organization?.name,
-            actions: (
-              <ButtonGroup className="w-full justify-end">
-                <IconButton
-                  icon={PencilSquareIcon}
-                  className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
-                  text="Edit"
-                  type="button"
-                  onClick={() => handleEditUnit(unit)}
-                />
-              </ButtonGroup>
-            ),
-          })),
-        }}
+      <DataTable2
+        data={units?.results ?? []}
+        columns={columns}
         isLoading={unitsLoading}
+        query={unitsQuery}
+        setQuery={setUnitsQuery}
         title="Units"
         subtitle="View, add or edit organizational units (i.e. schools, offices)."
-        itemFilterQuery={unitsQuery}
-        setItemFilterQuery={setUnitsQuery}
-        paginationOptions={{
-          ...units,
-        }}
-        searchOptions={{
-          searchQuery: unitsQuery.search ?? "",
-          setSearchQuery: (search) => {
-            setUnitsQuery((q) => {
-              q.search = search;
-              q.offset = 0;
-            });
-          },
-        }}
-        filterOptions={organizationFilters}
-        notFoundDetail="No units found."
         action={
           <button
             type="button"
@@ -108,6 +100,10 @@ export const ViewUnits: React.FC = () => {
             + Add New Unit
           </button>
         }
+        pageState={units}
+        showFooter={false}
+        noRowsMessage="No units found."
+        filterOptions={organizationFilters}
       />
       <SlideOver open={editUnitSliderOpen} setOpen={setEditUnitSliderOpen}>
         <EditUnit setOpen={setEditUnitSliderOpen} unit={selectedUnit} />

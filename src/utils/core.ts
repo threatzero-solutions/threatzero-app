@@ -1,4 +1,6 @@
+import { PaginationState, SortingState } from "@tanstack/react-table";
 import { OrderOptions, Ordering } from "../types/core";
+import { Paginated } from "../types/entities";
 
 export const classNames = (...classes: (string | undefined)[]) =>
   classes.filter(Boolean).join(" ");
@@ -67,6 +69,38 @@ export const parseOrder = (order: string) =>
       acc[field] = order as OrderOptions;
       return acc;
     }, {} as Ordering);
+
+export const asOrdering = (sorting: SortingState) =>
+  sorting.reduce((acc, { id, desc }) => {
+    acc[id] = desc ? "DESC" : "ASC";
+    return acc;
+  }, {} as Ordering);
+
+export const asSortingState = (ordering: Ordering): SortingState =>
+  Object.entries(ordering).map(([key, value]) => ({
+    id: key,
+    desc: value === "DESC",
+  }));
+
+export const asPageInfo = (
+  pagination: PaginationState
+): Omit<Paginated<unknown>, "results" | "count"> => ({
+  offset: pagination.pageIndex * pagination.pageSize,
+  limit: pagination.pageSize,
+});
+
+export const asPaginationState = (
+  pageInfo: {
+    offset?: number | string;
+    limit?: number | string;
+  },
+  pageSize = 10
+) => {
+  return {
+    pageSize,
+    pageIndex: Math.floor(+(pageInfo.offset || 0) / pageSize),
+  } as PaginationState;
+};
 
 export const getIframeSrcFromEmbed = (embed: string) => {
   const node = document.createElement("html");

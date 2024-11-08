@@ -69,7 +69,7 @@ const ViewWatchStats: React.FC = () => {
     <>
       <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center mb-8">
         <h1 className="text-base font-semibold leading-6 text-gray-900">
-          Watch Stats
+          Training Completions
         </h1>
       </div>
       <DataTable
@@ -149,7 +149,7 @@ const ViewWatchStats: React.FC = () => {
             progress: <ViewPercentWatched percentWatched={r.progress * 100} />,
           })),
         }}
-        title="All Training Watch Stats"
+        title="All Training Completions"
         subtitle="Sort and filter through watch stats."
         dense
         isLoading={watchStatsLoading}

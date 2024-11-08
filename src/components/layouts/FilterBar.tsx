@@ -73,6 +73,32 @@ const compareValues = (
   v2: undefined | string | string[]
 ) => (v1 && Array.isArray(v2) ? v2.includes(v1) : v1 === v2);
 
+const getNewValue = (
+  f: FilterBarFilter,
+  prevValue: string | string[] | undefined,
+  value: string | undefined
+) => {
+  let newValue: string | string[] | undefined;
+
+  if (f.many) {
+    newValue = prevValue;
+
+    if (!value || !Array.isArray(prevValue)) {
+      newValue = !value ? [] : [value];
+    } else {
+      if (!prevValue.includes(value)) {
+        newValue = [...prevValue, value];
+      } else {
+        newValue = prevValue.filter((v) => v !== value);
+      }
+    }
+  } else {
+    newValue = prevValue === value ? undefined : value;
+  }
+
+  return newValue;
+};
+
 const FilterBar: React.FC<FilterBarProps> = ({
   searchOptions,
   filterOptions,
@@ -117,8 +143,15 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
   const handleSetFilter = (
     e: React.MouseEvent<HTMLButtonElement>,
-    f: FilterBarFilter,
-    value: string | undefined
+    updates:
+      | {
+          f: FilterBarFilter;
+          value: string | undefined;
+        }
+      | {
+          f: FilterBarFilter;
+          value: string | undefined;
+        }[]
   ) => {
     e.preventDefault();
 
@@ -126,40 +159,31 @@ const FilterBar: React.FC<FilterBarProps> = ({
     stable.current = true;
 
     setFilterValues((draft) => {
-      const prevValue = draft[f.key];
-      let newValue: string | string[] | undefined;
-
-      if (f.many) {
-        newValue = draft[f.key];
-
-        if (!value || !Array.isArray(prevValue)) {
-          newValue = !value ? [] : [value];
-        } else {
-          if (!prevValue.includes(value)) {
-            newValue = [...prevValue, value];
-          } else {
-            newValue = prevValue.filter((v) => v !== value);
-          }
-        }
-      } else {
-        newValue = prevValue === value ? undefined : value;
-      }
-
-      const doSetFilter = (thisKey: string, thisValue?: string | string[]) => {
-        draft[thisKey] = thisValue;
-
-        if (filterOptions?.setFilter) {
-          filterOptions.setFilter(thisKey, thisValue);
-        } else {
-          filterOptions?.setQuery?.((q) => {
-            q[thisKey] = thisValue;
-            q.offset = 0;
-          });
-        }
+      const toUpdate: { key: string; value: string | string[] | undefined }[] =
+        [];
+      const addUpdate = (key: string, value: string | string[] | undefined) => {
+        toUpdate.push({ key, value });
+        draft[key] = value;
       };
 
-      doSetFilter(f.key, newValue);
-      f.onSetFilter?.(newValue, doSetFilter);
+      for (const { f, value } of Array.isArray(updates) ? updates : [updates]) {
+        const newValue = getNewValue(f, draft[f.key], value);
+        addUpdate(f.key, newValue);
+        f.onSetFilter?.(newValue, addUpdate);
+      }
+
+      if (filterOptions?.setFilter) {
+        for (const { key, value } of toUpdate) {
+          filterOptions.setFilter(key, value);
+        }
+      } else {
+        filterOptions?.setQuery?.((q) => {
+          for (const { key, value } of toUpdate) {
+            q[key] = value;
+          }
+          q.offset = 0;
+        });
+      }
     });
   };
 
@@ -190,10 +214,13 @@ const FilterBar: React.FC<FilterBarProps> = ({
                   type="button"
                   className="inline-flex gap-1 items-center text-gray-500 text-sm hover:text-gray-600 transition-colors"
                   onClick={(e) => {
-                    e.preventDefault();
-                    (filterOptions.filters ?? []).forEach((f) => {
-                      handleSetFilter(e, f, undefined);
-                    });
+                    handleSetFilter(
+                      e,
+                      (filterOptions.filters ?? []).map((f) => ({
+                        f,
+                        value: undefined,
+                      }))
+                    );
                   }}
                 >
                   <MinusCircleIcon className="h-4 w-4" />
@@ -241,7 +268,8 @@ const FilterBar: React.FC<FilterBarProps> = ({
                               {o.label}
                             </div>
                           ),
-                          action: (e) => handleSetFilter(e, f, o.value),
+                          action: (e) =>
+                            handleSetFilter(e, { f, value: o.value }),
                           hidden: f.isLoading,
                         } as DropdownAction)
                     ),
@@ -305,7 +333,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                         clear
                       </span>
                     ),
-                    action: (e) => handleSetFilter(e, f, undefined),
+                    action: (e) => handleSetFilter(e, { f, value: undefined }),
                     disabled: Array.isArray(filterValues[f.key])
                       ? !filterValues[f.key]?.length
                       : filterValues[f.key] === undefined,
