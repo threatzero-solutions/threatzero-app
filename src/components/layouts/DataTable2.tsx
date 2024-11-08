@@ -82,9 +82,6 @@ const DataTable2 = <T extends object>({
       }),
     manualPagination: true,
     rowCount: pageState?.count,
-    // pageCount:
-    //   pageState &&
-    //   Math.floor((pageState.count ?? 0) / (pageState.limit ?? 10)) + 1,
   });
 
   const searchOptions = useMemo(() => {

@@ -42,11 +42,18 @@ const BaseTable = <T extends object>({
                 <th
                   key={header.id}
                   className={classNames(
-                    "py-3.5 text-sm text-left font-semibold text-gray-900",
+                    dense ? "py-1.5 text-xs" : "py-3.5 text-sm",
+                    "text-left font-semibold text-gray-900",
                     idx === 0
-                      ? "pl-4 pr-3 sm:pl-0"
+                      ? dense
+                        ? "pl-2.5 pr-1.5 sm:pl-0"
+                        : "pl-4 pr-3 sm:pl-0"
                       : idx === headerGroup.headers.length - 1
-                      ? "pl-3 pr-4 sm:pl-0"
+                      ? dense
+                        ? "pl-1.5 pr-2.5 sm:pl-0"
+                        : "pl-3 pr-4 sm:pl-0"
+                      : dense
+                      ? "px-1.5"
                       : "px-2"
                   )}
                 >
@@ -118,11 +125,18 @@ const BaseTable = <T extends object>({
                   <td
                     key={cell.id}
                     className={classNames(
-                      "py-4 text-sm text-left text-gray-500",
+                      dense ? "py-2 text-xs" : "py-4 text-sm",
+                      "text-left text-gray-500",
                       idx === 0
-                        ? "pl-4 pr-3 sm:pl-0"
+                        ? dense
+                          ? "pl-2.5 pr-1.5 sm:pl-0"
+                          : "pl-4 pr-3 sm:pl-0"
                         : idx === row.getVisibleCells().length - 1
-                        ? "pl-3 pr-4 sm:pl-0"
+                        ? dense
+                          ? "pl-1.5 pr-2.5 sm:pl-0"
+                          : "pl-3 pr-4 sm:pl-0"
+                        : dense
+                        ? "px-1.5"
                         : "px-2"
                     )}
                   >
