@@ -138,9 +138,9 @@ const ViewWatchStats: React.FC = () => {
     query: completionsQuery,
     setQuery: setCompletionsQuery,
     organizationsEnabled: hasMultipleOrganizationAccess,
-    organizationKey: "organizationSlug",
+    organizationKey: "organization.slug",
     unitsEnabled: hasMultipleUnitAccess,
-    unitKey: "unitSlug",
+    unitKey: "unit.slug",
   });
 
   const itemCompletionsCsvMutation = useMutation({
@@ -191,7 +191,7 @@ const ViewWatchStats: React.FC = () => {
         filterOptions={{
           filters: [
             {
-              key: "trainingItemId",
+              key: "item.id",
               label: "Training Item",
               many: true,
               options: trainingItems?.results.map((t) => ({
@@ -217,6 +217,7 @@ const ViewWatchStats: React.FC = () => {
           ],
           setQuery: setCompletionsQuery,
         }}
+        showFooter={false}
       />
     </>
   );

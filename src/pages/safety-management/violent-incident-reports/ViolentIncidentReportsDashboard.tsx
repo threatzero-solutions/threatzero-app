@@ -264,6 +264,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
           ],
           setQuery: setTableFilterOptions,
         }}
+        showFooter={false}
       />
     </div>
   );

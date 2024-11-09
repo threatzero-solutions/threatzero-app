@@ -257,6 +257,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
           ],
           setQuery: setTableFilterOptions,
         }}
+        showFooter={false}
       />
     </div>
   );
