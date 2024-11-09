@@ -45,6 +45,7 @@ import ManageTrainingInvite from "../../admin-panel/users/training-invites/Manag
 import Dropdown from "../../../components/layouts/Dropdown";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import {
+  getMyOrganization,
   getOrganizationBySlug,
   getUnitBySlug,
   getUnits,
@@ -334,14 +335,14 @@ const ManageTrainingInvites: React.FC = () => {
         firstName: row.firstName,
         lastName: row.lastName,
         email: row.email,
-        unitSlug: row.unitSlug,
+        unitSlug: findUnit(row.unitSlug)?.slug,
       });
     }
 
-    if (organizationSlugFromCsv) {
-      results.organization = await getOrganizationBySlug(
-        organizationSlugFromCsv
-      );
+    if (!hasMultipleOrganizationAccess || organizationSlugFromCsv) {
+      results.organization = await (hasMultipleOrganizationAccess
+        ? getOrganizationBySlug(organizationSlugFromCsv)
+        : getMyOrganization());
 
       if (enrollmentIdFromCsv) {
         results.enrollment = results.organization.enrollments?.find(

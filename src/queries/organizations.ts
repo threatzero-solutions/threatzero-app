@@ -14,6 +14,7 @@ import {
   findManyRaw,
   findOneById,
   findOneByIdOrFail,
+  findOneOrFail,
   insertOne,
   putOne,
   save,
@@ -29,6 +30,9 @@ export const getOrganizations = (query?: ItemFilterQueryParams) =>
 
 export const getOrganization = (id?: string) =>
   findOneByIdOrFail<Organization>("/organizations/organizations/", id);
+
+export const getMyOrganization = () =>
+  findOneOrFail<Organization>("/organizations/organizations/mine/");
 
 export const getOrganizationBySlug = (slug?: string) =>
   findOneByIdOrFail<Organization>("/organizations/organizations/slug/", slug);
