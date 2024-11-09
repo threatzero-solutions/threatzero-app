@@ -420,7 +420,7 @@ export const ResourceItemCategories = [
   "prevention",
   "preparation",
   "response",
-  "resiliency",
+  "resilience",
 ] as const;
 
 export type ResourceItemCategory = (typeof ResourceItemCategories)[number];
