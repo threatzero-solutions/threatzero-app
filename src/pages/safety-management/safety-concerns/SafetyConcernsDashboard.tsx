@@ -8,8 +8,7 @@ import {
 } from "../../../queries/safety-management";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
-import { TipStatus } from "../../../types/entities";
-import DataTable from "../../../components/layouts/DataTable";
+import { Tip, TipStatus } from "../../../types/entities";
 import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import StatusPill from "../../tip-submission/components/StatusPill";
@@ -20,6 +19,13 @@ import { withRequirePermissions } from "../../../guards/with-require-permissions
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import DataTable2 from "../../../components/layouts/DataTable2";
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+
+const columnHelper = createColumnHelper<Tip>();
 
 const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
   const location = useLocation();
@@ -50,11 +56,8 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
     {}
   );
   const { data: tipStats, isLoading: tipStatsLoading } = useQuery({
-    queryKey: ["tip-submission-stats", tipFilterOptions],
-    queryFn: ({ queryKey }) =>
-      getTipSubmissionStats(
-        queryKey[1] as SafetyManagementResourceFilterOptions
-      ),
+    queryKey: ["tip-submission-stats", tipFilterOptions] as const,
+    queryFn: ({ queryKey }) => getTipSubmissionStats(queryKey[1]),
   });
 
   const saveTipMutation = useMutation({
@@ -78,6 +81,88 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
     unitKey: "unitSlug",
     locationKey: "location.id",
   });
+
+  const columns = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const columns: ColumnDef<Tip, any>[] = [];
+
+    columns.push(
+      ...[
+        columnHelper.accessor("status", {
+          header: "Status",
+          cell: (info) => <StatusPill status={info.getValue()} />,
+        }),
+        columnHelper.accessor("tag", {
+          header: "Tag",
+          cell: (info) => (
+            <EditableCell
+              value={info.getValue()}
+              onSave={(tag) =>
+                saveTipMutation.mutate({
+                  id: info.row.original.id,
+                  tag,
+                })
+              }
+              emptyValue="—"
+              readOnly={!canAlterTip}
+            />
+          ),
+        }),
+        columnHelper.accessor("createdOn", {
+          header: "Created On",
+          cell: (info) => dayjs(info.getValue()).format("ll"),
+        }),
+        columnHelper.accessor("updatedOn", {
+          header: "Last Updated",
+          cell: (info) => dayjs(info.getValue()).fromNow(),
+        }),
+      ]
+    );
+
+    if (hasMultipleUnitAccess) {
+      columns.push(
+        columnHelper.accessor((t) => t.unit?.name ?? "", {
+          id: "unit.name",
+          header: "Unit",
+          cell: (info) => info.getValue() || "—",
+        })
+      );
+    }
+
+    columns.push(
+      ...[
+        columnHelper.accessor((t) => t.location?.name ?? "", {
+          id: "location.name",
+          header: "Location",
+          cell: (info) => info.getValue() || "—",
+        }),
+        // columnHelper.accessor('pocFiles', {
+        //   header: "Files",
+        //   cell: (info) => <POCFilesButtonCompact pocFiles={info.getValue()} />,
+        //   enableSorting: false,
+        // }),
+        columnHelper.display({
+          id: "actions",
+          cell: (info) => (
+            <ButtonGroup>
+              <IconButton
+                as={Link}
+                to={`./${info.row.original.id}`}
+                state={{ from: location }}
+                className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                icon={ArrowRightIcon}
+                trailing
+                text="View"
+              />
+            </ButtonGroup>
+          ),
+          enableSorting: false,
+        }),
+      ]
+    );
+
+    return columns;
+  }, [canAlterTip, location, saveTipMutation, hasMultipleUnitAccess]);
 
   return (
     <div className={"space-y-12"}>
@@ -123,96 +208,18 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
       />
 
       {/* VIEW ASSESSMENTS */}
-      <DataTable
-        data={{
-          headers: [
-            {
-              label: "Status",
-              key: "status",
-            },
-            {
-              label: "Tag",
-              key: "tag",
-            },
-            {
-              label: "Created On",
-              key: "createdOn",
-            },
-            {
-              label: "Last Updated",
-              key: "updatedOn",
-            },
-            {
-              label: "Unit",
-              key: "unit.name",
-              hidden: !hasMultipleUnitAccess,
-            },
-            {
-              label: "Location",
-              key: "location.name",
-            },
-            // {
-            //   label: "Files",
-            //   key: "pocFiles",
-            //   noSort: true,
-            // },
-            {
-              label: <span className="sr-only">View</span>,
-              key: "view",
-              align: "right",
-              noSort: true,
-            },
-          ],
-          rows:
-            tips?.results.map((tip) => ({
-              id: tip.id,
-              status: <StatusPill status={tip.status} />,
-              tag: (
-                <EditableCell
-                  value={tip.tag}
-                  onSave={(tag) =>
-                    saveTipMutation.mutate({
-                      id: tip.id,
-                      tag,
-                    })
-                  }
-                  emptyValue="—"
-                  readOnly={!canAlterTip}
-                />
-              ),
-              createdOn: dayjs(tip.createdOn).format("MMM D, YYYY"),
-              updatedOn: dayjs(tip.updatedOn).fromNow(),
-              ["unit.name"]: tip.unit?.name ?? "—",
-              ["location.name"]: tip.location?.name ?? "—",
-              // pocFiles: <POCFilesButtonCompact pocFiles={tip.pocFiles} />,
-              view: (
-                <Link
-                  to={`./${tip.id}`}
-                  state={{ from: location }}
-                  className="text-secondary-600 hover:text-secondary-900 font-medium"
-                >
-                  View
-                  <span className="sr-only">, {tip.id}</span>
-                </Link>
-              ),
-            })) ?? [],
-        }}
+      <DataTable2
+        data={tips?.results ?? []}
+        columns={columns}
         isLoading={tipsLoading}
-        notFoundDetail="No safety concerns found."
+        noRowsMessage="No safety concerns found."
         title="View Safety Concerns"
         subtitle="Sort and filter through safety concern submissions."
-        itemFilterQuery={tableFilterOptions}
-        setItemFilterQuery={setTableFilterOptions}
-        paginationOptions={{
-          ...tips,
-        }}
+        query={tableFilterOptions}
+        setQuery={setTableFilterOptions}
+        pageState={tips}
         searchOptions={{
-          setSearchQuery: (q) =>
-            setTableFilterOptions((o) => {
-              o.search = q;
-              o.offset = 0;
-            }),
-          searchQuery: tableFilterOptions.search ?? "",
+          placeholder: "Search by tag...",
         }}
         filterOptions={{
           filters: [

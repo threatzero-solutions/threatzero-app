@@ -207,7 +207,7 @@ export const router = createBrowserRouter(
                       element: <TrainingAdminDashboard />,
                       children: [
                         {
-                          path: "training-completions",
+                          path: "completions",
                           handle: { title: "View Training Completions" },
                           element: <ViewWatchStats />,
                         },
@@ -218,7 +218,7 @@ export const router = createBrowserRouter(
                         },
                         {
                           path: "*?",
-                          loader: () => redirect("training-completions"),
+                          loader: () => redirect("completions"),
                         },
                       ],
                     },

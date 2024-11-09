@@ -27,7 +27,10 @@ import type Vimeo from "@vimeo/player";
 import VideoProgress from "./components/VideoProgress";
 import { useImmer } from "use-immer";
 import { useDebounceCallback } from "usehooks-ts";
-import { COMPLETION_THRESHOLD } from "../../constants/core";
+import {
+  ACTUAL_COMPLETION_THRESHOLD,
+  DISPLAY_COMPLETION_THRESHOLD,
+} from "../../constants/core";
 
 const VideoUnavailable: React.FC = () => (
   <div className="w-full h-full flex justify-center items-center bg-gray-900">
@@ -155,7 +158,7 @@ const TrainingItem: React.FC = () => {
     if (data.progressPercent < 1) {
       saveVideoProgress(
         data.progressPercent,
-        data.progressPercent >= COMPLETION_THRESHOLD
+        data.progressPercent >= ACTUAL_COMPLETION_THRESHOLD
       );
     }
   };
@@ -242,7 +245,7 @@ const TrainingItem: React.FC = () => {
                 <VideoProgress
                   duration={videoProgress.duration}
                   currentTime={videoProgress.seconds}
-                  completionThreshold={COMPLETION_THRESHOLD}
+                  completionThreshold={DISPLAY_COMPLETION_THRESHOLD}
                   className="h-12 w-12 self-center shrink-0"
                 />
               </div>

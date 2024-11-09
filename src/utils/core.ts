@@ -194,3 +194,10 @@ export const simulateDownload = (
   a.click();
   a.remove();
 };
+
+export const isUndefined = (obj: unknown): obj is undefined =>
+  typeof obj === "undefined";
+
+export const isNil = <T>(
+  value: T | null | undefined
+): value is null | undefined => value === null || isUndefined(value);

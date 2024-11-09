@@ -1,8 +1,7 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import DataTable from "../../../components/layouts/DataTable";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import ViewPercentWatched from "./components/ViewPercentWatched";
@@ -15,18 +14,23 @@ import {
 } from "../../../queries/training";
 import dayjs from "dayjs";
 import { AlertContext } from "../../../contexts/alert/alert-context";
+import DataTable2 from "../../../components/layouts/DataTable2";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import { ItemCompletion } from "../../../types/entities";
+
+const columnHelper = createColumnHelper<ItemCompletion>();
 
 const ViewWatchStats: React.FC = () => {
-  const [watchStatsQuery, setWatchStatsQuery] = useImmer<ItemFilterQueryParams>(
-    {}
-  );
+  const [completionsQuery, setCompletionsQuery] =
+    useImmer<ItemFilterQueryParams>({});
 
   const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
   const { setInfo } = useContext(AlertContext);
 
-  const { data: watchStats, isLoading: watchStatsLoading } = useQuery({
-    queryKey: ["watch-stats", watchStatsQuery],
-    queryFn: () => getItemCompletions(watchStatsQuery),
+  const [debouncedCompletionsQuery] = useDebounceValue(completionsQuery, 300);
+  const { data: itemCompletions, isLoading: completionsLoading } = useQuery({
+    queryKey: ["item-completions", debouncedCompletionsQuery],
+    queryFn: () => getItemCompletions(debouncedCompletionsQuery),
   });
 
   const [trainingItemFilterQuery, setTrainingItemFilterQuery] =
@@ -40,9 +44,99 @@ const ViewWatchStats: React.FC = () => {
     queryFn: ({ queryKey }) => getTrainingItems(queryKey[1]),
   });
 
+  const columns = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const columns: ColumnDef<ItemCompletion, any>[] = [];
+
+    columns.push(
+      ...[
+        columnHelper.accessor("user.familyName", {
+          id: "user.familyName",
+          header: "Last Name",
+          cell: (info) => info.getValue() || "—",
+        }),
+        columnHelper.accessor("user.givenName", {
+          id: "user.givenName",
+          header: "First Name",
+          cell: (info) => info.getValue() || "—",
+        }),
+        columnHelper.accessor("user.email", {
+          id: "user.email",
+          header: "Email",
+          cell: (info) => info.getValue() || "—",
+        }),
+      ]
+    );
+
+    if (hasMultipleOrganizationAccess) {
+      columns.push(
+        columnHelper.accessor((c) => c.organization?.name ?? "", {
+          id: "organization.name",
+          header: "Organization",
+          cell: (info) => (
+            <span className="line-clamp-2" title={info.getValue() || undefined}>
+              {info.getValue() || "—"}
+            </span>
+          ),
+        })
+      );
+    }
+
+    if (hasMultipleUnitAccess) {
+      columns.push(
+        columnHelper.accessor((c) => c.unit?.name ?? "", {
+          id: "unit.name",
+          header: "Unit",
+          cell: (info) => (
+            <span className="line-clamp-2" title={info.getValue() || undefined}>
+              {info.getValue() || "—"}
+            </span>
+          ),
+        })
+      );
+    }
+
+    columns.push(
+      ...[
+        columnHelper.accessor("item.metadata.title", {
+          id: "item.metadata.title",
+          header: "Training Item",
+          cell: (info) => (
+            <span className="line-clamp-2" title={info.getValue() ?? undefined}>
+              {info.getValue() || "—"}
+            </span>
+          ),
+        }),
+        columnHelper.accessor("enrollment.startDate", {
+          id: "enrollment.startDate",
+          header: "Year",
+          cell: (info) =>
+            dayjs(info.getValue()).isValid()
+              ? dayjs(info.getValue()).format("YYYY")
+              : "—",
+        }),
+        columnHelper.accessor("completedOn", {
+          header: "Completed On",
+          cell: (info) =>
+            dayjs(info.getValue()).isValid()
+              ? dayjs(info.getValue()).format("ll")
+              : "—",
+        }),
+        columnHelper.accessor("progress", {
+          header: "Percent Watched",
+          cell: (info) => (
+            <ViewPercentWatched percentWatched={info.getValue() * 100} />
+          ),
+        }),
+      ]
+    );
+
+    return columns;
+  }, [hasMultipleOrganizationAccess, hasMultipleUnitAccess]);
+
   const organizationFilters = useOrganizationFilters({
-    query: watchStatsQuery,
-    setQuery: setWatchStatsQuery,
+    query: completionsQuery,
+    setQuery: setCompletionsQuery,
     organizationsEnabled: hasMultipleOrganizationAccess,
     organizationKey: "organizationSlug",
     unitsEnabled: hasMultipleUnitAccess,
@@ -62,97 +156,23 @@ const ViewWatchStats: React.FC = () => {
 
   const handleDownloadWatchStatsCsv = () => {
     setInfo("Downloading CSV...");
-    itemCompletionsCsvMutation.mutate(watchStatsQuery);
+    itemCompletionsCsvMutation.mutate(completionsQuery);
   };
 
   return (
     <>
-      <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center mb-8">
+      {/* <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center mb-8">
         <h1 className="text-base font-semibold leading-6 text-gray-900">
-          Training Completions
+          View Completions
         </h1>
-      </div>
-      <DataTable
-        data={{
-          headers: [
-            {
-              key: "user.familyName",
-              label: "Last Name",
-            },
-            {
-              key: "user.givenName",
-              label: "First Name",
-            },
-            {
-              key: "user.email",
-              label: "Email",
-            },
-            {
-              key: "organization.name",
-              label: "Organization",
-              hidden: !hasMultipleOrganizationAccess,
-            },
-            {
-              key: "unit.name",
-              label: "Unit",
-              hidden: !hasMultipleUnitAccess,
-            },
-            {
-              key: "item.metadata.title",
-              label: "Training Item",
-            },
-            {
-              key: "enrollment.startDate",
-              label: "Year",
-            },
-            {
-              key: "completedOn",
-              label: "Completed On",
-            },
-            {
-              key: "progress",
-              label: "Percent Watched",
-            },
-          ],
-          rows: (watchStats?.results ?? []).map((r) => ({
-            id: r.id,
-            ["user.familyName"]: r.user?.familyName || "—",
-            ["user.givenName"]: r.user?.givenName || "—",
-            ["user.email"]: r.user?.email || "—",
-            ["organization.name"]: (
-              <span
-                className="line-clamp-2"
-                title={r.organization?.name ?? undefined}
-              >
-                {r.organization?.name || "—"}
-              </span>
-            ),
-            ["unit.name"]: (
-              <span className="line-clamp-2" title={r.unit?.name ?? undefined}>
-                {r.unit?.name || "—"}
-              </span>
-            ),
-            ["item.metadata.title"]: (
-              <span
-                className="line-clamp-2"
-                title={stripHtml(r.item?.metadata.title) ?? undefined}
-              >
-                {stripHtml(r.item?.metadata.title) || "—"}
-              </span>
-            ),
-            ["enrollment.startDate"]: r.enrollment?.startDate
-              ? dayjs(r.enrollment?.startDate).format("YYYY")
-              : "—",
-            completedOn: r.completedOn
-              ? dayjs(r.completedOn).format("MMM D, YYYY")
-              : "—",
-            progress: <ViewPercentWatched percentWatched={r.progress * 100} />,
-          })),
-        }}
-        title="All Training Completions"
+      </div> */}
+      <DataTable2
+        data={itemCompletions?.results ?? []}
+        columns={columns}
+        title="All Training Progress & Completion"
         subtitle="Sort and filter through watch stats."
         dense
-        isLoading={watchStatsLoading}
+        isLoading={completionsLoading}
         action={
           <button
             type="button"
@@ -162,10 +182,11 @@ const ViewWatchStats: React.FC = () => {
             Download (.csv)
           </button>
         }
-        itemFilterQuery={watchStatsQuery}
-        setItemFilterQuery={setWatchStatsQuery}
-        paginationOptions={{
-          ...watchStats,
+        query={completionsQuery}
+        setQuery={setCompletionsQuery}
+        pageState={itemCompletions}
+        searchOptions={{
+          placeholder: "Search by user...",
         }}
         filterOptions={{
           filters: [
@@ -194,7 +215,7 @@ const ViewWatchStats: React.FC = () => {
             },
             ...(organizationFilters.filters ?? []),
           ],
-          setQuery: setWatchStatsQuery,
+          setQuery: setCompletionsQuery,
         }}
       />
     </>

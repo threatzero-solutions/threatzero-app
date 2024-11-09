@@ -7,7 +7,14 @@ import {
 } from "../../../types/api";
 import Input from "../../../components/forms/inputs/Input";
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { ChangeEvent, FormEvent, useContext, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import { SimpleChangeEvent } from "../../../types/core";
 import {
@@ -40,6 +47,7 @@ import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import {
   getOrganizationBySlug,
   getUnitBySlug,
+  getUnits,
 } from "../../../queries/organizations";
 import { simulateDownload, stripHtml } from "../../../utils/core";
 import Autocomplete from "../../../components/forms/inputs/Autocomplete";
@@ -50,6 +58,7 @@ import { DeepPartial } from "react-hook-form";
 import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
 import EnrollmentSelect from "../../../components/forms/inputs/EnrollmentSelect";
 import Papa, { ParseResult } from "papaparse";
+import Fuse from "fuse.js";
 
 interface InviteCsvRow {
   firstName: string;
@@ -226,6 +235,36 @@ const ManageTrainingInvites: React.FC = () => {
       ),
     enabled: !!selectedEnrollment?.course?.id,
   });
+
+  const availableUnitsQuery = useMemo(() => {
+    const q: ItemFilterQueryParams = { limit: 500 };
+
+    if (hasMultipleOrganizationAccess && selectedOrganization) {
+      q["organization.id"] = selectedOrganization.id;
+    }
+
+    return q;
+  }, [hasMultipleOrganizationAccess, selectedOrganization]);
+
+  const { data: availableUnits } = useQuery({
+    queryKey: ["units", availableUnitsQuery] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
+    enabled:
+      hasMultipleUnitAccess &&
+      (!!selectedOrganization || !hasMultipleOrganizationAccess),
+  });
+
+  const findUnit = useCallback(
+    (search: string) => {
+      const fuse = new Fuse(availableUnits?.results ?? [], {
+        keys: ["name", "slug"],
+        includeScore: true,
+      });
+
+      return fuse.search(search)[0]?.item ?? null;
+    },
+    [availableUnits]
+  );
 
   const organizationFilters = useOrganizationFilters({
     query: itemFilterOptions,
@@ -593,7 +632,7 @@ const ManageTrainingInvites: React.FC = () => {
                 ),
                 unit: (
                   <UnitSelect
-                    value={t.unitSlug}
+                    value={t.unitSlug && findUnit(t.unitSlug)}
                     onChange={(e) =>
                       handleUpdateInvite(
                         idx,

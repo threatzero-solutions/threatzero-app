@@ -65,33 +65,38 @@ const VimeoPlayer: React.FC<VimeoPlayerProps> = ({
       onPause && player.on("pause", onPause);
       onError && player.on("error", onError);
 
-      player.on("timeupdate", (data) => {
-        if (seeking.current) {
-          return;
-        }
+      player.on("timeupdate", (data) =>
+        // There seems to be a slight race condition between the seek events and this timeupdate
+        // event. Let's make sure that the timeupdate is delayed somewhat to help prevent a seek
+        // from being overlooked.
+        setTimeout(() => {
+          if (seeking.current) {
+            return;
+          }
 
-        if (data.seconds <= maxProgressSeconds.current) {
-          hasSeeked.current = false;
-        }
+          if (data.seconds <= maxProgressSeconds.current) {
+            hasSeeked.current = false;
+          }
 
-        if (!hasSeeked.current) {
-          maxProgressSeconds.current = Math.max(
-            maxProgressSeconds.current,
-            data.seconds
-          );
-        }
+          if (!hasSeeked.current) {
+            maxProgressSeconds.current = Math.max(
+              maxProgressSeconds.current,
+              data.seconds
+            );
+          }
 
-        onProgress?.({
-          progressSeconds: maxProgressSeconds.current,
-          progressPercent:
-            Math.ceil((maxProgressSeconds.current / data.duration) * 10000) /
-            10000,
-          currentSeconds: data.seconds,
-          currentPercent: data.percent,
-          totalDuration: data.duration,
-          hasSeeked: hasSeeked.current,
-        });
-      });
+          onProgress?.({
+            progressSeconds: maxProgressSeconds.current,
+            progressPercent:
+              Math.ceil((maxProgressSeconds.current / data.duration) * 10000) /
+              10000,
+            currentSeconds: data.seconds,
+            currentPercent: data.percent,
+            totalDuration: data.duration,
+            hasSeeked: hasSeeked.current,
+          });
+        }, 250)
+      );
 
       player.on("seeking", () => {
         seeking.current = true;

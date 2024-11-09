@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { classNames } from "../../../utils/core";
 
 interface AsProp<T extends React.ElementType> {
@@ -8,6 +9,7 @@ type IconButtonProps<T extends React.ElementType> = AsProp<T> & {
   icon: React.ElementType;
   className?: string;
   text?: string;
+  trailing?: boolean;
 } & React.ComponentProps<T>;
 
 const IconButton = <T extends React.ElementType = "button">({
@@ -15,8 +17,13 @@ const IconButton = <T extends React.ElementType = "button">({
   className,
   as: Component = "button",
   text,
+  trailing = false,
   ...props
 }: IconButtonProps<T>) => {
+  const parts: ReactNode[] = [
+    <Icon key="icon" className="block size-4" />,
+    <span key="text">{text}</span>,
+  ];
   return (
     <Component
       className={classNames(
@@ -25,8 +32,7 @@ const IconButton = <T extends React.ElementType = "button">({
       )}
       {...props}
     >
-      <Icon className="block size-4" />
-      {text}
+      {trailing ? parts.reverse() : parts}
     </Component>
   );
 };

@@ -202,7 +202,13 @@ const EditTrainingSection: React.FC<EditTrainingSectionProps> = ({
             />
           </SlideOverField>
           <SlideOverField label="Sequence" name="order">
-            <Input {...register("order")} type="number" />
+            <Input
+              {...register("order")}
+              type="number"
+              className="w-full"
+              min={0}
+              max={sectionCount}
+            />
           </SlideOverField>
           <SlideOverField label="Featured For" name="duration">
             <Controller

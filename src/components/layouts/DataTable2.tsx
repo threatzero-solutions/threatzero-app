@@ -11,15 +11,18 @@ import {
   asPageInfo,
   asPaginationState,
   asSortingState,
+  isNil,
 } from "../../utils/core";
 import { ReactNode, useMemo } from "react";
 import { Paginated } from "../../types/entities";
 import FilterBar, { FilterBarFilterOptions } from "./FilterBar";
 import { SearchInputProps } from "../forms/inputs/SearchInput";
 
-interface DataTable2Props<T> extends Omit<BaseTableProps<T>, "table"> {
+interface DataTable2Props<T extends object>
+  extends Omit<BaseTableProps<T>, "table"> {
   data: T[];
-  columns: ColumnDef<T, string>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  columns: ColumnDef<T, any>[];
   query?: ItemFilterQueryParams;
   setQuery?: (draft: DraftFunction<ItemFilterQueryParams>) => void;
   className?: string;
@@ -27,7 +30,7 @@ interface DataTable2Props<T> extends Omit<BaseTableProps<T>, "table"> {
   subtitle?: string;
   action?: ReactNode;
   pageState?: Partial<Omit<Paginated<unknown>, "results">>;
-  searchOptions?: SearchInputProps;
+  searchOptions?: Partial<SearchInputProps>;
   filterOptions?: FilterBarFilterOptions;
   showSearch?: boolean;
 }
@@ -86,17 +89,25 @@ const DataTable2 = <T extends object>({
 
   const searchOptions = useMemo(() => {
     if (!showSearch) return;
-    if (searchOptionsProp) return searchOptionsProp;
+
+    const opts: Partial<SearchInputProps> = {};
+
     if (query && setQuery) {
-      return {
-        searchQuery: query.search ?? "",
-        setSearchQuery: (search) => {
-          setQuery((draft) => {
-            draft.search = search;
-            draft.offset = 0;
-          });
-        },
+      opts.searchQuery = query.search ?? "";
+      opts.setSearchQuery = (search) => {
+        setQuery((draft) => {
+          draft.search = search;
+          draft.offset = 0;
+        });
       };
+    }
+
+    if (searchOptionsProp) {
+      Object.assign(opts, searchOptionsProp);
+    }
+
+    if (!isNil(opts.searchQuery) && opts.setSearchQuery) {
+      return opts as SearchInputProps;
     }
   }, [showSearch, searchOptionsProp, query, setQuery]);
 

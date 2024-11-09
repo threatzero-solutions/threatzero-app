@@ -1,8 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import DataTable from "../../../components/layouts/DataTable";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
-import { ViolentIncidentReportStatus } from "../../../types/entities";
+import {
+  ViolentIncidentReport,
+  ViolentIncidentReportStatus,
+} from "../../../types/entities";
 import {
   SafetyManagementResourceFilterOptions,
   getViolentIncidentReportSubmissionStats,
@@ -21,8 +23,15 @@ import { withRequirePermissions } from "../../../guards/with-require-permissions
 import { useAuth } from "../../../contexts/AuthProvider";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
+import DataTable2 from "../../../components/layouts/DataTable2";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
 
 dayjs.extend(relativeTime);
+
+const columnHelper = createColumnHelper<ViolentIncidentReport>();
 
 const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
   const location = useLocation();
@@ -35,6 +44,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
   const {
     itemFilterOptions: tableFilterOptions,
     setItemFilterOptions: setTableFilterOptions,
+    debouncedItemFilterOptions: debouncedTableFilterOptions,
   } = useItemFilterQuery({
     order: { createdOn: "DESC" },
   });
@@ -44,11 +54,11 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
     isLoading: violentIncidentReportsLoading,
     refetch: refetchViolentIncidentReports,
   } = useQuery({
-    queryKey: ["violent-incident-reports", tableFilterOptions],
-    queryFn: ({ queryKey }) =>
-      getViolentIncidentReports(
-        queryKey[1] as SafetyManagementResourceFilterOptions
-      ),
+    queryKey: [
+      "violent-incident-reports",
+      debouncedTableFilterOptions,
+    ] as const,
+    queryFn: ({ queryKey }) => getViolentIncidentReports(queryKey[1]),
   });
 
   const [statsFilterOptions] = useState<SafetyManagementResourceFilterOptions>(
@@ -87,6 +97,88 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
     unitKey: "unitSlug",
     locationKey: "location.id",
   });
+
+  const columns = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const columns: ColumnDef<ViolentIncidentReport, any>[] = [];
+
+    columns.push(
+      ...[
+        columnHelper.accessor("status", {
+          header: "Status",
+          cell: (info) => <StatusPill status={info.getValue()} />,
+        }),
+        columnHelper.accessor("tag", {
+          header: "Tag",
+          cell: (info) => (
+            <EditableCell
+              value={info.getValue()}
+              onSave={(tag) =>
+                saveViolentIncidentReportMutation.mutate({
+                  id: info.row.original.id,
+                  tag,
+                })
+              }
+              emptyValue="—"
+              readOnly={!canAlterViolentIncidentReports}
+            />
+          ),
+        }),
+        columnHelper.accessor("createdOn", {
+          header: "Created On",
+          cell: (info) => dayjs(info.getValue()).format("ll"),
+        }),
+        columnHelper.accessor("updatedOn", {
+          header: "Last Updated",
+          cell: (info) => dayjs(info.getValue()).fromNow(),
+        }),
+      ]
+    );
+
+    if (hasMultipleUnitAccess) {
+      columns.push(
+        columnHelper.accessor((t) => t.unit?.name ?? "", {
+          id: "unit.name",
+          header: "Unit",
+          cell: (info) => info.getValue() || "—",
+        })
+      );
+    }
+
+    columns.push(
+      ...[
+        // columnHelper.accessor('pocFiles', {
+        //   header: "Files",
+        //   cell: (info) => <POCFilesButtonCompact pocFiles={info.getValue()} />,
+        //   enableSorting: false,
+        // }),
+        columnHelper.display({
+          id: "actions",
+          cell: (info) => (
+            <ButtonGroup>
+              <IconButton
+                as={Link}
+                to={`./${info.row.original.id}`}
+                state={{ from: location }}
+                className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                icon={ArrowRightIcon}
+                trailing
+                text="View"
+              />
+            </ButtonGroup>
+          ),
+          enableSorting: false,
+        }),
+      ]
+    );
+
+    return columns;
+  }, [
+    canAlterViolentIncidentReports,
+    location,
+    saveViolentIncidentReportMutation,
+    hasMultipleUnitAccess,
+  ]);
 
   return (
     <div className={"space-y-12"}>
@@ -132,76 +224,11 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
           )
         }
       />
-      <DataTable
-        data={{
-          headers: [
-            {
-              label: "Status",
-              key: "status",
-            },
-            {
-              label: "Tag",
-              key: "tag",
-            },
-            {
-              label: "Created On",
-              key: "createdOn",
-            },
-            {
-              label: "Last Updated",
-              key: "updatedOn",
-            },
-            {
-              label: "Unit",
-              key: "unit.name",
-              hidden: !hasMultipleUnitAccess,
-            },
-            // {
-            //   label: "Files",
-            //   key: "pocFiles",
-            //   noSort: true,
-            // },
-            {
-              label: <span className="sr-only">View</span>,
-              key: "view",
-              align: "right",
-              noSort: true,
-            },
-          ],
-          rows: (violentIncidentReports?.results ?? []).map((report) => ({
-            id: report.id,
-            status: <StatusPill status={report.status} />,
-            tag: (
-              <EditableCell
-                value={report.tag}
-                onSave={(tag) =>
-                  saveViolentIncidentReportMutation.mutate({
-                    id: report.id,
-                    tag,
-                  })
-                }
-                emptyValue="—"
-                readOnly={!canAlterViolentIncidentReports}
-              />
-            ),
-            createdOn: dayjs(report.createdOn).format("MMM D, YYYY"),
-            updatedOn: dayjs(report.updatedOn).fromNow(),
-            ["unit.name"]: report.unit?.name ?? report.unit?.slug,
-            // pocFiles: <POCFilesButtonCompact pocFiles={report.pocFiles} />,
-            view: (
-              <Link
-                to={`./${report.id}`}
-                state={{ from: location }}
-                className="text-secondary-600 hover:text-secondary-900 font-medium"
-              >
-                View
-                <span className="sr-only">, {report.id}</span>
-              </Link>
-            ),
-          })),
-        }}
+      <DataTable2
+        data={violentIncidentReports?.results ?? []}
+        columns={columns}
         isLoading={violentIncidentReportsLoading}
-        notFoundDetail="Violent incident log empty."
+        noRowsMessage="Violent incident log empty."
         title="Violent Incident Log"
         subtitle="View, add or edit violent incident reports."
         action={
@@ -214,19 +241,11 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
             </button>
           </Link>
         }
-        itemFilterQuery={tableFilterOptions}
-        setItemFilterQuery={setTableFilterOptions}
-        paginationOptions={{
-          ...violentIncidentReports,
-        }}
+        query={tableFilterOptions}
+        setQuery={setTableFilterOptions}
+        pageState={violentIncidentReports}
         searchOptions={{
-          searchQuery: tableFilterOptions.search ?? "",
-          setSearchQuery: (search) => {
-            setTableFilterOptions((q) => {
-              q.search = search;
-              q.offset = 0;
-            });
-          },
+          placeholder: "Search by tag...",
         }}
         filterOptions={{
           filters: [
