@@ -17,7 +17,8 @@ const VideoItem: React.FC<{ resource: ResourceItemEntity }> = ({
     <>
       <VimeoPlayer
         url={resource.vimeoUrl}
-        controls={true}
+        controls
+        responsive
         className="w-full aspect-video"
       />
       <h1 className="text-2xl my-1 mt-4">{resource.title}</h1>

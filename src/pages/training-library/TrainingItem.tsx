@@ -214,8 +214,8 @@ const TrainingItem: React.FC = () => {
                   >
                     <VimeoPlayer
                       url={(item as Video).vimeoUrl ?? ""}
-                      controls={true}
-                      responsive={true}
+                      controls
+                      responsive
                       className="h-full w-full"
                       onReady={handlePlayerReady}
                       onError={handleVideoError}

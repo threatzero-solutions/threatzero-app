@@ -91,8 +91,8 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
         to: "/resources/response",
       },
       {
-        name: "Resiliency",
-        to: "/resources/resiliency",
+        name: "Resilience",
+        to: "/resources/resilience",
       },
     ],
   },
