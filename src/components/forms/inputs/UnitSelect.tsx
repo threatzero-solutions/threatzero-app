@@ -6,13 +6,14 @@ import {
   Label,
 } from "@headlessui/react";
 import { Unit } from "../../../types/entities";
-import { ChangeEvent, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUnits, getUnitBySlug } from "../../../queries/organizations";
 import { classNames } from "../../../utils/core";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { SimpleChangeEvent } from "../../../types/core";
 import PillBadge from "../../PillBadge";
+import { useDebounceValue } from "usehooks-ts";
 
 type ConditionalUnit<M> = M extends true
   ? Unit[]
@@ -25,6 +26,7 @@ interface UnitSelectProps<M extends boolean | undefined> {
   label?: string;
   many?: M;
   required?: boolean;
+  disabled?: boolean;
   queryFilter?: Record<string, string>;
 }
 
@@ -35,11 +37,11 @@ const UnitSelect = <M extends boolean | undefined = false>({
   label,
   many,
   required,
+  disabled = false,
   queryFilter,
 }: UnitSelectProps<M>) => {
   const [unitQuery, setUnitQuery] = useState<string>("");
-
-  const unitQueryDebounce = useRef<number>();
+  const [debouncedUnitQuery] = useDebounceValue(unitQuery, 350);
 
   const selectedUnitsLength = Array.isArray(value)
     ? value.length
@@ -47,7 +49,12 @@ const UnitSelect = <M extends boolean | undefined = false>({
     ? 1
     : 0;
   const { data: unitData } = useQuery({
-    queryKey: ["units", unitQuery, queryFilter, selectedUnitsLength] as const,
+    queryKey: [
+      "units",
+      debouncedUnitQuery,
+      queryFilter,
+      selectedUnitsLength,
+    ] as const,
     queryFn: ({ queryKey }) =>
       getUnits({
         search: queryKey[1] || undefined,
@@ -58,17 +65,11 @@ const UnitSelect = <M extends boolean | undefined = false>({
   });
 
   const { data: selectedUnit } = useQuery({
-    queryKey: ["unit", value] as const,
-    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[1] as string),
+    queryKey: ["unit", "slug", value] as const,
+    queryFn: ({ queryKey }) =>
+      getUnitBySlug(queryKey[2] as string).catch(() => null),
     enabled: !!value && typeof value === "string",
   });
-
-  const handleQueryUnit = (event: ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(unitQueryDebounce.current);
-    unitQueryDebounce.current = setTimeout(() => {
-      setUnitQuery(event.target.value);
-    }, 350);
-  };
 
   const units = useMemo(() => {
     return unitData?.results
@@ -128,6 +129,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
         }
         className="relative"
         aria-required={required}
+        disabled={disabled}
       >
         {label && (
           <Label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
@@ -137,7 +139,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
         <div className="relative">
           <ComboboxInput
             className="w-full rounded-md border-0 bg-white py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
-            onChange={handleQueryUnit}
+            onChange={(e) => setUnitQuery(e.target.value)}
             displayValue={(unit: Unit | string) =>
               many
                 ? ""
@@ -148,6 +150,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
             placeholder="Search for a unit..."
             type="search"
             required={required}
+            disabled={disabled}
           />
           {!many && value && (
             <button

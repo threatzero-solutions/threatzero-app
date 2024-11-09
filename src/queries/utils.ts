@@ -4,30 +4,41 @@ import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { Paginated } from "../types/entities";
 import { DeepPartial } from "../types/core";
 
-export const findOneOrFail = <T>(
+export const nullFrom404 = (e: unknown) => {
+  if (e instanceof AxiosError && e.response?.status === 404) {
+    return null;
+  }
+  throw e;
+};
+
+export const findOneOrFail = <T>(path: string, options?: AxiosRequestConfig) =>
+  axios
+    .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}`, {
+      ...options,
+    })
+    .then((res) => res.data);
+
+export const findOneByIdOrFail = <T>(
   path: string,
   id?: string,
   options?: AxiosRequestConfig
 ) =>
   id
     ? axios
-        .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id}`, {
+        .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id ?? ""}`, {
           ...options,
         })
         .then((res) => res.data)
     : Promise.reject(new Error("ID must not be empty."));
 
-export const findOne = <T>(
+export const findOne = <T>(path: string, options?: AxiosRequestConfig) =>
+  findOneOrFail<T>(path, options).catch(nullFrom404);
+
+export const findOneById = <T>(
   path: string,
   id?: string,
   options?: AxiosRequestConfig
-) =>
-  findOneOrFail<T>(path, id, options).catch((e) => {
-    if (e instanceof AxiosError && e.response?.status === 404) {
-      return null;
-    }
-    throw e;
-  });
+) => findOneByIdOrFail<T>(path, id, options).catch(nullFrom404);
 
 export const findManyRaw = <T>(
   path: string,
@@ -92,3 +103,16 @@ export const deleteOne = (path: string, id?: string) =>
   id
     ? axios.delete(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id}`)
     : Promise.reject(new Error("ID must not be empty."));
+
+export const download = (
+  path: string,
+  query?: Record<string, unknown>,
+  options?: AxiosRequestConfig
+) =>
+  axios
+    .get(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`, {
+      params: query,
+      responseType: "blob",
+      ...options,
+    })
+    .then((res) => res.data);

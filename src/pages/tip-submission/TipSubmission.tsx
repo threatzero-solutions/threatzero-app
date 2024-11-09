@@ -246,7 +246,10 @@ const TipSubmission: React.FC = () => {
           }`}
           languages={forms?.map((f) => f.language)}
           setLanguage={(l) =>
-            setSearchParams((p) => ({ ...p, language: l.code }))
+            setSearchParams((p) => {
+              p.set("language", l.code);
+              return p;
+            })
           }
         />
       )}

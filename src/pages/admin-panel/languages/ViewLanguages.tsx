@@ -25,6 +25,8 @@ export const ViewLanguages: React.FC = () => {
     queryFn: ({ queryKey }) => getLanguages(queryKey[1]),
   });
 
+  /*************  ✨ Codeium Command ⭐  *************/
+  /******  d5736b23-724c-4ce5-a190-a1ca75679811  *******/
   const handleEditLanguage = (language?: Language) => {
     setSelectedLanguage(language);
     setEditLanguageSliderOpen(true);
@@ -74,23 +76,10 @@ export const ViewLanguages: React.FC = () => {
         isLoading={languagesLoading}
         title="Languages"
         subtitle="View, add or edit languages used for displaying content for different locales."
-        orderOptions={{
-          order: languagesQuery.order,
-          setOrder: (k, v) => {
-            setLanguagesQuery((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={languagesQuery}
+        setItemFilterQuery={setLanguagesQuery}
         paginationOptions={{
-          currentOffset: languages?.offset,
-          total: languages?.count,
-          limit: languages?.limit,
-          setOffset: (offset) =>
-            setLanguagesQuery((q) => {
-              q.offset = offset;
-            }),
+          ...languages,
         }}
         searchOptions={{
           searchQuery: languagesQuery.search ?? "",

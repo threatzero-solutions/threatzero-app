@@ -9,7 +9,7 @@ type MultilineTextInputProps<K extends string | number | symbol> = Omit<
   DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,
   "name" | "value" | "onChange"
 > & {
-  name: K;
+  name?: K;
   value?: string[];
   onChange?: (value: SimpleChangeEvent<string[], K>) => void;
 };
@@ -18,7 +18,7 @@ const MultilineTextInput = <K extends string | number | symbol = string>({
   value,
   onChange,
   className,
-  name,
+  name = "multilineText" as K,
   ...props
 }: MultilineTextInputProps<K>) => {
   const [lines, setLines] = useImmer<string[]>(value?.length ? value : [""]);

@@ -1,3 +1,5 @@
+import { DurationObject } from "./api";
+
 export interface Base {
   id: string;
   createdOn: string;
@@ -30,13 +32,30 @@ export interface OrganizationBase extends Base {
   policiesAndProcedures: OrganizationPolicyFile[];
 }
 
+export interface AllowedOrigin {
+  value: string;
+}
+
+export interface OrganizationTrainingAccessSettings {
+  allowedOrigins?: AllowedOrigin[];
+}
+
 /** Represents an organization (ie district, company, etc.) */
 export interface Organization extends OrganizationBase {
   groupId: string | null;
-  courses?: TrainingCourse[];
+  enrollments?: CourseEnrollment[];
   resources?: ResourceItem[];
   idpSlugs: string[];
   allowedAudiences: string[];
+  trainingAccessSettings: OrganizationTrainingAccessSettings | null;
+}
+
+export interface CourseEnrollment extends Base {
+  // organization?: Organization;
+  course: TrainingCourse;
+  startDate: Date | string | null;
+  endDate: Date | string | null;
+  visibility: TrainingVisibility;
 }
 
 /** Represents a unit of an organization (ie school, office, college, etc.) */
@@ -76,15 +95,10 @@ export interface TrainingMetadata {
 export interface TrainingCourse extends Base {
   metadata: TrainingMetadata;
   visibility: TrainingVisibility;
-  organizations: Organization[];
+  enrollments: CourseEnrollment[];
   sections: TrainingSection[];
   audiences: Audience[];
   presentableBy: Audience[];
-}
-
-export enum TrainingRepeats {
-  YEARLY = "yearly",
-  ONCE = "once",
 }
 
 /** A group of training items. */
@@ -92,9 +106,7 @@ export interface TrainingSection extends Base {
   metadata: TrainingMetadata;
   order: number;
   items: TrainingSectionItem[] | null;
-  availableOn: string;
-  expiresOn: string | null;
-  repeats: TrainingRepeats;
+  duration: DurationObject;
   courseId: string | null;
 }
 
@@ -129,6 +141,19 @@ export interface Video extends TrainingItem {
   vimeoUrl?: string;
   encodingJobId: string | null;
   abrEnabled: boolean;
+}
+
+export interface ItemCompletion extends Base {
+  item?: TrainingItem;
+  section?: TrainingSection;
+  enrollment?: CourseEnrollment;
+  completed: boolean;
+  completedOn: Date | null;
+  progress: number;
+  organization?: Organization;
+  unit?: Unit;
+  user?: UserRepresentation;
+  url: string;
 }
 
 export enum TrackingStatus {
@@ -415,7 +440,7 @@ export interface ResourceItem extends Base {
   description?: string;
   type: ResourceType;
   category: ResourceItemCategory;
-  organizations: Organization[];
+  // organizations: Organization[];
 }
 
 // USERS
@@ -423,6 +448,7 @@ export interface ResourceItem extends Base {
 export interface OpaqueToken<V> extends Base {
   key: string;
   value: V;
+  expiresOn: Date | null;
 }
 
 export interface ViewingUserTokenValue {
@@ -443,24 +469,15 @@ export interface TrainingParticipantTokenValue extends ViewingUserTokenValue {
 
 export interface TrainingToken
   extends OpaqueToken<TrainingParticipantTokenValue> {
-  watchStat?: WatchStat | null;
+  completion?: ItemCompletion | null;
 }
 
-export interface WatchStat {
+export interface LmsTrainingTokenValue {
+  enrollmentId: string;
   trainingItemId: string;
-  trainingItemTitle: string;
-  trainingCourseId: string | null;
-  percentWatched: string;
-  year: number;
-  userId: string | null;
-  userExternalId: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-  organizationId: string | null;
-  organizationSlug: string | null;
-  organizationName: string | null;
-  unitId: string | null;
-  unitSlug: string | null;
-  unitName: string | null;
+  unitId?: string;
+  organizationId: string;
+  lmsName?: string;
 }
+
+export interface LmsTrainingToken extends OpaqueToken<LmsTrainingTokenValue> {}

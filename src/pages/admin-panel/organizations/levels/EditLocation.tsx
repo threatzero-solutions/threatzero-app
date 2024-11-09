@@ -10,7 +10,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { Location, Field, FieldType, Unit } from "../../../../types/entities";
@@ -27,6 +26,7 @@ import SlideOverField from "../../../../components/layouts/slide-over/SlideOverF
 import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
 import { CoreContext } from "../../../../contexts/core/core-context";
+import { useDebounceValue } from "usehooks-ts";
 
 const INPUT_DATA: Array<Partial<Field> & { name: keyof Location }> = [
   {
@@ -73,31 +73,35 @@ const EditLocation: React.FC<EditLocationProps> = ({
 
   const isNew = useMemo(() => !locationProp, [locationProp]);
 
-  const unitQueryDebounce = useRef<number>();
-
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
+  const [debouncedUnitQuery] = useDebounceValue(unitQuery, 350);
   const { data: units } = useQuery({
-    queryKey: ["units", unitQuery],
-    queryFn: ({ queryKey }) => getUnits({ search: queryKey[1], limit: 5 }),
+    queryKey: ["units", { search: debouncedUnitQuery, limit: 5 }] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
   });
 
   const queryClient = useQueryClient();
-  const onMutateSuccess = () => {
-    queryClient.invalidateQueries({
-      queryKey: ["locations"],
-    });
-    setOpen(false);
-  };
   const saveLocationMutation = useMutation({
     mutationFn: saveLocation,
-    onSuccess: onMutateSuccess,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["locations"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["location", "id", data.id],
+      });
+      setOpen(false);
+    },
   });
 
   const deleteLocationMutation = useMutation({
     mutationFn: deleteLocation,
     onSuccess: () => {
-      onMutateSuccess();
+      queryClient.invalidateQueries({
+        queryKey: ["locations"],
+      });
+      setOpen(false);
       setConfirmationClose();
     },
   });
@@ -108,13 +112,6 @@ const EditLocation: React.FC<EditLocationProps> = ({
       ...(locationProp ?? {}),
     }));
   }, [locationProp]);
-
-  const handleQueryUnit = (event: ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(unitQueryDebounce.current);
-    unitQueryDebounce.current = setTimeout(() => {
-      setUnitQuery(event.target.value);
-    }, 350);
-  };
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -174,13 +171,15 @@ const EditLocation: React.FC<EditLocationProps> = ({
             {input.name === "unit" ? (
               <Combobox
                 as="div"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 value={location.unit ?? ({} as Unit as any)}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(v) => setLocation((l) => ({ ...l, unit: v })) as any}
                 className="relative"
               >
                 <ComboboxInput
                   className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
-                  onChange={handleQueryUnit}
+                  onChange={(e) => setUnitQuery(e.target.value)}
                   displayValue={(unit: Unit) => unit?.name}
                   type="search"
                   placeholder="Search for a unit..."

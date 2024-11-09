@@ -1,17 +1,13 @@
-import { useImmer } from "use-immer";
-import { RoleGroupMatcherDto } from "../../../../types/api";
-import { SimpleChangeEvent } from "../../../../types/core";
+import { OrganizationIdpDto, RoleGroupMatcherDto } from "../../../../types/api";
 import DataTable from "../../../../components/layouts/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
-import React, { MouseEvent, useEffect } from "react";
+import React, { MouseEvent } from "react";
 import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
 import Select from "../../../../components/forms/inputs/Select";
 import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import { useFieldArray, useFormContext } from "react-hook-form";
 
-interface RoleGroupMatchersInputProps<K extends string | number | symbol> {
-  name: K;
-  value?: RoleGroupMatcherDto[];
-  onChange?: (e: SimpleChangeEvent<RoleGroupMatcherDto[], K>) => void;
+interface RoleGroupMatchersInputProps {
   allowedRoleGroups: string[];
   checkDisabled: (m: RoleGroupMatcherDto) => boolean;
 }
@@ -31,45 +27,21 @@ const AddMatcherButton: React.FC<{
   );
 };
 
-const RoleGroupMatchersInput = <K extends string | number | symbol>({
-  name,
-  value,
-  onChange,
+const DEFAULT_MATCHER: RoleGroupMatcherDto = {
+  externalName: "",
+  pattern: "",
+  roleGroup: "",
+};
+
+const RoleGroupMatchersInput: React.FC<RoleGroupMatchersInputProps> = ({
   allowedRoleGroups,
   checkDisabled,
-}: RoleGroupMatchersInputProps<K>) => {
-  const [matchers, setMatchers] = useImmer<RoleGroupMatcherDto[]>(value ?? []);
-
-  const handleAddMatcher = () => {
-    setMatchers((draft) => {
-      draft.push({
-        externalName: "",
-        pattern: "",
-        roleGroup: "",
-      });
-    });
-  };
-
-  const handleRemoveMatcher = (idx: number) => {
-    setMatchers((draft) => {
-      draft.splice(idx, 1);
-    });
-  };
-
-  const handleUpdateMatcher = (
-    idx: number,
-    key: keyof RoleGroupMatcherDto,
-    e: SimpleChangeEvent<string | null | undefined>
-  ) => {
-    setMatchers((draft) => {
-      const value = e.target?.value;
-      draft[idx][key] = (value ?? "") as string;
-    });
-  };
-
-  useEffect(() => {
-    onChange?.({ target: { name, value: matchers } });
-  }, [matchers, onChange, name]);
+}) => {
+  const { control } = useFormContext<OrganizationIdpDto>();
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "roleGroupMatchers",
+  });
 
   return (
     <div className="flex flex-col">
@@ -106,45 +78,51 @@ const RoleGroupMatchersInput = <K extends string | number | symbol>({
               noSort: true,
             },
           ],
-          rows: matchers.map((u, idx) => ({
-            id: u.attributeId ?? idx.toString(),
+          rows: fields.map((field, idx) => ({
+            id: field.attributeId ?? idx.toString(),
             externalName: (
               <Input
-                value={u.externalName ?? ""}
+                value={field.externalName ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateMatcher(idx, "externalName", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, externalName: e.target.value })
+                }
                 required
-                readOnly={checkDisabled(u)}
+                readOnly={checkDisabled(field)}
               />
             ),
             matchesSeparator: <PuzzlePieceIcon className="w-4 h-4" />,
             pattern: (
               <Input
-                value={u.pattern ?? ""}
+                value={field.pattern ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateMatcher(idx, "pattern", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, pattern: e.target.value })
+                }
                 required
-                readOnly={checkDisabled(u)}
+                readOnly={checkDisabled(field)}
               />
             ),
             arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             roleGroup: (
               <Select
-                value={u.roleGroup}
-                onChange={(e) => handleUpdateMatcher(idx, "roleGroup", e)}
+                value={field.roleGroup}
+                onChange={(e) =>
+                  update(idx, { ...field, roleGroup: e.target.value })
+                }
                 options={(allowedRoleGroups ?? []).map((roleGroup) => ({
                   label: roleGroup,
                   key: roleGroup,
-                  disabled: checkDisabled({ ...u, roleGroup }),
+                  disabled: checkDisabled({ ...field, roleGroup }),
                 }))}
-                readOnly={checkDisabled(u)}
+                readOnly={checkDisabled(field)}
               />
             ),
             delete: (
               <button
                 type="button"
-                onClick={() => handleRemoveMatcher(idx)}
-                disabled={checkDisabled(u)}
+                onClick={() => remove(idx)}
+                disabled={checkDisabled(field)}
                 className="cursor-pointer disabled:cursor-default disabled:opacity-50"
               >
                 <TrashIcon className="w-4 h-4" />
@@ -155,11 +133,13 @@ const RoleGroupMatchersInput = <K extends string | number | symbol>({
         notFoundDetail={
           <AddMatcherButton
             value="+ Add a role group matcher"
-            onClick={handleAddMatcher}
+            onClick={() => append(DEFAULT_MATCHER)}
           />
         }
       />
-      {matchers.length > 0 && <AddMatcherButton onClick={handleAddMatcher} />}
+      {fields.length > 0 && (
+        <AddMatcherButton onClick={() => append(DEFAULT_MATCHER)} />
+      )}
     </div>
   );
 };

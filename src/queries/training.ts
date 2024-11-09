@@ -2,6 +2,8 @@ import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import {
   Audience,
+  ItemCompletion,
+  Organization,
   TrainingCourse,
   TrainingItem,
   TrainingSection,
@@ -9,7 +11,21 @@ import {
   VideoEvent,
 } from "../types/entities";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
-import { deleteOne, findMany, findOne, save } from "./utils";
+import {
+  deleteOne,
+  download,
+  findMany,
+  findOne,
+  findOneById,
+  insertOne,
+  save,
+  updateOne,
+} from "./utils";
+
+export const getMyCourseEnrollments = () =>
+  findOne<Organization>("/organizations/organizations/mine/").then(
+    (organization) => organization?.enrollments ?? []
+  );
 
 export const getTrainingAudiences = (options: ItemFilterQueryParams = {}) =>
   findMany<Audience>("/training/audiences/", options);
@@ -18,16 +34,16 @@ export const getTrainingCourses = (options: ItemFilterQueryParams = {}) =>
   findMany<TrainingCourse>("/training/courses/", options);
 
 export const getTrainingCourse = (id?: string) =>
-  findOne<TrainingCourse>("/training/courses/", id);
+  findOneById<TrainingCourse>("/training/courses/", id);
 
 export const getTrainingSection = (id?: string) =>
-  findOne<TrainingSection>("/training/sections/", id);
+  findOneById<TrainingSection>("/training/sections/", id);
 
 export const getTrainingItems = (options: ItemFilterQueryParams = {}) =>
   findMany<TrainingItem>("/training/items/", options);
 
 export const getTrainingItem = (id?: string, watchId?: string | null) =>
-  findOne<TrainingItem>(`/training/items/${watchId ? "watch/" : ""}`, id, {
+  findOneById<TrainingItem>(`/training/items/${watchId ? "watch/" : ""}`, id, {
     params: { watch_id: watchId },
   });
 
@@ -40,6 +56,32 @@ export const getPresignedPutUrl = (key: string) =>
       }
     )
     .then((r) => r.data.signedUrl);
+
+export const getMyItemCompletion = (
+  itemId: string,
+  enrollmentId: string | undefined,
+  watchId?: string | null
+) =>
+  findMany<ItemCompletion>(`/training/items/my-completions/`, {
+    watch_id: watchId,
+    ["item.id"]: itemId,
+    ["enrollment.id"]: enrollmentId,
+  }).then((r) => r.results[0] ?? null);
+
+export const getMyItemCompletions = (
+  query: ItemFilterQueryParams,
+  watchId?: string | null
+) =>
+  findMany<ItemCompletion>(`/training/items/my-completions/`, {
+    ...query,
+    watch_id: watchId,
+  });
+
+export const getItemCompletions = (query: ItemFilterQueryParams) =>
+  findMany<ItemCompletion>("/training/items/completions/", query);
+
+export const getItemCompletionsCsv = (query: ItemFilterQueryParams) =>
+  download("/training/items/completions/csv/", query);
 
 // ------- MUTATIONS ---------
 
@@ -54,6 +96,21 @@ export const saveTrainingSection = (section: Partial<TrainingSection>) =>
 
 export const deleteTrainingSection = async (id?: string) =>
   deleteOne("/training/sections/", id);
+
+export const swapTrainingSectionOrders = async (
+  sectionA: Partial<TrainingSection>,
+  sectionB: Partial<TrainingSection>
+) =>
+  Promise.all([
+    updateOne<TrainingSection>("/training/sections/", {
+      id: sectionA.id,
+      order: sectionB.order,
+    }),
+    updateOne<TrainingSection>("/training/sections/", {
+      id: sectionB.id,
+      order: sectionA.order,
+    }),
+  ]);
 
 export const saveTrainingItem = async (item: Partial<TrainingItem & Video>) => {
   // TODO: Add support for other items.
@@ -88,3 +145,45 @@ export const emitVideoEvent = async (
       event
     )
     .then((res) => res.data);
+
+export const createItemCompletion = async (
+  input: {
+    itemId: string;
+    sectionId?: string;
+    enrollmentId: string | undefined;
+    url: string;
+  },
+  watchId?: string | null
+) =>
+  insertOne<ItemCompletion>(
+    "/training/items/my-completions/",
+    {
+      item: {
+        id: input.itemId,
+      },
+      section: input.sectionId ? { id: input.sectionId } : undefined,
+      enrollment: { id: input.enrollmentId },
+      url: input.url,
+    },
+    {
+      params: { watch_id: watchId },
+    }
+  );
+
+export const updateItemCompletion = async (
+  id: ItemCompletion["id"],
+  progress: number,
+  completed: boolean,
+  watchId?: string | null
+) =>
+  updateOne<ItemCompletion>(
+    "/training/items/my-completions/",
+    {
+      id,
+      progress,
+      completed,
+    },
+    {
+      params: { watch_id: watchId },
+    }
+  );

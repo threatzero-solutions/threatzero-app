@@ -2,10 +2,10 @@ import { Fragment, useContext } from "react";
 import { Transition } from "@headlessui/react";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { ErrorContext } from "../../../contexts/error/error-context";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 
 const ErrorNotice: React.FC = () => {
-  const { state, dispatch } = useContext(ErrorContext);
+  const { state, dispatch } = useContext(AlertContext);
 
   return (
     <>

@@ -59,35 +59,32 @@ interface ManageTrainingInviteProps {
 
 const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
   setOpen,
-  trainingToken: trainingTokenProp,
+  trainingToken,
   readOnly,
 }) => {
   const [trainingTokenValue, setTrainingTokenValue] = useState<
-    Record<string, unknown>
-  >({});
+    Partial<TrainingToken>
+  >(trainingToken ?? {});
   const [selectItemOpen, setSelectItemOpen] = useState(false);
   const [userIdAsEmail, setUserIdAsEmail] = useState(true);
-
-  useEffect(() => {
-    setTrainingTokenValue((v) => ({
-      ...v,
-      ...(trainingTokenProp?.value ?? {}),
-    }));
-  }, [trainingTokenProp]);
 
   useEffect(() => {
     if (userIdAsEmail) {
       setTrainingTokenValue((v) => ({
         ...v,
-        userId: trainingTokenValue.email,
+        userId: trainingToken?.value?.email,
       }));
     }
-  }, [userIdAsEmail, trainingTokenValue.email]);
+  }, [userIdAsEmail, trainingToken?.value?.email]);
 
   const { data: trainingItem, isLoading: trainingItemLoading } = useQuery({
-    queryKey: ["training-items", trainingTokenValue.trainingItemId] as const,
-    queryFn: ({ queryKey }) => getTrainingItem(`${queryKey[1]}`),
-    enabled: !!trainingTokenValue.trainingItemId,
+    queryKey: [
+      "training-item",
+      "id",
+      trainingTokenValue.value?.trainingItemId,
+    ] as const,
+    queryFn: ({ queryKey }) => getTrainingItem(`${queryKey[2]}`),
+    enabled: !!trainingTokenValue.value?.trainingItemId,
   });
 
   const queryClient = useQueryClient();
@@ -188,8 +185,8 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
                         }}
                         checked={
                           readOnly
-                            ? trainingTokenValue.email ===
-                              trainingTokenValue.userId
+                            ? trainingTokenValue.value?.email ===
+                              trainingTokenValue.value?.userId
                             : userIdAsEmail
                         }
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -204,7 +201,13 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
                     field={input}
                     onChange={handleChange}
                     disabled={input.name === "userId" && userIdAsEmail}
-                    value={trainingTokenValue[input.name as keyof object] ?? ""}
+                    value={
+                      input.name === "expiresOn"
+                        ? trainingTokenValue.expiresOn
+                        : trainingTokenValue.value?.[
+                            input.name as keyof object
+                          ] ?? ""
+                    }
                     readOnly={readOnly}
                   />
                 </div>

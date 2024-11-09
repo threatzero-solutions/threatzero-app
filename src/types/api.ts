@@ -35,8 +35,9 @@ export interface TrainingParticipantRepresentation {
 export interface SendTrainingLinksDto {
   trainingTokenValues: Partial<TrainingParticipantRepresentation>[];
   trainingUrlTemplate: string;
-  trainingCourseId: string;
+  courseEnrollmentId: string;
   trainingItemId: string;
+  organizationId?: string;
 }
 
 export interface ResendTrainingLinksDto {
@@ -80,3 +81,24 @@ export interface OrganizationIdpDto {
   defaultAudience?: string | null;
   importedConfig: Record<string, string>;
 }
+
+export interface OrganizationUser {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  attributes: Record<string, string[]>;
+}
+
+export const DurationUnits = [
+  "years",
+  "months",
+  "days",
+  "hours",
+  "minutes",
+  "seconds",
+] as const;
+export type DurationObject = Partial<
+  Record<(typeof DurationUnits)[number], number>
+>;

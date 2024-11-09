@@ -1,18 +1,14 @@
-import { useImmer } from "use-immer";
-import { UnitMatcherDto } from "../../../../types/api";
-import { SimpleChangeEvent } from "../../../../types/core";
+import { OrganizationIdpDto, UnitMatcherDto } from "../../../../types/api";
 import DataTable from "../../../../components/layouts/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
-import React, { MouseEvent, useEffect } from "react";
+import React, { MouseEvent } from "react";
 import UnitSelect from "../../../../components/forms/inputs/UnitSelect";
 import { Organization, Unit } from "../../../../types/entities";
 import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import { useFormContext, useFieldArray } from "react-hook-form";
 
-interface UnitMatchersInputProps<K extends string | number | symbol> {
-  name: K;
-  value?: UnitMatcherDto[];
-  onChange?: (e: SimpleChangeEvent<UnitMatcherDto[], K>) => void;
+interface UnitMatchersInputProps {
   organizationId: Organization["id"];
 }
 
@@ -31,50 +27,20 @@ const AddUnitMatcherButton: React.FC<{
   );
 };
 
-const UnitMatchersInput = <K extends string | number | symbol = string>({
-  name,
-  value,
-  onChange,
+const DEFAULT_MATCHER: UnitMatcherDto = {
+  externalName: "",
+  pattern: "",
+  unitSlug: "",
+};
+
+const UnitMatchersInput: React.FC<UnitMatchersInputProps> = ({
   organizationId,
-}: UnitMatchersInputProps<K>) => {
-  const [unitMatchers, setUnitMatchers] = useImmer<UnitMatcherDto[]>(
-    value ?? []
-  );
-
-  const handleAddMatcher = () => {
-    setUnitMatchers((draft) => {
-      draft.push({
-        externalName: "",
-        pattern: "",
-        unitSlug: "",
-      });
-    });
-  };
-
-  const handleRemoveMatcher = (idx: number) => {
-    setUnitMatchers((draft) => {
-      draft.splice(idx, 1);
-    });
-  };
-
-  const handleUpdateMatcher = (
-    idx: number,
-    key: keyof UnitMatcherDto,
-    e: SimpleChangeEvent<string | Unit | null | undefined>
-  ) => {
-    setUnitMatchers((draft) => {
-      let value = e.target?.value;
-      if (key === "unitSlug" && value && typeof value !== "string") {
-        value = (value as Unit).slug;
-      }
-
-      draft[idx][key] = (value ?? "") as string;
-    });
-  };
-
-  useEffect(() => {
-    onChange?.({ target: { name, value: unitMatchers } });
-  }, [unitMatchers, onChange, name]);
+}) => {
+  const { control } = useFormContext<OrganizationIdpDto>();
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "unitMatchers",
+  });
 
   return (
     <div className="flex flex-col">
@@ -111,35 +77,48 @@ const UnitMatchersInput = <K extends string | number | symbol = string>({
               noSort: true,
             },
           ],
-          rows: unitMatchers.map((u, idx) => ({
-            id: u.attributeId ?? idx.toString(),
+          rows: fields.map((field, idx) => ({
+            id: field.attributeId ?? idx.toString(),
             externalName: (
               <Input
-                value={u.externalName ?? ""}
+                value={field.externalName ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateMatcher(idx, "externalName", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, externalName: e.target.value })
+                }
                 required
               />
             ),
             matchesSeparator: <PuzzlePieceIcon className="w-4 h-4" />,
             pattern: (
               <Input
-                value={u.pattern ?? ""}
+                value={field.pattern ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateMatcher(idx, "pattern", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, pattern: e.target.value })
+                }
                 required
               />
             ),
             arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             unitSlug: (
               <UnitSelect
-                value={u.unitSlug}
-                onChange={(e) => handleUpdateMatcher(idx, "unitSlug", e)}
+                value={field.unitSlug}
+                onChange={(e) => {
+                  let newValue = e.target?.value;
+                  if (newValue && typeof newValue !== "string") {
+                    newValue = (newValue as Unit).slug;
+                  }
+                  update(idx, {
+                    ...field,
+                    unitSlug: newValue ?? "",
+                  });
+                }}
                 queryFilter={{ ["organization.id"]: organizationId }}
               />
             ),
             delete: (
-              <button type="button" onClick={() => handleRemoveMatcher(idx)}>
+              <button type="button" onClick={() => remove(idx)}>
                 <TrashIcon className="w-4 h-4" />
               </button>
             ),
@@ -148,12 +127,12 @@ const UnitMatchersInput = <K extends string | number | symbol = string>({
         notFoundDetail={
           <AddUnitMatcherButton
             value="+ Add a unit matcher"
-            onClick={handleAddMatcher}
+            onClick={() => append(DEFAULT_MATCHER)}
           />
         }
       />
-      {unitMatchers.length > 0 && (
-        <AddUnitMatcherButton onClick={handleAddMatcher} />
+      {fields.length > 0 && (
+        <AddUnitMatcherButton onClick={() => append(DEFAULT_MATCHER)} />
       )}
     </div>
   );

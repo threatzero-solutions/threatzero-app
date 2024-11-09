@@ -1,8 +1,8 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { ResendTrainingLinksDto, SendTrainingLinksDto } from "../types/api";
-import { TrainingToken, WatchStat } from "../types/entities";
-import { findMany } from "./utils";
+import { TrainingToken } from "../types/entities";
+import { download, findMany } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
 export const sendTrainingLinks = (
@@ -33,30 +33,11 @@ export const getTrainingInvitesCsv = (
   query?: ItemFilterQueryParams,
   options?: AxiosRequestConfig
 ) =>
-  axios
-    .get(`${API_BASE_URL}/training-admin/invites/csv/`, {
-      params: {
-        ...query,
-        trainingUrlTemplate,
-      },
-      responseType: "arraybuffer",
-      ...options,
-    })
-    .then((res) => res.data);
-
-export const findWatchStats = (query?: ItemFilterQueryParams) =>
-  findMany<WatchStat>("/training-admin/watch-stats/", query);
-
-export const getWatchStatsCsv = (
-  query?: ItemFilterQueryParams,
-  options: AxiosRequestConfig = {}
-) =>
-  axios
-    .get(`${API_BASE_URL}/training-admin/watch-stats/csv/`, {
-      params: {
-        ...query,
-      },
-      responseType: "arraybuffer",
-      ...options,
-    })
-    .then((res) => res.data);
+  download(
+    "/training-admin/invites/csv/",
+    {
+      ...query,
+      trainingUrlTemplate,
+    },
+    options
+  );

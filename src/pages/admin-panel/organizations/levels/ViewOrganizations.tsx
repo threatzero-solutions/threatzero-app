@@ -1,21 +1,49 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { getOrganizations } from "../../../../queries/organizations";
-import DataTable from "../../../../components/layouts/DataTable";
-import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import EditOrganization from "./EditOrganization";
-import { Organization } from "../../../../types/entities";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
 import { useImmer } from "use-immer";
+import { Link } from "react-router-dom";
+import { PencilSquareIcon } from "@heroicons/react/20/solid";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
+import { createColumnHelper } from "@tanstack/react-table";
+import { Organization } from "../../../../types/entities";
+import DataTable2 from "../../../../components/layouts/DataTable2";
+import dayjs from "dayjs";
+
+const columnHelper = createColumnHelper<Organization>();
+const columns = [
+  columnHelper.accessor("name", {
+    header: "Name",
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor("slug", {
+    header: "Slug",
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor("createdOn", {
+    header: "Created On",
+    cell: (info) => dayjs(info.getValue()).format("ll"),
+  }),
+  columnHelper.display({
+    id: "actions",
+    cell: (info) => (
+      <ButtonGroup className="w-full justify-end">
+        <IconButton
+          as={Link}
+          icon={PencilSquareIcon}
+          to={info.row.original.id}
+          className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+          text="Edit"
+        />
+      </ButtonGroup>
+    ),
+    enableSorting: false,
+  }),
+];
 
 export const ViewOrganizations: React.FC = () => {
-  const [editOrganizationSliderOpen, setEditOrganizationSliderOpen] =
-    useState(false);
-  const [selectedOrganization, setSelectedOrganization] = useState<
-    Partial<Organization> | undefined
-  >();
-
   const [organizationsQuery, setOrganizationsQuery] =
     useImmer<ItemFilterQueryParams>({ order: { name: "ASC" } });
   const [debouncedOrganizationsQuery] = useDebounceValue(
@@ -28,97 +56,28 @@ export const ViewOrganizations: React.FC = () => {
     queryFn: ({ queryKey }) => getOrganizations(queryKey[1]),
   });
 
-  const handleEditOrganization = (organization?: Organization) => {
-    setSelectedOrganization(organization);
-    setEditOrganizationSliderOpen(true);
-  };
-
   return (
     <>
-      <DataTable
-        data={{
-          headers: [
-            {
-              label: "Name",
-              key: "name",
-            },
-            {
-              label: "Slug",
-              key: "slug",
-            },
-            {
-              label: <span className="sr-only">Edit</span>,
-              key: "edit",
-              align: "right",
-              noSort: true,
-            },
-          ],
-          rows: (organizations?.results ?? []).map((organization) => ({
-            id: organization.id,
-            name: organization.name,
-            slug: organization.slug,
-            edit: (
-              <button
-                type="button"
-                className="text-secondary-600 hover:text-secondary-900 font-medium"
-                onClick={() => handleEditOrganization(organization)}
-              >
-                Edit
-                <span className="sr-only">, {organization.id}</span>
-              </button>
-            ),
-          })),
-        }}
+      <DataTable2
+        data={organizations?.results ?? []}
+        columns={columns}
         isLoading={organizationsLoading}
+        query={organizationsQuery}
+        setQuery={setOrganizationsQuery}
         title="Organizations"
         subtitle="View, add or edit top-level organizations (i.e. school districts, companies)."
-        orderOptions={{
-          order: organizationsQuery.order,
-          setOrder: (k, v) => {
-            setOrganizationsQuery((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
-        paginationOptions={{
-          currentOffset: organizations?.offset,
-          total: organizations?.count,
-          limit: organizations?.limit,
-          setOffset: (offset) =>
-            setOrganizationsQuery((q) => {
-              q.offset = offset;
-            }),
-        }}
-        searchOptions={{
-          searchQuery: organizationsQuery.search ?? "",
-          setSearchQuery: (search) => {
-            setOrganizationsQuery((q) => {
-              q.search = search;
-              q.offset = 0;
-            });
-          },
-        }}
-        notFoundDetail="No organizations found."
         action={
-          <button
-            type="button"
+          <Link
+            to="new"
             className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-            onClick={() => handleEditOrganization()}
           >
             + Add New Organization
-          </button>
+          </Link>
         }
+        pageState={organizations}
+        showFooter={false}
+        noRowsMessage="No organizations found."
       />
-      <SlideOver
-        open={editOrganizationSliderOpen}
-        setOpen={setEditOrganizationSliderOpen}
-      >
-        <EditOrganization
-          setOpen={setEditOrganizationSliderOpen}
-          organization={selectedOrganization}
-        />
-      </SlideOver>
     </>
   );
 };

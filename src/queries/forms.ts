@@ -1,11 +1,11 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { Field, FieldGroup, Form } from "../types/entities";
-import { deleteOne, findMany, findOneOrFail, save } from "./utils";
+import { deleteOne, findMany, findOneByIdOrFail, save } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
 export const getForm = (formId?: string) =>
-  findOneOrFail<Form>("/forms/", formId);
+  findOneByIdOrFail<Form>("/forms/", formId);
 
 export const getForms = (query: ItemFilterQueryParams = {}) =>
   findMany<Form>("/forms/", query);

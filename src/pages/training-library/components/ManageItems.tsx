@@ -167,9 +167,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
 
         <div>
           <Paginator
-            currentOffset={itemsData?.offset}
-            total={itemsData?.count}
-            limit={itemsData?.limit}
+            {...itemsData}
             setOffset={(offset) =>
               setItemFilterOptions((o) => {
                 o.offset = offset;

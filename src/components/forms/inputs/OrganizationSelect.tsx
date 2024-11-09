@@ -6,7 +6,7 @@ import {
   Label,
 } from "@headlessui/react";
 import { Organization } from "../../../types/entities";
-import { ChangeEvent, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getOrganizationBySlug,
@@ -16,6 +16,7 @@ import { classNames } from "../../../utils/core";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { SimpleChangeEvent } from "../../../types/core";
 import PillBadge from "../../PillBadge";
+import { useDebounceValue } from "usehooks-ts";
 
 type ConditionalOrganization<M> = M extends true
   ? Organization[]
@@ -39,8 +40,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
   required,
 }: OrganizationSelectProps<M>) => {
   const [organizationQuery, setOrganizationQuery] = useState<string>("");
-
-  const organizationQueryDebounce = useRef<number>();
+  const [debouncedOrganizationQuery] = useDebounceValue(organizationQuery, 350);
 
   const selectedOrganizationsLength = Array.isArray(value)
     ? value.length
@@ -50,7 +50,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
   const { data: organizationData } = useQuery({
     queryKey: [
       "organizations",
-      organizationQuery,
+      debouncedOrganizationQuery,
       selectedOrganizationsLength,
     ] as const,
     queryFn: ({ queryKey }) =>
@@ -62,17 +62,11 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
   });
 
   const { data: selectedOrganization } = useQuery({
-    queryKey: ["unit", value] as const,
-    queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[1] as string),
+    queryKey: ["organization", "slug", value] as const,
+    queryFn: ({ queryKey }) =>
+      getOrganizationBySlug(queryKey[2] as string).catch(() => null),
     enabled: !!value && typeof value === "string",
   });
-
-  const handleQueryOrganization = (event: ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(organizationQueryDebounce.current);
-    organizationQueryDebounce.current = setTimeout(() => {
-      setOrganizationQuery(event.target.value);
-    }, 350);
-  };
 
   const organizations = useMemo(() => {
     return organizationData?.results
@@ -130,8 +124,11 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
       <Combobox
         as="div"
         immediate
-        onChange={handleChange as any}
-        value={value as any}
+        onChange={handleChange as (value: unknown) => void}
+        value={
+          value ??
+          ((many ? [] : { name: "" }) as ConditionalOrganization<M> as unknown)
+        }
         className="relative"
         aria-required={required}
       >
@@ -143,7 +140,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
         <div className="relative">
           <ComboboxInput
             className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
-            onChange={handleQueryOrganization}
+            onChange={(e) => setOrganizationQuery(e.target.value)}
             displayValue={(organization: Organization) =>
               many
                 ? ""
@@ -179,10 +176,10 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
                 <ComboboxOption
                   key={organization?.id ?? -1}
                   value={organization}
-                  className={({ active }) =>
+                  className={({ focus }) =>
                     classNames(
                       "relative cursor-default select-none py-2 pl-3 pr-9",
-                      active ? "bg-secondary-600 text-white" : "text-gray-900"
+                      focus ? "bg-secondary-600 text-white" : "text-gray-900"
                     )
                   }
                 >

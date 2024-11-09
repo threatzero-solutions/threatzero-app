@@ -5,9 +5,9 @@ import {
   ComboboxOptions,
   Label,
 } from "@headlessui/react";
-import { ChangeEvent, useRef } from "react";
 import { classNames } from "../../../utils/core";
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import { useDebounceCallback } from "usehooks-ts";
 
 interface AutocompleteProps<V extends { id: string }> {
   value: V | null | undefined;
@@ -21,6 +21,7 @@ interface AutocompleteProps<V extends { id: string }> {
   displayValue?: (v: V) => string;
   immediate?: boolean;
   required?: boolean;
+  disabled?: boolean;
 }
 
 const Autocomplete = <V extends { id: string }>({
@@ -34,15 +35,9 @@ const Autocomplete = <V extends { id: string }>({
   displayValue,
   immediate,
   required,
+  disabled = false,
 }: AutocompleteProps<V>) => {
-  const queryDebounce = useRef<number>();
-
-  const handleQuery = (event: ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(queryDebounce.current);
-    queryDebounce.current = setTimeout(() => {
-      setQuery(event.target.value);
-    }, 350);
-  };
+  const debouncedSetQuery = useDebounceCallback(setQuery, 350);
 
   return (
     <div>
@@ -52,6 +47,7 @@ const Autocomplete = <V extends { id: string }>({
         onChange={onChange}
         value={value}
         className="relative"
+        disabled={disabled}
       >
         {label && (
           <Label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
@@ -61,7 +57,7 @@ const Autocomplete = <V extends { id: string }>({
         <div className="relative">
           <ComboboxInput
             className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
-            onChange={handleQuery}
+            onChange={(e) => debouncedSetQuery(e.target.value)}
             displayValue={displayValue ?? ((v) => `${v}`)}
             placeholder={placeholder ?? "Search..."}
             type="search"

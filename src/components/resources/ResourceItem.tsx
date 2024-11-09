@@ -7,8 +7,8 @@ import {
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getResourceItem } from "../../queries/media";
-import VimeoPlayer from "react-player/vimeo";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/solid";
+import VimeoPlayer from "../media/VimeoPlayer";
 
 const VideoItem: React.FC<{ resource: ResourceItemEntity }> = ({
   resource,
@@ -18,11 +18,7 @@ const VideoItem: React.FC<{ resource: ResourceItemEntity }> = ({
       <VimeoPlayer
         url={resource.vimeoUrl}
         controls={true}
-        width="100%"
-        height="unset"
-        style={{
-          aspectRatio: "16/9",
-        }}
+        className="w-full aspect-video"
       />
       <h1 className="text-2xl my-1 mt-4">{resource.title}</h1>
       <p className="text-gray-500 text-md">{resource.description}</p>
@@ -68,7 +64,7 @@ const ResourceItem: React.FC = () => {
   const params = useParams();
 
   const { data: resource, isLoading } = useQuery({
-    queryKey: ["resource-items", params.category, params.id],
+    queryKey: ["resource-item", "id", params.id],
     queryFn: ({ queryKey }) => getResourceItem(queryKey[2] as string),
     refetchOnWindowFocus: false,
     enabled: !!params.id,

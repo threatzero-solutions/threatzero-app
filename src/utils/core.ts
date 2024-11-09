@@ -1,4 +1,6 @@
+import { PaginationState, SortingState } from "@tanstack/react-table";
 import { OrderOptions, Ordering } from "../types/core";
+import { Paginated } from "../types/entities";
 
 export const classNames = (...classes: (string | undefined)[]) =>
   classes.filter(Boolean).join(" ");
@@ -68,6 +70,38 @@ export const parseOrder = (order: string) =>
       return acc;
     }, {} as Ordering);
 
+export const asOrdering = (sorting: SortingState) =>
+  sorting.reduce((acc, { id, desc }) => {
+    acc[id] = desc ? "DESC" : "ASC";
+    return acc;
+  }, {} as Ordering);
+
+export const asSortingState = (ordering: Ordering): SortingState =>
+  Object.entries(ordering).map(([key, value]) => ({
+    id: key,
+    desc: value === "DESC",
+  }));
+
+export const asPageInfo = (
+  pagination: PaginationState
+): Omit<Paginated<unknown>, "results" | "count"> => ({
+  offset: pagination.pageIndex * pagination.pageSize,
+  limit: pagination.pageSize,
+});
+
+export const asPaginationState = (
+  pageInfo: {
+    offset?: number | string;
+    limit?: number | string;
+  },
+  pageSize = 10
+) => {
+  return {
+    pageSize,
+    pageIndex: Math.floor(+(pageInfo.offset || 0) / pageSize),
+  } as PaginationState;
+};
+
 export const getIframeSrcFromEmbed = (embed: string) => {
   const node = document.createElement("html");
   node.innerHTML = embed;
@@ -79,13 +113,18 @@ export const pathJoin = (...args: string[]) => {
   return args.join("/").replace(/\/+/g, "/");
 };
 
-export const stripHtml = (html: string | undefined | null) => {
+export function stripHtml(html: string): string;
+export function stripHtml(html: undefined | null): undefined | null;
+export function stripHtml(
+  html: string | undefined | null
+): string | undefined | null;
+export function stripHtml(html: string | undefined | null) {
   if (!html) {
     return html;
   }
   const doc = new DOMParser().parseFromString(html, "text/html");
   return doc.body.textContent || "";
-};
+}
 
 export const camelToSnake = (str: string) =>
   str.replace(/[A-Z][a-z0-9]+/g, (match) => `_${match.toLowerCase()}`);
@@ -144,14 +183,21 @@ export const stripPhoneNumber = (phoneNumber: string) => {
   return phoneNumber.replace(/[^+\d]/g, "");
 };
 
-export const dedup = <T>(arr: T[], key?: (item: T) => string) => {
-  const seen = new Set();
-  return arr.filter((item) => {
-    const k = key ? key(item) : item;
-    if (seen.has(k)) {
-      return false;
-    }
-    seen.add(k);
-    return true;
-  });
+export const simulateDownload = (
+  data: Blob | MediaSource,
+  filename: string
+) => {
+  const a = document.createElement("a");
+  a.setAttribute("href", window.URL.createObjectURL(data));
+  a.setAttribute("download", filename);
+  document.body.append(a);
+  a.click();
+  a.remove();
 };
+
+export const isUndefined = (obj: unknown): obj is undefined =>
+  typeof obj === "undefined";
+
+export const isNil = <T>(
+  value: T | null | undefined
+): value is null | undefined => value === null || isUndefined(value);

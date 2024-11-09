@@ -1,24 +1,13 @@
-import { READ } from "../../constants/permissions";
-import { withRequirePermissions } from "../../guards/RequirePermissions";
+import { safetyManagementPermissionOptions } from "../../constants/permission-options";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { Outlet } from "react-router-dom";
 
-const ThreatManagementRoot: React.FC = () => {
+const SafetyManagementRoot: React.FC = withRequirePermissions(() => {
   return (
     <>
       <Outlet />
     </>
   );
-};
+}, safetyManagementPermissionOptions);
 
-export const safetyManagementPermissionOptions = {
-  permissions: [
-    READ.TIPS,
-    READ.THREAT_ASSESSMENTS,
-    READ.VIOLENT_INCIDENT_REPORTS,
-  ],
-};
-
-export default withRequirePermissions(
-  ThreatManagementRoot,
-  safetyManagementPermissionOptions
-);
+export default SafetyManagementRoot;

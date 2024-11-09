@@ -8,6 +8,7 @@ import {
 } from "../queries/organizations";
 import { FilterBarFilterOptions } from "../components/layouts/FilterBar";
 import { useDebounceValue } from "usehooks-ts";
+import { useMemo } from "react";
 
 export const useOrganizationFilters = ({
   query,
@@ -34,11 +35,14 @@ export const useOrganizationFilters = ({
   unitKeyType?: "slug" | "id";
   locationKeyType?: "id";
 }): FilterBarFilterOptions => {
-  const organizationSelected =
-    !!organizationKey &&
-    (Array.isArray(query[organizationKey])
-      ? (query[organizationKey] as unknown[]).length > 0
-      : !!query[organizationKey]);
+  const organizationSelected = useMemo(
+    () =>
+      !!organizationKey &&
+      (Array.isArray(query[organizationKey])
+        ? (query[organizationKey] as unknown[]).length > 0
+        : !!query[organizationKey]),
+    [query, organizationKey]
+  );
 
   const [organizationsQuery, setOrganizationsQuery] =
     useImmer<ItemFilterQueryParams>({ limit: 5 });
@@ -53,11 +57,14 @@ export const useOrganizationFilters = ({
     enabled: organizationsEnabled,
   });
 
-  const unitSelected =
-    !!unitKey &&
-    (Array.isArray(query[unitKey])
-      ? (query[unitKey] as unknown[]).length > 0
-      : !!query[unitKey]);
+  const unitSelected = useMemo(
+    () =>
+      !!unitKey &&
+      (Array.isArray(query[unitKey])
+        ? (query[unitKey] as unknown[]).length > 0
+        : !!query[unitKey]),
+    [query, unitKey]
+  );
 
   const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({
     limit: 5,

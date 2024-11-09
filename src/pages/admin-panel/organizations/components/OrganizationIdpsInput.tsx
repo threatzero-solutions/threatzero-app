@@ -16,6 +16,9 @@ import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AxiosError } from "axios";
 import { CoreContext } from "../../../../contexts/core/core-context";
+import Block from "../../../../components/layouts/content/Block";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
 
 interface OrganizationIdpsInputProps {
   organization: Organization;
@@ -43,7 +46,7 @@ const IdpRow: React.FC<{
   });
 
   return (
-    <div className="flex items-start rounded-md shadow-sm ring-1 ring-inset ring-gray-300 py-4 px-6">
+    <Block className="flex items-center justify-between bg-gray-50">
       {idpLoading ? (
         <div className="animate-pulse bg-slate-200 h-4 w-24 rounded-full"></div>
       ) : idp ? (
@@ -81,18 +84,18 @@ const IdpRow: React.FC<{
           <span className="block">{idpSlug}</span>
         </div>
       )}
-      <div className="grow"></div>
       {hasAdminLevel && (
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 cursor-pointer text-red-500 hover:text-red-700 transition-colors text-sm"
-          onClick={() => onUnlink?.(idpSlug)}
-        >
-          <span>unlink</span>
-          <MinusCircleIcon className="h-4 w-4" />
-        </button>
+        <ButtonGroup>
+          <IconButton
+            icon={MinusCircleIcon}
+            className="bg-red-500 ring-transparent text-white hover:bg-red-600"
+            text="Unlink"
+            type="button"
+            onClick={() => onUnlink?.(idpSlug)}
+          />
+        </ButtonGroup>
       )}
-    </div>
+    </Block>
   );
 };
 
@@ -132,7 +135,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
       {
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["organizations", organization.id],
+            queryKey: ["organization", "id", organization.id],
           });
           close();
           setSlugToLink("");
@@ -154,7 +157,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
           {
             onSuccess: () => {
               queryClient.invalidateQueries({
-                queryKey: ["organizations", organization.id],
+                queryKey: ["organization", "id", organization.id],
               });
               setConfirmationClose();
             },

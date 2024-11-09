@@ -1,32 +1,47 @@
-import { useMemo } from "react";
-import { TrainingSection } from "../../../types/entities";
-import { getAvailableSection } from "../../../utils/training";
+import { useContext, useMemo } from "react";
+import { CourseEnrollment, TrainingSection } from "../../../types/entities";
+import { getNextAvailableSection } from "../../../utils/training";
 import TrainingSectionTile from "./TrainingSectionTile";
 import { Link, useLocation } from "react-router-dom";
+import { TrainingContext } from "../../../contexts/training/training-context";
 
 interface FeaturedSectionProps {
   sections?: TrainingSection[];
+  enrollment?: CourseEnrollment | null;
   loading?: boolean;
   title?: string;
   showAllTrainingLink?: boolean;
 }
 
 const FeaturedSection: React.FC<FeaturedSectionProps> = ({
-  sections,
-  loading,
+  sections: sectionsProp,
+  enrollment: enrollmentProp,
+  loading: loadingProp,
   title,
   showAllTrainingLink,
 }) => {
+  const { state, courseLoading } = useContext(TrainingContext);
+
   const location = useLocation();
-  const featuredSection = useMemo(() => {
-    if (!sections?.length) {
-      return;
-    }
 
-    const currentSection = getAvailableSection(sections);
+  const enrollment = useMemo(
+    () => enrollmentProp ?? state.activeEnrollment,
+    [enrollmentProp, state.activeEnrollment]
+  );
 
-    return currentSection ?? sections[0];
-  }, [sections]);
+  const sections = useMemo(
+    () => sectionsProp ?? state.activeCourse?.sections ?? [],
+    [sectionsProp, state.activeCourse]
+  );
+
+  const { section: featuredSection, window } = useMemo(() => {
+    return getNextAvailableSection(enrollment, sections);
+  }, [enrollment, sections]);
+
+  const loading = useMemo(
+    () => loadingProp ?? courseLoading,
+    [loadingProp, courseLoading]
+  );
 
   return !loading && featuredSection ? (
     <div className="bg-gradient-to-b from-gray-100 to-gray-200 rounded-lg p-4 -mx-4 shadow-xl">
@@ -35,7 +50,10 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
         <span className="whitespace-nowrap">&#9733; {title ?? "Featured"}</span>
       </h2>
       <div role="grid" className="mt-3 grid grid-cols-1 gap-5 sm:gap-6">
-        <TrainingSectionTile section={featuredSection} />
+        <TrainingSectionTile
+          section={featuredSection}
+          featuredWindow={window ?? undefined}
+        />
       </div>
       {showAllTrainingLink && (
         <Link to="/training/library" state={{ from: location }}>

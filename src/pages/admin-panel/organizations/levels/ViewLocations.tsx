@@ -1,10 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback, useContext, useMemo, useState } from "react";
 import {
   generateQrCode,
   getLocations,
 } from "../../../../queries/organizations";
-import DataTable from "../../../../components/layouts/DataTable";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditLocation from "./EditLocation";
 import { Location } from "../../../../types/entities";
@@ -13,8 +12,24 @@ import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
 import { useOrganizationFilters } from "../../../../hooks/use-organization-filters";
+import {
+  LinkIcon,
+  PencilSquareIcon,
+  QrCodeIcon,
+} from "@heroicons/react/20/solid";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
+import { simulateDownload } from "../../../../utils/core";
+import { AlertContext } from "../../../../contexts/alert/alert-context";
+import DataTable2 from "../../../../components/layouts/DataTable2";
+import { createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
+
+const columnHelper = createColumnHelper<Location>();
 
 export const ViewLocations: React.FC = () => {
+  const { setInfo } = useContext(AlertContext);
+
   const [editLocationSliderOpen, setEditLocationSliderOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<
     Partial<Location> | undefined
@@ -42,111 +57,89 @@ export const ViewLocations: React.FC = () => {
     setEditLocationSliderOpen(true);
   };
 
-  const handleDownloadQRCode = (locationId: string) => {
-    generateQrCode(locationId).then((imgData) => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(imgData);
-      a.download = `sos-qr-code-${locationId}.png`;
-      a.click();
-    });
-  };
+  const downloadQrCodeMutation = useMutation({
+    mutationFn: generateQrCode,
+    onSuccess: ({ locationId, data }) => {
+      simulateDownload(data, `sos-qr-code-${locationId}.png`);
+
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
+  const handleDownloadQRCode = useCallback(
+    (locationId: string) => {
+      setInfo("Downloading QR code...");
+      downloadQrCodeMutation.mutate(locationId);
+    },
+    [setInfo, downloadQrCodeMutation]
+  );
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: "Name",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("locationId", {
+        header: "Location ID",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("unit.name", {
+        id: "unit.name",
+        header: "Unit",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("createdOn", {
+        header: "Created On",
+        cell: (info) => dayjs(info.getValue()).format("ll"),
+      }),
+      columnHelper.display({
+        id: "actions",
+        cell: (info) => (
+          <ButtonGroup className="w-full justify-end">
+            <IconButton
+              as={Link}
+              icon={LinkIcon}
+              to={`/sos/?loc_id=${info.row.original.locationId}`}
+              target="_blank"
+              className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+              text="SOS Link"
+            />
+            <IconButton
+              icon={QrCodeIcon}
+              className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+              text="QR Code"
+              type="button"
+              onClick={() => handleDownloadQRCode(info.row.original.locationId)}
+            />
+            <IconButton
+              icon={PencilSquareIcon}
+              className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+              text="Edit"
+              type="button"
+              onClick={() => handleEditLocation(info.row.original)}
+            />
+          </ButtonGroup>
+        ),
+        enableSorting: false,
+      }),
+    ],
+    [handleDownloadQRCode]
+  );
 
   return (
     <>
-      <DataTable
-        data={{
-          headers: [
-            {
-              label: "Name",
-              key: "name",
-            },
-            {
-              label: "Location ID",
-              key: "locationId",
-            },
-            {
-              label: "Unit",
-              key: "unit.name",
-            },
-            {
-              label: <span className="sr-only">QR Code</span>,
-              key: "qrCode",
-              noSort: true,
-            },
-            {
-              label: <span className="sr-only">Edit</span>,
-              key: "edit",
-              align: "right",
-              noSort: true,
-            },
-          ],
-          rows: (locations?.results ?? []).map((location) => ({
-            id: location.id,
-            name: location.name,
-            locationId: location.locationId,
-            ["unit.name"]: location.unit.name,
-            qrCode: (
-              <span>
-                <Link
-                  to={`/sos/?loc_id=${location.locationId}`}
-                  className="text-secondary-600 hover:text-secondary-900 font-medium"
-                >
-                  SOS Link
-                </Link>
-                <span> / </span>
-                <button
-                  type="button"
-                  className="text-secondary-600 hover:text-secondary-900 font-medium"
-                  onClick={() => handleDownloadQRCode(location.locationId)}
-                >
-                  QR Code
-                </button>
-              </span>
-            ),
-            edit: (
-              <button
-                type="button"
-                className="text-secondary-600 hover:text-secondary-900 font-medium"
-                onClick={() => handleEditLocation(location)}
-              >
-                Edit
-                <span className="sr-only">, {location.id}</span>
-              </button>
-            ),
-          })),
-        }}
+      <DataTable2
+        data={locations?.results ?? []}
+        columns={columns}
         isLoading={locationsLoading}
+        query={locationsQuery}
+        setQuery={setLocationsQuery}
         title="Locations"
         subtitle="View, add or edit specific locations that belong to an organizational unit."
-        orderOptions={{
-          order: locationsQuery.order,
-          setOrder: (k, v) => {
-            setLocationsQuery((q) => {
-              q.order = { [k]: v };
-              q.offset = 0;
-            });
-          },
-        }}
-        paginationOptions={{
-          currentOffset: locations?.offset,
-          total: locations?.count,
-          limit: locations?.limit,
-          setOffset: (offset) =>
-            setLocationsQuery((q) => {
-              q.offset = offset;
-            }),
-        }}
-        searchOptions={{
-          searchQuery: locationsQuery.search ?? "",
-          setSearchQuery: (search) => {
-            setLocationsQuery((q) => {
-              q.search = search;
-              q.offset = 0;
-            });
-          },
-        }}
-        filterOptions={organizationFilters}
-        notFoundDetail="No locations found."
         action={
           <button
             type="button"
@@ -156,6 +149,10 @@ export const ViewLocations: React.FC = () => {
             + Add New Location
           </button>
         }
+        pageState={locations}
+        showFooter={false}
+        noRowsMessage="No locations found."
+        filterOptions={organizationFilters}
       />
       <SlideOver
         open={editLocationSliderOpen}

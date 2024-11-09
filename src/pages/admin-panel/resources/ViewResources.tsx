@@ -22,7 +22,7 @@ export const ViewResources: React.FC = () => {
   const [debouncedItemFilterOptions] = useDebounceValue(itemFilterOptions, 300);
 
   const { data: resources, isLoading: resourcesLoading } = useQuery({
-    queryKey: ["resource-items-all", debouncedItemFilterOptions] as const,
+    queryKey: ["resource-items", debouncedItemFilterOptions] as const,
     queryFn: ({ queryKey }) => getResourceItems(queryKey[1]),
   });
 
@@ -85,23 +85,10 @@ export const ViewResources: React.FC = () => {
             + Add New Resource
           </button>
         }
-        orderOptions={{
-          order: itemFilterOptions.order,
-          setOrder: (k, v) => {
-            setItemFilterOptions((options) => {
-              options.order = { [k]: v };
-              options.offset = 0;
-            });
-          },
-        }}
+        itemFilterQuery={itemFilterOptions}
+        setItemFilterQuery={setItemFilterOptions}
         paginationOptions={{
-          currentOffset: resources?.offset,
-          total: resources?.count,
-          limit: resources?.limit,
-          setOffset: (offset) =>
-            setItemFilterOptions((q) => {
-              q.offset = offset;
-            }),
+          ...resources,
         }}
         searchOptions={{
           searchQuery: itemFilterOptions.search ?? "",

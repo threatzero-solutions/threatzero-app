@@ -9,24 +9,29 @@ import { useMemo } from "react";
 import { LEVEL } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/AuthProvider";
 import { SimpleChangeEvent } from "../../../types/core";
+import { DeepPartial } from "react-hook-form";
 
-const displayCourse = (course?: TrainingCourse | null, admin = false) => {
+type CourseInput =
+  | TrainingCourse
+  | DeepPartial<TrainingCourse>
+  | undefined
+  | null;
+
+const displayCourse = (course?: CourseInput, admin = false) => {
   if (!course) {
     return "";
   }
 
   return (
-    stripHtml(course.metadata.title) +
+    stripHtml(course?.metadata?.title) +
     " " +
-    (admin && course.metadata.tag ? `(${course.metadata.tag})` : "")
+    (admin && course?.metadata?.tag ? `(${course.metadata.tag})` : "")
   );
 };
 
 interface CourseSelectProps {
-  value: TrainingCourse | undefined | null;
-  onChange?: (
-    event: SimpleChangeEvent<TrainingCourse | undefined | null>
-  ) => void;
+  value: CourseInput;
+  onChange?: (event: SimpleChangeEvent<CourseInput>) => void;
   name?: string;
   required?: boolean;
   immediate?: boolean;
@@ -45,9 +50,11 @@ const CourseSelect: React.FC<CourseSelectProps> = ({
 }) => {
   const [coursesQuery, setCoursesQuery] = useImmer<ItemFilterQueryParams>({});
   const { data: allCourses } = useQuery({
-    queryKey: ["training-courses", coursesQuery, queryFilter] as const,
-    queryFn: ({ queryKey }) =>
-      getTrainingCourses({ ...queryKey[1], ...queryFilter }),
+    queryKey: [
+      "training-courses",
+      { ...coursesQuery, ...queryFilter },
+    ] as const,
+    queryFn: ({ queryKey }) => getTrainingCourses(queryKey[1]),
   });
 
   const { hasPermissions } = useAuth();
@@ -57,7 +64,7 @@ const CourseSelect: React.FC<CourseSelectProps> = ({
     [hasPermissions]
   );
 
-  const handleCourseChange = (course: TrainingCourse | undefined | null) => {
+  const handleCourseChange = (course: CourseInput) => {
     onChange?.({
       type: "change",
       target: {
@@ -69,7 +76,8 @@ const CourseSelect: React.FC<CourseSelectProps> = ({
 
   return (
     <Autocomplete
-      value={value ?? null}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      value={value ?? (null as any)}
       onChange={handleCourseChange}
       onRemove={() => handleCourseChange(null)}
       setQuery={(s) =>

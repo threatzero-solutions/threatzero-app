@@ -1,30 +1,77 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
-import { Unit, Organization, Location } from "../types/entities";
+import {
+  Unit,
+  Organization,
+  Location,
+  LmsTrainingToken,
+  LmsTrainingTokenValue,
+} from "../types/entities";
 import {
   deleteOne,
+  download,
   findMany,
   findManyRaw,
+  findOneById,
+  findOneByIdOrFail,
   findOneOrFail,
   insertOne,
   putOne,
   save,
+  updateOne,
 } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { DeepPartial } from "../types/core";
-import { OrganizationIdpDto } from "../types/api";
+import { OrganizationIdpDto, OrganizationUser } from "../types/api";
+import { ScormVersion } from "../types/training";
 
 export const getOrganizations = (query?: ItemFilterQueryParams) =>
   findMany<Organization>("/organizations/organizations/", query);
 
 export const getOrganization = (id?: string) =>
-  findOneOrFail<Organization>("/organizations/organizations/", id);
+  findOneByIdOrFail<Organization>("/organizations/organizations/", id);
+
+export const getMyOrganization = () =>
+  findOneOrFail<Organization>("/organizations/organizations/mine/");
 
 export const getOrganizationBySlug = (slug?: string) =>
-  getOrganizations({ slug }).then((res) => res.results[0]);
+  findOneByIdOrFail<Organization>("/organizations/organizations/slug/", slug);
+
+export const getCourseEnrollments = (id?: Organization["id"]) =>
+  findOneById<Organization>("/organizations/organizations/", id).then(
+    (organization) => organization?.enrollments ?? []
+  );
+
+export const getOrganizationLmsTokens = (
+  id: Organization["id"],
+  query?: ItemFilterQueryParams
+) =>
+  findMany<LmsTrainingToken>(
+    `/organizations/organizations/${id}/lms-tokens/`,
+    query
+  );
+
+export const getLmsScormPackage = (
+  id: Organization["id"],
+  key: string,
+  version?: ScormVersion
+) =>
+  download(`/organizations/organizations/${id}/lms-tokens/scorm`, {
+    key,
+    version,
+  });
+
+export const getOrganizationUsers = (
+  id: Organization["id"] | undefined,
+  query?: ItemFilterQueryParams
+) =>
+  findMany<OrganizationUser>(
+    `/organizations/organizations/${id}/users/`,
+    query
+  );
 
 export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
-  findOneOrFail<OrganizationIdpDto>(
+  findOneByIdOrFail<OrganizationIdpDto>(
     `/organizations/organizations/${id}/idps/`,
     slug
   );
@@ -35,8 +82,14 @@ export const getOrganizationIdpRoleGroups = (id: Organization["id"]) =>
 export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);
 
+export const getUnit = (id?: Unit["id"]) =>
+  findOneByIdOrFail<Unit>("/organizations/units/", id);
+
 export const getUnitBySlug = (slug?: string) =>
-  getUnits({ slug }).then((res) => res.results[0]);
+  getUnits({ slug }).then((res) => {
+    if (res.results.length) return res.results[0];
+    throw new Error('Unit not found by slug "' + slug + '"');
+  });
 
 export const getLocations = (query?: ItemFilterQueryParams) =>
   findMany<Location>("/organizations/locations/", query);
@@ -47,7 +100,7 @@ export const generateQrCode = async (locationId: string) => {
     .get(url, {
       responseType: "blob",
     })
-    .then((res) => res.data);
+    .then((res) => ({ locationId, data: res.data }));
 };
 
 // ------------- MUTATIONS -------------
@@ -57,6 +110,32 @@ export const saveOrganization = (organization: DeepPartial<Organization>) =>
 
 export const deleteOrganization = (id: string | undefined) =>
   deleteOne("/organizations/organizations/", id);
+
+export const createOrganizationLmsToken = (
+  id: Organization["id"],
+  createLmsTokenValue: DeepPartial<LmsTrainingTokenValue>,
+  expiresOn?: Date
+) =>
+  insertOne(
+    `/organizations/organizations/${id}/lms-tokens/`,
+    createLmsTokenValue,
+    { params: { expiresOn } }
+  );
+
+export const setOrganizationLmsTokenExpirations = (
+  id: Organization["id"],
+  query: ItemFilterQueryParams,
+  expiration: Date | null
+) =>
+  updateOne<{ id: never; expiration: Date | null }>(
+    `/organizations/organizations/${id}/lms-tokens/expiration`,
+    {
+      expiration,
+    },
+    {
+      params: query,
+    }
+  );
 
 export type ImportOrganizationIdpMetadataPayload =
   | {

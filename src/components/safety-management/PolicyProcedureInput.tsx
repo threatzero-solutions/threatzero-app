@@ -3,8 +3,11 @@ import { SimpleChangeEvent } from "../../types/core";
 import { OrganizationPolicyFile } from "../../types/entities";
 import SlideOver from "../layouts/slide-over/SlideOver";
 import EditOrganizationPolicyFile from "./EditOrganizationPolicyFile";
-import Input from "../forms/inputs/Input";
-import { XMarkIcon } from "@heroicons/react/20/solid";
+import { PlusIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import FormField from "../forms/FormField";
+import Block from "../layouts/content/Block";
+import ButtonGroup from "../layouts/buttons/ButtonGroup";
+import IconButton from "../layouts/buttons/IconButton";
 
 interface PolicyProcedureInputProps {
   value?: Partial<OrganizationPolicyFile>[];
@@ -12,12 +15,16 @@ interface PolicyProcedureInputProps {
     event: SimpleChangeEvent<Partial<OrganizationPolicyFile>[]>
   ) => void;
   name?: string;
+  label?: string;
+  helpText?: string;
 }
 
 const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
   value,
   onChange,
   name,
+  label = "Policies & Procedures",
+  helpText,
 }) => {
   const [editPolicyProcedureSliderOpen, setPolicyProcedureSliderOpen] =
     useState(false);
@@ -86,31 +93,50 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        {localValue.map((v) => (
-          <div className="relative w-full" key={v.id}>
-            <Input
-              className="w-full pr-10"
-              value={v.name ?? v.pdfS3Key ?? ""}
-              readOnly
-              onClick={() => handleEditOrganizationPolicyFile(v)}
-            />
-            <div
-              className="cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 opacity-100 hover:opacity-75 transition-opacity"
-              onClick={() => handleRemoveOrganizationPolicyFile(v)}
-            >
-              <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-            </div>
+      <FormField
+        field={{
+          label,
+          name,
+          helpText,
+        }}
+        fillColumns={false}
+        action={
+          <IconButton
+            icon={PlusIcon}
+            className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+            text="Add Policy or Procedure"
+            type="button"
+            onClick={() => handleNewOrganizationPolicyFile()}
+          />
+        }
+        input={
+          <div className="flex flex-col gap-2">
+            {localValue.map((v) => (
+              <Block
+                className="flex items-center justify-between bg-gray-50"
+                key={v.id}
+              >
+                <button
+                  className="text-sm font-semibold bg-gray-50"
+                  onClick={() => handleEditOrganizationPolicyFile(v)}
+                >
+                  {v.name ?? v.pdfS3Key ?? ""}{" "}
+                  <span className="text-xs font-normal">(edit)</span>
+                </button>
+                <ButtonGroup>
+                  <IconButton
+                    icon={XMarkIcon}
+                    className="bg-red-500 ring-transparent text-white hover:bg-red-600"
+                    text="Remove"
+                    type="button"
+                    onClick={() => handleRemoveOrganizationPolicyFile(v)}
+                  />
+                </ButtonGroup>
+              </Block>
+            ))}
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => handleNewOrganizationPolicyFile()}
-          className="self-end rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-        >
-          Add Policy or Procedure
-        </button>
-      </div>
+        }
+      />
       <SlideOver
         open={editPolicyProcedureSliderOpen}
         setOpen={setPolicyProcedureSliderOpen}

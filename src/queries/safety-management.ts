@@ -15,7 +15,7 @@ import {
 import {
   findMany,
   findManyRaw,
-  findOne,
+  findOneById,
   insertOne,
   save,
   updateOne,
@@ -88,7 +88,7 @@ export const getThreatAssessmentStats = (
   );
 
 export const getThreatAssessment = (id?: string) =>
-  findOne<ThreatAssessment>("/assessments/submissions/", id);
+  findOneById<ThreatAssessment>("/assessments/submissions/", id);
 
 export const getThreatAssessmentForm = getResourceForm("assessments");
 
@@ -111,7 +111,7 @@ export const getTipSubmissionStats = (
   findManyRaw<SafetyManagementResourceStats<TipStatus>>("/tips/stats/", query);
 
 export const getTipSubmission = (id?: string) =>
-  findOne<Tip>("/tips/submissions/", id);
+  findOneById<Tip>("/tips/submissions/", id);
 
 export const getTipForm = getResourceForm("tips");
 
@@ -141,7 +141,10 @@ export const getViolentIncidentReportSubmissionStats = (
   );
 
 export const getViolentIncidentReportSubmission = (id?: string) =>
-  findOne<ViolentIncidentReport>("/violent-incident-reports/submissions/", id);
+  findOneById<ViolentIncidentReport>(
+    "/violent-incident-reports/submissions/",
+    id
+  );
 
 export const getViolentIncidentReportForm = getResourceForm(
   "violent-incident-reports"

@@ -57,13 +57,15 @@ const ResourceVideos: React.FC = () => {
   const category = params.category as ResourceItemCategory;
 
   const { data: videos, isLoading } = useQuery({
-    queryKey: ["resource-items", category, ResourceType.VIDEO],
-    queryFn: () =>
-      getResourceItems({
+    queryKey: [
+      "resource-items",
+      {
         category: category,
         type: ResourceType.VIDEO,
         limit: 250,
-      }),
+      },
+    ] as const,
+    queryFn: ({ queryKey }) => getResourceItems(queryKey[1]),
   });
 
   return (

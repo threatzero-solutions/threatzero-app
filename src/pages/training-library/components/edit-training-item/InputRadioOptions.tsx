@@ -11,8 +11,9 @@ const InputRadioOptions: React.FC<{
   options: InputRadioOption[];
   onSelect?: (id: string) => void;
   defaultSelection?: string;
+  hideOnInactive?: boolean;
   ref?: React.RefObject<HTMLObjectElement>;
-}> = ({ options, onSelect, ref, defaultSelection }) => {
+}> = ({ options, onSelect, ref, defaultSelection, hideOnInactive = false }) => {
   const defaultIdx =
     (defaultSelection && options.findIndex((o) => o.id === defaultSelection)) ||
     0;
@@ -27,9 +28,10 @@ const InputRadioOptions: React.FC<{
     });
   }, [defaultIdx]);
 
-  useEffect(() => {
+  const handleSelect = (idx: number) => {
+    setIdxSelected(idx);
     onSelect?.(options[idxSelected].id);
-  }, [idxSelected, options, onSelect]);
+  };
 
   return (
     <fieldset>
@@ -42,7 +44,7 @@ const InputRadioOptions: React.FC<{
                 name={mediaOption.id}
                 type="radio"
                 checked={idx === idxSelected}
-                onChange={() => setIdxSelected(idx)}
+                onChange={() => handleSelect(idx)}
                 className="h-4 w-4 border-gray-300 text-secondary-600 focus:ring-secondary-600"
               />
             </div>
@@ -53,16 +55,19 @@ const InputRadioOptions: React.FC<{
               >
                 {mediaOption.name}
               </label>
-              {mediaOption.children && (
-                <div
-                  className={classNames(
-                    "text-gray-500 mt-2 grid grid-cols-1",
-                    idx !== idxSelected ? "opacity-50 pointer-events-none" : ""
-                  )}
-                >
-                  {mediaOption.children}
-                </div>
-              )}
+              {mediaOption.children &&
+                (!hideOnInactive || idx === idxSelected) && (
+                  <div
+                    className={classNames(
+                      "text-gray-500 mt-2 grid grid-cols-1",
+                      idx !== idxSelected
+                        ? "opacity-50 pointer-events-none"
+                        : ""
+                    )}
+                  >
+                    {mediaOption.children}
+                  </div>
+                )}
             </div>
           </div>
         ))}

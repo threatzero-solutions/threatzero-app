@@ -7,7 +7,14 @@ import {
 } from "../../../types/api";
 import Input from "../../../components/forms/inputs/Input";
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { ChangeEvent, FormEvent, useContext, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import { SimpleChangeEvent } from "../../../types/core";
 import {
@@ -18,7 +25,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useAuth } from "../../../contexts/AuthProvider";
-import { ErrorContext } from "../../../contexts/error/error-context";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 import { useResolvedPath } from "react-router-dom";
 import {
   getTrainingInvites,
@@ -26,10 +33,10 @@ import {
   resendTrainingLinks,
   sendTrainingLinks,
 } from "../../../queries/training-admin";
-import { CoreContext } from "../../../contexts/core/core-context";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import {
-  TrainingCourse,
+  CourseEnrollment,
+  Organization,
   TrainingItem,
   TrainingToken,
 } from "../../../types/entities";
@@ -38,17 +45,33 @@ import ManageTrainingInvite from "../../admin-panel/users/training-invites/Manag
 import Dropdown from "../../../components/layouts/Dropdown";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import {
+  getMyOrganization,
   getOrganizationBySlug,
   getUnitBySlug,
+  getUnits,
 } from "../../../queries/organizations";
-import { stripHtml } from "../../../utils/core";
-import CourseSelect from "../../../components/forms/inputs/CourseSelect";
+import { simulateDownload, stripHtml } from "../../../utils/core";
 import Autocomplete from "../../../components/forms/inputs/Autocomplete";
 import { useDebounceValue } from "usehooks-ts";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import ViewPercentWatched from "./components/ViewPercentWatched";
+import { DeepPartial } from "react-hook-form";
+import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
+import EnrollmentSelect from "../../../components/forms/inputs/EnrollmentSelect";
+import Papa, { ParseResult } from "papaparse";
+import Fuse from "fuse.js";
 
-const CSV_HEADERS_MAPPER = new Map([
+interface InviteCsvRow {
+  firstName: string;
+  lastName: string;
+  email: string;
+  organizationSlug: string;
+  unitSlug: string;
+  enrollmentId: string;
+  trainingItemId: string;
+}
+
+const CSV_HEADERS_MAPPER = new Map<string, InviteCsvRow[keyof InviteCsvRow]>([
   ["firstname", "firstName"],
   ["lastname", "lastName"],
   ["email", "email"],
@@ -56,22 +79,24 @@ const CSV_HEADERS_MAPPER = new Map([
   ["familyname", "lastName"],
   ["emailaddress", "email"],
   ["surname", "lastName"],
+  ["organization", "organizationSlug"],
+  ["organizationslug", "organizationSlug"],
   ["unit", "unitSlug"],
+  ["unitslug", "unitSlug"],
   ["school", "unitSlug"],
-  ["course", "trainingCourseId"],
-  ["courseid", "trainingCourseId"],
-  ["trainingcourseid", "trainingCourseId"],
+  ["enrollment", "enrollmentId"],
+  ["enrollmentid", "enrollmentId"],
+  ["courseenrollmentid", "enrollmentId"],
+  ["courseenrollment", "enrollmentId"],
+  ["trainingcourseenrollmentid", "enrollmentId"],
+  ["trainingcourseenrollment", "enrollmentId"],
   ["item", "trainingItemId"],
   ["trainingitem", "trainingItemId"],
   ["trainingitemid", "trainingItemId"],
 ]);
 
-const normalizeHeaders = (headers: string[]) => {
-  return headers.map(
-    (h) =>
-      CSV_HEADERS_MAPPER.get(h.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()) || h
-  );
-};
+const normalizeHeader = (h: string) =>
+  CSV_HEADERS_MAPPER.get(h.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()) || h;
 
 const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
   trainingItemId,
@@ -150,8 +175,11 @@ const ManageTrainingInvites: React.FC = () => {
       email: "",
     },
   ]);
-  const [selectedCourse, setSelectedCourse] = useState<
-    TrainingCourse | undefined | null
+  const [selectedOrganization, setSelectedOrganization] = useState<
+    Organization | undefined | null
+  >();
+  const [selectedEnrollment, setSelectedEnrollment] = useState<
+    CourseEnrollment | DeepPartial<CourseEnrollment> | undefined | null
   >();
   const [selectedItem, setSelectedItem] = useState<
     TrainingItem | undefined | null
@@ -163,8 +191,8 @@ const ManageTrainingInvites: React.FC = () => {
     useState<TrainingToken>();
 
   const { hasMultipleUnitAccess, hasMultipleOrganizationAccess } = useAuth();
-  const { setError } = useContext(ErrorContext);
-  const { setSuccess, setInfo } = useContext(CoreContext);
+  const { setError } = useContext(AlertContext);
+  const { setSuccess, setInfo } = useContext(AlertContext);
 
   const watchTrainingPath = useResolvedPath("/watch-training/");
 
@@ -190,16 +218,54 @@ const ManageTrainingInvites: React.FC = () => {
   });
 
   const { data: allTrainingItems } = useQuery({
-    queryKey: ["training-course-items", selectedCourse] as const,
+    queryKey: [
+      "training-course-items",
+      selectedEnrollment?.course?.id,
+    ] as const,
     queryFn: ({ queryKey }) =>
-      getTrainingCourse(queryKey[1]?.id).then((c) =>
-        c?.sections.reduce((arr, s) => {
-          arr.push(...(s.items?.map((i) => i.item) ?? []));
-          return arr;
-        }, [] as TrainingItem[])
+      getTrainingCourse(queryKey[1]).then((c) =>
+        Array.from(
+          c?.sections
+            .flatMap((s) => s.items?.map((i) => i.item) ?? [])
+            .reduce((arr, i) => {
+              arr.set(i.id, i);
+              return arr;
+            }, new Map<TrainingItem["id"], TrainingItem>())
+            .values() ?? []
+        )
       ),
-    enabled: !!selectedCourse,
+    enabled: !!selectedEnrollment?.course?.id,
   });
+
+  const availableUnitsQuery = useMemo(() => {
+    const q: ItemFilterQueryParams = { limit: 500 };
+
+    if (hasMultipleOrganizationAccess && selectedOrganization) {
+      q["organization.id"] = selectedOrganization.id;
+    }
+
+    return q;
+  }, [hasMultipleOrganizationAccess, selectedOrganization]);
+
+  const { data: availableUnits } = useQuery({
+    queryKey: ["units", availableUnitsQuery] as const,
+    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
+    enabled:
+      hasMultipleUnitAccess &&
+      (!!selectedOrganization || !hasMultipleOrganizationAccess),
+  });
+
+  const findUnit = useCallback(
+    (search: string) => {
+      const fuse = new Fuse(availableUnits?.results ?? [], {
+        keys: ["name", "slug"],
+        includeScore: true,
+      });
+
+      return fuse.search(search)[0]?.item ?? null;
+    },
+    [availableUnits]
+  );
 
   const organizationFilters = useOrganizationFilters({
     query: itemFilterOptions,
@@ -223,63 +289,91 @@ const ManageTrainingInvites: React.FC = () => {
     );
   }, [allTrainingItems, itemSearchQuery]);
 
-  const handleCSVUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const inviteCSVUploadFn = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result;
-      if (!text || typeof text !== "string") {
-        return;
-      }
-      const lines = text.split("\n").filter((l) => l.trim().length > 0);
-      const headers = normalizeHeaders(lines.shift()?.split(",") || []);
-      setTokenValues(() =>
-        lines.map((line) => {
-          const {
-            firstName,
-            lastName,
-            email,
-            unitSlug,
-            trainingCourseId: _trainingCourseId,
-            trainingItemId: _trainingItemId,
-          } = Object.fromEntries(
-            headers.map((h, i) => [h, line.split(",")[i]])
-          );
 
-          if (!selectedCourse && _trainingCourseId) {
-            getTrainingCourse(_trainingCourseId).then((c) => {
-              setSelectedCourse(c);
-
-              if (!selectedItem && _trainingItemId) {
-                setSelectedItem(
-                  c?.sections.reduce((acc, s) => {
-                    if (!acc) {
-                      acc = s.items
-                        ?.map((i) => i.item)
-                        .find((i) => i.id === _trainingItemId);
-                    }
-
-                    return acc;
-                  }, undefined as TrainingItem | undefined)
-                );
-              }
-            });
-          }
-
-          return {
-            firstName,
-            lastName,
-            email,
-            unitSlug,
-          };
+    const { data: rows } = await new Promise<ParseResult<InviteCsvRow>>(
+      (resolve) =>
+        Papa.parse<InviteCsvRow, File>(file, {
+          header: true,
+          transformHeader: normalizeHeader,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results),
         })
-      );
+    );
+
+    let organizationSlugFromCsv: string | undefined = undefined;
+    let enrollmentIdFromCsv: string | undefined = undefined;
+    let trainingItemIdFromCsv: string | undefined = undefined;
+
+    const results: {
+      organization?: Organization;
+      enrollment?: CourseEnrollment;
+      item?: TrainingItem;
+      tokenValues: Partial<TrainingParticipantRepresentation>[];
+    } = {
+      tokenValues: [],
     };
-    reader.readAsText(file);
+
+    for (const row of rows) {
+      if (row.organizationSlug && !organizationSlugFromCsv) {
+        organizationSlugFromCsv = row.organizationSlug;
+
+        if (row.enrollmentId && !enrollmentIdFromCsv) {
+          enrollmentIdFromCsv = row.enrollmentId;
+
+          if (row.trainingItemId && !trainingItemIdFromCsv) {
+            trainingItemIdFromCsv = row.trainingItemId;
+          }
+        }
+      }
+
+      results.tokenValues.push({
+        firstName: row.firstName,
+        lastName: row.lastName,
+        email: row.email,
+        unitSlug: findUnit(row.unitSlug)?.slug,
+      });
+    }
+
+    if (!hasMultipleOrganizationAccess || organizationSlugFromCsv) {
+      results.organization = await (hasMultipleOrganizationAccess
+        ? getOrganizationBySlug(organizationSlugFromCsv)
+        : getMyOrganization());
+
+      if (enrollmentIdFromCsv) {
+        results.enrollment = results.organization.enrollments?.find(
+          (e) => e.id === enrollmentIdFromCsv
+        );
+
+        if (trainingItemIdFromCsv) {
+          const course = await getTrainingCourse(
+            results.enrollment?.course?.id
+          );
+          results.item = course?.sections
+            .flatMap((s) => s.items?.map((i) => i.item) ?? [])
+            .find((i) => i.id === trainingItemIdFromCsv);
+        }
+      }
+    }
+
+    return results;
   };
+
+  const inviteCSVUploadMutation = useMutation({
+    mutationFn: inviteCSVUploadFn,
+    onSuccess: (data) => {
+      if (data) {
+        setTokenValues(data.tokenValues);
+        setSelectedOrganization(data.organization);
+        setSelectedEnrollment(data.enrollment);
+        setSelectedItem(data.item);
+      }
+    },
+  });
 
   const handleUpdateInvite = (
     idx: number,
@@ -317,7 +411,8 @@ const ManageTrainingInvites: React.FC = () => {
     onSuccess: () => {
       setSuccess("Invites successfully sent!", 5000);
       setTokenValues([{ firstName: "", lastName: "", email: "" }]);
-      setSelectedCourse(undefined);
+      setSelectedOrganization(undefined);
+      setSelectedEnrollment(undefined);
       setSelectedItem(undefined);
       queryClient.invalidateQueries({ queryKey: ["training-invites"] });
     },
@@ -334,8 +429,8 @@ const ManageTrainingInvites: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!selectedCourse) {
-      setError("No training course selected.", 5000);
+    if (!selectedEnrollment?.id) {
+      setError("No course enrollment selected.", 5000);
       return;
     }
 
@@ -350,8 +445,9 @@ const ManageTrainingInvites: React.FC = () => {
         userId: t.email,
       })),
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
-      trainingCourseId: selectedCourse?.id,
+      courseEnrollmentId: selectedEnrollment.id,
       trainingItemId: selectedItem?.id,
+      organizationId: selectedOrganization?.id,
     };
 
     sendTrainingLinksMutation.mutate(preparedRequest);
@@ -375,20 +471,25 @@ const ManageTrainingInvites: React.FC = () => {
     });
   };
 
+  const downloadTrainingLinksCsvMutation = useMutation({
+    mutationFn: (args: {
+      trainingUrlTemplate: string;
+      query: ItemFilterQueryParams;
+    }) => getTrainingInvitesCsv(args.trainingUrlTemplate, args.query),
+    onSuccess: (data) => {
+      simulateDownload(new Blob([data]), "training-links.csv");
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
   const handleDownloadTrainingLinksCsv = () => {
     setInfo("Downloading CSV...");
-    getTrainingInvitesCsv(
-      `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
-      itemFilterOptions
-    ).then((response) => {
-      const a = document.createElement("a");
-      a.setAttribute("href", window.URL.createObjectURL(new Blob([response])));
-      a.setAttribute("download", "training-links.csv");
-      document.body.append(a);
-      a.click();
-      a.remove();
-
-      setTimeout(() => setInfo(), 2000);
+    downloadTrainingLinksCsvMutation.mutate({
+      trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
+      query: itemFilterOptions,
     });
   };
 
@@ -400,8 +501,83 @@ const ManageTrainingInvites: React.FC = () => {
             Manage Training Invites
           </h1>
         </div>
-        <form className="flex flex-col gap-6" onSubmit={onSubmitSendInvites}>
+        <form className="flex flex-col gap-4" onSubmit={onSubmitSendInvites}>
           {/* SEND NEW INVITES */}
+          <div className="sm:flex sm:items-center">
+            <div className="sm:flex-auto">
+              <h1 className="text-base font-semibold leading-6 text-gray-900">
+                Send New Invites
+              </h1>
+              <p className="mt-2 text-sm text-gray-700">
+                Send members of your organization email invites to watch
+                specific trainings.
+              </p>
+            </div>
+            <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+                + Upload From CSV
+                <input
+                  type="file"
+                  onChange={inviteCSVUploadMutation.mutate}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+          {hasMultipleOrganizationAccess && (
+            <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+              <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+                Select an organization
+              </label>
+              <div className="mt-2 sm:col-span-2 sm:mt-0">
+                <OrganizationSelect
+                  value={selectedOrganization}
+                  onChange={(e) =>
+                    setSelectedOrganization(
+                      e.target?.value as Organization | undefined
+                    )
+                  }
+                  required
+                />
+              </div>
+            </div>
+          )}
+          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              Select a course enrollment
+            </label>
+            <div className="mt-2 sm:col-span-2 sm:mt-0">
+              <EnrollmentSelect
+                value={selectedEnrollment}
+                onChange={(e) => setSelectedEnrollment(e.target?.value)}
+                immediate
+                required
+                disabled={
+                  hasMultipleOrganizationAccess && !selectedOrganization
+                }
+                organizationId={selectedOrganization?.id}
+              />
+            </div>
+          </div>
+          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              Select a training item
+            </label>
+            <div className="mt-2 sm:col-span-2 sm:mt-0">
+              <Autocomplete
+                value={selectedItem ?? null}
+                onChange={setSelectedItem}
+                onRemove={() => setSelectedItem(null)}
+                setQuery={setItemSearchQuery}
+                options={filteredTrainingItems}
+                placeholder="Search for training item in course..."
+                displayValue={(i) => stripHtml(i?.metadata.title) ?? ""}
+                required
+                immediate
+                disabled={!selectedEnrollment}
+              />
+            </div>
+          </div>
           <DataTable
             data={{
               headers: [
@@ -457,7 +633,7 @@ const ManageTrainingInvites: React.FC = () => {
                 ),
                 unit: (
                   <UnitSelect
-                    value={t.unitSlug}
+                    value={t.unitSlug && findUnit(t.unitSlug)}
                     onChange={(e) =>
                       handleUpdateInvite(
                         idx,
@@ -466,6 +642,16 @@ const ManageTrainingInvites: React.FC = () => {
                       )
                     }
                     required={true}
+                    queryFilter={
+                      hasMultipleOrganizationAccess && selectedOrganization
+                        ? {
+                            ["organization.id"]: selectedOrganization.id,
+                          }
+                        : undefined
+                    }
+                    disabled={
+                      hasMultipleOrganizationAccess && !selectedOrganization
+                    }
                   />
                 ),
                 delete: (
@@ -475,18 +661,6 @@ const ManageTrainingInvites: React.FC = () => {
                 ),
               })),
             }}
-            title="Send New Invites"
-            subtitle="Send members of your organization email invites to watch specific trainings."
-            action={
-              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
-                + Upload From CSV
-                <input
-                  type="file"
-                  onChange={handleCSVUpload}
-                  className="hidden"
-                />
-              </label>
-            }
           />
           <button
             type="button"
@@ -495,37 +669,6 @@ const ManageTrainingInvites: React.FC = () => {
           >
             + Add Invite
           </button>
-          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-              Select a training course
-            </label>
-            <div className="mt-2 sm:col-span-2 sm:mt-0">
-              <CourseSelect
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target?.value)}
-                immediate
-                required
-              />
-            </div>
-          </div>{" "}
-          <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
-              Select a training item
-            </label>
-            <div className="mt-2 sm:col-span-2 sm:mt-0">
-              <Autocomplete
-                value={selectedItem ?? null}
-                onChange={setSelectedItem}
-                onRemove={() => setSelectedItem(null)}
-                setQuery={setItemSearchQuery}
-                options={filteredTrainingItems}
-                placeholder="Search for training item in course..."
-                displayValue={(i) => stripHtml(i?.metadata.title) ?? ""}
-                required
-                immediate
-              />
-            </div>
-          </div>
           <div className="flex flex-col items-center gap-3">
             <p className="text-sm text-gray-700">
               Click "Send Invites" to immediately send training invites via
@@ -548,25 +691,25 @@ const ManageTrainingInvites: React.FC = () => {
             headers: [
               {
                 label: "Name",
-                key: "lastName",
+                key: "value.lastName",
               },
               {
                 label: "Email",
-                key: "email",
+                key: "value.email",
               },
               {
                 label: "Organization",
-                key: "organizationSlug",
+                key: "value.organizationSlug",
                 hidden: !hasMultipleOrganizationAccess,
               },
               {
                 label: "Unit",
-                key: "unitSlug",
+                key: "value.unitSlug",
                 hidden: !hasMultipleUnitAccess,
               },
               {
                 label: "Training Item",
-                key: "trainingItemId",
+                key: "value.trainingItemId",
                 noSort: true,
               },
               {
@@ -579,7 +722,7 @@ const ManageTrainingInvites: React.FC = () => {
               },
               {
                 label: "Percent Watched",
-                key: "watchStat.percentWatched",
+                key: "completion.progress",
                 align: "right",
               },
               {
@@ -597,7 +740,7 @@ const ManageTrainingInvites: React.FC = () => {
             ],
             rows: (trainingInvites?.results ?? []).map((t) => ({
               id: t.id,
-              lastName: (
+              ["value.lastName"]: (
                 <span className="whitespace-nowrap">
                   {(
                     (t.value.lastName ?? "") +
@@ -606,7 +749,7 @@ const ManageTrainingInvites: React.FC = () => {
                   ).replace(/(^[,\s]+)|(^[,\s]+$)/g, "") || "—"}
                 </span>
               ),
-              email: (
+              ["value.email"]: (
                 <button
                   type="button"
                   className="text-secondary-600 hover:text-secondary-900 font-medium"
@@ -617,11 +760,11 @@ const ManageTrainingInvites: React.FC = () => {
                   <span className="sr-only">, {t.id}</span>
                 </button>
               ),
-              organizationSlug: (
+              ["value.organizationSlug"]: (
                 <ViewOrganization organizationSlug={t.value.organizationSlug} />
               ),
-              unitSlug: <ViewUnit unitSlug={t.value.unitSlug} />,
-              trainingItemId: (
+              ["value.unitSlug"]: <ViewUnit unitSlug={t.value.unitSlug} />,
+              ["value.trainingItemId"]: (
                 <ViewTrainingItem trainingItemId={t.value.trainingItemId} />
               ),
               createdOn: (
@@ -630,13 +773,15 @@ const ManageTrainingInvites: React.FC = () => {
                 </span>
               ),
               expiresOn: (
-                <span title={dayjs(t.value.expiresOn).format("MMM D, YYYY")}>
-                  {dayjs(t.value.expiresOn).fromNow()}
+                <span title={dayjs(t.expiresOn).format("MMM D, YYYY")}>
+                  {dayjs(t.expiresOn).fromNow()}
                 </span>
               ),
-              ["watchStat.percentWatched"]: (
+              ["completion.progress"]: (
                 <ViewPercentWatched
-                  percentWatched={t.watchStat?.percentWatched}
+                  percentWatched={
+                    t.completion?.progress && t.completion.progress * 100
+                  }
                 />
               ),
               link: (
@@ -697,28 +842,15 @@ const ManageTrainingInvites: React.FC = () => {
               Download (.csv)
             </button>
           }
-          orderOptions={{
-            order: itemFilterOptions.order,
-            setOrder: (k, v) => {
-              setItemFilterOptions((options) => {
-                options.order = { [k]: v };
-                options.offset = 0;
-              });
-            },
-          }}
+          itemFilterQuery={itemFilterOptions}
+          setItemFilterQuery={setItemFilterOptions}
           paginationOptions={{
-            currentOffset: trainingInvites?.offset,
-            total: trainingInvites?.count,
-            limit: trainingInvites?.limit,
-            setOffset: (offset) =>
-              setItemFilterOptions((q) => {
-                q.offset = offset;
-              }),
+            ...trainingInvites,
           }}
           filterOptions={{
             filters: [
               {
-                key: "trainingItemId",
+                key: "value.trainingItemId",
                 label: "Training Item",
                 many: true,
                 options: trainingItems?.results.map((t) => ({
@@ -743,6 +875,14 @@ const ManageTrainingInvites: React.FC = () => {
               ...(organizationFilters.filters ?? []),
             ],
             setQuery: setItemFilterOptions,
+          }}
+          searchOptions={{
+            searchQuery: itemFilterOptions.search ?? "",
+            setSearchQuery: (sq) =>
+              setItemFilterOptions((q) => {
+                q.search = sq;
+                q.offset = 0;
+              }),
           }}
         />
       </div>

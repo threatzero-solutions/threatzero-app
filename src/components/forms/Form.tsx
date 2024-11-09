@@ -4,7 +4,6 @@ import {
   useEffect,
   useContext,
   useMemo,
-  useRef,
   ReactNode,
   useCallback,
 } from "react";
@@ -32,10 +31,11 @@ import { deleteForm, newDraftForm, saveForm } from "../../queries/forms";
 import { produce } from "immer";
 import Steps from "./Steps";
 import React from "react";
-import { ErrorContext } from "../../contexts/error/error-context";
+import { AlertContext } from "../../contexts/alert/alert-context";
 import SlideOver from "../layouts/slide-over/SlideOver";
 import SelectLanguage from "../languages/SelectLanguage";
 import { DeepPartial } from "../../types/core";
+import { useDebounceCallback } from "usehooks-ts";
 
 export interface FormAction {
   id: string;
@@ -125,7 +125,7 @@ const Form: React.FC<FormProps> = ({
   );
 
   const { dispatch: formsDispatch } = useContext(FormsContext);
-  const { setError } = useContext(ErrorContext);
+  const { setError } = useContext(AlertContext);
 
   const published = useMemo(() => form?.state === FormState.PUBLISHED, [form]);
 
@@ -156,7 +156,6 @@ const Form: React.FC<FormProps> = ({
     return actions;
   }, [actionsProp]);
 
-  const autoExecuteTimeout = useRef<number>();
   const autoExecuteAction = useMemo(
     () => formActions?.find((a) => a.autoExecute),
     [formActions]
@@ -210,6 +209,34 @@ const Form: React.FC<FormProps> = ({
     setFieldResponsesLoaded(!!submission);
   }, [submission, fieldResponsesLoaded]);
 
+  const handleAutoExecute = useCallback(
+    async (action: FormAction) => {
+      setAutoExecuteLoading(true);
+      if (!action.action) {
+        action.ref?.current?.click();
+      } else {
+        try {
+          await action.action();
+        } catch (e) {
+          setError(`${e}`);
+        }
+        if (action.autoExecuteLoading === undefined) {
+          setTimeout(
+            () => setAutoExecuteLoading(false),
+            AUTO_EXECUTE_LOADING_MS
+          );
+        }
+      }
+    },
+    [setError, setAutoExecuteLoading]
+  );
+
+  const debouncedAutoExecute = useDebounceCallback(
+    handleAutoExecute,
+    autoExecuteAction?.autoExecuteDebounceTime ??
+      DEFAULT_AUTO_EXECUTE_DEBOUNCE_TIME
+  );
+
   const handleChange = (event: Partial<ChangeEvent<HTMLInputElement>>) => {
     if (!form || !event.target) {
       return;
@@ -223,7 +250,7 @@ const Form: React.FC<FormProps> = ({
 
     const type = event.target.getAttribute("data-fieldtype");
 
-    // biome-ignore lint/suspicious/noExplicitAny:
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let newValue: any = value;
     if (type === FieldType.CHECKBOX) {
       newValue = event.target.checked;
@@ -242,25 +269,7 @@ const Form: React.FC<FormProps> = ({
     );
 
     if (autoExecuteAction) {
-      clearTimeout(autoExecuteTimeout.current);
-      autoExecuteTimeout.current = setTimeout(async () => {
-        setAutoExecuteLoading(true);
-        if (!autoExecuteAction.action) {
-          autoExecuteAction.ref?.current?.click();
-        } else {
-          try {
-            await autoExecuteAction.action();
-          } catch (e) {
-            setError(`${e}`);
-          }
-          if (autoExecuteAction.autoExecuteLoading === undefined) {
-            setTimeout(
-              () => setAutoExecuteLoading(false),
-              AUTO_EXECUTE_LOADING_MS
-            );
-          }
-        }
-      }, autoExecuteAction.autoExecuteDebounceTime ?? DEFAULT_AUTO_EXECUTE_DEBOUNCE_TIME);
+      debouncedAutoExecute(autoExecuteAction);
     }
   };
 
@@ -310,7 +319,11 @@ const Form: React.FC<FormProps> = ({
       newDraftMutation.mutate({ formId: form.id, languageId: language.id });
     }
 
-    setSearchParams((p) => ({ ...p, v: 0, language: language.code }));
+    setSearchParams((p) => {
+      p.set("v", "0");
+      p.set("language", language.code);
+      return p;
+    });
   };
 
   const handlePublish = () => {
@@ -409,10 +422,10 @@ const Form: React.FC<FormProps> = ({
                         ),
                         disabled: !!submission || l.id === form.language?.id,
                         action: () =>
-                          setSearchParams((p) => ({
-                            ...p,
-                            language: l?.code ?? "",
-                          })),
+                          setSearchParams((p) => {
+                            p.set("language", l?.code ?? "");
+                            return p;
+                          }),
                       })),
                       {
                         id: "new",
@@ -470,11 +483,10 @@ const Form: React.FC<FormProps> = ({
                           <PillBadge color="gray" displayValue={<i>Draft</i>} />
                         ),
                         action: () =>
-                          setSearchParams((p) => ({
-                            ...p,
-                            v,
-                            language: form.language?.code,
-                          })),
+                          setSearchParams((p) => {
+                            p.set("language", form.language?.code ?? "");
+                            return p;
+                          }),
                       })),
                       {
                         id: "new",

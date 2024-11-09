@@ -19,7 +19,7 @@ import {
   FormSubmission,
 } from "../../../types/entities";
 import Form from "../../../components/forms/Form";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import StatusPill from "./components/StatusPill";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import { THREAT_ASSESSMENT_FORM_SLUG } from "../../../constants/forms";
@@ -32,6 +32,8 @@ import { API_BASE_URL } from "../../../contexts/core/constants";
 import EditableCell from "../../../components/layouts/EditableCell";
 import { DeepPartial } from "../../../types/core";
 import { useAuth } from "../../../contexts/AuthProvider";
+import { simulateDownload } from "../../../utils/core";
+import { AlertContext } from "../../../contexts/alert/alert-context";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
 
@@ -41,6 +43,8 @@ const ThreatAssessmentForm: React.FC = () => {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const { setInfo } = useContext(AlertContext);
   const { hasPermissions } = useAuth();
 
   const isEditing = useMemo(() => searchParams.has("edit"), [searchParams]);
@@ -117,6 +121,18 @@ const ThreatAssessmentForm: React.FC = () => {
     [assessmentMutation.mutate, params.assessmentId]
   );
 
+  const downloadAssessmentAsPdfMutation = useMutation({
+    mutationFn: assessmentToPdf,
+    onSuccess: (data) => {
+      simulateDownload(new Blob([data]), "assessment.pdf");
+
+      setTimeout(() => setInfo(), 2000);
+    },
+    onError: () => {
+      setInfo();
+    },
+  });
+
   const assessmentActions: DropdownAction[] = useMemo(
     () => [
       {
@@ -129,20 +145,8 @@ const ThreatAssessmentForm: React.FC = () => {
         id: "pdf",
         value: "Download as PDF",
         action: () => {
-          assessmentToPdf(assessment?.id).then((response) => {
-            const a = document.createElement("a");
-            a.setAttribute(
-              "href",
-              window.URL.createObjectURL(new Blob([response]))
-            );
-            a.setAttribute("download", "assessment.pdf");
-
-            document.body.append(a);
-
-            a.click();
-
-            a.remove();
-          });
+          setInfo("Downloading assessment as PDF...");
+          downloadAssessmentAsPdfMutation.mutate(assessment?.id);
         },
         hidden: !assessment,
       },
@@ -153,7 +157,15 @@ const ThreatAssessmentForm: React.FC = () => {
         hidden: assessment?.status === value,
       })),
     ],
-    [changeStatus, assessment, canAlterAssessment, isEditing, setIsEditing]
+    [
+      changeStatus,
+      assessment,
+      canAlterAssessment,
+      isEditing,
+      setIsEditing,
+      downloadAssessmentAsPdfMutation,
+      setInfo,
+    ]
   );
 
   const handleSubmit = (

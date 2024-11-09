@@ -1,17 +1,13 @@
-import { useImmer } from "use-immer";
-import { AudienceMatcherDto } from "../../../../types/api";
-import { SimpleChangeEvent } from "../../../../types/core";
+import { AudienceMatcherDto, OrganizationIdpDto } from "../../../../types/api";
 import DataTable from "../../../../components/layouts/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
-import React, { MouseEvent, useEffect } from "react";
+import React, { MouseEvent } from "react";
 import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
 import Select from "../../../../components/forms/inputs/Select";
 import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import { useFieldArray, useFormContext } from "react-hook-form";
 
-interface AudienceMatchersInputProps<K extends string | number | symbol> {
-  name: K;
-  value?: AudienceMatcherDto[];
-  onChange?: (e: SimpleChangeEvent<AudienceMatcherDto[], K>) => void;
+interface AudienceMatchersInputProps {
   allowedAudiences: string[];
 }
 
@@ -30,46 +26,20 @@ const AddMatcherButton: React.FC<{
   );
 };
 
-const AudienceMatchersInput = <K extends string | number | symbol = string>({
-  name,
-  value,
-  onChange,
+const DEFAULT_MATCHER: AudienceMatcherDto = {
+  externalName: "",
+  pattern: "",
+  audience: "",
+};
+
+const AudienceMatchersInput: React.FC<AudienceMatchersInputProps> = ({
   allowedAudiences,
-}: AudienceMatchersInputProps<K>) => {
-  const [audienceMatchers, setAudienceMatchers] = useImmer<
-    AudienceMatcherDto[]
-  >(value ?? []);
-
-  const handleAddMatcher = () => {
-    setAudienceMatchers((draft) => {
-      draft.push({
-        externalName: "",
-        pattern: "",
-        audience: "",
-      });
-    });
-  };
-
-  const handleRemoveMatcher = (idx: number) => {
-    setAudienceMatchers((draft) => {
-      draft.splice(idx, 1);
-    });
-  };
-
-  const handleUpdateMatcher = (
-    idx: number,
-    key: keyof AudienceMatcherDto,
-    e: SimpleChangeEvent<string | null | undefined>
-  ) => {
-    setAudienceMatchers((draft) => {
-      const value = e.target?.value;
-      draft[idx][key] = (value ?? "") as string;
-    });
-  };
-
-  useEffect(() => {
-    onChange?.({ target: { name, value: audienceMatchers } });
-  }, [audienceMatchers]);
+}) => {
+  const { control } = useFormContext<OrganizationIdpDto>();
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "audienceMatchers",
+  });
 
   return (
     <div className="flex flex-col">
@@ -106,30 +76,36 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
               noSort: true,
             },
           ],
-          rows: audienceMatchers.map((u, idx) => ({
-            id: u.attributeId ?? idx.toString(),
+          rows: fields.map((field, idx) => ({
+            id: field.attributeId ?? idx.toString(),
             externalName: (
               <Input
-                value={u.externalName ?? ""}
+                value={field.externalName ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateMatcher(idx, "externalName", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, externalName: e.target.value })
+                }
                 required
               />
             ),
             matchesSeparator: <PuzzlePieceIcon className="w-4 h-4" />,
             pattern: (
               <Input
-                value={u.pattern ?? ""}
+                value={field.pattern ?? ""}
                 className="w-full"
-                onChange={(e) => handleUpdateMatcher(idx, "pattern", e)}
+                onChange={(e) =>
+                  update(idx, { ...field, pattern: e.target.value })
+                }
                 required
               />
             ),
             arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             audience: (
               <Select
-                value={u.audience}
-                onChange={(e) => handleUpdateMatcher(idx, "audience", e)}
+                value={field.audience}
+                onChange={(e) =>
+                  update(idx, { ...field, audience: e.target.value })
+                }
                 options={allowedAudiences.map((audience) => ({
                   key: audience,
                   label: audience,
@@ -137,7 +113,7 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
               />
             ),
             delete: (
-              <button type="button" onClick={() => handleRemoveMatcher(idx)}>
+              <button type="button" onClick={() => remove(idx)}>
                 <TrashIcon className="w-4 h-4" />
               </button>
             ),
@@ -146,12 +122,12 @@ const AudienceMatchersInput = <K extends string | number | symbol = string>({
         notFoundDetail={
           <AddMatcherButton
             value="+ Add an audience matcher"
-            onClick={handleAddMatcher}
+            onClick={() => append(DEFAULT_MATCHER)}
           />
         }
       />
-      {audienceMatchers.length > 0 && (
-        <AddMatcherButton onClick={handleAddMatcher} />
+      {fields.length > 0 && (
+        <AddMatcherButton onClick={() => append(DEFAULT_MATCHER)} />
       )}
     </div>
   );

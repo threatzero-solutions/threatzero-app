@@ -1,5 +1,3 @@
-import { useContext } from "react";
-import { TrainingContext } from "../../contexts/training/training-context";
 import FeaturedSection from "../training-library/components/FeaturedSection";
 import { useAuth } from "../../contexts/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
@@ -7,22 +5,24 @@ import {
   getOrganizationBySlug,
   getUnitBySlug,
 } from "../../queries/organizations";
-import { stripPhoneNumber } from "../../utils/core";
+import SafetyContactBody from "../../components/safety-management/SafetyContactBody";
 
 const MyDashboard: React.FC = () => {
-  const { state } = useContext(TrainingContext);
-
   const { keycloak } = useAuth();
 
   const { data: myOrganization, isLoading: organizationLoading } = useQuery({
-    queryKey: ["organizations", keycloak!.tokenParsed!.organization] as const,
-    queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[1]),
+    queryKey: [
+      "organization",
+      "slug",
+      keycloak!.tokenParsed!.organization,
+    ] as const,
+    queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[2]),
     enabled: !!keycloak?.tokenParsed?.organization,
   });
 
   const { data: myUnit, isLoading: unitLoading } = useQuery({
-    queryKey: ["units", keycloak!.tokenParsed!.unit] as const,
-    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[1]),
+    queryKey: ["unit", "slug", keycloak!.tokenParsed!.unit] as const,
+    queryFn: ({ queryKey }) => getUnitBySlug(queryKey[2]),
     enabled: !!keycloak?.tokenParsed?.unit,
   });
 
@@ -65,24 +65,7 @@ const MyDashboard: React.FC = () => {
                   />
                 ))
             ) : mySafetyContact ? (
-              <>
-                <span className="text-lg">
-                  {mySafetyContact.name}
-                  {mySafetyContact.title ? ` - ${mySafetyContact.title}` : ""}
-                </span>
-                <a
-                  href={`mailto:${mySafetyContact.email}`}
-                  className="text-secondary-600 hover:text-secondary-500 transition-colors"
-                >
-                  {mySafetyContact.email}
-                </a>
-                <a
-                  href={`tel:${stripPhoneNumber(mySafetyContact.phone)}`}
-                  className="text-secondary-600 hover:text-secondary-500 transition-colors"
-                >
-                  {mySafetyContact.phone}
-                </a>
-              </>
+              <SafetyContactBody value={mySafetyContact} />
             ) : (
               "Safety contact not found."
             )}
@@ -119,12 +102,7 @@ const MyDashboard: React.FC = () => {
           </p>
         </div>
       </div>
-      <FeaturedSection
-        loading={state.activeCourse === undefined}
-        sections={state.activeCourse?.sections}
-        title="Featured Training"
-        showAllTrainingLink
-      />
+      <FeaturedSection title="Featured Training" showAllTrainingLink />
     </div>
   );
 };

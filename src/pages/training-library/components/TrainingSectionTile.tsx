@@ -1,12 +1,12 @@
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { TrainingRepeats, TrainingSection } from "../../../types/entities";
+import { TrainingSection } from "../../../types/entities";
 import {
-  Fragment,
   KeyboardEvent,
   MouseEvent,
   useCallback,
+  useContext,
   useMemo,
   useState,
 } from "react";
@@ -16,7 +16,18 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import { classNames } from "../../../utils/core";
-import { Menu, Transition } from "@headlessui/react";
+import { TrainingContext } from "../../../contexts/training/training-context";
+import VideoProgress from "./VideoProgress";
+import { FeaturedWindow } from "../../../types/training";
+import { DEFAULT_THUMBNAIL_URL } from "../../../constants/core";
+import Dropdown from "../../../components/layouts/Dropdown";
+import {
+  ArrowRightCircleIcon,
+  ArrowLeftCircleIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/20/solid";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { swapTrainingSectionOrders } from "../../../queries/training";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -26,6 +37,9 @@ interface TrainingSectionTileProps {
   className?: string;
   onEditSection?: (section?: Partial<TrainingSection>) => void;
   navigateDisabled?: boolean;
+  featuredWindow?: FeaturedWindow | null;
+  previousSection?: Partial<TrainingSection>;
+  nextSection?: Partial<TrainingSection>;
 }
 
 const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
@@ -33,7 +47,12 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
   className,
   onEditSection,
   navigateDisabled: navigateDisabledProp,
+  featuredWindow,
+  previousSection,
+  nextSection,
 }) => {
+  const { state } = useContext(TrainingContext);
+
   const location = useLocation();
 
   const firstItem = useMemo(() => section.items?.[0]?.item, [section.items]);
@@ -51,14 +70,77 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
   );
 
   const availability = useMemo(() => {
-    const parts = [section.availableOn, section.expiresOn];
-    const format =
-      section.repeats === TrainingRepeats.YEARLY ? "MMM DD" : "MMM DD, YYYY";
-    return parts
-      .filter((p) => p)
-      .map((p) => dayjs(p).format(format))
-      .join(" - ");
-  }, [section]);
+    if (!featuredWindow) {
+      return "";
+    }
+
+    const { featuredOn, featuredUntil } = featuredWindow;
+
+    if (!featuredOn.isValid()) {
+      return "";
+    }
+
+    const defaultFormat = "MMM D, YYYY";
+
+    if (!featuredUntil.isValid()) {
+      return featuredOn.format(defaultFormat);
+    }
+
+    if (featuredOn.isSame(featuredUntil, "year")) {
+      const yearSuffix = `, ${featuredUntil.format("YYYY")}`;
+      if (featuredOn.isSame(featuredUntil, "month")) {
+        return `${featuredOn.format("MMM D")} - ${featuredUntil.format(
+          "D"
+        )}${yearSuffix}`;
+      }
+      return `${featuredOn.format("MMM D")} - ${featuredUntil.format(
+        "MMM D"
+      )}${yearSuffix}`;
+    }
+
+    return `${featuredOn.format(defaultFormat)} - ${featuredUntil.format(
+      defaultFormat
+    )}`;
+  }, [featuredWindow]);
+
+  const completionProps = useMemo(() => {
+    return (
+      state.itemCompletionsMap &&
+      section.items?.reduce(
+        (acc, item) => {
+          if (item?.item) {
+            const completion = state.itemCompletionsMap!.get(item.item.id);
+            if (completion) {
+              acc.duration += 1;
+              acc.currentTime = completion.progress;
+            }
+          }
+
+          return acc;
+        },
+        { duration: 0, currentTime: 0 }
+      )
+    );
+  }, [state.itemCompletionsMap, section.items]);
+
+  const queryClient = useQueryClient();
+  const swapSectionOrdersMutation = useMutation({
+    mutationFn: (data: {
+      sectionA: Partial<TrainingSection>;
+      sectionB: Partial<TrainingSection>;
+    }) => swapTrainingSectionOrders(data.sectionA, data.sectionB),
+    onSuccess: ([dataA, dataB]) => {
+      queryClient.invalidateQueries({
+        queryKey: ["training-section", "id", dataA.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["training-section", "id", dataB.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["training-course", "id", dataA.courseId],
+      });
+    },
+  });
 
   const navigateToSection = useCallback(
     (e: MouseEvent | KeyboardEvent) => {
@@ -102,8 +184,8 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
                 : "w-full h-full",
               "absolute object-cover transition-all duration-300 ease-out inset-0"
             )}
-            src={firstItem?.thumbnailUrl ?? undefined}
-            alt=""
+            src={firstItem?.thumbnailUrl ?? DEFAULT_THUMBNAIL_URL}
+            alt={firstItem?.metadata?.title ?? "Training Material"}
           />
         </div>
         <div className="flex flex-col min-w-32 justify-between px-6 py-4 text-sm bg-white">
@@ -146,45 +228,79 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
               )}
             </p>
             <div className="grow" />
+            {!onEditSection && !navigateDisabled && completionProps && (
+              <VideoProgress {...completionProps} className="h-10 w-10" />
+            )}
             {onEditSection && (
-              <Menu as="div">
-                <Menu.Button className="block p-2.5 text-gray-400 hover:text-gray-500">
-                  <span className="sr-only">Open options</span>
+              <Dropdown
+                value="Open training section actions"
+                valueIcon={
                   <EllipsisVerticalIcon
                     className="h-5 w-5"
                     aria-hidden="true"
                   />
-                </Menu.Button>
-                <Transition
-                  as={Fragment}
-                  enter="transition ease-out duration-100"
-                  enterFrom="transform opacity-0 scale-95"
-                  enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="transform opacity-100 scale-100"
-                  leaveTo="transform opacity-0 scale-95"
-                >
-                  <Menu.Items className="absolute right-6 z-10 mt-0.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          type="button"
-                          onClick={() => onEditSection(section)}
-                          className={classNames(
-                            active ? "bg-gray-50" : "",
-                            "block w-full px-3 py-1 text-sm leading-6 text-gray-900"
-                          )}
-                        >
-                          Edit
-                          <span className="sr-only">
-                            , {section.metadata?.title}
-                          </span>
-                        </button>
-                      )}
-                    </Menu.Item>
-                  </Menu.Items>
-                </Transition>
-              </Menu>
+                }
+                iconOnly
+                strategy="fixed"
+                actions={[
+                  {
+                    id: "edit",
+                    value: (
+                      <span className="inline-flex items-center">
+                        <PencilSquareIcon className="h-4 w-4 mr-1 text-gray-600" />
+                        Edit
+                      </span>
+                    ),
+                    action: () => onEditSection(section),
+                  },
+                  {
+                    id: "move-back",
+                    value: (
+                      <span
+                        className={classNames(
+                          "inline-flex items-center",
+                          !previousSection ? "opacity-50" : ""
+                        )}
+                      >
+                        <ArrowLeftCircleIcon className="h-5 w-5 mr-1 text-secondary-600" />
+                        Move back
+                      </span>
+                    ),
+                    disabled: !previousSection,
+                    action: () => {
+                      if (previousSection) {
+                        swapSectionOrdersMutation.mutate({
+                          sectionA: section,
+                          sectionB: previousSection,
+                        });
+                      }
+                    },
+                  },
+                  {
+                    id: "move-forward",
+                    value: (
+                      <span
+                        className={classNames(
+                          "inline-flex items-center",
+                          !nextSection ? "opacity-50" : ""
+                        )}
+                      >
+                        <ArrowRightCircleIcon className="h-5 w-5 mr-1 text-secondary-600" />
+                        Move forward
+                      </span>
+                    ),
+                    disabled: !nextSection,
+                    action: () => {
+                      if (nextSection) {
+                        swapSectionOrdersMutation.mutate({
+                          sectionA: section,
+                          sectionB: nextSection,
+                        });
+                      }
+                    },
+                  },
+                ]}
+              />
             )}
           </div>
         </div>

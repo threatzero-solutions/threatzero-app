@@ -129,8 +129,8 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
   const autoSaveEnabled = useRef(false);
 
   const { data: itemProp } = useQuery({
-    queryKey: ["training-items", itemId],
-    queryFn: ({ queryKey }) => getTrainingItem(queryKey[1]),
+    queryKey: ["training-item", "id", itemId],
+    queryFn: ({ queryKey }) => getTrainingItem(queryKey[2]),
     enabled: !!itemId,
   });
 

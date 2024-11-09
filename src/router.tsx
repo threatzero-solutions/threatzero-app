@@ -9,7 +9,7 @@ import TrainingItem from "./pages/training-library/TrainingItem";
 import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
 import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
-import CourseBuilder from "./pages/training-library/CourseBuilder";
+import CourseBuilder from "./pages/admin-panel/courses/CourseBuilder";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
 import PublicLayout from "./components/layouts/PublicLayout";
 import MyDashboard from "./pages/my-dashboard/MyDashboard";
@@ -38,6 +38,15 @@ import ManageTrainingInvites from "./pages/safety-management/training-admin/Mana
 import TrainingAdminDashboard from "./pages/safety-management/training-admin/TrainingAdminDashboard";
 import PublicRoot from "./components/layouts/PublicRoot";
 import Root from "./components/layouts/Root";
+import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
+import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
+import EditOrganization from "./pages/admin-panel/organizations/levels/EditOrganization";
+// import MyOrganization from "./pages/my-organization/MyOrganization";
+// import MyOrganizationHome from "./pages/my-organization/MyOrganizationHome";
+// import MyOrganizationUsersRoot from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersRoot";
+// import MyOrganizationUsersAccessManagement from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersAccessManagement";
+// import MyOrganizationUsersAll from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersAll";
+// import MyOrganizationUsersTrainingMembership from "./pages/my-organization/my-organization-users.tsx/MyOrganizationUsersTrainingMembership";
 
 export const router = createBrowserRouter(
   [
@@ -198,8 +207,8 @@ export const router = createBrowserRouter(
                       element: <TrainingAdminDashboard />,
                       children: [
                         {
-                          path: "watch-stats",
-                          handle: { title: "View Watch Stats" },
+                          path: "completions",
+                          handle: { title: "View Training Completions" },
                           element: <ViewWatchStats />,
                         },
                         {
@@ -209,7 +218,7 @@ export const router = createBrowserRouter(
                         },
                         {
                           path: "*?",
-                          loader: () => redirect("watch-stats"),
+                          loader: () => redirect("completions"),
                         },
                       ],
                     },
@@ -245,7 +254,34 @@ export const router = createBrowserRouter(
                     {
                       path: "organizations",
                       handle: { title: "Organizations" },
-                      element: <Organizations />,
+                      children: [
+                        {
+                          path: "",
+                          element: <Organizations />,
+                        },
+                        {
+                          path: ":id",
+                          element: <EditOrganization />,
+                        },
+                      ],
+                    },
+                    {
+                      path: "courses",
+                      handle: { title: "Courses" },
+                      children: [
+                        {
+                          path: "",
+                          element: <ViewCourses />,
+                        },
+                        {
+                          path: "preview/:id",
+                          element: <PreviewCourse />,
+                        },
+                        {
+                          path: ":id",
+                          element: <CourseBuilder />,
+                        },
+                      ],
                     },
                     {
                       path: "forms",
@@ -323,6 +359,47 @@ export const router = createBrowserRouter(
                     },
                   ],
                 },
+                // {
+                //   path: "my-organization",
+                //   handle: { title: "My Organization" },
+                //   element: <MyOrganization />,
+                //   children: [
+                //     {
+                //       path: "home",
+                //       element: <MyOrganizationHome />,
+                //     },
+                //     {
+                //       path: "users",
+                //       handle: { title: "Users" },
+                //       element: <MyOrganizationUsersRoot />,
+                //       children: [
+                //         {
+                //           path: "all",
+                //           handle: { title: "All" },
+                //           element: <MyOrganizationUsersAll />,
+                //         },
+                //         {
+                //           path: "access",
+                //           handle: { title: "Access Management" },
+                //           element: <MyOrganizationUsersAccessManagement />,
+                //         },
+                //         {
+                //           path: "training",
+                //           handle: { title: "Training Membership" },
+                //           element: <MyOrganizationUsersTrainingMembership />,
+                //         },
+                //         {
+                //           path: "*?",
+                //           loader: () => redirect("all"),
+                //         },
+                //       ],
+                //     },
+                //     {
+                //       path: "*?",
+                //       loader: () => redirect("home"),
+                //     },
+                //   ],
+                // },
                 {
                   path: "help-center",
                   handle: { title: "Help Center" },

@@ -44,7 +44,7 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof SafetyContact }> = [
 
 interface EditSafetyContactProps {
   safetyContact?: Partial<SafetyContact>;
-  setSafetyContact: (safetyContact: Partial<SafetyContact>) => void;
+  setSafetyContact: (safetyContact: Partial<SafetyContact> | null) => void;
   setOpen: (open: boolean) => void;
 }
 
@@ -81,10 +81,17 @@ const EditSafetyContact: React.FC<EditSafetyContactProps> = ({
     setOpen(false);
   };
 
+  const handleRemove = () => {
+    setSafetyContact(null);
+    setOpen(false);
+  };
+
   return (
     <SlideOverForm
       onSubmit={handleSubmit}
       onClose={() => setOpen(false)}
+      onDelete={() => handleRemove()}
+      deleteText="Clear"
       submitText="Done"
     >
       <SlideOverHeading

@@ -36,6 +36,8 @@ export const useItemFilterQuery = (
     options: ItemFilterQueryParams,
     valueMap: (v: string | undefined) => T
   ) => {
+    // Extracting limit from options even though it's not used so only custom params are left.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { offset, order, search, limit, ...customParams } = options;
     const p: Record<string, T> = {
       offset: valueMap(offset ? `${offset}` : undefined),
@@ -123,7 +125,7 @@ export const useItemFilterQuery = (
       },
       { replace: true }
     );
-  }, [debouncedItemFilterOptions, options.prefix, setSearchParams]);
+  }, [debouncedItemFilterOptions, options.prefix, setSearchParams, params]);
 
   const clearParams = () => {
     setParams({});

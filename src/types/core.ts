@@ -34,3 +34,14 @@ export type DeepPartial<T> =
           [K in keyof T]?: DeepPartial<T[K]>;
         }
       : T);
+
+export type FieldPath<T, Prefix extends string = ""> = {
+  [K in keyof T]: T[K] extends object
+    ? // If the property is an object, recursively call FieldPath with dot notation
+      | `${Prefix extends "" ? "" : `${Prefix}.`}${K & string}`
+        | FieldPath<
+            T[K],
+            `${Prefix extends "" ? "" : `${Prefix}.`}${K & string}`
+          >
+    : `${Prefix extends "" ? "" : `${Prefix}.`}${K & string}`;
+}[keyof T];
