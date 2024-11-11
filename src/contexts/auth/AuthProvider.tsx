@@ -2,19 +2,18 @@ import {
   PropsWithChildren,
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import configJson from "../config";
+import configJson from "../../config";
 import { useNavigate } from "react-router-dom";
-import ErrorPage from "../pages/ErrorPage";
+import ErrorPage from "../../pages/ErrorPage";
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
 import axios, { InternalAxiosRequestConfig } from "axios";
-import SplashScreen from "../components/layouts/SplashScreen";
-import { LEVEL } from "../constants/permissions";
+import SplashScreen from "../../components/layouts/SplashScreen";
+import { LEVEL } from "../../constants/permissions";
 
 const TOKEN_MIN_VALIDATY_SECONDS = 2;
 
@@ -69,13 +68,13 @@ export interface AuthContextType {
   authenticated: boolean;
   addEventListener: (
     event: string,
-    cb: (kc: Keycloak, ...args: any[]) => void
+    cb: (kc: Keycloak, ...args: unknown[]) => void
   ) => void;
   hasPermissions: (
     requiredPermissions: string[],
     type?: "any" | "all"
   ) => boolean;
-  accessTokenClaims?: { [key: string]: any } | null;
+  accessTokenClaims?: { [key: string]: unknown } | null;
   interceptorReady: boolean;
   hasMultipleUnitAccess: boolean;
   hasMultipleOrganizationAccess: boolean;
@@ -95,8 +94,6 @@ export const AuthContext = createContext<AuthContextType>({
   hasMultipleOrganizationAccess: false,
 });
 
-export const useAuth = () => useContext(AuthContext);
-
 const _keycloak = new Keycloak(configJson.keycloak.config as KeycloakConfig);
 
 const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
@@ -109,12 +106,12 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const eventCallbacks = new Map<
     string,
-    Set<(kc: Keycloak, ...args: any[]) => void>
+    Set<(kc: Keycloak, ...args: unknown[]) => void>
   >();
 
   const addEventListener = (
     event: string,
-    cb: (kc: Keycloak, ...args: any[]) => void
+    cb: (kc: Keycloak, ...args: unknown[]) => void
   ) => {
     if (!eventCallbacks.has(event)) {
       eventCallbacks.set(event, new Set<() => void>());
@@ -132,7 +129,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     setAuthenticated(!!kc.authenticated);
   };
 
-  const _onReady = (kc: Keycloak, authenticated: any) => {
+  const _onReady = (kc: Keycloak, authenticated: unknown) => {
     setKeycloak(kc);
     setAuthenticated(!!authenticated);
   };
@@ -143,7 +140,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const handleEvent =
     (event: string, kc: Keycloak) =>
-    (...args: any[]) => {
+    (...args: unknown[]) => {
       eventCallbacks.get(event)?.forEach((cb) => {
         cb(kc, ...args);
       });
@@ -272,7 +269,8 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const hasMultipleUnitAccess = useMemo(
     () =>
       hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN], "any") ||
-      !!keycloak?.tokenParsed?.peer_units?.length,
+      (!!keycloak?.tokenParsed?.peer_units?.length &&
+        keycloak.tokenParsed.peer_units.length > 1),
     [hasPermissions, keycloak?.tokenParsed]
   );
 
@@ -308,27 +306,5 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export const withAuthenticationRequired =
-  (Component: React.FC<PropsWithChildren>): React.FC =>
-  (props: PropsWithChildren) => {
-    const { authenticated, keycloak, interceptorReady } = useAuth();
-
-    useEffect(() => {
-      if (!authenticated && keycloak) {
-        keycloak.login();
-      }
-    }, [keycloak, authenticated]);
-
-    return (
-      <>
-        {authenticated && interceptorReady ? (
-          <Component {...props} />
-        ) : (
-          <SplashScreen />
-        )}
-      </>
-    );
-  };
 
 export default AuthProvider;

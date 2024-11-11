@@ -1,5 +1,5 @@
 import { useContext, useMemo } from "react";
-import { useAuth } from "../../../contexts/AuthProvider";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useMutation, useQuery } from "@tanstack/react-query";

@@ -32,7 +32,7 @@ import { API_BASE_URL } from "../../contexts/core/constants";
 import BackButton from "../../components/layouts/BackButton";
 import EditableCell from "../../components/layouts/EditableCell";
 import { DeepPartial } from "../../types/core";
-import { useAuth } from "../../contexts/AuthProvider";
+import { useAuth } from "../../contexts/auth/useAuth";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 

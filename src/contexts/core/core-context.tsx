@@ -1,10 +1,10 @@
 import { createContext, Dispatch, PropsWithChildren, useState } from "react";
 import { NavigationItem } from "../../types/core";
 import { ImmerReducer, useImmerReducer } from "use-immer";
-import { withAuthenticationRequired } from "../AuthProvider";
 import ConfirmationModal, {
   ConfirmationModalProps,
 } from "../../components/layouts/modal/ConfirmationModal";
+import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 
 export interface CoreState {
   mainNavigationItems: NavigationItem[];

@@ -2,7 +2,7 @@ import { useContext, useMemo } from "react";
 import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { LEVEL, WRITE } from "../../constants/permissions";
 import { TrainingContext } from "../../contexts/training/training-context";
-import { useAuth } from "../../contexts/AuthProvider";
+import { useAuth } from "../../contexts/auth/useAuth";
 import { trainingLibraryPermissionsOptions } from "../../constants/permission-options";
 import ViewTrainingCourse from "./components/ViewTrainingCourse";
 

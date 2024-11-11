@@ -10,7 +10,7 @@ import {
   saveOrganization,
 } from "../../../../queries/organizations";
 import { classNames } from "../../../../utils/core";
-import { useAuth } from "../../../../contexts/AuthProvider";
+import { useAuth } from "../../../../contexts/auth/useAuth";
 import { LEVEL } from "../../../../constants/permissions";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";

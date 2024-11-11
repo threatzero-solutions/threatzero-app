@@ -1,5 +1,5 @@
 import FeaturedSection from "../training-library/components/FeaturedSection";
-import { useAuth } from "../../contexts/AuthProvider";
+import { useAuth } from "../../contexts/auth/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import {
   getOrganizationBySlug,

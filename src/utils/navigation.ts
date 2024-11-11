@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useAuth } from "../contexts/AuthProvider";
+import { useAuth } from "../contexts/auth/useAuth";
 import { NavigationItem } from "../types/core";
 
 export const useNav = () => {

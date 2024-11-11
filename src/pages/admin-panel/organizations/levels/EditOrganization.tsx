@@ -15,7 +15,7 @@ import OrganizationIdpsInput from "../components/OrganizationIdpsInput";
 import { CoreContext } from "../../../../contexts/core/core-context";
 import CourseEnrollmentsInput from "../components/CourseEnrollmentsInput";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { useAuth } from "../../../../contexts/AuthProvider";
+import { useAuth } from "../../../../contexts/auth/useAuth";
 import { useNavigate, useParams } from "react-router-dom";
 import LargeFormSection from "../../../../components/forms/LargeFormSection";
 import FormField from "../../../../components/forms/FormField";
