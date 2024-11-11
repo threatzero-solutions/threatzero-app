@@ -3,7 +3,7 @@ import { TrainingContext } from "../../../contexts/training/training-context";
 import { CourseEnrollment, TrainingVisibility } from "../../../types/entities";
 import { useNavigate } from "react-router-dom";
 import { LEVEL, WRITE } from "../../../constants/permissions";
-import { useAuth } from "../../../contexts/AuthProvider";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import CourseVisibilityTag from "./CourseVisibilityTag";
 import CourseCustomTag from "./CourseCustomTag";
 import CourseAvailabilityDates from "./CourseActiveStatus";

@@ -11,7 +11,7 @@ import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import Paginator from "../../../components/layouts/Paginator";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
-import { useAuth } from "../../../contexts/AuthProvider";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import { LEVEL } from "../../../constants/permissions";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 

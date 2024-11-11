@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "../../contexts/AuthProvider";
+import { useAuth } from "../../contexts/auth/useAuth";
 import { getOrganizationBySlug } from "../../queries/organizations";
 
 const MyOrganizationHome = () => {

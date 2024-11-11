@@ -4,7 +4,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import TrainingLibrary from "./pages/training-library/TrainingLibrary";
 import TipSubmission from "./pages/tip-submission/TipSubmission";
 import Login from "./pages/Login";
-import AuthProvider from "./contexts/AuthProvider";
+import AuthProvider from "./contexts/auth/AuthProvider";
 import TrainingItem from "./pages/training-library/TrainingItem";
 import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
 import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";

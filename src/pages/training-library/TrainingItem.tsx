@@ -19,7 +19,7 @@ import { TrainingContext } from "../../contexts/training/training-context";
 import TrainingItemTile from "./components/TrainingItemTile";
 import { Video } from "../../types/entities";
 import { ErrorBoundary } from "react-error-boundary";
-import { useAuth } from "../../contexts/AuthProvider";
+import { useAuth } from "../../contexts/auth/useAuth";
 import VimeoPlayer, {
   ProgressEventData,
 } from "../../components/media/VimeoPlayer";

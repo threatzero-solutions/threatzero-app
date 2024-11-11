@@ -72,6 +72,7 @@ const DataTable2 = <T extends object>({
             ? sorting(asSortingState(draft.order ?? {}))
             : sorting;
         draft.order = asOrdering(newState);
+        draft.offset = 0;
       }),
     onPaginationChange: (pagination) =>
       setQuery?.((draft) => {

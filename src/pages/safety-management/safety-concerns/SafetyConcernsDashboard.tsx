@@ -16,7 +16,7 @@ import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
 import EditableCell from "../../../components/layouts/EditableCell";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { withRequirePermissions } from "../../../guards/with-require-permissions";
-import { useAuth } from "../../../contexts/AuthProvider";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";

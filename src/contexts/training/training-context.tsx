@@ -25,8 +25,9 @@ import EditTrainingSection from "../../pages/training-library/components/EditTra
 import ManageItems from "../../pages/training-library/components/ManageItems";
 import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
 import { useLocalStorage } from "usehooks-ts";
-import { useAuth, withAuthenticationRequired } from "../AuthProvider";
 import { sortEnrollmentsByScoreFn } from "../../utils/training";
+import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
+import { useAuth } from "../auth/useAuth";
 
 export interface TrainingState {
   activeCourse?: TrainingCourse;
@@ -265,13 +266,17 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
         ? accessTokenClaims?.audiences
         : [];
 
-      const sortedEnrollments = enrollments.sort(
-        sortEnrollmentsByScoreFn(userAudiences)
-      );
+      const chosenEnrollment =
+        enrollments
+          .sort(sortEnrollmentsByScoreFn(userAudiences))
+          .find((e) => e) ?? null;
 
-      const chosenEnrollment = sortedEnrollments[0];
       setActiveEnrollment(chosenEnrollment);
-      setActiveEnrollmentId(chosenEnrollment?.id ?? null);
+
+      const newEnrollmentId = chosenEnrollment?.id ?? null;
+      if (activeEnrollmentId !== newEnrollmentId) {
+        setActiveEnrollmentId(newEnrollmentId);
+      }
     }, [
       enrollments,
       activeEnrollmentId,

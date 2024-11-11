@@ -6,7 +6,7 @@ import { getMyCourseEnrollments } from "../../../queries/training";
 import Autocomplete from "./Autocomplete";
 import { useMemo } from "react";
 import { LEVEL } from "../../../constants/permissions";
-import { useAuth } from "../../../contexts/AuthProvider";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import { SimpleChangeEvent } from "../../../types/core";
 import { DeepPartial } from "react-hook-form";
 import { getCourseEnrollments } from "../../../queries/organizations";

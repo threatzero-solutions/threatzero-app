@@ -31,7 +31,7 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { API_BASE_URL } from "../../../contexts/core/constants";
 import EditableCell from "../../../components/layouts/EditableCell";
 import { DeepPartial } from "../../../types/core";
-import { useAuth } from "../../../contexts/AuthProvider";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import { simulateDownload } from "../../../utils/core";
 import { AlertContext } from "../../../contexts/alert/alert-context";
 

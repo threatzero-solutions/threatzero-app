@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Footer from "../components/layouts/Footer";
-import { useAuth } from "../contexts/AuthProvider";
+import { useAuth } from "../contexts/auth/useAuth";
 
 const HOME_PAGE = "/";
 

@@ -1,6 +1,6 @@
 import { Fragment, PropsWithChildren, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthProvider";
+import { useAuth } from "../contexts/auth/useAuth";
 
 export interface RequirePermissionsOptions extends PropsWithChildren {
   type?: "any" | "all";

@@ -20,7 +20,7 @@ import { fromDaysKey, fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
 import EditableCell from "../../../components/layouts/EditableCell";
 import { withRequirePermissions } from "../../../guards/with-require-permissions";
-import { useAuth } from "../../../contexts/AuthProvider";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
 import DataTable2 from "../../../components/layouts/DataTable2";
