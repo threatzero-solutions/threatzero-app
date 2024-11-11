@@ -9,7 +9,6 @@ import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 export interface CoreState {
   mainNavigationItems: NavigationItem[];
   confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">;
-  isPrimaryTab: boolean;
 }
 
 export interface CoreAction {
@@ -25,7 +24,6 @@ const INITIAL_STATE: CoreState = {
     message: "",
     onConfirm: () => {},
   },
-  isPrimaryTab: false,
 };
 
 export interface CoreContextType {
@@ -54,9 +52,6 @@ const coreReducer: ImmerReducer<CoreState, CoreAction> = (state, action) => {
       break;
     case "SET_CONFIRMATION_OPTIONS":
       state.confirmationOptions = action.payload;
-      break;
-    case "SET_IS_PRIMARY_TAB":
-      state.isPrimaryTab = action.payload;
       break;
   }
 };

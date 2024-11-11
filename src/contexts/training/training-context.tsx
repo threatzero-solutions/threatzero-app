@@ -24,7 +24,7 @@ import {
 import EditTrainingSection from "../../pages/training-library/components/EditTrainingSection";
 import ManageItems from "../../pages/training-library/components/ManageItems";
 import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
-import { useLocalStorage } from "usehooks-ts";
+import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
 import { sortEnrollmentsByScoreFn } from "../../utils/training";
 import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 import { useAuth } from "../auth/useAuth";
@@ -236,6 +236,11 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
       });
     }, [itemCompletions]);
 
+    // Use debounced setActiveEnrollmentId to prevent race conditions between multiple tabs.
+    const debouncedSetActiveEnrollmentId = useDebounceCallback(
+      setActiveEnrollmentId,
+      1000
+    );
     // Automatically select enrollment.
     useEffect(() => {
       if (!enrollments || !enrollments.length) {
@@ -278,13 +283,13 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
         document.visibilityState === "visible" &&
         activeEnrollmentId !== newEnrollmentId
       ) {
-        setActiveEnrollmentId(newEnrollmentId);
+        debouncedSetActiveEnrollmentId(newEnrollmentId);
       }
     }, [
       enrollments,
       activeEnrollmentId,
       accessTokenClaims?.audiences,
-      setActiveEnrollmentId,
+      debouncedSetActiveEnrollmentId,
     ]);
 
     return (
