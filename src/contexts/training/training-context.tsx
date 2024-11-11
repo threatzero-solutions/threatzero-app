@@ -2,6 +2,7 @@ import React, {
   createContext,
   Dispatch,
   PropsWithChildren,
+  useContext,
   useEffect,
   useReducer,
 } from "react";
@@ -28,6 +29,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { sortEnrollmentsByScoreFn } from "../../utils/training";
 import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 import { useAuth } from "../auth/useAuth";
+import { CoreContext } from "../core/core-context";
 
 export interface TrainingState {
   activeCourse?: TrainingCourse;
@@ -185,11 +187,12 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
   withAuthenticationRequired(({ children }) => {
     const [activeEnrollmentId, setActiveEnrollmentId] = useLocalStorage<
       string | null
-    >("training_activeEnrollmentId", null);
+    >("threatzero.tranining.active-enrollment-id", null);
 
     const [state, dispatch] = useReducer(trainingReducer, INITIAL_STATE);
 
     const { accessTokenClaims } = useAuth();
+    const { state: coreState } = useContext(CoreContext);
 
     const { data: enrollments } = useQuery({
       queryKey: ["my-course-enrollments"],
@@ -274,7 +277,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
       setActiveEnrollment(chosenEnrollment);
 
       const newEnrollmentId = chosenEnrollment?.id ?? null;
-      if (activeEnrollmentId !== newEnrollmentId) {
+      if (coreState.isPrimaryTab && activeEnrollmentId !== newEnrollmentId) {
         setActiveEnrollmentId(newEnrollmentId);
       }
     }, [
@@ -282,6 +285,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
       activeEnrollmentId,
       accessTokenClaims?.audiences,
       setActiveEnrollmentId,
+      coreState.isPrimaryTab,
     ]);
 
     return (
