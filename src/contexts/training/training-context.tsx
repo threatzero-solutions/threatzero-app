@@ -237,7 +237,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
 
     // Automatically select enrollment.
     useEffect(() => {
-      if (!enrollments) {
+      if (!enrollments || !enrollments.length) {
         return;
       }
 
