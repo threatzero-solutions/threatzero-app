@@ -2,7 +2,6 @@ import React, {
   createContext,
   Dispatch,
   PropsWithChildren,
-  useContext,
   useEffect,
   useReducer,
 } from "react";
@@ -25,11 +24,10 @@ import {
 import EditTrainingSection from "../../pages/training-library/components/EditTrainingSection";
 import ManageItems from "../../pages/training-library/components/ManageItems";
 import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
-import { useLocalStorage } from "usehooks-ts";
+import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
 import { sortEnrollmentsByScoreFn } from "../../utils/training";
 import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 import { useAuth } from "../auth/useAuth";
-import { CoreContext } from "../core/core-context";
 
 export interface TrainingState {
   activeCourse?: TrainingCourse;
@@ -192,7 +190,6 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
     const [state, dispatch] = useReducer(trainingReducer, INITIAL_STATE);
 
     const { accessTokenClaims } = useAuth();
-    const { state: coreState } = useContext(CoreContext);
 
     const { data: enrollments } = useQuery({
       queryKey: ["my-course-enrollments"],
@@ -239,6 +236,11 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
       });
     }, [itemCompletions]);
 
+    // Use debounced setActiveEnrollmentId to prevent race conditions between multiple tabs.
+    const debouncedSetActiveEnrollmentId = useDebounceCallback(
+      setActiveEnrollmentId,
+      1000
+    );
     // Automatically select enrollment.
     useEffect(() => {
       if (!enrollments || !enrollments.length) {
@@ -277,15 +279,17 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
       setActiveEnrollment(chosenEnrollment);
 
       const newEnrollmentId = chosenEnrollment?.id ?? null;
-      if (coreState.isPrimaryTab && activeEnrollmentId !== newEnrollmentId) {
-        setActiveEnrollmentId(newEnrollmentId);
+      if (
+        document.visibilityState === "visible" &&
+        activeEnrollmentId !== newEnrollmentId
+      ) {
+        debouncedSetActiveEnrollmentId(newEnrollmentId);
       }
     }, [
       enrollments,
       activeEnrollmentId,
       accessTokenClaims?.audiences,
-      setActiveEnrollmentId,
-      coreState.isPrimaryTab,
+      debouncedSetActiveEnrollmentId,
     ]);
 
     return (
