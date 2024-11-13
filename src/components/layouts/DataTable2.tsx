@@ -54,15 +54,10 @@ const DataTable2 = <T extends object>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    isMultiSortEvent: () => true,
+    // isMultiSortEvent: () => true,
     manualSorting: true,
     state: {
-      sorting:
-        query &&
-        Object.entries(query.order ?? {}).map(([key, value]) => ({
-          id: key,
-          desc: value === "DESC",
-        })),
+      sorting: query && asSortingState(query.order ?? {}),
       pagination: pageState && asPaginationState(pageState),
     },
     onSortingChange: (sorting) =>

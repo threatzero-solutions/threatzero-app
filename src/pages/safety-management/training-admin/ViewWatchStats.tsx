@@ -22,7 +22,7 @@ const columnHelper = createColumnHelper<ItemCompletion>();
 
 const ViewWatchStats: React.FC = () => {
   const [completionsQuery, setCompletionsQuery] =
-    useImmer<ItemFilterQueryParams>({});
+    useImmer<ItemFilterQueryParams>({ order: { ["user.familyName"]: "DESC" } });
 
   const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
   const { setInfo } = useContext(AlertContext);
@@ -50,17 +50,17 @@ const ViewWatchStats: React.FC = () => {
 
     columns.push(
       ...[
-        columnHelper.accessor("user.familyName", {
+        columnHelper.accessor((c) => c.user?.familyName ?? "", {
           id: "user.familyName",
           header: "Last Name",
           cell: (info) => info.getValue() || "—",
         }),
-        columnHelper.accessor("user.givenName", {
+        columnHelper.accessor((c) => c.user?.givenName ?? "", {
           id: "user.givenName",
           header: "First Name",
           cell: (info) => info.getValue() || "—",
         }),
-        columnHelper.accessor("user.email", {
+        columnHelper.accessor((c) => c.user?.email ?? "", {
           id: "user.email",
           header: "Email",
           cell: (info) => info.getValue() || "—",
@@ -115,7 +115,8 @@ const ViewWatchStats: React.FC = () => {
               ? dayjs(info.getValue()).format("YYYY")
               : "—",
         }),
-        columnHelper.accessor("completedOn", {
+        columnHelper.accessor((c) => c.completedOn ?? "", {
+          id: "completedOn",
           header: "Completed On",
           cell: (info) =>
             dayjs(info.getValue()).isValid()
