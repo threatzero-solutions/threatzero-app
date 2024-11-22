@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import DataTable from "../../../components/layouts/DataTable";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import {
   getOrganizationBySlug,

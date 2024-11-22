@@ -1,4 +1,5 @@
 import {
+  DefaultError,
   MutationCache,
   QueryCache,
   QueryClient,
@@ -7,11 +8,12 @@ import {
 import { PropsWithChildren, useContext, useState } from "react";
 import { AlertContext } from "./alert/alert-context";
 import { AxiosError } from "axios";
+import { as } from "../utils/core";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(AlertContext);
 
-  const handleError = (error: unknown) => {
+  const handleError = (error: DefaultError) => {
     console.error(error);
     if (error instanceof AxiosError && error.response?.status) {
       if (error.response.status >= 400 && error.response.status < 500) {
@@ -42,7 +44,10 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
         onError: handleError,
       }),
       mutationCache: new MutationCache({
-        onError: handleError,
+        onError: (error, _variables, context) => {
+          if (as(context).skipOnError) return;
+          handleError(error);
+        },
       }),
     });
   });

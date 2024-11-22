@@ -23,7 +23,7 @@ import { withRequirePermissions } from "../../../guards/with-require-permissions
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
-import DataTable2 from "../../../components/layouts/DataTable2";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import IconButton from "../../../components/layouts/buttons/IconButton";

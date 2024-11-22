@@ -9,6 +9,7 @@ export interface SlideOverFormActionButtonsProps {
   hideDelete?: boolean;
   closeText?: string;
   submitText?: string;
+  submitDisabled?: boolean;
   deleteText?: string;
   readOnly?: boolean;
   lastUpdated?: string | Date;
@@ -22,6 +23,7 @@ const SlideOverFormActionButtons: React.FC<SlideOverFormActionButtonsProps> = ({
   hideDelete,
   closeText,
   submitText = "Save",
+  submitDisabled = false,
   deleteText = "Delete",
   readOnly = false,
   lastUpdated,
@@ -64,7 +66,7 @@ const SlideOverFormActionButtons: React.FC<SlideOverFormActionButtonsProps> = ({
               "inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400",
               isSaving ? "animate-pulse" : ""
             )}
-            disabled={isSaving}
+            disabled={submitDisabled || isSaving}
           >
             {submitText}
           </button>

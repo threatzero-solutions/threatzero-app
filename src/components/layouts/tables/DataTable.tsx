@@ -6,18 +6,18 @@ import {
   useRef,
   useState,
 } from "react";
-import { classNames } from "../../utils/core";
-import Paginator, { PaginatorProps } from "./Paginator";
+import { classNames } from "../../../utils/core";
+import Paginator, { PaginatorProps } from "../Paginator";
 import {
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/20/solid";
-import { OrderOptions, Ordering } from "../../types/core";
+import { OrderOptions, Ordering } from "../../../types/core";
 
-import FilterBar, { FilterBarFilterOptions } from "./FilterBar";
-import { SearchInputProps } from "../forms/inputs/SearchInput";
-import { ItemFilterQueryParams } from "../../hooks/use-item-filter-query";
+import FilterBar, { FilterBarFilterOptions } from "../FilterBar";
+import { SearchInputProps } from "../../forms/inputs/SearchInput";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { DraftFunction } from "use-immer";
 
 export interface DataTableOrderOptions {
@@ -320,7 +320,12 @@ const DataTable: React.FC<DataTableProps> = ({
                 </div>
               )}
               {!isLoading && data && data.rows.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4 border-t border-gray-300">
+                <p
+                  className={classNames(
+                    dense ? "text-xs py-2" : "text-sm py-4",
+                    "text-gray-500 text-center border-t border-gray-300"
+                  )}
+                >
                   {notFoundDetail ?? "No details."}
                 </p>
               )}

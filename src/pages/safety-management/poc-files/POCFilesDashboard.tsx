@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import DataTable from "../../../components/layouts/DataTable";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useImmer } from "use-immer";

@@ -12,7 +12,7 @@ import { PencilSquareIcon } from "@heroicons/react/20/solid";
 import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../../components/layouts/buttons/IconButton";
 import { createColumnHelper } from "@tanstack/react-table";
-import DataTable2 from "../../../../components/layouts/DataTable2";
+import DataTable2 from "../../../../components/layouts/tables/DataTable2";
 import dayjs from "dayjs";
 
 const columnHelper = createColumnHelper<Unit>();

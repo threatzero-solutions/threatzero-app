@@ -12,6 +12,7 @@ import {
   download,
   findMany,
   findManyRaw,
+  findOne,
   findOneById,
   findOneByIdOrFail,
   findOneOrFail,
@@ -22,7 +23,11 @@ import {
 } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { DeepPartial } from "../types/core";
-import { OrganizationIdpDto, OrganizationUser } from "../types/api";
+import {
+  IsUniqueResponse,
+  OrganizationIdpDto,
+  OrganizationUser,
+} from "../types/api";
 import { ScormVersion } from "../types/training";
 
 export const getOrganizations = (query?: ItemFilterQueryParams) =>
@@ -36,6 +41,20 @@ export const getMyOrganization = () =>
 
 export const getOrganizationBySlug = (slug?: string) =>
   findOneByIdOrFail<Organization>("/organizations/organizations/slug/", slug);
+
+export const isOrganizationSlugUnique = (slug: string) =>
+  findOne<IsUniqueResponse>("/organizations/organizations/slug-unique/", {
+    params: {
+      slug,
+    },
+  });
+
+export const isIdpSlugUnique = (slug: string) =>
+  findOne<IsUniqueResponse>("/organizations/organizations/idp-slug-unique/", {
+    params: {
+      slug,
+    },
+  });
 
 export const getCourseEnrollments = (id?: Organization["id"]) =>
   findOneById<Organization>("/organizations/organizations/", id).then(
@@ -89,6 +108,11 @@ export const getUnitBySlug = (slug?: string) =>
   getUnits({ slug }).then((res) => {
     if (res.results.length) return res.results[0];
     throw new Error('Unit not found by slug "' + slug + '"');
+  });
+
+export const isUnitSlugUnique = (organizationId: string, slug: string) =>
+  findOne<IsUniqueResponse>("/organizations/units/slug-unique/", {
+    params: { slug, organizationId },
   });
 
 export const getLocations = (query?: ItemFilterQueryParams) =>

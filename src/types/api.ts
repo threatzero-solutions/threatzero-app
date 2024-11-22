@@ -45,26 +45,26 @@ export interface ResendTrainingLinksDto {
   trainingUrlTemplate: string;
 }
 
-export interface SyncAttributeDto {
+export interface BaseMapperDto {
+  id?: string;
+}
+
+export interface SyncAttributeDto extends BaseMapperDto {
   externalName: string;
   internalName: string;
 }
 
-export interface BaseMatcherDto {
+export interface SyncAttributeToAttributeDto extends SyncAttributeDto {
+  patterns: { pattern: string; value: string }[];
+  patternType: string;
+  defaultValue?: string;
+  isMultivalue?: boolean;
+}
+
+export interface RoleGroupMatcherDto {
   attributeId?: string;
   externalName: string;
   pattern: string;
-}
-
-export interface UnitMatcherDto extends BaseMatcherDto {
-  unitSlug: string;
-}
-
-export interface AudienceMatcherDto extends BaseMatcherDto {
-  audience: string;
-}
-
-export interface RoleGroupMatcherDto extends BaseMatcherDto {
   roleGroup: string;
 }
 
@@ -74,8 +74,8 @@ export interface OrganizationIdpDto {
   protocol: string;
   domains: string[];
   syncAttributes?: SyncAttributeDto[];
-  unitMatchers: UnitMatcherDto[];
-  audienceMatchers: AudienceMatcherDto[];
+  unitMatchers?: SyncAttributeToAttributeDto[];
+  audienceMatchers?: SyncAttributeToAttributeDto[];
   roleGroupMatchers: RoleGroupMatcherDto[];
   defaultRoleGroups: string[];
   defaultAudience?: string | null;
@@ -102,3 +102,7 @@ export const DurationUnits = [
 export type DurationObject = Partial<
   Record<(typeof DurationUnits)[number], number>
 >;
+
+export interface IsUniqueResponse {
+  isUnique: boolean;
+}

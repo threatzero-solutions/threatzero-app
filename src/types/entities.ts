@@ -60,8 +60,11 @@ export interface CourseEnrollment extends Base {
 
 /** Represents a unit of an organization (ie school, office, college, etc.) */
 export interface Unit extends OrganizationBase {
+  organizationId: string;
   organization: Organization;
-  groupId: string | null;
+  parentUnitId: string | null;
+  parentUnit: Unit | null;
+  path?: string;
   tatGroupId: string | null;
 }
 
@@ -150,8 +153,6 @@ export interface ItemCompletion extends Base {
   completed: boolean;
   completedOn: Date | null;
   progress: number;
-  organization?: Organization;
-  unit?: Unit;
   user?: UserRepresentation;
   url: string;
 }
@@ -235,6 +236,7 @@ export interface Field extends Base {
   order: number;
   form?: Form | null;
   group?: FieldGroup | null;
+  validationError?: string;
 }
 
 export interface FieldGroup extends Base {
@@ -277,8 +279,8 @@ export interface UserRepresentation extends Base {
   picture: string | null;
   givenName: string | null;
   familyName: string | null;
-  organizationSlug: string | null;
-  unitSlug: string | null;
+  organization?: Organization;
+  unit?: Unit;
 }
 
 export interface Note extends Base {

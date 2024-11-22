@@ -4,7 +4,7 @@ import CourseCustomTag from "../../training-library/components/CourseCustomTag";
 import CourseVisibilityTag from "../../training-library/components/CourseVisibilityTag";
 import { useQuery } from "@tanstack/react-query";
 import { getTrainingCourses } from "../../../queries/training";
-import DataTable from "../../../components/layouts/DataTable";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import { DocumentDuplicateIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/20/solid";
 import { EyeIcon } from "@heroicons/react/20/solid";

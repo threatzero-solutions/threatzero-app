@@ -1,12 +1,13 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { Unit, FieldType } from "../../../../types/entities";
-import { slugify } from "../../../../utils/core";
+import { classNames, slugify } from "../../../../utils/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   saveUnit,
   deleteUnit,
   saveLocation,
   getUnit,
+  isUnitSlugUnique,
 } from "../../../../queries/organizations";
 import OrganizationSelect from "../../../../components/forms/inputs/OrganizationSelect";
 import SafetyContactInput from "../../../../components/safety-management/SafetyContactInput";
@@ -19,8 +20,14 @@ import { Controller, useForm } from "react-hook-form";
 import Checkbox from "../../../../components/forms/inputs/Checkbox";
 import Input from "../../../../components/forms/inputs/Input";
 import TextArea from "../../../../components/forms/inputs/TextArea";
-import { ArrowPathIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/20/solid";
 import { useAutoSlug } from "../../../../hooks/use-auto-slug";
+import { useDebounceValue } from "usehooks-ts";
+import UnitSelect from "../../../../components/forms/inputs/UnitSelect";
 
 interface EditUnitProps {
   setOpen: (open: boolean) => void;
@@ -53,11 +60,28 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
 
   const id = watch("id");
   const name = watch("name");
+  const slug = watch("slug");
+  const organizationId = watch("organization")?.id;
 
   const { registerSlug, resetSlug } = useAutoSlug({
     ...formMethods,
     defaultSlug: unitData?.slug,
   });
+
+  const [debouncedSlug] = useDebounceValue(slug, 200);
+  const { data: slugUniqueResponse } = useQuery({
+    queryKey: ["units", "unique-slug", organizationId, debouncedSlug] as const,
+    queryFn: ({ queryKey }) => isUnitSlugUnique(queryKey[2]!, queryKey[3]!),
+    enabled:
+      !!organizationId && !!debouncedSlug && debouncedSlug !== unitData?.slug,
+  });
+  const isUniqueSlug = useMemo(
+    () =>
+      debouncedSlug === unitData?.slug ||
+      !slugUniqueResponse ||
+      slugUniqueResponse.isUnique,
+    [debouncedSlug, unitData?.slug, slugUniqueResponse]
+  );
 
   const queryClient = useQueryClient();
   const saveLocationMutation = useMutation({
@@ -154,6 +178,7 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
           <Controller
             name="organization"
             control={control}
+            rules={{ required: true }}
             render={({ field }) => (
               <OrganizationSelect
                 value={field.value}
@@ -170,6 +195,7 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
           <Input
             type={FieldType.TEXT}
             required
+            disabled={!organizationId}
             {...register("name")}
             className="w-full"
           />
@@ -180,11 +206,38 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
           helpText="The slug field must be unique."
         >
           <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              {!isUniqueSlug ? (
+                <ExclamationCircleIcon
+                  className="size-5 text-red-500"
+                  aria-hidden="true"
+                />
+              ) : (
+                <CheckCircleIcon
+                  className={classNames(
+                    "size-5 text-green-500",
+                    !slug ? "grayscale" : ""
+                  )}
+                  aria-hidden="true"
+                />
+              )}
+            </span>
             <Input
               type={FieldType.TEXT}
               required
-              {...registerSlug()}
-              className="w-full pr-7"
+              {...registerSlug({
+                validate: () => isUniqueSlug,
+              })}
+              disabled={!organizationId}
+              className={classNames(
+                "w-full pr-7 pl-10",
+                slug
+                  ? !isUniqueSlug
+                    ? "ring-red-300 text-red-900 focus:!ring-red-500"
+                    : "ring-green-300 text-green-900 focus:!ring-green-500"
+                  : ""
+              )}
+              autoComplete="off"
             />
             <button
               type="button"
@@ -196,9 +249,31 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
               <ArrowPathIcon className="size-4 group-hover:group-enabled:rotate-180 duration-500 transition-transform" />
             </button>
           </div>
+          {!isUniqueSlug && (
+            <span className="text-xs text-red-500 mt-1">
+              Slug "{slug}" is already in use within this organization.
+            </span>
+          )}
         </SlideOverField>
         <SlideOverField name="address" label="Address (Optional)">
           <TextArea {...register("address")} rows={3} className="w-full" />
+        </SlideOverField>
+        <SlideOverField
+          key="parentUnit"
+          label="Parent Unit (Optional)"
+          helpText="The parent unit this unit is nested under, if applicable."
+        >
+          <Controller
+            name="parentUnit"
+            control={control}
+            rules={{ required: false }}
+            render={({ field }) => (
+              <UnitSelect
+                value={field.value}
+                onChange={(e) => field.onChange(e.target?.value)}
+              />
+            )}
+          />
         </SlideOverField>
         <SlideOverField key="safetyContact" label="Safety Contact">
           <Controller
@@ -219,21 +294,6 @@ const EditUnit: React.FC<EditUnitProps> = ({ setOpen, unit: unitProp }) => {
           <Checkbox
             onChange={(checked) => setAutoAddLocation(checked)}
             checked={autoAddLocation}
-          />
-        </SlideOverField>
-        <SlideOverField
-          name="groupId"
-          label="Group ID"
-          helpText="This id correlates with the unit's Group ID in the identity provider."
-        >
-          <Input
-            type={FieldType.TEXT}
-            disabled
-            {...register("groupId", {
-              disabled: true,
-            })}
-            placeholder="Automatically generated"
-            className="w-full"
           />
         </SlideOverField>
       </SlideOverFormBody>

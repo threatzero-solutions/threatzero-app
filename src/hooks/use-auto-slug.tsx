@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import {
   Path,
   PathValue,
+  RegisterOptions,
   UseFormRegister,
   UseFormRegisterReturn,
   UseFormSetValue,
@@ -74,22 +75,28 @@ export const useAutoSlug = <
     debouncedSetSlug(slug, slug);
   }, [slug, debouncedSetSlug]);
 
-  const registerSlug = useCallback(() => {
-    const { onChange, onBlur, ...rest } = register("slug" as Path<T>);
-    // Intercept onChange to slugify user input and onBlur to disable auto
-    // slug once the user interacts with the input.
-    return {
-      ...rest,
-      onChange: (e) => {
-        e.target.value = slugify(e.target.value, false);
-        return onChange(e);
-      },
-      onBlur: (e) => {
-        disableAutoSlug.current = true;
-        return onBlur(e);
-      },
-    } as UseFormRegisterReturn<Path<T>>;
-  }, [register]);
+  const registerSlug = useCallback(
+    (options?: RegisterOptions<T, Path<T>>) => {
+      const { onChange, onBlur, ...rest } = register(
+        "slug" as Path<T>,
+        options
+      );
+      // Intercept onChange to slugify user input and onBlur to disable auto
+      // slug once the user interacts with the input.
+      return {
+        ...rest,
+        onChange: (e) => {
+          e.target.value = slugify(e.target.value, false);
+          return onChange(e);
+        },
+        onBlur: (e) => {
+          disableAutoSlug.current = true;
+          return onBlur(e);
+        },
+      } as UseFormRegisterReturn<Path<T>>;
+    },
+    [register]
+  );
 
   const resetSlug = useCallback(() => {
     // Reenable auto slug and update slug from name.

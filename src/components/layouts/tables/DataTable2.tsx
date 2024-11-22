@@ -4,7 +4,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import BaseTable, { BaseTableProps } from "./BaseTable";
-import { ItemFilterQueryParams } from "../../hooks/use-item-filter-query";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { DraftFunction } from "use-immer";
 import {
   asOrdering,
@@ -12,23 +12,22 @@ import {
   asPaginationState,
   asSortingState,
   isNil,
-} from "../../utils/core";
-import { ReactNode, useMemo } from "react";
-import { Paginated } from "../../types/entities";
-import FilterBar, { FilterBarFilterOptions } from "./FilterBar";
-import { SearchInputProps } from "../forms/inputs/SearchInput";
+} from "../../../utils/core";
+import { useMemo } from "react";
+import { Paginated } from "../../../types/entities";
+import FilterBar, { FilterBarFilterOptions } from "../FilterBar";
+import { SearchInputProps } from "../../forms/inputs/SearchInput";
+import TableHeader, { TableHeaderProps } from "./TableHeader";
 
 interface DataTable2Props<T extends object>
-  extends Omit<BaseTableProps<T>, "table"> {
+  extends Omit<BaseTableProps<T>, "table">,
+    TableHeaderProps {
   data: T[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<T, any>[];
   query?: ItemFilterQueryParams;
   setQuery?: (draft: DraftFunction<ItemFilterQueryParams>) => void;
   className?: string;
-  title?: string;
-  subtitle?: string;
-  action?: ReactNode;
   pageState?: Partial<Omit<Paginated<unknown>, "results">>;
   searchOptions?: Partial<SearchInputProps>;
   filterOptions?: FilterBarFilterOptions;
@@ -111,21 +110,7 @@ const DataTable2 = <T extends object>({
     <div className={className}>
       <div className="flex flex-col gap-4">
         {(title || subtitle || action) && (
-          <div className="sm:flex sm:items-center">
-            <div className="sm:flex-auto">
-              {title && (
-                <h1 className="text-base font-semibold leading-6 text-gray-900">
-                  {title}
-                </h1>
-              )}
-              {subtitle && (
-                <p className="mt-2 text-sm text-gray-700">{subtitle}</p>
-              )}
-            </div>
-            {action && (
-              <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">{action}</div>
-            )}
-          </div>
+          <TableHeader title={title} subtitle={subtitle} action={action} />
         )}
         {searchOptions || filterOptions ? (
           <FilterBar

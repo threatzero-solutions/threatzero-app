@@ -21,7 +21,7 @@ import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../../components/layouts/buttons/IconButton";
 import { simulateDownload } from "../../../../utils/core";
 import { AlertContext } from "../../../../contexts/alert/alert-context";
-import DataTable2 from "../../../../components/layouts/DataTable2";
+import DataTable2 from "../../../../components/layouts/tables/DataTable2";
 import { createColumnHelper } from "@tanstack/react-table";
 import dayjs from "dayjs";
 

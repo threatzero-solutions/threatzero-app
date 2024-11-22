@@ -1,12 +1,12 @@
 import { flexRender, type Table } from "@tanstack/react-table";
-import { classNames } from "../../utils/core";
+import { classNames } from "../../../utils/core";
 import {
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/20/solid";
 import { useEffect, useRef, useState } from "react";
-import Paginator2 from "./Paginator2";
+import Paginator2 from "../Paginator2";
 
 export interface BaseTableProps<T> {
   table: Table<T>;

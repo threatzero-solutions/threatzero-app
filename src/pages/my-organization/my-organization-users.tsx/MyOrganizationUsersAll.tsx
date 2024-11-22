@@ -4,7 +4,52 @@ import {
   getOrganizationBySlug,
   getOrganizationUsers,
 } from "../../../queries/organizations";
-import DataTable from "../../../components/layouts/DataTable";
+import BaseTable from "../../../components/layouts/tables/BaseTable";
+import {
+  createColumnHelper,
+  FilterFnOption,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { OrganizationUser } from "../../../types/api";
+import FilterBar from "../../../components/layouts/FilterBar";
+import Fuse from "fuse.js";
+
+const columnHelper = createColumnHelper<OrganizationUser>();
+
+const columns = [
+  columnHelper.accessor((t) => t.email, {
+    id: "email",
+    header: "Email",
+  }),
+  columnHelper.accessor((t) => t.firstName, {
+    id: "firstName",
+    header: "First Name",
+  }),
+  columnHelper.accessor((t) => t.lastName, {
+    id: "lastName",
+    header: "Last Name",
+  }),
+];
+
+const fuzzyFilterFn: FilterFnOption<OrganizationUser> = (
+  row,
+  _columnId,
+  filterValue
+) => {
+  // console.debug(row, columnId, filterValue);
+  // return true;
+
+  const fuse = new Fuse([row.original], {
+    keys: ["email", "firstName", "lastName"],
+    threshold: 0.2,
+  });
+
+  return fuse.search(filterValue).length > 0;
+};
 
 const MyOrganizationUsersAll: React.FC = () => {
   const { keycloak } = useAuth();
@@ -20,47 +65,45 @@ const MyOrganizationUsersAll: React.FC = () => {
   });
 
   const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ["organizations-users", myOrganization?.id] as const,
-    queryFn: ({ queryKey }) => getOrganizationUsers(queryKey[1]),
+    queryKey: [
+      "organizations-users",
+      myOrganization?.id,
+      { limit: 50000 },
+    ] as const,
+    queryFn: ({ queryKey }) => getOrganizationUsers(queryKey[1], queryKey[2]),
     enabled: !!myOrganization?.id,
+  });
+
+  const table = useReactTable({
+    data: users?.results ?? [],
+    columns,
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn: fuzzyFilterFn,
   });
 
   return (
     <>
-      <DataTable
-        data={{
-          headers: [
-            {
-              label: "Email",
-              key: "email",
-            },
-            {
-              label: "First Name",
-              key: "firstName",
-            },
-            {
-              label: "Last Name",
-              key: "lastName",
-            },
-          ],
-          rows: (users?.results ?? []).map((user) => ({
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-          })),
-        }}
-        isLoading={organizationLoading || usersLoading}
-        // action={
-        //   <button
-        //     type="button"
-        //     className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-        //     onClick={() => {}}
-        //   >
-        //     + Add Users
-        //   </button>
-        // }
-      />
+      <div className="mt-4 flex flex-col gap-4">
+        <FilterBar
+          searchOptions={{
+            placeholder: "Search by name or email...",
+            setSearchQuery: (s) => table.setGlobalFilter(s),
+          }}
+        />
+        <BaseTable
+          table={table}
+          isLoading={organizationLoading || usersLoading}
+          showFooter={false}
+        />
+      </div>
     </>
   );
 };

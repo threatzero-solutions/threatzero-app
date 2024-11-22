@@ -1,5 +1,5 @@
 import { useImmer } from "use-immer";
-import DataTable from "../../../components/layouts/DataTable";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import {
   ResendTrainingLinksDto,
   SendTrainingLinksDto,

@@ -1,11 +1,12 @@
 import { useContext, useMemo, useState } from "react";
 import { Organization } from "../../../../types/entities";
-import { slugify } from "../../../../utils/core";
+import { classNames, slugify } from "../../../../utils/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   saveOrganization,
   deleteOrganization,
   getOrganization,
+  isOrganizationSlugUnique,
 } from "../../../../queries/organizations";
 import { getResourceItems } from "../../../../queries/media";
 import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
@@ -22,9 +23,13 @@ import FormField from "../../../../components/forms/FormField";
 import BackButtonLink from "../../../../components/layouts/BackButtonLink";
 import SuccessButton from "../../../../components/layouts/buttons/SuccessButton";
 import { useAutoSlug } from "../../../../hooks/use-auto-slug";
-import { ArrowPathIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/20/solid";
 import Input from "../../../../components/forms/inputs/Input";
-import { useInterval } from "usehooks-ts";
+import { useDebounceValue, useInterval } from "usehooks-ts";
 
 const EditOrganization: React.FC = () => {
   const navigate = useNavigate();
@@ -62,12 +67,27 @@ const EditOrganization: React.FC = () => {
 
   const id = watch("id");
   const name = watch("name");
+  const slug = watch("slug");
   const idpSlugs = watch("idpSlugs");
 
   const { registerSlug, resetSlug } = useAutoSlug({
     ...formMethods,
     defaultSlug: organizationData?.slug,
   });
+
+  const [debouncedSlug] = useDebounceValue(slug, 200);
+  const { data: slugUniqueResponse } = useQuery({
+    queryKey: ["organizations", "unique-slug", debouncedSlug] as const,
+    queryFn: ({ queryKey }) => isOrganizationSlugUnique(queryKey[2]!),
+    enabled: !!debouncedSlug && debouncedSlug !== organizationData?.slug,
+  });
+  const isUniqueSlug = useMemo(
+    () =>
+      debouncedSlug === organizationData?.slug ||
+      !slugUniqueResponse ||
+      slugUniqueResponse.isUnique,
+    [debouncedSlug, organizationData?.slug, slugUniqueResponse]
+  );
 
   const { data: resources } = useQuery({
     queryKey: ["resource-items", { limit: 100 }] as const,
@@ -149,14 +169,42 @@ const EditOrganization: React.FC = () => {
                 field={{
                   label: "Slug",
                   helpText: "The slug field must be unique.",
+                  validationError:
+                    !isUniqueSlug && `Slug "${slug}" is already in use.`,
                 }}
                 input={
                   <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      {!isUniqueSlug ? (
+                        <ExclamationCircleIcon
+                          className="size-5 text-red-500"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <CheckCircleIcon
+                          className={classNames(
+                            "size-5 text-green-500",
+                            !slug ? "grayscale" : ""
+                          )}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </span>
                     <Input
                       type="text"
                       required
-                      {...registerSlug()}
-                      className="w-full pr-7"
+                      {...registerSlug({
+                        validate: () => isUniqueSlug,
+                      })}
+                      className={classNames(
+                        "w-full pr-7 pl-10",
+                        slug
+                          ? !isUniqueSlug
+                            ? "ring-red-300 text-red-900 focus:!ring-red-500"
+                            : "ring-green-300 text-green-900 focus:!ring-green-500"
+                          : ""
+                      )}
+                      autoComplete="off"
                     />
                     <button
                       type="button"

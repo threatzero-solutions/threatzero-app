@@ -12,7 +12,7 @@
 // };
 
 import { useImmer } from "use-immer";
-import DataTable from "../../../components/layouts/DataTable";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { getTrainingTokens } from "../../../queries/users";
 import { useQuery } from "@tanstack/react-query";

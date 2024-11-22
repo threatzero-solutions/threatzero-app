@@ -201,3 +201,14 @@ export const isUndefined = (obj: unknown): obj is undefined =>
 export const isNil = <T>(
   value: T | null | undefined
 ): value is null | undefined => value === null || isUndefined(value);
+
+const defaultFallback: Record<string, unknown> = {};
+export const as = <T extends typeof defaultFallback = typeof defaultFallback>(
+  context: unknown,
+  fallback: T = defaultFallback as T
+) => {
+  if (context !== null && typeof context === "object") {
+    return context as Record<string, unknown>;
+  }
+  return fallback;
+};

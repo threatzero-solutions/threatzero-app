@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getLanguages } from "../../../queries/languages";
-import DataTable from "../../../components/layouts/DataTable";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import EditLanguage from "./EditLanguage";
 import { Language } from "../../../types/entities";

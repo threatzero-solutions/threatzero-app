@@ -5,34 +5,39 @@ import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverFo
 import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
 import { OrganizationIdpDto } from "../../../../types/api";
-import { Organization } from "../../../../types/entities";
+import { Organization, Unit } from "../../../../types/entities";
 import { classNames } from "../../../../utils/core";
 import IdpMetadataInput from "./IdpMetadataInput";
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createOrganizationIdp,
   deleteOrganizationIdp,
   getOrganizationIdpRoleGroups,
+  isIdpSlugUnique,
   updateOrganizationIdp,
 } from "../../../../queries/organizations";
 import Input from "../../../../components/forms/inputs/Input";
 import {
   ArrowPathIcon,
+  CheckCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   ClipboardIcon,
+  ExclamationCircleIcon,
 } from "@heroicons/react/20/solid";
 import { CoreContext } from "../../../../contexts/core/core-context";
-import UnitMatchersInput from "./UnitMatchersInput";
 import { Transition } from "@headlessui/react";
-import AudienceMatchersInput from "./AudienceMatchersInput";
 import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
 import Select from "../../../../components/forms/inputs/Select";
 import SyncAttributesInput from "./SyncAttributesInput";
 import { AlertContext } from "../../../../contexts/alert/alert-context";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useAutoSlug } from "../../../../hooks/use-auto-slug";
+import MultiAttributeMatchersInput from "./MultiAttributeMatchersInput";
+import UnitSelect from "../../../../components/forms/inputs/UnitSelect";
+import { useDebounceValue } from "usehooks-ts";
+import { isURL } from "validator";
 
 const SERVICE_PROVIDER_ENTITY_ID =
   "https://auth.threatzero.org/realms/threatzero";
@@ -52,8 +57,6 @@ const INITIAL_IDP: OrganizationIdpDto = {
   slug: "",
   protocol: "saml",
   domains: [],
-  unitMatchers: [],
-  audienceMatchers: [],
   roleGroupMatchers: [],
   defaultRoleGroups: [],
   defaultAudience: undefined,
@@ -100,7 +103,13 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
   const formMethods = useForm({
     defaultValues: idpProp ?? INITIAL_IDP,
   });
-  const { control, register, handleSubmit, watch } = formMethods;
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    formState: { dirtyFields, isValid },
+  } = formMethods;
 
   const name = watch("name");
   const slug = watch("slug");
@@ -110,6 +119,20 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
     ...formMethods,
     defaultSlug: idpProp?.slug,
   });
+
+  const [debouncedSlug] = useDebounceValue(slug, 200);
+  const { data: slugUniqueResponse } = useQuery({
+    queryKey: ["organization-idps", "unique-slug", debouncedSlug] as const,
+    queryFn: ({ queryKey }) => isIdpSlugUnique(queryKey[2]!),
+    enabled: !!debouncedSlug && debouncedSlug !== idpProp?.slug,
+  });
+  const isUniqueSlug = useMemo(
+    () =>
+      debouncedSlug === idpProp?.slug ||
+      !slugUniqueResponse ||
+      slugUniqueResponse.isUnique,
+    [debouncedSlug, idpProp?.slug, slugUniqueResponse]
+  );
 
   const [showCopyableConfig, setShowCopyableConfig] = useState(isNew);
 
@@ -156,6 +179,23 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
     createIdpMutation.mutate(idp as OrganizationIdpDto);
   };
 
+  const handleClose = () => {
+    if (Object.keys(dirtyFields).length > 0) {
+      setConfirmationOpen({
+        title: "Discard changes?",
+        message: "Are you sure you want to discard your changes?",
+        onConfirm: () => {
+          setConfirmationClose();
+          setOpen(false);
+        },
+        confirmText: "Discard",
+        cancelText: "Go Back",
+      });
+    } else {
+      setOpen(false);
+    }
+  };
+
   const handleDelete = () => {
     setConfirmationOpen({
       title: `Delete ${name} IDP`,
@@ -174,11 +214,12 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
     <FormProvider {...formMethods}>
       <SlideOverForm
         onSubmit={handleSubmit(handleSave)}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         onDelete={handleDelete}
         hideDelete={isNew}
         submitText={isNew ? "Add" : "Update"}
         isSaving={createIdpMutation.isPending}
+        submitDisabled={!isValid}
       >
         <SlideOverHeading
           title={!isNew ? "Edit Identity Provider" : "Add Identity Provider"}
@@ -227,9 +268,10 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
           <SlideOverField
             label="Name"
             helpText="Name of the identity provider."
+            discreetHelpText
           >
             <Input
-              {...register("name")}
+              {...register("name", { required: true })}
               type="text"
               required
               className="w-full"
@@ -237,14 +279,42 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
           </SlideOverField>
           <SlideOverField
             label="Slug"
-            helpText="<strong>This field will automatically populate from the name.</strong> Similar to the name, the slug is used in the redirect URL and must be URL safe."
+            helpText="<strong>This field will automatically populate from the name.</strong> The slug is used in the redirect URL and must be URL safe. It must also be <strong>globally unique</strong>."
+            discreetHelpText
           >
             <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                {!isUniqueSlug ? (
+                  <ExclamationCircleIcon
+                    className="size-5 text-red-500"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <CheckCircleIcon
+                    className={classNames(
+                      "size-5 text-green-500",
+                      !slug ? "grayscale" : ""
+                    )}
+                    aria-hidden="true"
+                  />
+                )}
+              </span>
               <Input
                 type="text"
                 required
-                {...registerSlug()}
-                className="w-full pr-7"
+                {...registerSlug({
+                  validate: () => isUniqueSlug,
+                  required: true,
+                })}
+                className={classNames(
+                  "w-full pr-7 pl-10",
+                  slug
+                    ? !isUniqueSlug
+                      ? "ring-red-300 text-red-900 focus:!ring-red-500"
+                      : "ring-green-300 text-green-900 focus:!ring-green-500"
+                    : ""
+                )}
+                autoComplete="off"
               />
               <button
                 type="button"
@@ -256,14 +326,21 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                 <ArrowPathIcon className="size-4 group-hover:group-enabled:rotate-180 duration-500 transition-transform" />
               </button>
             </div>
+            {!isUniqueSlug && (
+              <span className="text-xs text-red-500 mt-1">
+                Slug "{slug}" is already in use.
+              </span>
+            )}
           </SlideOverField>
           <SlideOverField
             label="Protocol"
             helpText="The protocol of the identity provider, either SAML or OIDC."
+            discreetHelpText
           >
             <Controller
               name="protocol"
               control={control}
+              rules={{ required: true }}
               render={({ field }) => (
                 <Select
                   required
@@ -286,10 +363,19 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
           <SlideOverField
             label="Domains"
             helpText="Used to route logins to this identity provider by the domain of the user's email address."
+            discreetHelpText
           >
             <Controller
               name="domains"
               control={control}
+              rules={{
+                validate: (domains) =>
+                  domains.length > 0 &&
+                  domains.every((d) => {
+                    console.debug(d, isURL(d));
+                    return isURL(d);
+                  }),
+              }}
               render={({ field }) => (
                 <MultilineTextInput
                   value={field.value}
@@ -302,16 +388,14 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
           <SlideOverField
             label="Sync Attributes"
             helpText="Sync attributes from the identity provider to ThreatZero users."
+            discreetHelpText
           >
             <SyncAttributesInput />
           </SlideOverField>
           <SlideOverField
             label="Attribute Matchers"
-            helpText={`Used during login to match a field passed from the identity provider to a user property.
-            <br/><br/>
-            <strong>External Name:</strong> The name of the attribute/claim passed in from the identity provider.<br/>
-            <strong>Pattern:</strong> The pattern (in Regular Expression format) to match the attribute/claim to the unit.<br/>
-            `}
+            helpText="Match attributes from the identity provider to specific properties on the ThreatZero user."
+            discreetHelpText
           >
             <div>
               <div className="mb-2">
@@ -357,13 +441,65 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                 </div>
               </div>
               {selectedAttributeMatcherTab === "Units" ? (
-                <UnitMatchersInput organizationId={organization.id} />
+                <MultiAttributeMatchersInput
+                  key="units"
+                  name="unitMatchers"
+                  valueLabel="Unit"
+                  renderValueInput={({
+                    control: valueControl,
+                    name: valueName,
+                  }) => (
+                    <Controller
+                      control={valueControl}
+                      name={valueName}
+                      render={({ field: unitField }) => (
+                        <UnitSelect
+                          value={unitField.value}
+                          onChange={(e) => {
+                            let newValue = e.target?.value;
+                            if (newValue && typeof newValue !== "string") {
+                              newValue = (newValue as Unit).slug;
+                            }
+                            unitField.onChange(newValue);
+                          }}
+                          queryFilter={{ ["organization.id"]: organization.id }}
+                        />
+                      )}
+                    />
+                  )}
+                />
               ) : selectedAttributeMatcherTab === "Audiences" ? (
-                <AudienceMatchersInput
-                  allowedAudiences={organization.allowedAudiences}
+                <MultiAttributeMatchersInput
+                  key="audiences"
+                  name="audienceMatchers"
+                  valueLabel="Audience"
+                  renderValueInput={({
+                    control: valueControl,
+                    name: valueName,
+                  }) => (
+                    <Controller
+                      name={valueName}
+                      control={valueControl}
+                      render={({ field: audienceField }) => (
+                        <Select
+                          value={audienceField.value}
+                          onChange={(e) =>
+                            audienceField.onChange(e.target.value)
+                          }
+                          options={organization.allowedAudiences.map(
+                            (audience) => ({
+                              key: audience,
+                              label: audience,
+                            })
+                          )}
+                        />
+                      )}
+                    />
+                  )}
                 />
               ) : selectedAttributeMatcherTab === "Role Groups" ? (
                 <RoleGroupMatchersInput
+                  key="roleGroups"
                   allowedRoleGroups={allowedRoleGroups ?? []}
                   checkDisabled={(rg) =>
                     DISABLED_ROLE_GROUPS.includes(rg.roleGroup)
@@ -377,6 +513,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
           <SlideOverField
             label="Default Role Groups"
             helpText="Role groups that will be assigned to all users."
+            discreetHelpText
           >
             <Controller
               name="defaultRoleGroups"
@@ -400,6 +537,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
           <SlideOverField
             label="Default Audience"
             helpText="The audience that will be assigned to all users."
+            discreetHelpText
           >
             <Controller
               name="defaultAudience"
@@ -421,10 +559,14 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
           <SlideOverField
             label="Import Metadata"
             helpText="Import metadata from identity provider by URL or file."
+            discreetHelpText
           >
             <Controller
               name="importedConfig"
               control={control}
+              rules={{
+                validate: (value) => !!value,
+              }}
               render={({ field }) => (
                 <IdpMetadataInput
                   name="importedConfig"

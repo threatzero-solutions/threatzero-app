@@ -14,7 +14,7 @@ import {
 } from "../../../queries/training";
 import dayjs from "dayjs";
 import { AlertContext } from "../../../contexts/alert/alert-context";
-import DataTable2 from "../../../components/layouts/DataTable2";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ItemCompletion } from "../../../types/entities";
 
@@ -70,8 +70,8 @@ const ViewWatchStats: React.FC = () => {
 
     if (hasMultipleOrganizationAccess) {
       columns.push(
-        columnHelper.accessor((c) => c.organization?.name ?? "", {
-          id: "organization.name",
+        columnHelper.accessor((c) => c.user?.organization?.name ?? "", {
+          id: "user.organization.name",
           header: "Organization",
           cell: (info) => (
             <span className="line-clamp-2" title={info.getValue() || undefined}>
@@ -84,8 +84,8 @@ const ViewWatchStats: React.FC = () => {
 
     if (hasMultipleUnitAccess) {
       columns.push(
-        columnHelper.accessor((c) => c.unit?.name ?? "", {
-          id: "unit.name",
+        columnHelper.accessor((c) => c.user?.unit?.name ?? "", {
+          id: "user.unit.name",
           header: "Unit",
           cell: (info) => (
             <span className="line-clamp-2" title={info.getValue() || undefined}>
@@ -101,11 +101,14 @@ const ViewWatchStats: React.FC = () => {
         columnHelper.accessor("item.metadata.title", {
           id: "item.metadata.title",
           header: "Training Item",
-          cell: (info) => (
-            <span className="line-clamp-2" title={info.getValue() ?? undefined}>
-              {info.getValue() || "—"}
-            </span>
-          ),
+          cell: (info) => {
+            const strippedValue = stripHtml(info.getValue() ?? "");
+            return (
+              <span className="line-clamp-2" title={strippedValue || undefined}>
+                {strippedValue || "—"}
+              </span>
+            );
+          },
         }),
         columnHelper.accessor("enrollment.startDate", {
           id: "enrollment.startDate",
@@ -139,9 +142,9 @@ const ViewWatchStats: React.FC = () => {
     query: completionsQuery,
     setQuery: setCompletionsQuery,
     organizationsEnabled: hasMultipleOrganizationAccess,
-    organizationKey: "organization.slug",
+    organizationKey: "user.organization.slug",
     unitsEnabled: hasMultipleUnitAccess,
-    unitKey: "unit.slug",
+    unitKey: "user.unit.slug",
   });
 
   const itemCompletionsCsvMutation = useMutation({

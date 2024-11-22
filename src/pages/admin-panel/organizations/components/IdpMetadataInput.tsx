@@ -1,6 +1,9 @@
-import { useState } from "react";
 import { SimpleChangeEvent } from "../../../../types/core";
-import { CheckCircleIcon } from "@heroicons/react/20/solid";
+import {
+  CheckCircleIcon,
+  InformationCircleIcon,
+  PauseCircleIcon,
+} from "@heroicons/react/20/solid";
 import InputRadioOptions from "../../../training-library/components/edit-training-item/InputRadioOptions";
 import Input from "../../../../components/forms/inputs/Input";
 import { useMutation } from "@tanstack/react-query";
@@ -8,6 +11,10 @@ import {
   importOrganizationIdpMetadata,
   ImportOrganizationIdpMetadataPayload,
 } from "../../../../queries/organizations";
+import { useDebounceCallback } from "usehooks-ts";
+import { useState } from "react";
+import { classNames } from "../../../../utils/core";
+import { isURL } from "validator";
 
 interface IdpMetadataInputProps<K extends string | number | symbol> {
   name: K;
@@ -24,99 +31,152 @@ const IdpMetadataInput = <K extends string | number | symbol = string>({
   organizationId,
   onChange,
 }: IdpMetadataInputProps<K>) => {
-  // const [metadata, setMetadata] = useState<Record<string, string>>(idpMetadata);
-  const [showLoader, setShowLoader] = useState<boolean>(false);
-  const [uploadTypeId, setUploadTypeId] = useState<string>("file-upload");
+  const [fileErrorMsg, setFileErrorMsg] = useState<string | null>();
+  const [urlErrorMsg, setUrlErrorMsg] = useState<string | null>();
+  const [loadedMsg, setLoadedMsg] = useState<string>("Using existing metadata");
+
   const [metadataFile, setMetadataFile] = useState<File | null>(null);
-  const [metadataUrl, setMetadataUrl] = useState<string | null>(null);
+  const [metadataURL, setMetadataURL] = useState<string | null>(null);
 
   const isSet = Object.entries(value).length > 0;
 
-  const importMetadataMutation = useMutation({
+  const { mutate: importMetadata, isPending } = useMutation({
     mutationFn: (payload: ImportOrganizationIdpMetadataPayload) =>
       importOrganizationIdpMetadata(organizationId, protocol, payload),
+    onMutate: () => {
+      return { skipOnError: true };
+    },
+    onSuccess: (d) => {
+      onChange?.({ target: { name, value: d } });
+    },
+    onError: (e) => {
+      console.warn("Unable to import metadata", e.message);
+    },
   });
 
-  const handleImport = () => {
-    let payload: ImportOrganizationIdpMetadataPayload | null = null;
-    if (uploadTypeId === "file-upload") {
-      if (metadataFile) {
-        payload = new FormData();
-        payload.append("file", metadataFile);
-      }
-    } else if (uploadTypeId === "url") {
-      if (metadataUrl) {
-        payload = { url: metadataUrl };
-      }
-    }
-
-    if (payload) {
-      importMetadataMutation.mutate(payload, {
-        onSuccess: (d) => {
-          setShowLoader(false);
-          onChange?.({ target: { name, value: d } });
+  const handleSetMetadataFile = (file: File | null) => {
+    if (file) {
+      setMetadataFile(file);
+      setFileErrorMsg(null);
+      const payload = new FormData();
+      payload.append("file", file);
+      importMetadata(payload, {
+        onSuccess: () => {
+          setLoadedMsg("Updated metadata from file");
+        },
+        onError: () => {
+          setFileErrorMsg("Unable to import metadata from this file.");
         },
       });
     }
   };
 
+  const handleSetMetadataURL = (url: string | null) => {
+    if (url) {
+      if (isURL(url)) {
+        setMetadataURL(url);
+        setUrlErrorMsg(null);
+        const payload = { url };
+        importMetadata(payload, {
+          onSuccess: () => {
+            setLoadedMsg("Updated metadata from URL");
+          },
+          onError: () => {
+            setUrlErrorMsg("Unable to import metadata from this URL.");
+          },
+        });
+      } else {
+        setUrlErrorMsg("This is not a valid URL.");
+      }
+    } else {
+      setUrlErrorMsg(null);
+    }
+  };
+  const debouncedHandleSetMetadataURL = useDebounceCallback(
+    handleSetMetadataURL,
+    400
+  );
+
   return (
     <div className="flex flex-col gap-2">
-      {isSet && (
-        <>
-          <span className="inline-flex items-center gap-1 text-sm text-gray-600">
-            <CheckCircleIcon className="h-5 w-5 text-green-500 inline" />
-            <span>Metadata loaded</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowLoader((s) => !s)}
-            className="self-start rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-          >
-            {showLoader ? "Cancel" : "Update"}
-          </button>
-        </>
-      )}
+      <span className="inline-flex items-center gap-1 text-sm text-gray-600">
+        {isPending ? (
+          <>
+            <PauseCircleIcon className="size-5 text-gray-400 inline animate-pulse" />
+            <span className="italic">Metadata loading...</span>
+          </>
+        ) : isSet ? (
+          <>
+            <CheckCircleIcon className="size-5 text-green-500 inline" />
+            <span>{loadedMsg}</span>
+          </>
+        ) : (
+          <>
+            <InformationCircleIcon className="size-5 text-gray-400 inline" />
+            <span>No metadata loaded</span>
+          </>
+        )}
+      </span>
 
-      {(!isSet || showLoader) && (
-        <>
-          <InputRadioOptions
-            options={[
-              {
-                id: "file-upload",
-                name: "File Upload",
-                children: (
-                  <input
-                    type="file"
-                    onChange={(e) =>
-                      setMetadataFile(e.target.files?.[0] ?? null)
+      <InputRadioOptions
+        onSelect={(id) => {
+          if (id === "file-upload") {
+            handleSetMetadataFile(metadataFile);
+          } else if (id === "url") {
+            handleSetMetadataURL(metadataURL);
+          }
+        }}
+        options={[
+          {
+            id: "file-upload",
+            name: "File Upload",
+            children: ({ selected }) => (
+              <div>
+                <input
+                  type="file"
+                  onChange={(e) =>
+                    handleSetMetadataFile(e.target.files?.[0] ?? null)
+                  }
+                  accept={protocol === "saml" ? ".xml" : ".json"}
+                />
+                {selected && fileErrorMsg && (
+                  <p className="mt-1 text-xs text-red-600">{fileErrorMsg}</p>
+                )}
+              </div>
+            ),
+          },
+          {
+            id: "url",
+            name: "URL",
+            children: ({ selected }) => (
+              <div>
+                <Input
+                  onChange={(e) =>
+                    debouncedHandleSetMetadataURL(e.target.value)
+                  }
+                  onKeyUp={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      debouncedHandleSetMetadataURL(e.currentTarget.value);
                     }
-                  />
-                ),
-              },
-              {
-                id: "url",
-                name: "URL",
-                children: (
-                  <Input onChange={(e) => setMetadataUrl(e.target.value)} />
-                ),
-              },
-            ]}
-            onSelect={setUploadTypeId}
-          />
-          <button
-            type="button"
-            onClick={() => handleImport()}
-            className="self-start rounded-md px-2 py-1 text-xs font-semibold text-white bg-secondary-600 shadow-sm hover:bg-secondary-500 transition-colors disabled:opacity-60 disabled:pointer-events-none"
-            disabled={
-              (uploadTypeId === "file-upload" && !metadataFile) ||
-              (uploadTypeId === "url" && !metadataUrl)
-            }
-          >
-            Import
-          </button>
-        </>
-      )}
+                  }}
+                  name="url"
+                  type="url"
+                  className={classNames(
+                    "w-full",
+                    selected && urlErrorMsg
+                      ? "ring-red-300 text-red-900 focus:!ring-red-500"
+                      : ""
+                  )}
+                />
+                {selected && urlErrorMsg && (
+                  <p className="mt-1 text-xs text-red-600">{urlErrorMsg}</p>
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 };

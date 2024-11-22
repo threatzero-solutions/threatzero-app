@@ -54,6 +54,11 @@ const FormField = forwardRef(
         </div>
         <div className="mt-2">
           {input || <FormInput ref={ref} field={field} {...fieldAttrs} />}
+          {field.validationError && (
+            <span className="text-xs text-red-500 mt-1">
+              {field.validationError}
+            </span>
+          )}
         </div>
         {!helpTextFirst && field.helpText && (
           <HelpText helpText={field.helpText} className="mt-3" />

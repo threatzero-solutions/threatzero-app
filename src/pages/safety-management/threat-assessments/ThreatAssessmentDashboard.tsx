@@ -22,7 +22,7 @@ import { useOrganizationFilters } from "../../../hooks/use-organization-filters"
 import { threatAssessmentPermissionsOptions } from "../../../constants/permission-options";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
-import DataTable2 from "../../../components/layouts/DataTable2";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 

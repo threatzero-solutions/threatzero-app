@@ -1,5 +1,5 @@
 import { OrganizationIdpDto, SyncAttributeDto } from "../../../../types/api";
-import DataTable from "../../../../components/layouts/DataTable";
+import DataTable from "../../../../components/layouts/tables/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
 import { MouseEvent } from "react";
 import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";

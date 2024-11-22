@@ -1,15 +1,18 @@
 import { PropsWithChildren } from "react";
+import InformationButton from "../buttons/InformationButton";
 
 interface SlideOverFieldProps extends PropsWithChildren {
   label: React.ReactNode;
   name?: string;
   helpText?: string | null;
+  discreetHelpText?: boolean;
 }
 
 const SlideOverField: React.FC<SlideOverFieldProps> = ({
   label,
   name,
   helpText,
+  discreetHelpText = false,
   children,
 }) => {
   return (
@@ -17,14 +20,17 @@ const SlideOverField: React.FC<SlideOverFieldProps> = ({
       <div>
         <label
           htmlFor={name}
-          className="block text-sm font-medium leading-6 text-gray-900 sm:mt-1.5"
+          className="text-sm font-medium leading-6 text-gray-900 sm:mt-1.5 inline-flex items-center gap-1"
         >
           {label}
+          {helpText && discreetHelpText && (
+            <InformationButton text={helpText} />
+          )}
         </label>
       </div>
       <div className="sm:col-span-3 space-y-2">
         {children}
-        {helpText && (
+        {helpText && !discreetHelpText && (
           <p
             className="text-sm text-gray-500"
             dangerouslySetInnerHTML={{ __html: helpText }}
