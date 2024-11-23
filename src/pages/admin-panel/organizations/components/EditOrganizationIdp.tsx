@@ -370,11 +370,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
               control={control}
               rules={{
                 validate: (domains) =>
-                  domains.length > 0 &&
-                  domains.every((d) => {
-                    console.debug(d, isURL(d));
-                    return isURL(d);
-                  }),
+                  domains.length > 0 && domains.every((d) => isURL(d)),
               }}
               render={({ field }) => (
                 <MultilineTextInput
