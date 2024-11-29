@@ -14,6 +14,7 @@ import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
 import axios, { InternalAxiosRequestConfig } from "axios";
 import SplashScreen from "../../components/layouts/SplashScreen";
 import { LEVEL } from "../../constants/permissions";
+import { getUnits } from "../../queries/organizations";
 
 const TOKEN_MIN_VALIDATY_SECONDS = 2;
 
@@ -265,14 +266,15 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     [accessTokenClaims]
   );
 
-  // Commonly used permission types.
-  const hasMultipleUnitAccess = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN], "any") ||
-      (!!keycloak?.tokenParsed?.peer_units?.length &&
-        keycloak.tokenParsed.peer_units.length > 1),
-    [hasPermissions, keycloak?.tokenParsed]
-  );
+  const [hasMultipleUnitAccess, setHasMultipleUnitAccess] = useState(false);
+  useEffect(() => {
+    if (!interceptorReady) {
+      return;
+    }
+    getUnits({ limit: 1 }).then((units) =>
+      setHasMultipleUnitAccess(units.count > 1)
+    );
+  }, [interceptorReady]);
 
   const hasMultipleOrganizationAccess = useMemo(
     () => hasPermissions([LEVEL.ADMIN]),

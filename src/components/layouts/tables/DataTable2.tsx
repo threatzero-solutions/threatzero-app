@@ -2,6 +2,7 @@ import {
   ColumnDef,
   getCoreRowModel,
   useReactTable,
+  VisibilityState,
 } from "@tanstack/react-table";
 import BaseTable, { BaseTableProps } from "./BaseTable";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
@@ -32,6 +33,7 @@ interface DataTable2Props<T extends object>
   searchOptions?: Partial<SearchInputProps>;
   filterOptions?: FilterBarFilterOptions;
   showSearch?: boolean;
+  columnVisibility?: VisibilityState;
 }
 
 const DataTable2 = <T extends object>({
@@ -47,6 +49,7 @@ const DataTable2 = <T extends object>({
   searchOptions: searchOptionsProp,
   filterOptions,
   showSearch = true,
+  columnVisibility,
   ...passThroughProps
 }: DataTable2Props<T>) => {
   const table = useReactTable({
@@ -58,6 +61,7 @@ const DataTable2 = <T extends object>({
     state: {
       sorting: query && asSortingState(query.order ?? {}),
       pagination: pageState && asPaginationState(pageState),
+      columnVisibility,
     },
     onSortingChange: (sorting) =>
       setQuery?.((draft) => {
