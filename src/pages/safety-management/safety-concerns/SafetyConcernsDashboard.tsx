@@ -9,7 +9,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import { Tip, TipStatus } from "../../../types/entities";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import dayjs from "dayjs";
 import StatusPill from "../../tip-submission/components/StatusPill";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";

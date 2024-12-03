@@ -24,7 +24,7 @@ import { classNames, noMutateSort, orderSort } from "../../utils/core";
 import PillBadge from "../PillBadge";
 import { CheckIcon, TrashIcon } from "@heroicons/react/20/solid";
 import Dropdown from "../layouts/Dropdown";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import FieldGroup from "./FieldGroup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteForm, newDraftForm, saveForm } from "../../queries/forms";

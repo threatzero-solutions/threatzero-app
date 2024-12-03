@@ -7,7 +7,7 @@ import {
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditLocation from "./EditLocation";
 import { Location } from "../../../../types/entities";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useImmer } from "use-immer";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";

@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router";
 import { classNames } from "../../../utils/core";
 import { NavigationItem } from "../../../types/core";
 import { Disclosure } from "@headlessui/react";

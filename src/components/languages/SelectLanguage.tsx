@@ -4,7 +4,7 @@ import Autocomplete from "../forms/inputs/Autocomplete";
 import SlideOverHeading from "../layouts/slide-over/SlideOverHeading";
 import { useQuery } from "@tanstack/react-query";
 import { getLanguages } from "../../queries/languages";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import SlideOverFormBody from "../layouts/slide-over/SlideOverFormBody";
 import SlideOverForm from "../layouts/slide-over/SlideOverForm";
 import SlideOverField from "../layouts/slide-over/SlideOverField";

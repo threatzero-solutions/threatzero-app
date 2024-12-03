@@ -10,7 +10,7 @@ import {
   saveThreatAssessment,
 } from "../../../queries/safety-management";
 import { AssessmentStatus, ThreatAssessment } from "../../../types/entities";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import StatusPill from "./components/StatusPill";

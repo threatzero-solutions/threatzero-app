@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FolderOpenIcon } from "@heroicons/react/20/solid";
 import { trainingLibraryPermissionsOptions } from "../../../constants/permission-options";
 import { withRequirePermissions } from "../../../guards/with-require-permissions";

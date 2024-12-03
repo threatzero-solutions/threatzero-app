@@ -1,5 +1,5 @@
 import { withRequirePermissions } from "../../guards/with-require-permissions";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 import PageNavBar from "../../components/layouts/PageNavBar";
 import { adminPanelPermissionOptions } from "../../constants/permission-options";
 

@@ -1,7 +1,7 @@
 import { useContext, useMemo } from "react";
 import { TrainingContext } from "../../../contexts/training/training-context";
 import { CourseEnrollment, TrainingVisibility } from "../../../types/entities";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import CourseVisibilityTag from "./CourseVisibilityTag";

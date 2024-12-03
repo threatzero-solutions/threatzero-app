@@ -15,12 +15,7 @@ import {
   Tip,
   TipStatus,
 } from "../../types/entities";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { useCallback, useMemo, useState } from "react";
 import { TIP_SUBMISSION_FORM_SLUG } from "../../constants/forms";
 import { LEVEL, READ, WRITE } from "../../constants/permissions";

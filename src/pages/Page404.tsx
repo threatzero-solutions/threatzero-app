@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import Footer from "../components/layouts/Footer";
 
 const Page404: React.FC = () => {

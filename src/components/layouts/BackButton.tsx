@@ -1,4 +1,4 @@
-import { Link, To, useLocation } from "react-router-dom";
+import { Link, To, useLocation } from "react-router";
 import { classNames } from "../../utils/core";
 
 interface BackButtonProps {

@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { classNames } from "../utils/core";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useAuth } from "../contexts/auth/useAuth";
 
 const UserMenu: React.FC = () => {

@@ -19,7 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Unit } from "../../../types/entities";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 const DEPTH_COLORS = [
   "bg-red-500",

@@ -2,7 +2,7 @@ import { useContext, useMemo } from "react";
 import { CourseEnrollment, TrainingSection } from "../../../types/entities";
 import { getNextAvailableSection } from "../../../utils/training";
 import TrainingSectionTile from "./TrainingSectionTile";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { TrainingContext } from "../../../contexts/training/training-context";
 
 interface FeaturedSectionProps {

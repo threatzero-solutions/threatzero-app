@@ -18,7 +18,7 @@ import { getTrainingTokens } from "../../../queries/users";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useResolvedPath } from "react-router-dom";
+import { useResolvedPath } from "react-router";
 import { TrainingToken } from "../../../types/entities";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useContext, useState } from "react";

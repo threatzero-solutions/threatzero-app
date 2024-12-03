@@ -24,7 +24,7 @@ import AddNew from "../../../components/forms/builder/AddNew";
 import AudiencesSelect from "../../training-library/components/AudiencesSelect";
 import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import SuccessButton from "../../../components/layouts/buttons/SuccessButton";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { CoreContext } from "../../../contexts/core/core-context";
 import { courseBuilderPermissionsOptions } from "../../../constants/permission-options";
 import CourseVisibilityTag from "../../training-library/components/CourseVisibilityTag";

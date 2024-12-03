@@ -7,12 +7,7 @@ import {
   saveViolentIncidentReport,
   violentIncidentReportToPdf,
 } from "../../../queries/safety-management";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   FormState,
   FormSubmission,

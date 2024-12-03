@@ -1,4 +1,4 @@
-import { createBrowserRouter, redirect } from "react-router-dom";
+import { createBrowserRouter, redirect } from "react-router";
 import App from "./App";
 import Dashboard from "./pages/dashboard/Dashboard";
 import TrainingLibrary from "./pages/training-library/TrainingLibrary";

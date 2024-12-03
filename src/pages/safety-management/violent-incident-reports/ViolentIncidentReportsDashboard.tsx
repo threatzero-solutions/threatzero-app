@@ -13,7 +13,7 @@ import {
 } from "../../../queries/safety-management";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { WRITE } from "../../../constants/permissions";
 import StatsDisplay from "../../../components/StatsDisplay";
 import { fromDaysKey, fromStatus } from "../../../utils/core";

@@ -26,7 +26,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { AlertContext } from "../../../contexts/alert/alert-context";
-import { useResolvedPath } from "react-router-dom";
+import { useResolvedPath } from "react-router";
 import {
   getTrainingInvites,
   getTrainingInvitesCsv,

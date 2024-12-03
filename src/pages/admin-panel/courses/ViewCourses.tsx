@@ -1,5 +1,5 @@
 import { TrainingVisibility } from "../../../types/entities";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import CourseCustomTag from "../../training-library/components/CourseCustomTag";
 import CourseVisibilityTag from "../../training-library/components/CourseVisibilityTag";
 import { useQuery } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import ViewTrainingCourse from "../../training-library/components/ViewTrainingCourse";
 import { getTrainingCourse } from "../../../queries/training";
 import dayjs from "dayjs";

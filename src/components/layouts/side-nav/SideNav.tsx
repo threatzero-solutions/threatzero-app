@@ -14,7 +14,7 @@ import UserMenu from "../../UserMenu";
 import SideNavLink from "./SideNavLink";
 import { NavigationItem } from "../../../types/core";
 import { CoreContext } from "../../../contexts/core/core-context";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { classNames } from "../../../utils/core";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { useNav } from "../../../utils/navigation";

@@ -6,7 +6,7 @@ import {
   snakeToCamel,
   stringifyOrder,
 } from "../utils/core";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
 

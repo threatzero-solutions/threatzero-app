@@ -3,7 +3,7 @@ import { getOrganizations } from "../../../../queries/organizations";
 import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
 import { useImmer } from "use-immer";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { PencilSquareIcon } from "@heroicons/react/20/solid";
 import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../../components/layouts/buttons/IconButton";

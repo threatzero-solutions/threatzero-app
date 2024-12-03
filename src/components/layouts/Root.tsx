@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 import AuthProvider from "../../contexts/auth/AuthProvider";
 import { RootContexts } from "../../contexts/RootContexts";
 import { useTitles } from "../../hooks/use-titles";

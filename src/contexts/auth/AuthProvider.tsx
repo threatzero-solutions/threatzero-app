@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import configJson from "../../config";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import ErrorPage from "../../pages/ErrorPage";
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
 import axios, { InternalAxiosRequestConfig } from "axios";

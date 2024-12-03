@@ -4,7 +4,7 @@ import {
   ResourceItem as ResourceItemEntity,
   ResourceType,
 } from "../../types/entities";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getResourceItem } from "../../queries/media";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/solid";

@@ -17,7 +17,7 @@ import { CoreContext } from "../../../../contexts/core/core-context";
 import CourseEnrollmentsInput from "../components/CourseEnrollmentsInput";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useAuth } from "../../../../contexts/auth/useAuth";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import LargeFormSection from "../../../../components/forms/LargeFormSection";
 import FormField from "../../../../components/forms/FormField";
 import BackButtonLink from "../../../../components/layouts/BackButtonLink";

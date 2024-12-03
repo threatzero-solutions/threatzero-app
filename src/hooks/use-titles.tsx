@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useMatches } from "react-router-dom";
+import { useMatches } from "react-router";
 
 export const useTitles = () => {
   const matches = useMatches();
