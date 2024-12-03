@@ -519,9 +519,9 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                   prefix="organization_default_role_groups"
                   value={field.value}
                   options={(allowedRoleGroups ?? []).map((rg) => ({
-                    key: rg,
-                    label: rg,
-                    disabled: DISABLED_ROLE_GROUPS.includes(rg),
+                    key: rg.id,
+                    label: rg.name,
+                    disabled: DISABLED_ROLE_GROUPS.includes(rg.name),
                     disabledText:
                       "This role group can only be managed by identity admins.",
                   }))}

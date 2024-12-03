@@ -91,6 +91,13 @@ export interface OrganizationUser {
   attributes: Record<string, string[]>;
 }
 
+export interface KeycloakGroupDto {
+  id: string;
+  name: string;
+  path?: string;
+  attributes?: Record<string, string[]>;
+}
+
 export const DurationUnits = [
   "years",
   "months",

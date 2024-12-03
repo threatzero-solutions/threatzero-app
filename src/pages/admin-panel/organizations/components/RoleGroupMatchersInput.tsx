@@ -1,4 +1,8 @@
-import { OrganizationIdpDto, RoleGroupMatcherDto } from "../../../../types/api";
+import {
+  KeycloakGroupDto,
+  OrganizationIdpDto,
+  RoleGroupMatcherDto,
+} from "../../../../types/api";
 import DataTable from "../../../../components/layouts/tables/DataTable";
 import Input from "../../../../components/forms/inputs/Input";
 import React, { MouseEvent } from "react";
@@ -8,7 +12,7 @@ import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 interface RoleGroupMatchersInputProps {
-  allowedRoleGroups: string[];
+  allowedRoleGroups: KeycloakGroupDto[];
   checkDisabled: (m: RoleGroupMatcherDto) => boolean;
 }
 
@@ -111,9 +115,12 @@ const RoleGroupMatchersInput: React.FC<RoleGroupMatchersInputProps> = ({
                   update(idx, { ...field, roleGroup: e.target.value })
                 }
                 options={(allowedRoleGroups ?? []).map((roleGroup) => ({
-                  label: roleGroup,
-                  key: roleGroup,
-                  disabled: checkDisabled({ ...field, roleGroup }),
+                  label: roleGroup.name,
+                  key: roleGroup.id,
+                  disabled: checkDisabled({
+                    ...field,
+                    roleGroup: roleGroup.name,
+                  }),
                 }))}
                 readOnly={checkDisabled(field)}
               />

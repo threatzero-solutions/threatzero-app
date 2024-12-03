@@ -1,18 +1,21 @@
 import { ReactNode } from "react";
+import { classNames } from "../../../utils/core";
 
 export interface TableHeaderProps {
   title?: string;
   subtitle?: string;
   action?: ReactNode;
+  className?: string;
 }
 
 const TableHeader: React.FC<TableHeaderProps> = ({
   title,
   subtitle,
   action,
+  className,
 }) => {
   return (
-    <div className="sm:flex sm:items-center">
+    <div className={classNames("sm:flex sm:items-center", className)}>
       <div className="sm:flex-auto">
         {title && (
           <h1 className="text-base font-semibold leading-6 text-gray-900">

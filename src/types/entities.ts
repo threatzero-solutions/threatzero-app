@@ -64,6 +64,7 @@ export interface Unit extends OrganizationBase {
   organization: Organization;
   parentUnitId: string | null;
   parentUnit: Unit | null;
+  subUnits?: Unit[];
   path?: string;
   tatGroupId: string | null;
 }

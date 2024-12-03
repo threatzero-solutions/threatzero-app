@@ -41,6 +41,7 @@ export interface FilterBarFilterOptions {
 interface FilterBarProps {
   searchOptions?: SearchInputProps;
   filterOptions?: FilterBarFilterOptions;
+  className?: string;
 }
 
 const buildFilterValue = (filter: FilterBarFilter) => {
@@ -102,6 +103,7 @@ const getNewValue = (
 const FilterBar: React.FC<FilterBarProps> = ({
   searchOptions,
   filterOptions,
+  className,
 }) => {
   /** Used to keep track of whether user interacts with filters. */
   const stable = useRef(false);
@@ -202,7 +204,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   );
 
   return (
-    <div className="flex justify-end gap-4">
+    <div className={classNames("flex justify-end gap-4", className)}>
       {filterOptions && (
         <Dropdown
           value="Filter"

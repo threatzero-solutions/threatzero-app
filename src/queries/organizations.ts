@@ -25,6 +25,7 @@ import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { DeepPartial } from "../types/core";
 import {
   IsUniqueResponse,
+  KeycloakGroupDto,
   OrganizationIdpDto,
   OrganizationUser,
 } from "../types/api";
@@ -96,7 +97,9 @@ export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
   );
 
 export const getOrganizationIdpRoleGroups = (id: Organization["id"]) =>
-  findManyRaw<string[]>(`/organizations/organizations/${id}/idps/role-groups/`);
+  findManyRaw<KeycloakGroupDto[]>(
+    `/organizations/organizations/${id}/idps/role-groups/`
+  );
 
 export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);

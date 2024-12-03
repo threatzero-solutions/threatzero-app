@@ -34,16 +34,28 @@ const BaseTable = <T extends object>({
 
   return (
     <>
-      <table className="min-w-full divide-y divide-gray-300">
+      <table
+        style={{
+          width: table.options.enableColumnResizing
+            ? table.getCenterTotalSize()
+            : undefined,
+        }}
+        className="min-w-full divide-y divide-gray-300 table-auto"
+      >
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header, idx) => (
                 <th
                   key={header.id}
+                  style={{
+                    width: table.options.enableColumnResizing
+                      ? header.getSize()
+                      : undefined,
+                  }}
                   className={classNames(
                     dense ? "py-1.5 text-xs" : "py-3.5 text-sm",
-                    "text-left font-semibold text-gray-900",
+                    "relative text-left font-semibold text-gray-900",
                     idx === 0
                       ? dense
                         ? "pl-2.5 pr-1.5 sm:pl-0"
@@ -113,6 +125,32 @@ const BaseTable = <T extends object>({
                       </span>
                     </div>
                   )}
+                  <button
+                    type="button"
+                    className={classNames(
+                      table.options.enableColumnResizing ? "block" : "hidden",
+                      "absolute top-0 bottom-0 right-0 w-2 transition-colors transparent border-r-2 enabled:hover:border-gray-300 enabled:cursor-col-resize",
+                      header.column.getIsResizing()
+                        ? "border-gray-300"
+                        : "border-gray-100"
+                    )}
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    disabled={!header.column.getCanResize()}
+                    style={{
+                      transform:
+                        table.options.columnResizeMode === "onEnd" &&
+                        header.column.getIsResizing()
+                          ? `translateX(${
+                              (table.options.columnResizeDirection === "rtl"
+                                ? -1
+                                : 1) *
+                              (table.getState().columnSizingInfo.deltaOffset ??
+                                0)
+                            }px)`
+                          : "",
+                    }}
+                  ></button>
                 </th>
               ))}
             </tr>
@@ -125,6 +163,11 @@ const BaseTable = <T extends object>({
                 {row.getVisibleCells().map((cell, idx) => (
                   <td
                     key={cell.id}
+                    style={{
+                      width: table.options.enableColumnResizing
+                        ? cell.column.getSize()
+                        : undefined,
+                    }}
                     className={classNames(
                       dense ? "py-2 text-xs" : "py-4 text-sm",
                       "text-left text-gray-500",
@@ -203,11 +246,12 @@ const BaseTable = <T extends object>({
           previousPage={table.previousPage}
           canNextPage={table.getCanNextPage()}
           nextPage={table.nextPage}
-          rowStart={
+          rowStart={Math.min(
             table.getState().pagination.pageIndex *
               table.getState().pagination.pageSize +
-            1
-          }
+              1,
+            table.getRowCount()
+          )}
           rowEnd={Math.min(
             table.getState().pagination.pageIndex +
               1 * table.getState().pagination.pageSize,
