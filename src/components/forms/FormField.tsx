@@ -38,21 +38,25 @@ const FormField = forwardRef(
     ref
   ) => {
     return (
-      <div className={classNames(fillColumns ? "col-span-full" : "")}>
-        <div className="w-full flex items-center gap-1">
-          <div className="grow">
-            <label
-              htmlFor={field.name}
-              className="block text-sm font-medium leading-6 text-gray-900"
-              dangerouslySetInnerHTML={{ __html: field.label ?? "" }}
-            />
-            {helpTextFirst && field.helpText && (
-              <HelpText helpText={field.helpText} className="mb-3" />
-            )}
+      <div
+        className={classNames("space-y-2", fillColumns ? "col-span-full" : "")}
+      >
+        {(field.label || action || field.helpText) && (
+          <div className="w-full flex items-center gap-1">
+            <div className="grow">
+              <label
+                htmlFor={field.name}
+                className="block text-sm font-medium leading-6 text-gray-900"
+                dangerouslySetInnerHTML={{ __html: field.label ?? "" }}
+              />
+              {helpTextFirst && field.helpText && (
+                <HelpText helpText={field.helpText} className="mb-3" />
+              )}
+            </div>
+            {action}
           </div>
-          {action}
-        </div>
-        <div className="mt-2">
+        )}
+        <div>
           {input || <FormInput ref={ref} field={field} {...fieldAttrs} />}
           {field.validationError && (
             <span className="text-xs text-red-500 mt-1">

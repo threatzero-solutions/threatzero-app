@@ -13,13 +13,10 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table";
 import { ReactNode, useMemo } from "react";
-import { getUnits } from "../../../queries/organizations";
 import { useImmer } from "use-immer";
-import { useQuery } from "@tanstack/react-query";
 import { Unit } from "../../../types/entities";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
-import { Link } from "react-router";
 
 const DEPTH_COLORS = [
   "bg-red-500",
@@ -45,11 +42,11 @@ const DEPTH_COLORS = [
 const unitsColumnHelper = createColumnHelper<Unit>();
 
 interface SubunitsTableProps {
-  organizationId: string | null;
-  organizationIdType?: "id" | "slug";
+  units?: Unit[] | null;
+  unitsLoading?: boolean;
   unitId?: string;
   unitIdType?: "id" | "slug";
-  unitsRoot: string;
+  setUnitsPath: (unitsPath: string) => void;
   showOnEmtpy?: boolean;
   render?: (children: ReactNode) => ReactNode;
   unitsLabelSingular?: string;
@@ -57,11 +54,11 @@ interface SubunitsTableProps {
 }
 
 const SubunitsTable: React.FC<SubunitsTableProps> = ({
-  organizationId,
-  organizationIdType = "slug",
+  units,
+  unitsLoading = false,
   unitId,
   unitIdType = "slug",
-  unitsRoot,
+  setUnitsPath,
   showOnEmtpy = true,
   render = (children) => children,
   unitsLabelSingular = "Unit",
@@ -69,30 +66,30 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
 }) => {
   const [unitsExpanded, setUnitsExpanded] = useImmer<ExpandedState>(true);
   const [unitsSearch, setUnitsSearch] = useImmer<string>("");
-  const { data: units, isLoading: unitsLoading } = useQuery({
-    queryKey: [
-      "units",
-      {
-        [`organization.${organizationIdType}`]: organizationId,
-        order: { createdTimestamp: "DESC" },
-        limit: 10000,
-      },
-    ] as const,
-    queryFn: ({ queryKey }) => getUnits(queryKey[1]),
-    enabled: !!organizationId,
-  });
+  // const { data: units, isLoading: unitsLoading } = useQuery({
+  //   queryKey: [
+  //     "units",
+  //     {
+  //       [`organization.${organizationIdType}`]: organizationId,
+  //       order: { createdTimestamp: "DESC" },
+  //       limit: 10000,
+  //     },
+  //   ] as const,
+  //   queryFn: ({ queryKey }) => getUnits(queryKey[1]),
+  //   enabled: !!organizationId,
+  // });
 
   const thisUnit = useMemo(() => {
     if (units) {
-      return units.results.find((u) => u[unitIdType] === unitId);
+      return units.find((u) => u[unitIdType] === unitId);
     }
     return null;
   }, [units, unitId, unitIdType]);
 
   const nestedUnits = useMemo(() => {
     if (units) {
-      const allUnitSlugs = new Set<string>(units.results.map((u) => u.slug));
-      const roots = units.results.filter((u) => {
+      const allUnitSlugs = new Set<string>(units.map((u) => u.slug));
+      const roots = units.filter((u) => {
         if (unitId) {
           return u.parentUnit?.[unitIdType] === unitId;
         }
@@ -101,7 +98,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
       });
 
       const assignChildren = (unit: Unit): Unit => {
-        unit.subUnits = units.results
+        unit.subUnits = units
           .filter((u) => u.parentUnit?.slug === unit.slug)
           .map(assignChildren);
         return unit;
@@ -114,7 +111,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
 
   const parentSlugs = useMemo(() => {
     if (units) {
-      return units.results
+      return units
         .map((u) => u.parentUnit)
         .filter(Boolean)
         .reduce((acc, parent) => {
@@ -188,8 +185,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
         cell: ({ row }) => (
           <ButtonGroup className="w-full justify-end">
             <IconButton
-              as={Link}
-              to={`${unitsRoot}/${row.original.path}`.replace(/\/\//g, "/")}
+              onClick={() => setUnitsPath(row.original.path ?? "")}
               icon={ArrowRightIcon}
               className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
               trailing
@@ -200,7 +196,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
         enableSorting: false,
       }),
     ],
-    [parentUnitsColorMap, unitsRoot, thisUnit]
+    [parentUnitsColorMap, setUnitsPath, thisUnit]
   );
 
   const unitsTable = useReactTable({

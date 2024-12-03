@@ -23,7 +23,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
   value,
   onChange,
   name,
-  label = "Policies & Procedures",
+  label,
   helpText,
 }) => {
   const [editPolicyProcedureSliderOpen, setPolicyProcedureSliderOpen] =
@@ -134,6 +134,11 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
                 </ButtonGroup>
               </Block>
             ))}
+            {localValue.length === 0 && (
+              <p className="text-sm text-gray-500 italic text-center w-full">
+                No policy or procedures have been added.
+              </p>
+            )}
           </div>
         }
       />

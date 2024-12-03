@@ -253,6 +253,7 @@ const EditOrganization: React.FC = () => {
                 control={control}
                 render={({ field }) => (
                   <SafetyContactInput
+                    label="Safety Contact"
                     value={field.value}
                     onChange={(e) => field.onChange(e.target?.value)}
                   />
@@ -263,6 +264,7 @@ const EditOrganization: React.FC = () => {
                 control={control}
                 render={({ field }) => (
                   <PolicyProcedureInput
+                    label="Policies & Procedures"
                     value={field.value}
                     onChange={(e) => field.onChange(e.target?.value)}
                   />

@@ -41,8 +41,11 @@ import Root from "./components/layouts/Root";
 import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
 import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
 import EditOrganization from "./pages/admin-panel/organizations/levels/EditOrganization";
-import MyOrganizationHome from "./pages/my-organization/MyOrganizationHome";
-import MyOrganizationUnitOverview from "./pages/my-organization/MyOrganizationUnitOverview";
+import MyOrganizationRoot from "./pages/my-organization/MyOrganizationRoot";
+import MyOrganizationUnits from "./pages/my-organization/tabs/MyOrganizationUnits";
+import MyOrganizationUsers from "./pages/my-organization/tabs/MyOrganizationUsers";
+import MyOrganizationSafety from "./pages/my-organization/tabs/MyOrganizationSafety";
+import MyOrganizationTraining from "./pages/my-organization/tabs/MyOrganizationTraining";
 
 export const router = createBrowserRouter(
   [
@@ -358,20 +361,32 @@ export const router = createBrowserRouter(
                 {
                   path: "my-organization",
                   handle: { title: "My Organization" },
+                  element: <MyOrganizationRoot />,
                   children: [
                     {
-                      path: "",
-                      element: <MyOrganizationHome />,
+                      path: "units",
+                      handle: { title: "Units" },
+                      element: <MyOrganizationUnits />,
                     },
                     {
-                      path: "units/*",
-                      handle: { title: "Units" },
-                      element: <MyOrganizationUnitOverview />,
+                      path: "users",
+                      handle: { title: "Users" },
+                      element: <MyOrganizationUsers />,
                     },
-                    // {
-                    //   path: "*?",
-                    //   loader: () => redirect(""),
-                    // },
+                    {
+                      path: "training",
+                      handle: { title: "Training" },
+                      element: <MyOrganizationTraining />,
+                    },
+                    {
+                      path: "safety",
+                      handle: { title: "Safety" },
+                      element: <MyOrganizationSafety />,
+                    },
+                    {
+                      path: "*?",
+                      loader: () => redirect("units"),
+                    },
                   ],
                 },
                 {

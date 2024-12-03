@@ -28,7 +28,7 @@ export interface OrganizationBase extends Base {
   slug: string;
   name: string;
   address: string | null;
-  safetyContact?: SafetyContact;
+  safetyContact?: SafetyContact | null;
   policiesAndProcedures: OrganizationPolicyFile[];
 }
 

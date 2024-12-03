@@ -30,7 +30,7 @@ interface CourseEnrollmentsInputProps {
 
 const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
   name,
-  label = "Course Enrollments",
+  label,
   helpText,
   organizationId,
   accessSettings,
