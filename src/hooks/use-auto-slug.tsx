@@ -50,7 +50,7 @@ export const useAutoSlug = <
   // or potential infinite loops.
   const setSlug = useCallback(
     (value: PathValue<T, Path<T>>, prevSlug?: PathValue<T, Path<T>>) => {
-      if (value) {
+      if (typeof value === "string") {
         const cleanedSlug = slugify(value as string);
         if (cleanedSlug !== prevSlug) {
           setValue("slug" as Path<T>, cleanedSlug as PathValue<T, Path<T>>);
@@ -62,7 +62,7 @@ export const useAutoSlug = <
 
   // Auto update slug from name as long as auto slug is not disabled.
   useEffect(() => {
-    if (name && !disableAutoSlug.current) {
+    if (!disableAutoSlug.current) {
       setSlug(name);
     }
   }, [name, setSlug]);
@@ -103,7 +103,8 @@ export const useAutoSlug = <
     disableAutoSlug.current = false;
     setValue(
       "slug" as Path<T>,
-      slugify(name as string) as PathValue<T, Path<T>>
+      slugify(name as string) as PathValue<T, Path<T>>,
+      { shouldDirty: true }
     );
   }, [name, setValue]);
 

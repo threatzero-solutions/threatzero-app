@@ -1,10 +1,16 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
 import CourseEnrollmentsInput from "../../admin-panel/organizations/components/CourseEnrollmentsInput";
 import { DeepPartial, FormProvider, useForm } from "react-hook-form";
 import { Organization } from "../../../types/entities";
 import GroupMembersTable from "../components/GroupMembersTable";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { classNames } from "../../../utils/core";
+import InlineNotice from "../../../components/layouts/InlineNotice";
+
+const ORGANIZATION_TRAINING_ADMIN_GROUP_NAME = "Organization Training Admin";
+const UNIT_TRAINING_ADMIN_GROUP_NAME = "Training Admin";
 
 const MyOrganizationTraining: React.FC = () => {
   const {
@@ -12,7 +18,28 @@ const MyOrganizationTraining: React.FC = () => {
     myOrganizationLoading,
     isUnitContext,
     currentUnitSlug,
+    roleGroups,
+    roleGroupsLoading,
   } = useContext(MyOrganizationContext);
+  const { isGlobalAdmin } = useAuth();
+
+  const trainingAdminGroupName = useMemo(
+    () =>
+      isUnitContext
+        ? UNIT_TRAINING_ADMIN_GROUP_NAME
+        : ORGANIZATION_TRAINING_ADMIN_GROUP_NAME,
+    [isUnitContext]
+  );
+
+  const trainingAdminGroupId = useMemo(
+    () => roleGroups?.find((g) => g.name === trainingAdminGroupName)?.id,
+    [roleGroups, trainingAdminGroupName]
+  );
+
+  const trainingAdminGroupNotFound = useMemo(
+    () => !roleGroupsLoading && !trainingAdminGroupId,
+    [roleGroupsLoading, trainingAdminGroupId]
+  );
 
   const enrollmentFormMethods = useForm<DeepPartial<Organization>>({
     values: myOrganization ?? {},
@@ -41,23 +68,44 @@ const MyOrganizationTraining: React.FC = () => {
                 />
               </LargeFormSection>
             )}
-            <LargeFormSection
-              heading="Training Admins"
-              subheading={`Grant access to manage training for this ${
-                isUnitContext ? "unit" : "organization"
-              }.`}
-              defaultOpen
-            >
-              <div className="space-y-2">
-                <GroupMembersTable
-                  organizationId={myOrganization.id}
-                  unitSlug={currentUnitSlug}
-                  joinText="Add Training Admin"
-                  leaveText="Revoke Access"
-                  groupId={""}
-                />
-              </div>
-            </LargeFormSection>
+            {(!trainingAdminGroupNotFound || isGlobalAdmin) && (
+              <LargeFormSection
+                heading="Training Admins"
+                subheading={`Grant access to manage training for this ${
+                  isUnitContext ? "unit" : "organization"
+                }.`}
+                defaultOpen
+              >
+                {roleGroupsLoading ? (
+                  <div className="animate-pulse rounded bg-slate-200 w-full h-48" />
+                ) : (
+                  <div className="space-y-4">
+                    {trainingAdminGroupNotFound && (
+                      <InlineNotice
+                        level="warning"
+                        heading="Training Admin Role Group Unavailable"
+                        body={`No role group exists with name "${trainingAdminGroupName}". Please make sure an appropriate role group exists with this name.`}
+                      />
+                    )}
+                    <div
+                      className={classNames(
+                        trainingAdminGroupNotFound
+                          ? "grayscale pointer-events-none opacity-60"
+                          : ""
+                      )}
+                    >
+                      <GroupMembersTable
+                        organizationId={myOrganization.id}
+                        unitSlug={currentUnitSlug}
+                        joinText="Add Training Admin"
+                        leaveText="Revoke Access"
+                        groupId={""}
+                      />
+                    </div>
+                  </div>
+                )}
+              </LargeFormSection>
+            )}
           </div>
         </FormProvider>
       )}

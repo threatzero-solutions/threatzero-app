@@ -3,52 +3,44 @@ import { Organization, Unit } from "../../types/entities";
 import { useAuth } from "../auth/useAuth";
 import {
   getOrganizationBySlug,
+  getOrganizationIdpRoleGroups,
   getUnits,
-  saveOrganization,
-  saveUnit,
 } from "../../queries/organizations";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import { DeepPartial } from "react-hook-form";
+import { KeycloakGroupDto } from "../../types/api";
 
 export interface MyOrganizationContextType {
   myOrganizationSlug?: string | null;
   myOrganization?: Organization | null;
   myOrganizationLoading: boolean;
-  saveOrganization: (data: DeepPartial<Organization>) => void;
-  saveOrganizationPending: boolean;
-  saveOrganizationSuccess: boolean;
-  saveOrganizationError: boolean;
+  invalidateOrganizationQuery: () => void;
   allUnits?: Unit[] | null;
   allUnitsLoading: boolean;
   currentUnitSlug?: string;
   currentUnit?: Unit | null;
   currentUnitLoading: boolean;
-  saveCurrentUnit: (data: DeepPartial<Unit>) => void;
-  saveCurrentUnitPending: boolean;
-  saveCurrentUnitSuccess: boolean;
-  saveCurrentUnitError: boolean;
+  invalidateCurrentUnitQuery: () => void;
+  invalidateAllUnitsQuery: () => void;
   unitsPath?: string | null;
   setUnitsPath: (
     unitsPath: string | null | ((prevUnitsPath: string | null) => string | null)
   ) => void;
   isUnitContext: boolean;
+  roleGroups?: KeycloakGroupDto[] | null;
+  roleGroupsLoading: boolean;
 }
 
 export const MyOrganizationContext = createContext<MyOrganizationContextType>({
   myOrganizationLoading: false,
-  saveOrganization: () => {},
-  saveOrganizationPending: false,
-  saveOrganizationSuccess: false,
-  saveOrganizationError: false,
+  invalidateOrganizationQuery: () => {},
   allUnitsLoading: false,
   currentUnitLoading: false,
-  saveCurrentUnit: () => {},
-  saveCurrentUnitPending: false,
-  saveCurrentUnitSuccess: false,
-  saveCurrentUnitError: false,
+  invalidateCurrentUnitQuery: () => {},
+  invalidateAllUnitsQuery: () => {},
   setUnitsPath: () => {},
   isUnitContext: false,
+  roleGroupsLoading: false,
 });
 
 export interface MyOrganizationContextProviderProps extends PropsWithChildren {}
@@ -75,20 +67,11 @@ export const MyOrganizationContextProvider: React.FC<
 
   const queryClient = useQueryClient();
 
-  const {
-    mutate: saveOrganizationMutate,
-    isPending: saveOrganizationPending,
-    isSuccess: saveOrganizationSuccess,
-    isError: saveOrganizationError,
-  } = useMutation({
-    mutationFn: (data: DeepPartial<Organization>) =>
-      saveOrganization(data as Partial<Organization>),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["organization", "slug", data.slug],
-      });
-    },
-  });
+  const invalidateOrganizationQuery = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["organization", "slug", myOrganizationSlug],
+    });
+  }, [queryClient, myOrganizationSlug]);
 
   const { data: allUnits, isLoading: allUnitsLoading } = useQuery({
     queryKey: [
@@ -151,25 +134,36 @@ export const MyOrganizationContextProvider: React.FC<
     enabled: !!myOrganizationSlug && !!currentUnitSlug,
   });
 
-  const {
-    mutate: saveCurrentUnitMutate,
-    isPending: saveCurrentUnitPending,
-    isSuccess: saveCurrentUnitSuccess,
-    isError: saveCurrentUnitError,
-  } = useMutation({
-    mutationFn: (data: DeepPartial<Unit>) => saveUnit(data as Partial<Unit>),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          "unit",
-          "slug",
-          {
-            ["organization.slug"]: myOrganizationSlug,
-            slug: data.slug,
-          },
-        ],
-      });
-    },
+  const invalidateAllUnitsQuery = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["units"],
+    });
+  }, [queryClient]);
+
+  const invalidateCurrentUnitQuery = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: [
+        "unit",
+        "slug",
+        {
+          ["organization.slug"]: myOrganizationSlug,
+          slug: currentUnitSlug,
+        },
+      ],
+    });
+    invalidateAllUnitsQuery();
+  }, [
+    queryClient,
+    myOrganizationSlug,
+    currentUnitSlug,
+    invalidateAllUnitsQuery,
+  ]);
+
+  const { data: roleGroups, isLoading: roleGroupsLoading } = useQuery({
+    queryKey: ["roleGroups", myOrganization?.id] as const,
+    queryFn: ({ queryKey }) =>
+      queryKey[1] ? getOrganizationIdpRoleGroups(queryKey[1]) : null,
+    enabled: !!myOrganization?.id,
   });
 
   return (
@@ -178,22 +172,19 @@ export const MyOrganizationContextProvider: React.FC<
         myOrganizationSlug,
         myOrganization,
         myOrganizationLoading,
-        saveOrganization: saveOrganizationMutate,
-        saveOrganizationPending,
-        saveOrganizationSuccess,
-        saveOrganizationError,
+        invalidateOrganizationQuery,
         allUnits,
         allUnitsLoading,
         currentUnitSlug,
         currentUnit,
         currentUnitLoading,
-        saveCurrentUnit: saveCurrentUnitMutate,
-        saveCurrentUnitPending,
-        saveCurrentUnitSuccess,
-        saveCurrentUnitError,
+        invalidateCurrentUnitQuery,
+        invalidateAllUnitsQuery,
         unitsPath,
         setUnitsPath,
         isUnitContext: !!currentUnitSlug,
+        roleGroups,
+        roleGroupsLoading,
       }}
     >
       {children}

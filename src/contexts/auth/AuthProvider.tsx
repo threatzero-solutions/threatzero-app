@@ -81,6 +81,7 @@ export interface AuthContextType {
   hasMultipleOrganizationAccess: boolean;
   myOrganizationSlug?: string;
   myUnitSlug?: string;
+  isGlobalAdmin: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -93,6 +94,7 @@ export const AuthContext = createContext<AuthContextType>({
   interceptorReady: false,
   hasMultipleUnitAccess: false,
   hasMultipleOrganizationAccess: false,
+  isGlobalAdmin: false,
 });
 
 const _keycloak = new Keycloak(configJson.keycloak.config as KeycloakConfig);
@@ -276,7 +278,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     );
   }, [interceptorReady]);
 
-  const hasMultipleOrganizationAccess = useMemo(
+  const isGlobalAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN]),
     [hasPermissions]
   );
@@ -293,9 +295,10 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         accessTokenClaims,
         interceptorReady,
         hasMultipleUnitAccess,
-        hasMultipleOrganizationAccess,
+        hasMultipleOrganizationAccess: isGlobalAdmin,
         myOrganizationSlug,
         myUnitSlug,
+        isGlobalAdmin,
       }}
     >
       {keycloak ? (

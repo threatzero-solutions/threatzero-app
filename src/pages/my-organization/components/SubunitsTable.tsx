@@ -12,11 +12,13 @@ import {
   ExpandedState,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { Unit } from "../../../types/entities";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import EditOrganizationBasic from "./EditOrganizationBasic";
 
 const DEPTH_COLORS = [
   "bg-red-500",
@@ -42,6 +44,7 @@ const DEPTH_COLORS = [
 const unitsColumnHelper = createColumnHelper<Unit>();
 
 interface SubunitsTableProps {
+  organizationId: string;
   units?: Unit[] | null;
   unitsLoading?: boolean;
   unitId?: string;
@@ -54,6 +57,7 @@ interface SubunitsTableProps {
 }
 
 const SubunitsTable: React.FC<SubunitsTableProps> = ({
+  organizationId,
   units,
   unitsLoading = false,
   unitId,
@@ -64,20 +68,10 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
   unitsLabelSingular = "Unit",
   unitsLabelPlural = "Units",
 }) => {
+  const [addBaseOrganizationOpen, setAddBaseOrganizationOpen] = useState(false);
+
   const [unitsExpanded, setUnitsExpanded] = useImmer<ExpandedState>(true);
   const [unitsSearch, setUnitsSearch] = useImmer<string>("");
-  // const { data: units, isLoading: unitsLoading } = useQuery({
-  //   queryKey: [
-  //     "units",
-  //     {
-  //       [`organization.${organizationIdType}`]: organizationId,
-  //       order: { createdTimestamp: "DESC" },
-  //       limit: 10000,
-  //     },
-  //   ] as const,
-  //   queryFn: ({ queryKey }) => getUnits(queryKey[1]),
-  //   enabled: !!organizationId,
-  // });
 
   const thisUnit = useMemo(() => {
     if (units) {
@@ -225,34 +219,48 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
 
   return nestedUnits.length > 0 || showOnEmtpy ? (
     render(
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <button
-            type="button"
-            className={classNames(
-              "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
-              "inline-flex items-center gap-x-1"
-            )}
-            // onClick={() => handleNewUser()}
-          >
-            <PlusIcon className="size-4 inline" />
-            New {unitsLabelSingular}
-          </button>
-          <FilterBar
-            searchOptions={{
-              placeholder: "Search by name or email...",
-              searchQuery: unitsSearch,
-              setSearchQuery: setUnitsSearch,
-            }}
+      <>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <button
+              type="button"
+              className={classNames(
+                "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
+                "inline-flex items-center gap-x-1"
+              )}
+              onClick={() => setAddBaseOrganizationOpen(true)}
+            >
+              <PlusIcon className="size-4 inline" />
+              New {unitsLabelSingular}
+            </button>
+            <FilterBar
+              searchOptions={{
+                placeholder: "Search by name or email...",
+                searchQuery: unitsSearch,
+                setSearchQuery: setUnitsSearch,
+              }}
+            />
+          </div>
+          <BaseTable
+            table={unitsTable}
+            isLoading={unitsLoading}
+            showFooter={false}
+            noRowsMessage={`No ${unitsLabelPlural.toLowerCase()} found.`}
           />
         </div>
-        <BaseTable
-          table={unitsTable}
-          isLoading={unitsLoading}
-          showFooter={false}
-          noRowsMessage={`No ${unitsLabelPlural.toLowerCase()} found.`}
-        />
-      </div>
+        <SlideOver
+          open={addBaseOrganizationOpen}
+          setOpen={setAddBaseOrganizationOpen}
+        >
+          <EditOrganizationBasic
+            setOpen={setAddBaseOrganizationOpen}
+            create
+            organizationId={organizationId}
+            parentUnitId={thisUnit?.id}
+            level="unit"
+          />
+        </SlideOver>
+      </>
     )
   ) : (
     <></>

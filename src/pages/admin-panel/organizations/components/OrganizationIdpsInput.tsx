@@ -106,8 +106,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
   const [editIdpSliderOpen, setEditIdpSliderOpen] = useState(false);
   const [activeIdp, setActiveIdp] = useState<OrganizationIdpDto | undefined>();
 
-  const { hasPermissions } = useAuth();
-  const hasAdminLevel = hasPermissions([LEVEL.ADMIN]);
+  const { isGlobalAdmin } = useAuth();
 
   const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
 
@@ -192,7 +191,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
           >
             Add Identity Provider
           </button>
-          {hasAdminLevel && (
+          {isGlobalAdmin && (
             <Popover as={Fragment}>
               {({ open, close }) => (
                 <>

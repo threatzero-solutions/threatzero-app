@@ -54,7 +54,7 @@ const MyDashboard: React.FC = () => {
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
             Safety Contact
           </h3>
-          <p className="mt-1 text-gray-500 flex flex-col">
+          <div className="mt-1 text-gray-500 flex flex-col">
             {orgsLoading ? (
               new Array(3)
                 .fill(0)
@@ -69,7 +69,7 @@ const MyDashboard: React.FC = () => {
             ) : (
               "Safety contact not found."
             )}
-          </p>
+          </div>
         </div>
         {/* Policies & Procedures */}
         <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">

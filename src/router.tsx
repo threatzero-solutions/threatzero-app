@@ -46,6 +46,7 @@ import MyOrganizationUnits from "./pages/my-organization/tabs/MyOrganizationUnit
 import MyOrganizationUsers from "./pages/my-organization/tabs/MyOrganizationUsers";
 import MyOrganizationSafety from "./pages/my-organization/tabs/MyOrganizationSafety";
 import MyOrganizationTraining from "./pages/my-organization/tabs/MyOrganizationTraining";
+import MyOrganizationSettings from "./pages/my-organization/tabs/MyOrganizationSettings";
 
 export const router = createBrowserRouter(
   [
@@ -382,6 +383,11 @@ export const router = createBrowserRouter(
                       path: "safety",
                       handle: { title: "Safety" },
                       element: <MyOrganizationSafety />,
+                    },
+                    {
+                      path: "settings",
+                      handle: { title: "Settings" },
+                      element: <MyOrganizationSettings />,
                     },
                     {
                       path: "*?",

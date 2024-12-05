@@ -27,7 +27,7 @@ const IconButton = <T extends React.ElementType = "button">({
   return (
     <Component
       className={classNames(
-        "inline-flex gap-1 items-center min-w-max rounded-md px-2.5 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-inset cursor-pointer transition-colors",
+        "inline-flex gap-1 items-center min-w-max rounded-md px-2.5 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-inset enabled:cursor-pointer transition-colors",
         className
       )}
       {...props}

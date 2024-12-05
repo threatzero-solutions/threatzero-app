@@ -1,4 +1,11 @@
-import { Combobox } from "@headlessui/react";
+import {
+  Combobox,
+  ComboboxButton,
+  ComboboxInput,
+  ComboboxOption,
+  ComboboxOptions,
+  Label,
+} from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { Audience } from "../../../types/entities";
 import { getTrainingAudiences } from "../../../queries/training";
@@ -79,26 +86,26 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
       <div>
         <Combobox as="div" onChange={handleAddAudience}>
           {label && (
-            <Combobox.Label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
+            <Label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
               {label}
-            </Combobox.Label>
+            </Label>
           )}
           <div className="relative">
-            <Combobox.Input
+            <ComboboxInput
               className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
               onChange={(event) => setAudienceQuery(event.target.value)}
               placeholder="Search audiences..."
               displayValue={() => ""}
             />
-            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
+            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
               <ChevronUpDownIcon
                 className="h-5 w-5 text-gray-400"
                 aria-hidden="true"
               />
-            </Combobox.Button>
+            </ComboboxButton>
 
-            <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-              <Combobox.Option
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+              <ComboboxOption
                 value={null}
                 disabled={true}
                 className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-500"
@@ -110,17 +117,17 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
                 >
                   + Create New Audience
                 </button>
-              </Combobox.Option>
+              </ComboboxOption>
               {audiences &&
                 audiences.length > 0 &&
                 audiences.map((audience) => (
-                  <Combobox.Option
+                  <ComboboxOption
                     key={audience.id}
                     value={audience}
-                    className={({ active }) =>
+                    className={({ focus }) =>
                       classNames(
                         "relative cursor-default select-none py-2 pl-3 pr-9",
-                        active ? "bg-secondary-600 text-white" : "text-gray-900"
+                        focus ? "bg-secondary-600 text-white" : "text-gray-900"
                       )
                     }
                   >
@@ -129,9 +136,9 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
                         {humanizeSlug(audience.slug)}
                       </span>
                     }
-                  </Combobox.Option>
+                  </ComboboxOption>
                 ))}
-            </Combobox.Options>
+            </ComboboxOptions>
           </div>
         </Combobox>
         <div className="flex justify-between mt-3">
