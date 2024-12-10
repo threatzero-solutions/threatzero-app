@@ -8,6 +8,7 @@ import {
   LmsTrainingTokenValue,
 } from "../types/entities";
 import {
+  buildUrl,
   deleteOne,
   download,
   findMany,
@@ -121,6 +122,9 @@ export const isUnitSlugUnique = (organizationId: string, slug: string) =>
 export const getLocations = (query?: ItemFilterQueryParams) =>
   findMany<Location>("/organizations/locations/", query);
 
+export const getLocation = (id?: Location["id"]) =>
+  findOneByIdOrFail<Location>("/organizations/locations/", id);
+
 export const generateQrCode = async (locationId: string) => {
   const url = `${API_BASE_URL}/organizations/locations/${locationId}/sos-qr-code/`;
   return axios
@@ -180,6 +184,47 @@ export const importOrganizationIdpMetadata = <
   insertOne<T, Record<string, string>>(
     `/organizations/organizations/${id}/idps/load-imported-config/${protocol}/`,
     payload
+  );
+
+export const saveOrganizationUser = (
+  id: Organization["id"],
+  user: DeepPartial<OrganizationUser>
+) => save<OrganizationUser>(`/organizations/organizations/${id}/users/`, user);
+
+export const assignOrganizationUserToRoleGroup = (
+  id: Organization["id"],
+  userId: string,
+  groupOptions: {
+    groupId?: string;
+    groupPath?: string;
+  }
+) =>
+  axios.post(
+    buildUrl(
+      `/organizations/organizations/${id}/users/${userId}/assign-role-group/`
+    ),
+    null,
+    {
+      params: groupOptions,
+    }
+  );
+
+export const revokeOrganizationUserToRoleGroup = (
+  id: Organization["id"],
+  userId: string,
+  groupOptions: {
+    groupId?: string;
+    groupPath?: string;
+  }
+) =>
+  axios.post(
+    buildUrl(
+      `/organizations/organizations/${id}/users/${userId}/revoke-role-group/`
+    ),
+    null,
+    {
+      params: groupOptions,
+    }
   );
 
 export const createOrganizationIdp = (

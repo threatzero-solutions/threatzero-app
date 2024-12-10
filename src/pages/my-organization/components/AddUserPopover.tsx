@@ -7,21 +7,25 @@ import {
   PopoverButton,
   PopoverPanel,
 } from "@headlessui/react";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ReactNode, useEffect, useMemo } from "react";
 import { Fragment } from "react/jsx-runtime";
-import { OrganizationUser } from "../../../types/api";
 import { useImmer } from "use-immer";
-import { useQuery } from "@tanstack/react-query";
-import { getOrganizationUsers } from "../../../queries/organizations";
 import { useDebounceValue } from "usehooks-ts";
 import PillBadge from "../../../components/PillBadge";
 import Loader from "../../../components/layouts/Loader";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { getOrganizationUsers } from "../../../queries/organizations";
+import { OrganizationUser } from "../../../types/api";
+import { classNames } from "../../../utils/core";
 
 interface AddUserFormProps {
   onAddUsers?: (users: OrganizationUser[], close: () => void) => void;
   organizationId: string;
   unitSlug?: string;
+  isPending?: boolean;
+  appendQuery?: ItemFilterQueryParams;
   close: () => void;
 }
 
@@ -39,6 +43,8 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
   onAddUsers = () => {},
   organizationId,
   unitSlug,
+  isPending = false,
+  appendQuery = {},
   close,
 }) => {
   const [selectedUsers, setSelectedUsers] = useImmer<OrganizationUser[]>([]);
@@ -49,6 +55,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
       "organizations-users",
       organizationId,
       {
+        ...appendQuery,
         search: debouncedQuery,
         unit: unitSlug,
         limit: 20,
@@ -72,7 +79,8 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
     };
   }, [setSelectedUsers, setQuery]);
 
-  const handleToggleUser = (user: OrganizationUser) => {
+  const handleToggleUser = (user: OrganizationUser | null) => {
+    if (!user) return;
     if (selectedUsers.findIndex((u) => u.id === user.id) > -1) {
       setSelectedUsers((draft) => draft.filter((u) => u.id !== user.id));
     } else {
@@ -121,6 +129,15 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
                   {formatUser(user)}
                 </ComboboxOption>
               ))}
+              {query && users.length === 0 && (
+                <ComboboxOption
+                  value={null}
+                  disabled
+                  className="relative cursor-default select-none py-2 px-3 text-gray-900"
+                >
+                  No users found.
+                </ComboboxOption>
+              )}
             </ComboboxOptions>
           </Combobox>
           <div className="flex gap-2 flex-col items-start">
@@ -139,8 +156,11 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
         <button
           type="button"
           onClick={() => onAddUsers(selectedUsers, close)}
-          className="inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-sm enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto"
-          disabled={selectedUsers.length === 0}
+          className={classNames(
+            "inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-sm enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto",
+            isPending ? "animate-pulse" : ""
+          )}
+          disabled={selectedUsers.length === 0 || isPending}
         >
           Add
         </button>

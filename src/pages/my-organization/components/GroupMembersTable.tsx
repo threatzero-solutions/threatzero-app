@@ -1,22 +1,27 @@
-import { createColumnHelper } from "@tanstack/react-table";
-import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import { OrganizationUser } from "../../../types/api";
-import { useMemo } from "react";
-import { useDebounceValue } from "usehooks-ts";
-import { useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { useQuery } from "@tanstack/react-query";
-import { getOrganizationUsers, getUnits } from "../../../queries/organizations";
-import { Organization } from "../../../types/entities";
-import { classNames } from "../../../utils/core";
-import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import {
   ArrowRightEndOnRectangleIcon,
   ArrowRightStartOnRectangleIcon,
 } from "@heroicons/react/20/solid";
-import { useAuth } from "../../../contexts/auth/useAuth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useCallback, useMemo } from "react";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
 import FilterBar from "../../../components/layouts/FilterBar";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import {
+  assignOrganizationUserToRoleGroup,
+  getOrganizationUsers,
+  getUnits,
+  revokeOrganizationUserToRoleGroup,
+} from "../../../queries/organizations";
+import { OrganizationUser } from "../../../types/api";
+import { Organization } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
 import AddUserPopover from "./AddUserPopover";
 
 const columnHelper = createColumnHelper<OrganizationUser>();
@@ -68,6 +73,66 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
     [units, unitSlug]
   );
 
+  const queryClient = useQueryClient();
+  const invalidateGroupMembersQuery = useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        predicate: ({ queryKey }) =>
+          queryKey.length >= 3 &&
+          queryKey[0] === "organizations-users" &&
+          !!queryKey[2] &&
+          typeof queryKey[2] === "object" &&
+          "unit" in queryKey[2] &&
+          queryKey[2].unit === unitSlug &&
+          "groups.ids" in queryKey[2] &&
+          Array.isArray(queryKey[2]["groups.ids"]) &&
+          queryKey[2]["groups.ids"].includes(groupId),
+      }),
+    [queryClient, unitSlug, groupId]
+  );
+
+  const { mutate: admitUsers, isPending: isAdmittingUsers } = useMutation({
+    mutationFn: ({ users }: { users: OrganizationUser[]; close: () => void }) =>
+      Promise.all(
+        users.map((u) =>
+          assignOrganizationUserToRoleGroup(organizationId, u.id, {
+            groupId,
+          })
+        )
+      ),
+    onSuccess: (_data, { close }) => {
+      close();
+      invalidateGroupMembersQuery();
+    },
+  });
+
+  const { mutate: revokeUser, isPending: isRevokingUser } = useMutation({
+    mutationFn: (user: OrganizationUser) =>
+      revokeOrganizationUserToRoleGroup(organizationId, user.id, {
+        groupId,
+      }),
+    onSuccess: () => {
+      invalidateGroupMembersQuery();
+    },
+  });
+
+  const handleAddUsersToGroup = (
+    users: OrganizationUser[],
+    close: () => void
+  ) => {
+    admitUsers({
+      users,
+      close,
+    });
+  };
+
+  const handleRevokeUserFromGroup = useCallback(
+    (user: OrganizationUser) => {
+      revokeUser(user);
+    },
+    [revokeUser]
+  );
+
   const columns = useMemo(
     () => [
       columnHelper.accessor((t) => t.email, {
@@ -84,19 +149,24 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
       }),
       columnHelper.display({
         id: "actions",
-        cell: () => (
+        cell: ({ row: { original } }) => (
           <ButtonGroup className="w-full justify-end">
             <IconButton
-              className="bg-red-500 ring-transparent text-white hover:bg-red-600"
+              className={classNames(
+                "bg-red-500 ring-transparent text-white enabled:hover:bg-red-600",
+                isRevokingUser ? "animate-pulse" : ""
+              )}
               icon={ArrowRightStartOnRectangleIcon}
               text={leaveText}
+              onClick={() => handleRevokeUserFromGroup(original)}
+              disabled={isRevokingUser}
             />
           </ButtonGroup>
         ),
         enableSorting: false,
       }),
     ],
-    [leaveText]
+    [leaveText, handleRevokeUserFromGroup, isRevokingUser]
   );
   return (
     <>
@@ -104,13 +174,19 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
         <AddUserPopover
           organizationId={organizationId}
           unitSlug={unitSlug}
+          onAddUsers={handleAddUsersToGroup}
+          isPending={isAdmittingUsers}
+          appendQuery={{
+            ["groups.ids"]: [groupId],
+            ["groups.op"]: "none",
+          }}
           button={
             <button
               type="button"
               className={classNames(
                 "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
                 "inline-flex items-center gap-x-1"
-              )} // onClick={() => handleNewUser()}
+              )}
             >
               <ArrowRightEndOnRectangleIcon className="size-4 inline" />
               {joinText}

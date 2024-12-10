@@ -6,6 +6,8 @@ export interface Base {
   updatedOn: string;
 }
 
+export type Transient<T extends Base> = Omit<T, keyof Base> & Partial<Base>;
+
 export interface Paginated<T> {
   results: T[];
   count: number;

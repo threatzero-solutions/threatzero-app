@@ -1,15 +1,16 @@
 import { useContext, useMemo } from "react";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
-import SubunitsTable from "../components/SubunitsTable";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
-import SOSLocationsTable from "../components/SOSLocationsTable";
-import GroupMembersTable from "../components/GroupMembersTable";
-import { useAuth } from "../../../contexts/auth/useAuth";
 import InlineNotice from "../../../components/layouts/InlineNotice";
+import {
+  ORGANIZATION_ADMIN_GROUP_NAME,
+  UNIT_ADMIN_GROUP_NAME,
+} from "../../../constants/organizations";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
 import { classNames } from "../../../utils/core";
-
-const UNIT_ADMIN_GROUP_NAME = "Unit Admin";
-const ORGANIZATION_ADMIN_GROUP_NAME = "Organization Admin";
+import GroupMembersTable from "../components/GroupMembersTable";
+import SOSLocationsTable from "../components/SOSLocationsTable";
+import SubunitsTable from "../components/SubunitsTable";
 
 const MyOrganizationUnits: React.FC = () => {
   const {
@@ -18,6 +19,7 @@ const MyOrganizationUnits: React.FC = () => {
     myOrganization,
     myOrganizationLoading,
     currentUnitSlug,
+    currentUnit,
     setUnitsPath,
     isUnitContext,
     roleGroups,
@@ -69,13 +71,13 @@ const MyOrganizationUnits: React.FC = () => {
               </LargeFormSection>
             )}
           />
-          {isUnitContext && currentUnitSlug && (
+          {isUnitContext && currentUnit && (
             <LargeFormSection
               heading="SOS Locations"
               subheading="Provide physical locations for safety concern (SOS) posters and other reporting tools."
               defaultOpen
             >
-              <SOSLocationsTable unitId={currentUnitSlug} unitIdType="slug" />
+              <SOSLocationsTable unitId={currentUnit.id} />
             </LargeFormSection>
           )}
           {(!organizationAdminGroupNotFound || isGlobalAdmin) && (
@@ -115,7 +117,7 @@ const MyOrganizationUnits: React.FC = () => {
                           : "Add Organization Admin"
                       }
                       leaveText="Revoke Access"
-                      groupId={""}
+                      groupId={organizationAdminGroupId ?? ""}
                     />
                   </div>
                 </div>

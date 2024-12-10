@@ -5,7 +5,7 @@ import { useAuth } from "../../../contexts/auth/useAuth";
 import { useMutation } from "@tanstack/react-query";
 import { deleteOrganization, deleteUnit } from "../../../queries/organizations";
 import InlineNotice from "../../../components/layouts/InlineNotice";
-import { classNames } from "../../../utils/core";
+import { classNames, Path } from "../../../utils/core";
 import { TrashIcon } from "@heroicons/react/20/solid";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import { CoreContext } from "../../../contexts/core/core-context";
@@ -44,22 +44,31 @@ const MyOrganizationSettings: React.FC = () => {
   const deleteDisabled = useMemo(() => {
     if (
       isUnitContext &&
-      accessTokenClaims?.unit &&
-      accessTokenClaims?.unit === currentUnit?.slug
+      unitsPath &&
+      accessTokenClaims?.organization_unit_path &&
+      typeof accessTokenClaims.organization_unit_path === "string"
     ) {
-      return true;
+      const userPath = new Path(accessTokenClaims.organization_unit_path);
+      const thisPath = new Path(unitsPath);
+
+      // User org unit path should be absolute, meaning it includes the organization in the path.
+      // To avoid naming collisions b/w org and unit, behead the user path to remove the org name.
+      // Then check if the user path includes the node (or final unit) of the current units path.
+      if (userPath.isAbsolute && userPath.behead().includes(thisPath.node)) {
+        return true;
+      }
     }
 
     if (
       !isUnitContext &&
       accessTokenClaims?.organization &&
-      accessTokenClaims?.organization === myOrganization?.slug
+      accessTokenClaims.organization === myOrganization?.slug
     ) {
       return true;
     }
 
     return false;
-  }, [isUnitContext, accessTokenClaims, currentUnit, myOrganization]);
+  }, [isUnitContext, accessTokenClaims, myOrganization, unitsPath]);
 
   const deleteTitle = useMemo(
     () =>
@@ -126,9 +135,9 @@ const MyOrganizationSettings: React.FC = () => {
                     disabled={deleteDisabled}
                     title={
                       deleteDisabled
-                        ? `Cannot delete own ${
+                        ? `Cannot delete ${
                             isUnitContext ? "unit" : "organization"
-                          }.`
+                          } that you belong to.`
                         : ""
                     }
                   />

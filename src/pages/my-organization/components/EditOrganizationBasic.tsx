@@ -25,9 +25,9 @@ import {
 import {
   FieldType,
   OrganizationBase,
-  Base,
   Unit,
   Organization,
+  Transient,
 } from "../../../types/entities";
 import { slugify, classNames } from "../../../utils/core";
 import Input from "../../../components/forms/inputs/Input";
@@ -44,16 +44,15 @@ interface EditOrganizationBasicProps {
   parentUnitId?: string;
 }
 
-type OrganizationBaseValue = Omit<
-  OrganizationBase,
-  "safetyContact" | "policiesAndProcedures" | keyof Base
-> &
-  Partial<Base> & {
-    parentUnit?: Pick<Unit, "id"> | null;
-    organization?: Pick<Organization, "id">;
-  };
+type TransientOrganizationBase = Omit<
+  Transient<OrganizationBase>,
+  "safetyContact" | "policiesAndProcedures"
+> & {
+  parentUnit?: Pick<Unit, "id"> | null;
+  organization?: Pick<Organization, "id">;
+};
 
-const INITIAL_ORGANIZATION_BASE: OrganizationBaseValue = {
+const INITIAL_ORGANIZATION_BASE: TransientOrganizationBase = {
   name: "",
   slug: "",
   address: "",
@@ -89,11 +88,11 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   const isOrganization = level === "organization";
 
   const data = useMemo(() => {
-    const baseData: OrganizationBaseValue =
+    const baseData: TransientOrganizationBase =
       (isOrganization ? organizationData : unitData) ??
       INITIAL_ORGANIZATION_BASE;
 
-    const data: OrganizationBaseValue = {
+    const data: TransientOrganizationBase = {
       id: baseData.id,
       name: baseData.name,
       slug: baseData.slug,
@@ -187,10 +186,10 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   });
 
   const { mutate: save, isPending } = useMutation({
-    mutationFn: (data: OrganizationBaseValue) =>
+    mutationFn: (data: TransientOrganizationBase) =>
       (isOrganization
         ? saveOrganization(data)
-        : saveUnit(data)) as Promise<OrganizationBaseValue>,
+        : saveUnit(data)) as Promise<TransientOrganizationBase>,
     onSuccess: (data) => {
       if (!isOrganization && autoAddLocation) {
         saveLocationMutation.mutate({
@@ -208,7 +207,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
     },
   });
 
-  const handleSave = (orgUnit: OrganizationBaseValue) => {
+  const handleSave = (orgUnit: TransientOrganizationBase) => {
     orgUnit.slug = slugify(orgUnit.slug ?? "");
     save(orgUnit);
   };

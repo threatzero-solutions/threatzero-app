@@ -1,16 +1,17 @@
 import { useContext, useMemo } from "react";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
-import LargeFormSection from "../../../components/forms/LargeFormSection";
-import CourseEnrollmentsInput from "../../admin-panel/organizations/components/CourseEnrollmentsInput";
 import { DeepPartial, FormProvider, useForm } from "react-hook-form";
-import { Organization } from "../../../types/entities";
-import GroupMembersTable from "../components/GroupMembersTable";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { classNames } from "../../../utils/core";
+import LargeFormSection from "../../../components/forms/LargeFormSection";
 import InlineNotice from "../../../components/layouts/InlineNotice";
-
-const ORGANIZATION_TRAINING_ADMIN_GROUP_NAME = "Organization Training Admin";
-const UNIT_TRAINING_ADMIN_GROUP_NAME = "Training Admin";
+import {
+  ORGANIZATION_TRAINING_ADMIN_GROUP_NAME,
+  UNIT_TRAINING_ADMIN_GROUP_NAME,
+} from "../../../constants/organizations";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
+import { Organization } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
+import CourseEnrollmentsInput from "../../admin-panel/organizations/components/CourseEnrollmentsInput";
+import GroupMembersTable from "../components/GroupMembersTable";
 
 const MyOrganizationTraining: React.FC = () => {
   const {
@@ -99,7 +100,7 @@ const MyOrganizationTraining: React.FC = () => {
                         unitSlug={currentUnitSlug}
                         joinText="Add Training Admin"
                         leaveText="Revoke Access"
-                        groupId={""}
+                        groupId={trainingAdminGroupId ?? ""}
                       />
                     </div>
                   </div>

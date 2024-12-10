@@ -88,7 +88,8 @@ export interface OrganizationUser {
   firstName: string;
   lastName: string;
   email: string;
-  attributes: Record<string, string[]>;
+  attributes: Record<string, string[] | undefined>;
+  groups?: string[];
 }
 
 export interface KeycloakGroupDto {

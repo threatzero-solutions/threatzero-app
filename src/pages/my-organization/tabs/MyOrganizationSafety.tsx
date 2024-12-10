@@ -10,9 +10,10 @@ import InlineNotice from "../../../components/layouts/InlineNotice";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { useMutation } from "@tanstack/react-query";
 import { saveOrganization, saveUnit } from "../../../queries/organizations";
-
-const ORGANIZATION_TAT_GROUP_NAME = "Organization TAT Member";
-const UNIT_TAT_GROUP_NAME = "Unit TAT Member";
+import {
+  ORGANIZATION_TAT_GROUP_NAME,
+  UNIT_TAT_GROUP_NAME,
+} from "../../../constants/organizations";
 
 const MyOrganizationSafety: React.FC = () => {
   const {

@@ -1,11 +1,11 @@
 import { createContext, Dispatch, PropsWithChildren, useRef } from "react";
-import { ImmerReducer, useImmerReducer } from "use-immer";
-import ErrorNotice from "../../components/layouts/notices/ErrorNotice";
 import { createPortal } from "react-dom";
 import { ErrorBoundary } from "react-error-boundary";
-import ErrorPage from "../../pages/ErrorPage";
-import SuccessNotice from "../../components/layouts/notices/SuccessNotice";
+import { ImmerReducer, useImmerReducer } from "use-immer";
+import ErrorNotice from "../../components/layouts/notices/ErrorNotice";
 import InfoNotice from "../../components/layouts/notices/InfoNotice";
+import SuccessNotice from "../../components/layouts/notices/SuccessNotice";
+import ErrorPage from "../../pages/ErrorPage";
 
 export interface AlertState {
   errorMessage?: string | string[];
@@ -67,6 +67,8 @@ const coreReducer: ImmerReducer<AlertState, AlertAction> = (state, action) => {
       break;
   }
 };
+
+const alertRoot = document.getElementById("alert-root") ?? document.body;
 
 export const AlertContextProvider: React.FC<PropsWithChildren> = ({
   children,
@@ -136,9 +138,9 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
     >
       <ErrorBoundary fallback={<ErrorPage />}>
         {children}
-        {createPortal(<SuccessNotice />, document.body)}
-        {createPortal(<InfoNotice />, document.body)}
-        {createPortal(<ErrorNotice />, document.body)}
+        {createPortal(<SuccessNotice />, alertRoot)}
+        {createPortal(<InfoNotice />, alertRoot)}
+        {createPortal(<ErrorNotice />, alertRoot)}
       </ErrorBoundary>
     </AlertContext.Provider>
   );

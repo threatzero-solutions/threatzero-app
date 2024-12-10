@@ -1,19 +1,20 @@
+import { DialogTitle } from "@headlessui/react";
 import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import Modal from "./Modal";
-import { DialogTitle } from "@headlessui/react";
-import { ModalProps } from "./Modal";
 import { classNames } from "../../../utils/core";
+import Modal, { ModalProps } from "./Modal";
 
 export interface ConfirmationModalProps extends Omit<ModalProps, "children"> {
   title: string;
   message: React.ReactNode;
   onConfirm: () => void;
+  onCancel?: () => void;
   destructive?: boolean;
   confirmText?: string;
   cancelText?: string;
+  isPending?: boolean;
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -21,14 +22,16 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   title,
   message,
   onConfirm,
+  onCancel,
   destructive = false,
   confirmText = "Confirm",
   cancelText = "Cancel",
+  isPending = false,
   ...modalProps
 }) => {
   return (
     <Modal {...modalProps} setOpen={setOpen}>
-      <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+      <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 rounded-t-lg">
         <div className="sm:flex sm:items-start">
           <div
             className={classNames(
@@ -65,15 +68,17 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </div>
         </div>
       </div>
-      <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+      <div className="bg-gray-50 rounded-b-lg px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
         <button
           type="button"
           onClick={onConfirm}
+          disabled={isPending}
           className={classNames(
             "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto",
             destructive
-              ? "bg-red-600 hover:bg-red-500"
-              : "bg-secondary-600 hover:bg-secondary-500"
+              ? "bg-red-600 enabled:hover:bg-red-500"
+              : "bg-secondary-600 enabled:hover:bg-secondary-500",
+            isPending ? "animate-pulse" : ""
           )}
         >
           {confirmText}
@@ -81,8 +86,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <button
           type="button"
           data-autofocus
-          onClick={() => setOpen(false)}
-          className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+          onClick={() => (onCancel ? onCancel() : setOpen(false))}
+          disabled={isPending}
+          className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-50 sm:mt-0 sm:w-auto"
         >
           {cancelText}
         </button>

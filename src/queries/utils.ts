@@ -11,9 +11,12 @@ export const nullFrom404 = (e: unknown) => {
   throw e;
 };
 
+export const buildUrl = (path: string) =>
+  `${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}`;
+
 export const findOneOrFail = <T>(path: string, options?: AxiosRequestConfig) =>
   axios
-    .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}`, {
+    .get<T>(buildUrl(path), {
       ...options,
     })
     .then((res) => res.data);
@@ -25,7 +28,7 @@ export const findOneByIdOrFail = <T>(
 ) =>
   id
     ? axios
-        .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id ?? ""}`, {
+        .get<T>(`${buildUrl(path)}/${id ?? ""}`, {
           ...options,
         })
         .then((res) => res.data)
@@ -45,7 +48,7 @@ export const findManyRaw = <T>(
   query: ItemFilterQueryParams = {}
 ) =>
   axios
-    .get<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`, {
+    .get<T>(`${buildUrl(path)}/`, {
       params: {
         ...query,
       },
@@ -59,23 +62,13 @@ export const insertOne = <T, R = T>(
   path: string,
   entity: DeepPartial<T>,
   options: AxiosRequestConfig = {}
-) =>
-  axios
-    .post<R>(
-      `${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`,
-      entity,
-      options
-    )
-    .then((res) => res.data);
+) => axios.post<R>(buildUrl(path), entity, options).then((res) => res.data);
 
 export const putOne = <T>(
   path: string,
   entity: DeepPartial<T>,
   options: AxiosRequestConfig = {}
-) =>
-  axios
-    .put<T>(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`, entity, options)
-    .then((res) => res.data);
+) => axios.put<T>(buildUrl(path), entity, options).then((res) => res.data);
 
 export const updateOne = <T extends { id: string }>(
   path: string,
@@ -83,11 +76,7 @@ export const updateOne = <T extends { id: string }>(
   options: AxiosRequestConfig = {}
 ) =>
   axios
-    .patch<T>(
-      `${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${entity.id ?? ""}`,
-      entity,
-      options
-    )
+    .patch<T>(`${buildUrl(path)}/${entity.id ?? ""}`, entity, options)
     .then((res) => res.data);
 
 export const save = async <T extends { id: string }>(
@@ -101,7 +90,7 @@ export const save = async <T extends { id: string }>(
 
 export const deleteOne = (path: string, id?: string) =>
   id
-    ? axios.delete(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/${id}`)
+    ? axios.delete(`${buildUrl(path)}/${id}`)
     : Promise.reject(new Error("ID must not be empty."));
 
 export const download = (
@@ -110,7 +99,7 @@ export const download = (
   options?: AxiosRequestConfig
 ) =>
   axios
-    .get(`${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}/`, {
+    .get(buildUrl(path), {
       params: query,
       responseType: "blob",
       ...options,

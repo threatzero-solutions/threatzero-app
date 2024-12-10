@@ -1,16 +1,3 @@
-import { createColumnHelper } from "@tanstack/react-table";
-import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import { OrganizationUser } from "../../../types/api";
-import { useMemo } from "react";
-import { useDebounceValue } from "usehooks-ts";
-import { useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { useQuery } from "@tanstack/react-query";
-import { getOrganizationUsers, getUnits } from "../../../queries/organizations";
-import { Organization } from "../../../types/entities";
-import { classNames, humanizeSlug } from "../../../utils/core";
-import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
-import Dropdown from "../../../components/layouts/Dropdown";
 import {
   ArrowUturnRightIcon,
   EllipsisVerticalIcon,
@@ -18,8 +5,26 @@ import {
   TrashIcon,
   UserPlusIcon,
 } from "@heroicons/react/20/solid";
-import { useAuth } from "../../../contexts/auth/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import Dropdown from "../../../components/layouts/Dropdown";
 import FilterBar from "../../../components/layouts/FilterBar";
+import Modal from "../../../components/layouts/modal/Modal";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { getOrganizationUsers, getUnits } from "../../../queries/organizations";
+import { OrganizationUser } from "../../../types/api";
+import { type Organization } from "../../../types/entities";
+import { classNames, humanizeSlug } from "../../../utils/core";
+import { canAccessTraining } from "../../../utils/organization";
+import EditOrganizationUser from "./EditOrganizationUser";
+import { default as MoveUnitsForm } from "./MoveUnitsForm";
 
 const columnHelper = createColumnHelper<OrganizationUser>();
 
@@ -32,6 +37,13 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
   organizationId,
   unitSlug,
 }) => {
+  const [editUserOpen, setEditUserOpen] = useState(false);
+  const [moveUserDialogOpen, setMoveUserDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
+  const [selectedUserToMove, setSelectedUserToMove] = useState<
+    OrganizationUser | undefined
+  >();
+
   const { hasMultipleUnitAccess } = useAuth();
 
   const [usersQuery, setUsersQuery] = useImmer<ItemFilterQueryParams>({
@@ -93,18 +105,19 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
       columnHelper.accessor((t) => t.attributes.audience, {
         id: "audience",
         header: "Training Groups",
-        cell: (info) => (
+        cell: ({ row, getValue }) => (
           <span>
-            {info
-              .getValue()
-              ?.map((a) => humanizeSlug(a))
-              ?.join(", ") ?? "—"}
+            {(canAccessTraining(row.original)
+              ? getValue()
+                  ?.map((a) => humanizeSlug(a))
+                  ?.join(", ")
+              : null) ?? "—"}
           </span>
         ),
       }),
       columnHelper.display({
         id: "actions",
-        cell: () => (
+        cell: ({ row }) => (
           <ButtonGroup className="w-full justify-end">
             <Dropdown
               valueIcon={<EllipsisVerticalIcon className="size-4" />}
@@ -116,8 +129,11 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                       <ArrowUturnRightIcon className="size-4 inline" /> Move
                     </span>
                   ),
-                  action: () => {},
-                  hidden: !thisUnit,
+                  action: () => {
+                    setSelectedUserToMove(row.original);
+                    setMoveUserDialogOpen(true);
+                  },
+                  hidden: !thisUnit || !hasMultipleUnitAccess,
                 },
                 {
                   id: "edit",
@@ -126,7 +142,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                       <PencilIcon className="size-4 inline" /> Edit
                     </span>
                   ),
-                  action: () => {},
+                  action: () => handleEditUser(row.original.id),
                 },
                 {
                   id: "delete",
@@ -144,17 +160,34 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         enableSorting: false,
       }),
     ],
-    [units?.results, thisUnit]
+    [units?.results, thisUnit, hasMultipleUnitAccess]
   );
+
+  const handleEditUser = (userId?: string) => {
+    setSelectedUserId(userId);
+    setEditUserOpen(true);
+  };
+
+  const handleNewUser = () => {
+    handleEditUser();
+  };
+
   return (
     <>
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <button
           type="button"
           className={classNames(
-            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
+            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
             "inline-flex items-center gap-x-1"
-          )} // onClick={() => handleNewUser()}
+          )}
+          disabled={!unitSlug}
+          title={
+            !unitSlug
+              ? "New users can only be added within the context of a unit."
+              : ""
+          }
+          onClick={() => handleNewUser()}
         >
           <UserPlusIcon className="size-4 inline" />
           New User
@@ -183,16 +216,23 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         showFooter={false}
         noRowsMessage="No users found."
         showSearch={false}
-        // action={
-        //   <IconButton
-        //     icon={UserPlusIcon}
-        //     className="bg-secondary-600 ring-transparent text-white hover:bg-secondary-500 px-3 py-2 text-sm"
-        //     text="Add New User"
-        //     type="button"
-        //     // onClick={() => handleNewUser()}
-        //   />
-        // }
       />
+      <SlideOver open={editUserOpen} setOpen={setEditUserOpen}>
+        <EditOrganizationUser
+          setOpen={setEditUserOpen}
+          create={!selectedUserId}
+          userId={selectedUserId}
+        />
+      </SlideOver>
+      <Modal open={moveUserDialogOpen} setOpen={setMoveUserDialogOpen}>
+        {selectedUserToMove && (
+          <MoveUnitsForm
+            organizationId={organizationId}
+            user={selectedUserToMove}
+            setOpen={setMoveUserDialogOpen}
+          />
+        )}
+      </Modal>
     </>
   );
 };

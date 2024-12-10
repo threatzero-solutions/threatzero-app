@@ -16,11 +16,11 @@ const SlideOverField: React.FC<SlideOverFieldProps> = ({
   children,
 }) => {
   return (
-    <div className="space-y-2 px-4 sm:grid sm:grid-cols-4 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5">
+    <div className="group space-y-2 px-4 sm:grid sm:grid-cols-4 sm:gap-4 sm:space-y-0 sm:px-6 sm:py-5">
       <div>
         <label
           htmlFor={name}
-          className="text-sm font-medium leading-6 text-gray-900 sm:mt-1.5 inline-flex items-center gap-1"
+          className="text-sm font-medium leading-6 text-gray-900 group-has-[input]:sm:mt-1.5 inline-flex items-center gap-1"
         >
           {label}
           {helpText && discreetHelpText && (

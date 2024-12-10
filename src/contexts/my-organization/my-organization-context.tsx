@@ -1,14 +1,14 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, PropsWithChildren, useCallback, useMemo } from "react";
-import { Organization, Unit } from "../../types/entities";
-import { useAuth } from "../auth/useAuth";
+import { useSearchParams } from "react-router";
 import {
   getOrganizationBySlug,
   getOrganizationIdpRoleGroups,
   getUnits,
 } from "../../queries/organizations";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router";
 import { KeycloakGroupDto } from "../../types/api";
+import { Organization, Unit } from "../../types/entities";
+import { useAuth } from "../auth/useAuth";
 
 export interface MyOrganizationContextType {
   myOrganizationSlug?: string | null;
@@ -29,6 +29,9 @@ export interface MyOrganizationContextType {
   isUnitContext: boolean;
   roleGroups?: KeycloakGroupDto[] | null;
   roleGroupsLoading: boolean;
+  invalidateOrganizationUsersQuery: (
+    unitsSlugs?: (string | undefined)[]
+  ) => void;
 }
 
 export const MyOrganizationContext = createContext<MyOrganizationContextType>({
@@ -41,6 +44,7 @@ export const MyOrganizationContext = createContext<MyOrganizationContextType>({
   setUnitsPath: () => {},
   isUnitContext: false,
   roleGroupsLoading: false,
+  invalidateOrganizationUsersQuery: () => {},
 });
 
 export interface MyOrganizationContextProviderProps extends PropsWithChildren {}
@@ -159,6 +163,43 @@ export const MyOrganizationContextProvider: React.FC<
     invalidateAllUnitsQuery,
   ]);
 
+  const invalidateOrganizationUsersQuery = useCallback(
+    (unitsSlugs?: (string | undefined)[]) => {
+      queryClient.invalidateQueries({
+        predicate: ({ queryKey }) => {
+          if (queryKey.length < 3) {
+            return false;
+          }
+          const [type, qOrganizationId, userIdOrQuery, query] = queryKey;
+
+          // Is this an organizations user query?
+          if (
+            !["organizations-users", "organizations-user"].includes(`${type}`)
+          )
+            return false;
+
+          // Does the query match this current organization?
+          if (qOrganizationId !== myOrganization?.id) return false;
+
+          // Does the query match this current unit?
+          const q = typeof userIdOrQuery === "string" ? query : userIdOrQuery;
+          if (
+            !q ||
+            typeof q !== "object" ||
+            !("unit" in q) ||
+            !(unitsSlugs ?? [currentUnitSlug]).includes(
+              q.unit as string | undefined
+            )
+          )
+            return false;
+
+          return true;
+        },
+      });
+    },
+    [queryClient, myOrganization?.id, currentUnitSlug]
+  );
+
   const { data: roleGroups, isLoading: roleGroupsLoading } = useQuery({
     queryKey: ["roleGroups", myOrganization?.id] as const,
     queryFn: ({ queryKey }) =>
@@ -185,6 +226,7 @@ export const MyOrganizationContextProvider: React.FC<
         isUnitContext: !!currentUnitSlug,
         roleGroups,
         roleGroupsLoading,
+        invalidateOrganizationUsersQuery,
       }}
     >
       {children}

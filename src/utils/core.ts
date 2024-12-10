@@ -212,3 +212,81 @@ export const as = <T extends typeof defaultFallback = typeof defaultFallback>(
   }
   return fallback;
 };
+
+export class Path {
+  raw_path: string;
+  segments: string[];
+
+  constructor(path: string | null | undefined | Path) {
+    this.raw_path = Path.isPath(path) ? path.path : Path.clean(path ?? "");
+    this.segments = Path.splitPath(this.raw_path || "");
+  }
+
+  public get path() {
+    return this.raw_path;
+  }
+
+  public get isAbsolute() {
+    return !!this.raw_path.startsWith("/");
+  }
+
+  public get root() {
+    return this.segments.find((s) => s);
+  }
+
+  public get node() {
+    return this.segments.reverse().find((s) => s);
+  }
+
+  public includes(pathB: string | null | undefined | Path) {
+    const segmentsB = Path.splitPath(pathB);
+
+    if (segmentsB.length === 0 || this.segments.length < segmentsB.length) {
+      return false;
+    }
+
+    const startIdx = this.segments.findIndex(
+      (segment) => segment === segmentsB[0]
+    );
+    if (startIdx === -1) {
+      return false;
+    }
+    return segmentsB.every(
+      (segment, idx) => this.segments[startIdx + idx] === segment
+    );
+  }
+
+  public slice(start: number, end?: number) {
+    return new Path(this.segments.slice(start, end).join("/"));
+  }
+
+  public behead() {
+    if (!this.isAbsolute) {
+      throw new Error("Cannot behead a relative path");
+    }
+    return this.slice(1);
+  }
+
+  public static isPath(path: unknown): path is Path {
+    if (path !== null && typeof path === "object" && path instanceof Path) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public static clean(path: string) {
+    return path.replace(/\/+/g, "/");
+  }
+
+  public static splitPath(path: string | null | undefined | Path) {
+    if (Path.isPath(path)) {
+      return path.segments;
+    }
+    if (typeof path === "string") {
+      return Path.clean(path).split("/").filter(Boolean);
+    }
+
+    return [];
+  }
+}

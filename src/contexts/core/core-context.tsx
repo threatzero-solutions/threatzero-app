@@ -1,9 +1,9 @@
 import { createContext, Dispatch, PropsWithChildren, useState } from "react";
-import { NavigationItem } from "../../types/core";
 import { ImmerReducer, useImmerReducer } from "use-immer";
 import ConfirmationModal, {
   ConfirmationModalProps,
 } from "../../components/layouts/modal/ConfirmationModal";
+import { NavigationItem } from "../../types/core";
 import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 
 export interface CoreState {
@@ -32,9 +32,11 @@ export interface CoreContextType {
   dispatch: Dispatch<CoreAction>;
 
   // OTHER
+  /** @deprecated use `ConfirmationContext` instead. */
   setConfirmationOpen: (
     confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">
   ) => void;
+  /** @deprecated use `ConfirmationContext` instead. */
   setConfirmationClose: () => void;
 }
 
