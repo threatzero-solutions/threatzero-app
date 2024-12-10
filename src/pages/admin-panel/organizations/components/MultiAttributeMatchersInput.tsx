@@ -1,27 +1,27 @@
 import {
-  OrganizationIdpDto,
-  SyncAttributeToAttributeDto,
-} from "../../../../types/api";
-import DataTable from "../../../../components/layouts/tables/DataTable";
-import Input from "../../../../components/forms/inputs/Input";
-import React, { ReactNode, useContext } from "react";
-import {
   ArrowRightIcon,
   MinusCircleIcon,
+  PlusCircleIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import React, { ReactNode, useContext } from "react";
 import {
-  useFormContext,
-  useFieldArray,
-  Controller,
-  UseFormRegister,
   Control,
+  Controller,
+  useFieldArray,
+  useFormContext,
+  UseFormRegister,
 } from "react-hook-form";
+import Input from "../../../../components/forms/inputs/Input";
 import Select from "../../../../components/forms/inputs/Select";
-import { PlusCircleIcon } from "@heroicons/react/20/solid";
-import { CoreContext } from "../../../../contexts/core/core-context";
 import InformationButton from "../../../../components/layouts/buttons/InformationButton";
+import DataTable from "../../../../components/layouts/tables/DataTable";
+import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
+import {
+  OrganizationIdpDto,
+  SyncAttributeToAttributeDto,
+} from "../../../../types/api";
 import { KeysOfType } from "../../../../types/core";
 
 type TName = KeysOfType<OrganizationIdpDto, SyncAttributeToAttributeDto[]>;
@@ -47,7 +47,8 @@ const NEW_PATTERN = {
 const MultiAttributeMatcherInput: React.FC<
   MultiAttributeMatchersInputProps & { index: number; onRemove: () => void }
 > = ({ name, index, onRemove, renderValueInput, valueLabel = "Value" }) => {
-  const { control, register, watch } = useFormContext<OrganizationIdpDto>();
+  const { control, register, watch, getFieldState } =
+    useFormContext<OrganizationIdpDto>();
   const {
     fields,
     append: appendPattern,
@@ -58,26 +59,41 @@ const MultiAttributeMatcherInput: React.FC<
   });
 
   const externalName = watch(`${name}.${index}.externalName`);
+  const theseValues = watch(`${name}.${index}`);
 
-  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+  const { setOpen: setConfirmationOpen, setClose: setConfirmationClose } =
+    useContext(ConfirmationContext);
 
   const handleRemoveSelf = () => {
-    setConfirmationOpen({
-      title: `Remove ${valueLabel} Matcher?`,
-      message: (
-        <span>
-          Are you sure you want to remove this matcher
-          {externalName && <strong> for external name "{externalName}"</strong>}
-          ? If you proceed, changes will be lost.
-        </span>
-      ),
-      onConfirm: () => {
-        onRemove();
-        setConfirmationClose();
-      },
-      destructive: true,
-      confirmText: "Remove",
-    });
+    const fieldState = getFieldState(`${name}.${index}`);
+    const shouldPrompt =
+      fieldState.isDirty &&
+      (theseValues.patterns.length > 0 ||
+        theseValues.defaultValue ||
+        theseValues.externalName);
+
+    if (shouldPrompt) {
+      setConfirmationOpen({
+        title: `Remove ${valueLabel} Matcher?`,
+        message: (
+          <span>
+            Are you sure you want to remove this matcher
+            {externalName && (
+              <strong> for external name "{externalName}"</strong>
+            )}
+            ? If you proceed, changes will be lost.
+          </span>
+        ),
+        onConfirm: () => {
+          onRemove();
+          setConfirmationClose();
+        },
+        destructive: true,
+        confirmText: "Remove",
+      });
+    } else {
+      onRemove();
+    }
   };
 
   return (

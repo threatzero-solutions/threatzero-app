@@ -1,24 +1,24 @@
-import { useCallback, useContext, useMemo } from "react";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
-import LargeFormSection from "../../../components/forms/LargeFormSection";
-import GroupMembersTable from "../components/GroupMembersTable";
-import SafetyContactInput from "../../../components/safety-management/SafetyContactInput";
-import PolicyProcedureInput from "../../../components/safety-management/PolicyProcedureInput";
-import { SafetyContact } from "../../../types/entities";
-import { classNames } from "../../../utils/core";
-import InlineNotice from "../../../components/layouts/InlineNotice";
-import { useAuth } from "../../../contexts/auth/useAuth";
 import { useMutation } from "@tanstack/react-query";
-import { saveOrganization, saveUnit } from "../../../queries/organizations";
+import { useCallback, useContext, useMemo } from "react";
+import LargeFormSection from "../../../components/forms/LargeFormSection";
+import InlineNotice from "../../../components/layouts/InlineNotice";
+import PolicyProcedureInput from "../../../components/safety-management/PolicyProcedureInput";
+import SafetyContactInput from "../../../components/safety-management/SafetyContactInput";
 import {
   ORGANIZATION_TAT_GROUP_NAME,
   UNIT_TAT_GROUP_NAME,
 } from "../../../constants/organizations";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
+import { saveOrganization, saveUnit } from "../../../queries/organizations";
+import { SafetyContact } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
+import GroupMembersTable from "../components/GroupMembersTable";
 
 const MyOrganizationSafety: React.FC = () => {
   const {
-    myOrganization,
-    myOrganizationLoading,
+    currentOrganization: myOrganization,
+    currentOrganizationLoading: myOrganizationLoading,
     invalidateOrganizationQuery,
     currentUnitSlug,
     currentUnit,
@@ -26,7 +26,7 @@ const MyOrganizationSafety: React.FC = () => {
     isUnitContext,
     roleGroups,
     roleGroupsLoading,
-  } = useContext(MyOrganizationContext);
+  } = useContext(OrganizationsContext);
   const { isGlobalAdmin } = useAuth();
 
   const tatGroupName = useMemo(

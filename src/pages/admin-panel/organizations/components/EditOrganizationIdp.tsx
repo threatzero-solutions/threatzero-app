@@ -1,23 +1,4 @@
-import MultilineTextInput from "../../../../components/forms/inputs/MultilineTextInput";
-import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
-import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
-import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
-import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
-import { OrganizationIdpDto } from "../../../../types/api";
-import { Organization, Unit } from "../../../../types/entities";
-import { classNames } from "../../../../utils/core";
-import IdpMetadataInput from "./IdpMetadataInput";
-import { useContext, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  createOrganizationIdp,
-  deleteOrganizationIdp,
-  getOrganizationIdpRoleGroups,
-  isIdpSlugUnique,
-  updateOrganizationIdp,
-} from "../../../../queries/organizations";
-import Input from "../../../../components/forms/inputs/Input";
+import { Transition } from "@headlessui/react";
 import {
   ArrowPathIcon,
   CheckCircleIcon,
@@ -26,18 +7,39 @@ import {
   ClipboardIcon,
   ExclamationCircleIcon,
 } from "@heroicons/react/20/solid";
-import { CoreContext } from "../../../../contexts/core/core-context";
-import { Transition } from "@headlessui/react";
-import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
-import Select from "../../../../components/forms/inputs/Select";
-import SyncAttributesInput from "./SyncAttributesInput";
-import { AlertContext } from "../../../../contexts/alert/alert-context";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { useAutoSlug } from "../../../../hooks/use-auto-slug";
-import MultiAttributeMatchersInput from "./MultiAttributeMatchersInput";
-import UnitSelect from "../../../../components/forms/inputs/UnitSelect";
 import { useDebounceValue } from "usehooks-ts";
 import { isURL } from "validator";
+import Input from "../../../../components/forms/inputs/Input";
+import MultilineTextInput from "../../../../components/forms/inputs/MultilineTextInput";
+import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
+import Select from "../../../../components/forms/inputs/Select";
+import UnitSelect from "../../../../components/forms/inputs/UnitSelect";
+import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
+import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import { AlertContext } from "../../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../../contexts/alert/use-alert-id";
+import { useAuth } from "../../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
+import { useAutoSlug } from "../../../../hooks/use-auto-slug";
+import {
+  createOrganizationIdp,
+  deleteOrganizationIdp,
+  getOrganizationIdpRoleGroups,
+  isIdpSlugUnique,
+  updateOrganizationIdp,
+} from "../../../../queries/organizations";
+import { OrganizationIdpDto } from "../../../../types/api";
+import { Organization, Unit } from "../../../../types/entities";
+import { classNames } from "../../../../utils/core";
+import IdpMetadataInput from "./IdpMetadataInput";
+import MultiAttributeMatchersInput from "./MultiAttributeMatchersInput";
+import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
+import SyncAttributesInput from "./SyncAttributesInput";
 
 const SERVICE_PROVIDER_ENTITY_ID =
   "https://auth.threatzero.org/realms/threatzero";
@@ -68,6 +70,7 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
   label,
 }) => {
   const { setSuccess } = useContext(AlertContext);
+  const alertId = useAlertId();
 
   return (
     <div className="flex flex-col gap-1">
@@ -79,7 +82,10 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
           }
           onClick={() => {
             navigator.clipboard.writeText(value);
-            setSuccess("Copied to clipboard", 5000);
+            setSuccess("Copied to clipboard", {
+              timeout: 5000,
+              id: alertId,
+            });
           }}
         >
           <ClipboardIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
@@ -92,24 +98,70 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
 
 const ATTRIBUTE_MATCHER_TYPES = ["Units", "Audiences", "Role Groups"];
 
+const checkDirty = (dirtyFields: unknown): boolean => {
+  if (dirtyFields === true) {
+    return true;
+  }
+
+  if (
+    dirtyFields === null ||
+    dirtyFields === undefined ||
+    dirtyFields === false
+  ) {
+    return false;
+  }
+
+  if (Array.isArray(dirtyFields)) {
+    return dirtyFields.some((d) => checkDirty(d));
+  }
+
+  if (typeof dirtyFields === "object") {
+    return Object.values(dirtyFields).some((d) => checkDirty(d));
+  }
+
+  return false;
+};
+
 const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
   organization,
   idp: idpProp,
   setOpen,
 }) => {
+  const { isGlobalAdmin } = useAuth();
+
   const isNew = !idpProp;
   const originalSlug = idpProp?.slug;
 
   const formMethods = useForm({
-    defaultValues: idpProp ?? INITIAL_IDP,
+    defaultValues: INITIAL_IDP,
+    mode: "onChange",
   });
   const {
     control,
     register,
     handleSubmit,
     watch,
-    formState: { dirtyFields, isValid },
+    reset,
+    formState: { isValid, dirtyFields },
   } = formMethods;
+
+  useEffect(() => {
+    if (idpProp) {
+      reset(idpProp, { keepDirty: false, keepDefaultValues: false });
+    }
+  }, [idpProp, reset]);
+
+  const [isDirty, setIsDirty] = useState(false);
+  useEffect(() => {
+    setIsDirty(checkDirty(dirtyFields));
+    const sub = watch(() => {
+      setIsDirty(checkDirty(dirtyFields));
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
+  }, [watch, dirtyFields]);
 
   const name = watch("name");
   const slug = watch("slug");
@@ -139,7 +191,11 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
   const [selectedAttributeMatcherTab, setSelectedAttributeMatcherTab] =
     useState(ATTRIBUTE_MATCHER_TYPES[0]);
 
-  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+  const {
+    setOpen: setConfirmationOpen,
+    setClose: setConfirmationClose,
+    openConfirmDiscard,
+  } = useContext(ConfirmationContext);
 
   const { data: allowedRoleGroups } = useQuery({
     queryKey: ["roleGroups", organization.id] as const,
@@ -158,6 +214,9 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
       });
       queryClient.invalidateQueries({
         queryKey: ["organization", "id", organization.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "slug", organization.slug],
       });
       setOpen(false);
     },
@@ -180,16 +239,10 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
   };
 
   const handleClose = () => {
-    if (Object.keys(dirtyFields).length > 0) {
-      setConfirmationOpen({
-        title: "Discard changes?",
-        message: "Are you sure you want to discard your changes?",
-        onConfirm: () => {
-          setConfirmationClose();
-          setOpen(false);
-        },
-        confirmText: "Discard",
-        cancelText: "Go Back",
+    if (isDirty) {
+      openConfirmDiscard(() => {
+        setConfirmationClose();
+        setOpen(false);
       });
     } else {
       setOpen(false);
@@ -217,9 +270,9 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
         onClose={handleClose}
         onDelete={handleDelete}
         hideDelete={isNew}
-        submitText={isNew ? "Add" : "Update"}
+        submitText={isNew ? "Add" : "Save"}
         isSaving={createIdpMutation.isPending}
-        submitDisabled={!isValid}
+        submitDisabled={!isValid || !isDirty}
       >
         <SlideOverHeading
           title={!isNew ? "Edit Identity Provider" : "Add Identity Provider"}
@@ -478,7 +531,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                       control={valueControl}
                       render={({ field: audienceField }) => (
                         <Select
-                          value={audienceField.value}
+                          value={audienceField.value ?? ""}
                           onChange={(e) =>
                             audienceField.onChange(e.target.value)
                           }
@@ -518,13 +571,18 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                 <MultipleSelect
                   prefix="organization_default_role_groups"
                   value={field.value}
-                  options={(allowedRoleGroups ?? []).map((rg) => ({
-                    key: rg.id,
-                    label: rg.name,
-                    disabled: DISABLED_ROLE_GROUPS.includes(rg.name),
-                    disabledText:
-                      "This role group can only be managed by identity admins.",
-                  }))}
+                  options={(allowedRoleGroups ?? [])
+                    .filter(
+                      (rg) =>
+                        isGlobalAdmin || !DISABLED_ROLE_GROUPS.includes(rg.name)
+                    )
+                    .map((rg) => ({
+                      key: rg.name,
+                      label: rg.name,
+                      disabled: DISABLED_ROLE_GROUPS.includes(rg.name),
+                      disabledText:
+                        "This role group can only be managed by identity admins.",
+                    }))}
                   onChange={(ids) => field.onChange(ids)}
                 />
               )}

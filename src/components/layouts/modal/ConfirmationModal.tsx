@@ -3,7 +3,9 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
+import { useState } from "react";
 import { classNames } from "../../../utils/core";
+import Input from "../../forms/inputs/Input";
 import Modal, { ModalProps } from "./Modal";
 
 export interface ConfirmationModalProps extends Omit<ModalProps, "children"> {
@@ -15,6 +17,11 @@ export interface ConfirmationModalProps extends Omit<ModalProps, "children"> {
   confirmText?: string;
   cancelText?: string;
   isPending?: boolean;
+  requireTextInput?: boolean;
+  textInputPrompt?: string;
+  textInputPlaceholder?: string;
+  validateTextInput?: (text: string) => boolean;
+  onTextInputChange?: (text: string) => void;
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -27,8 +34,15 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   confirmText = "Confirm",
   cancelText = "Cancel",
   isPending = false,
+  requireTextInput = false,
+  textInputPrompt = "Please enter a reason:",
+  textInputPlaceholder = "",
+  validateTextInput = () => true,
+  onTextInputChange,
   ...modalProps
 }) => {
+  const [confirmDisabled, setConfirmDisabled] = useState(requireTextInput);
+
   return (
     <Modal {...modalProps} setOpen={setOpen}>
       <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 rounded-t-lg">
@@ -58,11 +72,25 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             >
               {title}
             </DialogTitle>
-            <div className="mt-2 text-sm text-gray-500">
+            <div className="mt-2 text-sm text-gray-500 space-y-4">
               {typeof message === "string" ? (
                 <p className="text-sm text-gray-500">{message}</p>
               ) : (
-                message
+                <div>{message}</div>
+              )}
+              {requireTextInput && (
+                <div className="space-y-2 w-full">
+                  <span className="font-bold">{textInputPrompt}</span>
+                  <Input
+                    type="text"
+                    placeholder={textInputPlaceholder}
+                    className="w-full"
+                    onChange={(e) => {
+                      onTextInputChange?.(e.target.value);
+                      setConfirmDisabled(!validateTextInput(e.target.value));
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -72,9 +100,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <button
           type="button"
           onClick={onConfirm}
-          disabled={isPending}
+          disabled={confirmDisabled || isPending}
           className={classNames(
-            "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto",
+            "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto disabled:opacity-50",
             destructive
               ? "bg-red-600 enabled:hover:bg-red-500"
               : "bg-secondary-600 enabled:hover:bg-secondary-500",

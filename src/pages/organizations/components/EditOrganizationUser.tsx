@@ -8,7 +8,7 @@ import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm"
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import { TRAINING_PARTICIPANT_ROLE_GROUP_PATH } from "../../../constants/organizations";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import {
   assignOrganizationUserToRoleGroup,
   getOrganizationUsers,
@@ -49,10 +49,10 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
   userId,
 }) => {
   const {
-    myOrganization: organization,
+    currentOrganization: organization,
     currentUnitSlug: unitSlug,
     invalidateOrganizationUsersQuery,
-  } = useContext(MyOrganizationContext);
+  } = useContext(OrganizationsContext);
 
   const { data: userData } = useQuery({
     queryKey: [

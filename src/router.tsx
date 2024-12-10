@@ -1,52 +1,84 @@
-import { createBrowserRouter, redirect } from "react-router";
+import { createBrowserRouter, redirect, RouteObject } from "react-router";
 import App from "./App";
-import Dashboard from "./pages/dashboard/Dashboard";
-import TrainingLibrary from "./pages/training-library/TrainingLibrary";
-import TipSubmission from "./pages/tip-submission/TipSubmission";
-import Login from "./pages/Login";
-import AuthProvider from "./contexts/auth/AuthProvider";
-import TrainingItem from "./pages/training-library/TrainingItem";
-import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
-import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
 import FormBuilder from "./components/forms/FormBuilder";
-import CourseBuilder from "./pages/admin-panel/courses/CourseBuilder";
-import AdminPanel from "./pages/admin-panel/AdminPanel";
 import PublicLayout from "./components/layouts/PublicLayout";
-import MyDashboard from "./pages/my-dashboard/MyDashboard";
-import ViewTrainingSection from "./pages/training-library/ViewTrainingSection";
-import Page404 from "./pages/Page404";
-import FirstLinkRedirect from "./components/layouts/side-nav/FirstLinkRedirect";
-import Organizations from "./pages/admin-panel/organizations/Organizations";
-import FormsDashboard from "./pages/admin-panel/forms/FormsDashboard";
-import UsersDashboard from "./pages/admin-panel/users/UsersDashboard";
-import SuccessfulSubmission from "./pages/tip-submission/components/SuccessfulSubmission";
-import ResourcePage from "./components/resources/ResourcePage";
-import ResourceVideos from "./components/resources/ResourceVideos";
-import ResourceDocuments from "./components/resources/ResourceDocuments";
-import ResourceItemEntity from "./components/resources/ResourceItem";
-import ErrorPage from "./pages/ErrorPage";
-import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
-import HelpCenter from "./pages/HelpCenter";
-import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
-import { ResourceItemCategories, ResourceItemCategory } from "./types/entities";
-import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
-import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
-import ViolentIncidentReportForm from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportForm";
-import { ViewLanguages } from "./pages/admin-panel/languages/ViewLanguages";
-import ViewWatchStats from "./pages/safety-management/training-admin/ViewWatchStats";
-import ManageTrainingInvites from "./pages/safety-management/training-admin/ManageTrainingInvites";
-import TrainingAdminDashboard from "./pages/safety-management/training-admin/TrainingAdminDashboard";
 import PublicRoot from "./components/layouts/PublicRoot";
 import Root from "./components/layouts/Root";
-import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
+import FirstLinkRedirect from "./components/layouts/side-nav/FirstLinkRedirect";
+import ResourceDocuments from "./components/resources/ResourceDocuments";
+import ResourceItemEntity from "./components/resources/ResourceItem";
+import ResourcePage from "./components/resources/ResourcePage";
+import ResourceVideos from "./components/resources/ResourceVideos";
+import AuthProvider from "./contexts/auth/AuthProvider";
+import AdminPanel from "./pages/admin-panel/AdminPanel";
+import CourseBuilder from "./pages/admin-panel/courses/CourseBuilder";
 import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
-import EditOrganization from "./pages/admin-panel/organizations/levels/EditOrganization";
-import MyOrganizationRoot from "./pages/my-organization/MyOrganizationRoot";
-import MyOrganizationUnits from "./pages/my-organization/tabs/MyOrganizationUnits";
-import MyOrganizationUsers from "./pages/my-organization/tabs/MyOrganizationUsers";
-import MyOrganizationSafety from "./pages/my-organization/tabs/MyOrganizationSafety";
-import MyOrganizationTraining from "./pages/my-organization/tabs/MyOrganizationTraining";
-import MyOrganizationSettings from "./pages/my-organization/tabs/MyOrganizationSettings";
+import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
+import FormsDashboard from "./pages/admin-panel/forms/FormsDashboard";
+import { ViewLanguages } from "./pages/admin-panel/languages/ViewLanguages";
+import ManageOrganization from "./pages/admin-panel/organizations/levels/ManageOrganization";
+import Organizations from "./pages/admin-panel/organizations/Organizations";
+import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
+import UsersDashboard from "./pages/admin-panel/users/UsersDashboard";
+import Dashboard from "./pages/dashboard/Dashboard";
+import ErrorPage from "./pages/ErrorPage";
+import HelpCenter from "./pages/HelpCenter";
+import Login from "./pages/Login";
+import MyDashboard from "./pages/my-dashboard/MyDashboard";
+import OrganizationsRoot from "./pages/organizations/OrganizationsRoot";
+import OrganizationsSafety from "./pages/organizations/tabs/OrganizationsSafety";
+import OrganizationsSettings from "./pages/organizations/tabs/OrganizationsSettings";
+import OrganizationsTraining from "./pages/organizations/tabs/OrganizationsTraining";
+import OrganizationsUnits from "./pages/organizations/tabs/OrganizationsUnits";
+import OrganizationsUsers from "./pages/organizations/tabs/OrganizationsUsers";
+import Page404 from "./pages/Page404";
+import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
+import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
+import ThreatAssessmentDashboard from "./pages/safety-management/threat-assessments/ThreatAssessmentDashboard";
+import ThreatAssessmentForm from "./pages/safety-management/threat-assessments/ThreatAssessmentForm";
+import ManageTrainingInvites from "./pages/safety-management/training-admin/ManageTrainingInvites";
+import TrainingAdminDashboard from "./pages/safety-management/training-admin/TrainingAdminDashboard";
+import ViewWatchStats from "./pages/safety-management/training-admin/ViewWatchStats";
+import ViolentIncidentReportForm from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportForm";
+import ViolentIncidentReportsDashboard from "./pages/safety-management/violent-incident-reports/ViolentIncidentReportsDashboard";
+import SuccessfulSubmission from "./pages/tip-submission/components/SuccessfulSubmission";
+import TipSubmission from "./pages/tip-submission/TipSubmission";
+import TrainingItem from "./pages/training-library/TrainingItem";
+import TrainingLibrary from "./pages/training-library/TrainingLibrary";
+import ViewTrainingSection from "./pages/training-library/ViewTrainingSection";
+import { ResourceItemCategories, ResourceItemCategory } from "./types/entities";
+
+const organizationsChildren: RouteObject[] = [
+  {
+    path: "units",
+    handle: { title: "Units" },
+    element: <OrganizationsUnits />,
+  },
+  {
+    path: "users",
+    handle: { title: "Users" },
+    element: <OrganizationsUsers />,
+  },
+  {
+    path: "training",
+    handle: { title: "Training" },
+    element: <OrganizationsTraining />,
+  },
+  {
+    path: "safety",
+    handle: { title: "Safety" },
+    element: <OrganizationsSafety />,
+  },
+  {
+    path: "settings",
+    handle: { title: "Settings" },
+    element: <OrganizationsSettings />,
+  },
+  {
+    path: "*?",
+    loader: () => redirect("units"),
+  },
+];
 
 export const router = createBrowserRouter(
   [
@@ -261,7 +293,8 @@ export const router = createBrowserRouter(
                         },
                         {
                           path: ":id",
-                          element: <EditOrganization />,
+                          element: <ManageOrganization />,
+                          children: organizationsChildren,
                         },
                       ],
                     },
@@ -362,38 +395,8 @@ export const router = createBrowserRouter(
                 {
                   path: "my-organization",
                   handle: { title: "My Organization" },
-                  element: <MyOrganizationRoot />,
-                  children: [
-                    {
-                      path: "units",
-                      handle: { title: "Units" },
-                      element: <MyOrganizationUnits />,
-                    },
-                    {
-                      path: "users",
-                      handle: { title: "Users" },
-                      element: <MyOrganizationUsers />,
-                    },
-                    {
-                      path: "training",
-                      handle: { title: "Training" },
-                      element: <MyOrganizationTraining />,
-                    },
-                    {
-                      path: "safety",
-                      handle: { title: "Safety" },
-                      element: <MyOrganizationSafety />,
-                    },
-                    {
-                      path: "settings",
-                      handle: { title: "Settings" },
-                      element: <MyOrganizationSettings />,
-                    },
-                    {
-                      path: "*?",
-                      loader: () => redirect("units"),
-                    },
-                  ],
+                  element: <OrganizationsRoot />,
+                  children: organizationsChildren,
                 },
                 {
                   path: "help-center",

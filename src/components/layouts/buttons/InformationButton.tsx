@@ -1,6 +1,6 @@
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Fragment } from "react/jsx-runtime";
 import { classNames } from "../../../utils/core";
 

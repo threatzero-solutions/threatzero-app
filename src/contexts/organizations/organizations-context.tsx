@@ -1,25 +1,31 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { createContext, PropsWithChildren, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router";
+import { To, useSearchParams } from "react-router";
 import {
+  getOrganization,
   getOrganizationBySlug,
+  getOrganizationIdp,
   getOrganizationIdpRoleGroups,
   getUnits,
 } from "../../queries/organizations";
-import { KeycloakGroupDto } from "../../types/api";
+import { KeycloakGroupDto, OrganizationIdpDto } from "../../types/api";
 import { Organization, Unit } from "../../types/entities";
 import { useAuth } from "../auth/useAuth";
 
-export interface MyOrganizationContextType {
+export interface OrganizationsContextType {
   myOrganizationSlug?: string | null;
-  myOrganization?: Organization | null;
-  myOrganizationLoading: boolean;
+  currentOrganizationId?: Organization["id"] | null;
+  currentOrganization?: Organization | null;
+  currentOrganizationLoading: boolean;
   invalidateOrganizationQuery: () => void;
   allUnits?: Unit[] | null;
   allUnitsLoading: boolean;
   currentUnitSlug?: string;
   currentUnit?: Unit | null;
   currentUnitLoading: boolean;
+  organizationIdps?: (OrganizationIdpDto | null)[];
+  organizationIdpsLoading: boolean;
   invalidateCurrentUnitQuery: () => void;
   invalidateAllUnitsQuery: () => void;
   unitsPath?: string | null;
@@ -32,63 +38,83 @@ export interface MyOrganizationContextType {
   invalidateOrganizationUsersQuery: (
     unitsSlugs?: (string | undefined)[]
   ) => void;
+  organizationDeleteRedirect: To;
 }
 
-export const MyOrganizationContext = createContext<MyOrganizationContextType>({
-  myOrganizationLoading: false,
+export const OrganizationsContext = createContext<OrganizationsContextType>({
+  currentOrganizationLoading: false,
   invalidateOrganizationQuery: () => {},
   allUnitsLoading: false,
   currentUnitLoading: false,
+  organizationIdpsLoading: false,
   invalidateCurrentUnitQuery: () => {},
   invalidateAllUnitsQuery: () => {},
   setUnitsPath: () => {},
   isUnitContext: false,
   roleGroupsLoading: false,
   invalidateOrganizationUsersQuery: () => {},
+  organizationDeleteRedirect: "/",
 });
 
-export interface MyOrganizationContextProviderProps extends PropsWithChildren {}
+export interface OrganizationsContextProviderProps extends PropsWithChildren {
+  currentOrganizationId?: Organization["id"];
+  organizationDeleteRedirect?: To;
+}
 
-export const MyOrganizationContextProvider: React.FC<
-  MyOrganizationContextProviderProps
-> = ({ children }) => {
-  const { accessTokenClaims } = useAuth();
+export const OrganizationsContextProvider: React.FC<
+  OrganizationsContextProviderProps
+> = ({
+  currentOrganizationId: currentOrganizationIdProp,
+  organizationDeleteRedirect,
+  children,
+}) => {
+  const { myOrganizationSlug } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const myOrganizationSlug = useMemo(
-    () =>
-      accessTokenClaims?.organization
-        ? `${accessTokenClaims?.organization}`
-        : null,
-    [accessTokenClaims]
+  const organizationId = useMemo(
+    () => currentOrganizationIdProp ?? myOrganizationSlug,
+    [currentOrganizationIdProp, myOrganizationSlug]
+  );
+  const organizationIdType = useMemo(
+    () => (currentOrganizationIdProp ? "id" : "slug"),
+    [currentOrganizationIdProp]
   );
 
-  const { data: myOrganization, isLoading: myOrganizationLoading } = useQuery({
-    queryKey: ["organization", "slug", myOrganizationSlug!] as const,
-    queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[2]),
-    enabled: !!myOrganizationSlug,
-  });
+  const { data: currentOrganization, isLoading: currentOrganizationLoading } =
+    useQuery({
+      queryKey: ["organization", organizationIdType, organizationId] as const,
+      queryFn: ({ queryKey }) =>
+        queryKey[1] === "slug"
+          ? getOrganizationBySlug(queryKey[2]!)
+          : getOrganization(queryKey[2]!),
+      enabled: !!organizationId,
+    });
+
+  const currentOrganizationId = useMemo(
+    () => currentOrganizationIdProp ?? currentOrganization?.id,
+    [currentOrganizationIdProp, currentOrganization]
+  );
 
   const queryClient = useQueryClient();
 
   const invalidateOrganizationQuery = useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: ["organization", "slug", myOrganizationSlug],
+      queryKey: ["organization", organizationIdType, organizationId],
     });
-  }, [queryClient, myOrganizationSlug]);
+  }, [queryClient, organizationId, organizationIdType]);
 
   const { data: allUnits, isLoading: allUnitsLoading } = useQuery({
     queryKey: [
       "units",
       {
-        [`organization.slug`]: myOrganizationSlug,
+        [`organization.${organizationIdType}`]: organizationId,
         order: { createdTimestamp: "DESC" },
         limit: 10000,
       },
     ] as const,
     queryFn: ({ queryKey }) =>
       getUnits(queryKey[1]).then((units) => units.results),
-    enabled: !!myOrganizationSlug,
+    enabled: !!organizationId,
   });
 
   const unitsPath = useMemo(
@@ -129,14 +155,52 @@ export const MyOrganizationContextProvider: React.FC<
       "unit",
       "slug",
       {
-        ["organization.slug"]: myOrganizationSlug,
+        [`organization.${organizationIdType}`]: organizationId,
         slug: currentUnitSlug,
       },
     ] as const,
     queryFn: ({ queryKey }) =>
       getUnits(queryKey[2]).then((units) => units.results.find((u) => u)),
-    enabled: !!myOrganizationSlug && !!currentUnitSlug,
+    enabled: !!organizationId && !!currentUnitSlug,
   });
+
+  const organizationIdpQueryResults = useQueries({
+    queries: (currentOrganization?.idpSlugs ?? []).map((slug) => {
+      return {
+        queryKey: ["organization-idps", currentOrganization?.id, slug],
+        queryFn: () =>
+          currentOrganization?.id
+            ? getOrganizationIdp(currentOrganization.id, slug).catch((e) => {
+                if (e instanceof AxiosError && e.response?.status === 404) {
+                  return null;
+                }
+                throw e;
+              })
+            : Promise.reject("No organization id"),
+        enabled: !!currentOrganization,
+      };
+    }),
+  });
+
+  const { organizationIdps, organizationIdpsLoading } = useMemo(
+    () =>
+      organizationIdpQueryResults.reduce(
+        (acc, result) => {
+          acc.organizationIdpsLoading =
+            acc.organizationIdpsLoading || result.isLoading;
+          if (result.isLoading || result.data === undefined) {
+            return acc;
+          }
+          acc.organizationIdps.push(result.data);
+          return acc;
+        },
+        {
+          organizationIdps: [] as (OrganizationIdpDto | null)[],
+          organizationIdpsLoading: false,
+        }
+      ),
+    [organizationIdpQueryResults]
+  );
 
   const invalidateAllUnitsQuery = useCallback(() => {
     queryClient.invalidateQueries({
@@ -150,7 +214,7 @@ export const MyOrganizationContextProvider: React.FC<
         "unit",
         "slug",
         {
-          ["organization.slug"]: myOrganizationSlug,
+          [`organization.${organizationIdType}`]: organizationId,
           slug: currentUnitSlug,
         },
       ],
@@ -158,7 +222,8 @@ export const MyOrganizationContextProvider: React.FC<
     invalidateAllUnitsQuery();
   }, [
     queryClient,
-    myOrganizationSlug,
+    organizationId,
+    organizationIdType,
     currentUnitSlug,
     invalidateAllUnitsQuery,
   ]);
@@ -179,7 +244,7 @@ export const MyOrganizationContextProvider: React.FC<
             return false;
 
           // Does the query match this current organization?
-          if (qOrganizationId !== myOrganization?.id) return false;
+          if (qOrganizationId !== currentOrganization?.id) return false;
 
           // Does the query match this current unit?
           const q = typeof userIdOrQuery === "string" ? query : userIdOrQuery;
@@ -197,28 +262,31 @@ export const MyOrganizationContextProvider: React.FC<
         },
       });
     },
-    [queryClient, myOrganization?.id, currentUnitSlug]
+    [queryClient, currentOrganization?.id, currentUnitSlug]
   );
 
   const { data: roleGroups, isLoading: roleGroupsLoading } = useQuery({
-    queryKey: ["roleGroups", myOrganization?.id] as const,
+    queryKey: ["roleGroups", currentOrganization?.id] as const,
     queryFn: ({ queryKey }) =>
       queryKey[1] ? getOrganizationIdpRoleGroups(queryKey[1]) : null,
-    enabled: !!myOrganization?.id,
+    enabled: !!currentOrganization?.id,
   });
 
   return (
-    <MyOrganizationContext.Provider
+    <OrganizationsContext.Provider
       value={{
         myOrganizationSlug,
-        myOrganization,
-        myOrganizationLoading,
+        currentOrganizationId,
+        currentOrganization,
+        currentOrganizationLoading,
         invalidateOrganizationQuery,
         allUnits,
         allUnitsLoading,
         currentUnitSlug,
         currentUnit,
         currentUnitLoading,
+        organizationIdps,
+        organizationIdpsLoading,
         invalidateCurrentUnitQuery,
         invalidateAllUnitsQuery,
         unitsPath,
@@ -227,9 +295,10 @@ export const MyOrganizationContextProvider: React.FC<
         roleGroups,
         roleGroupsLoading,
         invalidateOrganizationUsersQuery,
+        organizationDeleteRedirect: organizationDeleteRedirect ?? "/",
       }}
     >
       {children}
-    </MyOrganizationContext.Provider>
+    </OrganizationsContext.Provider>
   );
 };

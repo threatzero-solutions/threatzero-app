@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
-import { Paginated } from "../types/entities";
 import { DeepPartial } from "../types/core";
+import { Paginated } from "../types/entities";
 
 export const nullFrom404 = (e: unknown) => {
   if (e instanceof AxiosError && e.response?.status === 404) {
@@ -12,7 +12,7 @@ export const nullFrom404 = (e: unknown) => {
 };
 
 export const buildUrl = (path: string) =>
-  `${API_BASE_URL}/${path.replace(/^\/|\/$/g, "")}`;
+  `${API_BASE_URL}/${`${path}/`.replace(/^\/|\/$/g, "").replace(/\/+/g, "/")}`;
 
 export const findOneOrFail = <T>(path: string, options?: AxiosRequestConfig) =>
   axios
@@ -28,7 +28,7 @@ export const findOneByIdOrFail = <T>(
 ) =>
   id
     ? axios
-        .get<T>(`${buildUrl(path)}/${id ?? ""}`, {
+        .get<T>(buildUrl(`${path}/${id ?? ""}`), {
           ...options,
         })
         .then((res) => res.data)
@@ -48,7 +48,7 @@ export const findManyRaw = <T>(
   query: ItemFilterQueryParams = {}
 ) =>
   axios
-    .get<T>(`${buildUrl(path)}/`, {
+    .get<T>(buildUrl(`${path}/`), {
       params: {
         ...query,
       },
@@ -76,7 +76,7 @@ export const updateOne = <T extends { id: string }>(
   options: AxiosRequestConfig = {}
 ) =>
   axios
-    .patch<T>(`${buildUrl(path)}/${entity.id ?? ""}`, entity, options)
+    .patch<T>(buildUrl(`${path}/${entity.id ?? ""}`), entity, options)
     .then((res) => res.data);
 
 export const save = async <T extends { id: string }>(
@@ -90,7 +90,7 @@ export const save = async <T extends { id: string }>(
 
 export const deleteOne = (path: string, id?: string) =>
   id
-    ? axios.delete(`${buildUrl(path)}/${id}`)
+    ? axios.delete(buildUrl(`${path}/${id}`))
     : Promise.reject(new Error("ID must not be empty."));
 
 export const download = (

@@ -1,12 +1,9 @@
-import { useImmer } from "use-immer";
-import DataTable from "../../../components/layouts/tables/DataTable";
-import {
-  ResendTrainingLinksDto,
-  SendTrainingLinksDto,
-  TrainingParticipantRepresentation,
-} from "../../../types/api";
-import Input from "../../../components/forms/inputs/Input";
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import Fuse from "fuse.js";
+import Papa, { ParseResult } from "papaparse";
 import {
   ChangeEvent,
   FormEvent,
@@ -15,51 +12,55 @@ import {
   useMemo,
   useState,
 } from "react";
-import UnitSelect from "../../../components/forms/inputs/UnitSelect";
-import { SimpleChangeEvent } from "../../../types/core";
-import {
-  getTrainingCourse,
-  getTrainingItem,
-  getTrainingItems,
-} from "../../../queries/training";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import SlideOver from "../../../components/layouts/slide-over/SlideOver";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { AlertContext } from "../../../contexts/alert/alert-context";
+import { DeepPartial } from "react-hook-form";
 import { useResolvedPath } from "react-router";
-import {
-  getTrainingInvites,
-  getTrainingInvitesCsv,
-  resendTrainingLinks,
-  sendTrainingLinks,
-} from "../../../queries/training-admin";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import {
-  CourseEnrollment,
-  Organization,
-  TrainingItem,
-  TrainingToken,
-} from "../../../types/entities";
-import dayjs from "dayjs";
-import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
+import Autocomplete from "../../../components/forms/inputs/Autocomplete";
+import EnrollmentSelect from "../../../components/forms/inputs/EnrollmentSelect";
+import Input from "../../../components/forms/inputs/Input";
+import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
+import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import Dropdown from "../../../components/layouts/Dropdown";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import DataTable from "../../../components/layouts/tables/DataTable";
+import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../contexts/alert/use-alert-id";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import {
   getMyOrganization,
   getOrganizationBySlug,
   getUnitBySlug,
   getUnits,
 } from "../../../queries/organizations";
+import {
+  getTrainingCourse,
+  getTrainingItem,
+  getTrainingItems,
+} from "../../../queries/training";
+import {
+  getTrainingInvites,
+  getTrainingInvitesCsv,
+  resendTrainingLinks,
+  sendTrainingLinks,
+} from "../../../queries/training-admin";
+import {
+  ResendTrainingLinksDto,
+  SendTrainingLinksDto,
+  TrainingParticipantRepresentation,
+} from "../../../types/api";
+import { SimpleChangeEvent } from "../../../types/core";
+import {
+  CourseEnrollment,
+  Organization,
+  TrainingItem,
+  TrainingToken,
+} from "../../../types/entities";
 import { simulateDownload, stripHtml } from "../../../utils/core";
-import Autocomplete from "../../../components/forms/inputs/Autocomplete";
-import { useDebounceValue } from "usehooks-ts";
-import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
+import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
 import ViewPercentWatched from "./components/ViewPercentWatched";
-import { DeepPartial } from "react-hook-form";
-import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
-import EnrollmentSelect from "../../../components/forms/inputs/EnrollmentSelect";
-import Papa, { ParseResult } from "papaparse";
-import Fuse from "fuse.js";
 
 interface InviteCsvRow {
   firstName: string;
@@ -192,7 +193,9 @@ const ManageTrainingInvites: React.FC = () => {
 
   const { hasMultipleUnitAccess, hasMultipleOrganizationAccess } = useAuth();
   const { setError } = useContext(AlertContext);
-  const { setSuccess, setInfo } = useContext(AlertContext);
+  const { setSuccess, setInfo, clearAlert } = useContext(AlertContext);
+  const clipboardAlertId = useAlertId();
+  const infoAlertId = useAlertId();
 
   const watchTrainingPath = useResolvedPath("/watch-training/");
 
@@ -409,7 +412,7 @@ const ManageTrainingInvites: React.FC = () => {
   const sendTrainingLinksMutation = useMutation({
     mutationFn: (body: SendTrainingLinksDto) => sendTrainingLinks(body),
     onSuccess: () => {
-      setSuccess("Invites successfully sent!", 5000);
+      setSuccess("Invites successfully sent!", { timeout: 5000 });
       setTokenValues([{ firstName: "", lastName: "", email: "" }]);
       setSelectedOrganization(undefined);
       setSelectedEnrollment(undefined);
@@ -421,7 +424,7 @@ const ManageTrainingInvites: React.FC = () => {
   const resendTrainingLinkMutation = useMutation({
     mutationFn: (body: ResendTrainingLinksDto) => resendTrainingLinks(body),
     onSuccess: () => {
-      setSuccess("Invite successfully resent!", 5000);
+      setSuccess("Invite successfully resent!", { timeout: 5000 });
     },
   });
 
@@ -430,12 +433,12 @@ const ManageTrainingInvites: React.FC = () => {
     e.stopPropagation();
 
     if (!selectedEnrollment?.id) {
-      setError("No course enrollment selected.", 5000);
+      setError("No course enrollment selected.", { timeout: 5000 });
       return;
     }
 
     if (!selectedItem) {
-      setError("No training item selected.", 5000);
+      setError("No training item selected.", { timeout: 5000 });
       return;
     }
 
@@ -456,7 +459,10 @@ const ManageTrainingInvites: React.FC = () => {
   const copyTrainingUrl = (token: TrainingToken) => {
     const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
     navigator.clipboard.writeText(url);
-    setSuccess("Copied training link to clipboard", 5000);
+    setSuccess("Copied training link to clipboard", {
+      id: clipboardAlertId,
+      timeout: 5000,
+    });
   };
 
   const viewInvite = (token: TrainingToken) => {
@@ -478,15 +484,15 @@ const ManageTrainingInvites: React.FC = () => {
     }) => getTrainingInvitesCsv(args.trainingUrlTemplate, args.query),
     onSuccess: (data) => {
       simulateDownload(new Blob([data]), "training-links.csv");
-      setTimeout(() => setInfo(), 2000);
+      setTimeout(() => clearAlert(infoAlertId), 2000);
     },
     onError: () => {
-      setInfo();
+      clearAlert(infoAlertId);
     },
   });
 
   const handleDownloadTrainingLinksCsv = () => {
-    setInfo("Downloading CSV...");
+    setInfo("Downloading CSV...", { id: infoAlertId });
     downloadTrainingLinksCsvMutation.mutate({
       trainingUrlTemplate: `${window.location.origin}${watchTrainingPath.pathname}{trainingItemId}?watchId={token}`,
       query: itemFilterOptions,

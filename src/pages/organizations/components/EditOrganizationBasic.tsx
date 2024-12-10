@@ -1,47 +1,48 @@
 import {
-  ExclamationCircleIcon,
-  CheckCircleIcon,
   ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDebounceValue } from "usehooks-ts";
+import Checkbox from "../../../components/forms/inputs/Checkbox";
+import Input from "../../../components/forms/inputs/Input";
 import TextArea from "../../../components/forms/inputs/TextArea";
 import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { useAutoSlug } from "../../../hooks/use-auto-slug";
 import {
+  getOrganization,
   getUnit,
+  isOrganizationSlugUnique,
   isUnitSlugUnique,
   saveLocation,
-  saveUnit,
-  isOrganizationSlugUnique,
-  getOrganization,
   saveOrganization,
+  saveUnit,
 } from "../../../queries/organizations";
 import {
   FieldType,
-  OrganizationBase,
-  Unit,
   Organization,
+  OrganizationBase,
   Transient,
+  Unit,
 } from "../../../types/entities";
-import { slugify, classNames } from "../../../utils/core";
-import Input from "../../../components/forms/inputs/Input";
-import Checkbox from "../../../components/forms/inputs/Checkbox";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
-import { useAuth } from "../../../contexts/auth/useAuth";
+import { classNames, slugify } from "../../../utils/core";
 
 interface EditOrganizationBasicProps {
   setOpen: (open: boolean) => void;
   create: boolean;
   level: "organization" | "unit";
   unitId?: string;
-  organizationId: string;
+  organizationId: string | null;
   parentUnitId?: string;
+  onSaveSuccess?: () => void;
 }
 
 type TransientOrganizationBase = Omit<
@@ -65,16 +66,15 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   organizationId,
   create,
   parentUnitId,
+  onSaveSuccess,
 }) => {
   const { isGlobalAdmin } = useAuth();
-
-  const { invalidateOrganizationQuery, invalidateCurrentUnitQuery } =
-    useContext(MyOrganizationContext);
+  const { openConfirmDiscard } = useContext(ConfirmationContext);
 
   const { data: organizationData } = useQuery({
     queryKey: ["organization", "id", organizationId] as const,
-    queryFn: ({ queryKey }) => getOrganization(queryKey[2]),
-    enabled: level === "organization",
+    queryFn: ({ queryKey }) => getOrganization(queryKey[2]!),
+    enabled: level === "organization" && !!organizationId,
   });
 
   const { data: unitData } = useQuery({
@@ -103,7 +103,10 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
       data.parentUnit =
         baseData.parentUnit ??
         (parentUnitId ? { id: parentUnitId } : undefined);
-      data.organization = baseData.organization ?? { id: organizationId };
+      data.organization = baseData.organization;
+      if (!data.organization && organizationId) {
+        data.organization = { id: organizationId };
+      }
     }
 
     return data;
@@ -168,8 +171,13 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   ]);
 
   const slugReadOnly = useMemo(
-    () => !organizationId || (!create && !isGlobalAdmin),
-    [organizationId, create, isGlobalAdmin]
+    () => (!isOrganization && !organizationId) || (!create && !isGlobalAdmin),
+    [isOrganization, organizationId, create, isGlobalAdmin]
+  );
+
+  const canValidateSlug = useMemo(
+    () => isOrganization || !!organizationId,
+    [isOrganization, organizationId]
   );
 
   const queryClient = useQueryClient();
@@ -200,10 +208,9 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
         });
       }
 
-      setOpen(false);
+      onSaveSuccess?.();
 
-      if (isOrganization) invalidateOrganizationQuery();
-      else invalidateCurrentUnitQuery();
+      setOpen(false);
     },
   });
 
@@ -215,7 +222,13 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   return (
     <SlideOverForm
       onSubmit={handleSubmit(handleSave)}
-      onClose={() => setOpen(false)}
+      onClose={() => {
+        if (isDirty) {
+          openConfirmDiscard(() => setOpen(false));
+        } else {
+          setOpen(false);
+        }
+      }}
       hideDelete
       submitText={create ? "Add" : "Save"}
       isSaving={isPending}
@@ -244,7 +257,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
           <Input
             type={FieldType.TEXT}
             required
-            disabled={!organizationId}
+            disabled={!canValidateSlug}
             {...register("name")}
             className="w-full"
           />
@@ -279,7 +292,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
               {...registerSlug({
                 validate: () => isUniqueSlug,
               })}
-              disabled={!organizationId || slugReadOnly}
+              disabled={!canValidateSlug || slugReadOnly}
               className={classNames(
                 "w-full",
                 slugReadOnly ? "" : "pr-7 pl-10",

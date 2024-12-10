@@ -4,39 +4,56 @@ import ConfirmationModal, {
   ConfirmationModalProps,
 } from "../../components/layouts/modal/ConfirmationModal";
 
+type TConfirmationOptions = Omit<ConfirmationModalProps, "open" | "setOpen">;
+
 export interface ConfirmationContextType {
-  setOpen: (
-    confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">
-  ) => void;
+  setOpen: (confirmationOptions: TConfirmationOptions) => void;
   setClose: () => void;
-  setConfirmationOptions: Updater<
-    Omit<ConfirmationModalProps, "open" | "setOpen">
-  >;
+  setConfirmationOptions: Updater<TConfirmationOptions>;
+  openConfirmDiscard: (
+    onConfirm: TConfirmationOptions["onConfirm"],
+    options?: Omit<TConfirmationOptions, "onConfirm">
+  ) => void;
 }
 
 export const ConfirmationContext = createContext<ConfirmationContextType>({
   setOpen: () => {},
   setClose: () => {},
   setConfirmationOptions: () => {},
+  openConfirmDiscard: () => {},
 });
 
 export const ConfirmationContextProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const [open, setOpen] = useState(false);
-  const [confirmationOptions, setConfirmationOptions] = useImmer<
-    Omit<ConfirmationModalProps, "open" | "setOpen">
-  >({
-    title: "",
-    message: "",
-    onConfirm: () => {},
-  });
+  const [confirmationOptions, setConfirmationOptions] =
+    useImmer<TConfirmationOptions>({
+      title: "",
+      message: "",
+      onConfirm: () => {},
+    });
 
-  const handleOpen = (
-    options: Omit<ConfirmationModalProps, "open" | "setOpen">
-  ) => {
+  const handleOpen = (options: TConfirmationOptions) => {
     setConfirmationOptions(options);
     setOpen(true);
+  };
+
+  const openConfirmDiscard = (
+    onConfirm: TConfirmationOptions["onConfirm"],
+    options?: Omit<TConfirmationOptions, "onConfirm">
+  ) => {
+    handleOpen({
+      title: "Discard changes?",
+      message: "Are you sure you want to discard your changes?",
+      onConfirm: () => {
+        onConfirm();
+        setOpen(false);
+      },
+      confirmText: "Discard",
+      cancelText: "Go Back",
+      ...options,
+    });
   };
 
   return (
@@ -45,6 +62,7 @@ export const ConfirmationContextProvider: React.FC<PropsWithChildren> = ({
         setOpen: handleOpen,
         setClose: () => setOpen(false),
         setConfirmationOptions,
+        openConfirmDiscard,
       }}
     >
       {children}

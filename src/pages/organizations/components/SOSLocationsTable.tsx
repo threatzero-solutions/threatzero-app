@@ -1,27 +1,28 @@
-import { Link } from "react-router";
-import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
-import IconButton from "../../../components/layouts/buttons/IconButton";
 import {
   LinkIcon,
   PencilSquareIcon,
   PlusIcon,
   QrCodeIcon,
 } from "@heroicons/react/20/solid";
-import { createColumnHelper } from "@tanstack/react-table";
-import { useCallback, useContext, useMemo, useState } from "react";
-import { Location } from "../../../types/entities";
-import dayjs from "dayjs";
-import { useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { useDebounceValue } from "usehooks-ts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { generateQrCode, getLocations } from "../../../queries/organizations";
-import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import { useCallback, useContext, useMemo, useState } from "react";
+import { Link } from "react-router";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
 import FilterBar from "../../../components/layouts/FilterBar";
-import { classNames, simulateDownload, slugify } from "../../../utils/core";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
-import EditSOSLocation from "./EditSOSLocation";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../contexts/alert/use-alert-id";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { generateQrCode, getLocations } from "../../../queries/organizations";
+import { Location } from "../../../types/entities";
+import { classNames, simulateDownload, slugify } from "../../../utils/core";
+import EditSOSLocation from "./EditSOSLocation";
 
 const locationsColumnHelper = createColumnHelper<Location>();
 
@@ -35,7 +36,8 @@ const SOSLocationsTable: React.FC<SOSLocationsTableProps> = ({ unitId }) => {
     string | undefined
   >(undefined);
 
-  const { setInfo } = useContext(AlertContext);
+  const { setInfo, clearAlert } = useContext(AlertContext);
+  const infoAlertId = useAlertId();
 
   const [locationsQuery, setLocationsQuery] = useImmer<ItemFilterQueryParams>({
     order: { createdTimestamp: "DESC" },
@@ -67,19 +69,19 @@ const SOSLocationsTable: React.FC<SOSLocationsTableProps> = ({ unitId }) => {
         `sos-qr-code_${slugify(location.name)}_${locationId}.png`
       );
 
-      setTimeout(() => setInfo(), 2000);
+      setTimeout(() => clearAlert(infoAlertId), 2000);
     },
     onError: () => {
-      setInfo();
+      clearAlert(infoAlertId);
     },
   });
 
   const handleDownloadQRCode = useCallback(
     (location: Location) => {
-      setInfo("Downloading QR code...");
+      setInfo("Downloading QR code...", { id: infoAlertId });
       downloadQrCode(location);
     },
-    [setInfo, downloadQrCode]
+    [setInfo, downloadQrCode, infoAlertId]
   );
 
   const locationColumns = useMemo(

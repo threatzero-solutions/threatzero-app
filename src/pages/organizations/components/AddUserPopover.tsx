@@ -8,7 +8,7 @@ import {
   PopoverPanel,
 } from "@headlessui/react";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { ReactNode, useEffect, useMemo } from "react";
 import { Fragment } from "react/jsx-runtime";
 import { useImmer } from "use-immer";

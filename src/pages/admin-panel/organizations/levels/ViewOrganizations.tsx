@@ -1,16 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import { getOrganizations } from "../../../../queries/organizations";
-import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
-import { useDebounceValue } from "usehooks-ts";
-import { useImmer } from "use-immer";
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import { useState } from "react";
 import { Link } from "react-router";
-import { PencilSquareIcon } from "@heroicons/react/20/solid";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
 import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../../components/layouts/buttons/IconButton";
-import { createColumnHelper } from "@tanstack/react-table";
-import { Organization } from "../../../../types/entities";
+import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import DataTable2 from "../../../../components/layouts/tables/DataTable2";
-import dayjs from "dayjs";
+import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
+import { getOrganizations } from "../../../../queries/organizations";
+import { Organization } from "../../../../types/entities";
+import EditOrganizationBasic from "../../../organizations/components/EditOrganizationBasic";
 
 const columnHelper = createColumnHelper<Organization>();
 const columns = [
@@ -32,10 +35,11 @@ const columns = [
       <ButtonGroup className="w-full justify-end">
         <IconButton
           as={Link}
-          icon={PencilSquareIcon}
+          icon={ArrowRightIcon}
           to={info.row.original.id}
           className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
-          text="Edit"
+          trailing
+          text="View"
         />
       </ButtonGroup>
     ),
@@ -50,6 +54,10 @@ export const ViewOrganizations: React.FC = () => {
     organizationsQuery,
     300
   );
+
+  const [editBasicInfoOpen, setEditBasicInfoOpen] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const { data: organizations, isLoading: organizationsLoading } = useQuery({
     queryKey: ["organizations", debouncedOrganizationsQuery] as const,
@@ -67,17 +75,31 @@ export const ViewOrganizations: React.FC = () => {
         title="Organizations"
         subtitle="View, add or edit top-level organizations (i.e. school districts, companies)."
         action={
-          <Link
-            to="new"
+          <button
+            type="button"
+            onClick={() => setEditBasicInfoOpen(true)}
             className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
           >
             + Add New Organization
-          </Link>
+          </button>
         }
         pageState={organizations}
         showFooter={false}
         noRowsMessage="No organizations found."
       />
+      <SlideOver open={editBasicInfoOpen} setOpen={setEditBasicInfoOpen}>
+        <EditOrganizationBasic
+          setOpen={setEditBasicInfoOpen}
+          create={false}
+          organizationId={null}
+          level={"organization"}
+          onSaveSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ["organizations", debouncedOrganizationsQuery],
+            });
+          }}
+        />
+      </SlideOver>
     </>
   );
 };

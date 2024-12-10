@@ -1,16 +1,18 @@
 import { useContext } from "react";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
-import AllUsersTable from "../components/AllUsersTable";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import OrganizationIdpsInput from "../../admin-panel/organizations/components/OrganizationIdpsInput";
+import AllUsersTable from "../components/AllUsersTable";
 
 const MyOrganizationUsers: React.FC = () => {
   const {
-    myOrganization,
-    myOrganizationLoading,
+    currentOrganization: myOrganization,
+    currentOrganizationLoading: myOrganizationLoading,
     currentUnitSlug,
     isUnitContext,
-  } = useContext(MyOrganizationContext);
+    organizationIdps,
+    organizationIdpsLoading,
+  } = useContext(OrganizationsContext);
 
   return (
     <div>
@@ -40,11 +42,18 @@ const MyOrganizationUsers: React.FC = () => {
               defaultOpen
             >
               <div className="6">
-                {myOrganization && (
+                {organizationIdps && !organizationIdpsLoading ? (
                   <OrganizationIdpsInput
                     organization={myOrganization}
-                    idpSlugs={myOrganization.idpSlugs}
+                    idpSlugs={myOrganization.idpSlugs ?? []}
+                    idps={organizationIdps}
                   />
+                ) : (
+                  <>
+                    <div className="animate-pulse rounded bg-slate-200 w-full h-32" />
+                    <div className="animate-pulse rounded bg-slate-200 w-full h-32" />
+                    <div className="animate-pulse rounded bg-slate-200 w-full h-32" />
+                  </>
                 )}
               </div>
             </LargeFormSection>

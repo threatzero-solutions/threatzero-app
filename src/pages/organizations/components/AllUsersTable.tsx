@@ -5,9 +5,9 @@ import {
   TrashIcon,
   UserPlusIcon,
 } from "@heroicons/react/20/solid";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
@@ -17,8 +17,14 @@ import Modal from "../../../components/layouts/modal/Modal";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import { useAuth } from "../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { getOrganizationUsers, getUnits } from "../../../queries/organizations";
+import {
+  deleteOrganizationUser,
+  getOrganizationUsers,
+  getUnits,
+} from "../../../queries/organizations";
 import { OrganizationUser } from "../../../types/api";
 import { type Organization } from "../../../types/entities";
 import { classNames, humanizeSlug } from "../../../utils/core";
@@ -45,6 +51,12 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
   >();
 
   const { hasMultipleUnitAccess } = useAuth();
+  const {
+    setOpen: setConfirmationOpen,
+    setConfirmationOptions,
+    setClose: setConfirmationClose,
+  } = useContext(ConfirmationContext);
+  const { invalidateOrganizationUsersQuery } = useContext(OrganizationsContext);
 
   const [usersQuery, setUsersQuery] = useImmer<ItemFilterQueryParams>({
     order: { createdTimestamp: "DESC" },
@@ -73,6 +85,52 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
   const thisUnit = useMemo(
     () => units?.results?.find((u) => u.slug === unitSlug),
     [units, unitSlug]
+  );
+
+  const handleEditUser = (userId?: string) => {
+    setSelectedUserId(userId);
+    setEditUserOpen(true);
+  };
+
+  const handleNewUser = () => {
+    handleEditUser();
+  };
+
+  const { mutate: doDelete, isPending: isDeletePending } = useMutation({
+    mutationFn: (userId: string) =>
+      deleteOrganizationUser(organizationId, userId),
+    onSuccess: () => {
+      invalidateOrganizationUsersQuery();
+      setConfirmationClose();
+    },
+  });
+
+  useEffect(() => {
+    setConfirmationOptions((draft) => {
+      draft.isPending = isDeletePending;
+    });
+  }, [isDeletePending, setConfirmationOptions]);
+
+  const handleDeleteUser = useCallback(
+    (user: OrganizationUser) => {
+      setConfirmationOpen({
+        title: "Delete User",
+        message: (
+          <span>
+            Are you sure you want to delete the following user account?
+            <span className="block font-bold mt-2">
+              {user.firstName} {user.lastName} ({user.email})
+            </span>
+          </span>
+        ),
+        onConfirm: () => {
+          doDelete(user.id);
+        },
+        destructive: true,
+        confirmText: "Delete",
+      });
+    },
+    [setConfirmationOpen, doDelete]
   );
 
   const columns = useMemo(
@@ -151,7 +209,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                       <TrashIcon className="size-4 inline" /> Delete
                     </span>
                   ),
-                  action: () => {},
+                  action: () => handleDeleteUser(row.original),
                 },
               ]}
             />
@@ -160,17 +218,8 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         enableSorting: false,
       }),
     ],
-    [units?.results, thisUnit, hasMultipleUnitAccess]
+    [units?.results, thisUnit, hasMultipleUnitAccess, handleDeleteUser]
   );
-
-  const handleEditUser = (userId?: string) => {
-    setSelectedUserId(userId);
-    setEditUserOpen(true);
-  };
-
-  const handleNewUser = () => {
-    handleEditUser();
-  };
 
   return (
     <>

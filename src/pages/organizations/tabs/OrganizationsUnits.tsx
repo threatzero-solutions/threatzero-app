@@ -6,7 +6,7 @@ import {
   UNIT_ADMIN_GROUP_NAME,
 } from "../../../constants/organizations";
 import { useAuth } from "../../../contexts/auth/useAuth";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { classNames } from "../../../utils/core";
 import GroupMembersTable from "../components/GroupMembersTable";
 import SOSLocationsTable from "../components/SOSLocationsTable";
@@ -16,15 +16,15 @@ const MyOrganizationUnits: React.FC = () => {
   const {
     allUnits,
     allUnitsLoading,
-    myOrganization,
-    myOrganizationLoading,
+    currentOrganization: myOrganization,
+    currentOrganizationLoading: myOrganizationLoading,
     currentUnitSlug,
     currentUnit,
     setUnitsPath,
     isUnitContext,
     roleGroups,
     roleGroupsLoading,
-  } = useContext(MyOrganizationContext);
+  } = useContext(OrganizationsContext);
   const { isGlobalAdmin } = useAuth();
 
   const organizationAdminGroupName = useMemo(

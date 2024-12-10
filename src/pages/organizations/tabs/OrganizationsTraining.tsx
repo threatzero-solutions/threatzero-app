@@ -7,7 +7,7 @@ import {
   UNIT_TRAINING_ADMIN_GROUP_NAME,
 } from "../../../constants/organizations";
 import { useAuth } from "../../../contexts/auth/useAuth";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { Organization } from "../../../types/entities";
 import { classNames } from "../../../utils/core";
 import CourseEnrollmentsInput from "../../admin-panel/organizations/components/CourseEnrollmentsInput";
@@ -15,13 +15,13 @@ import GroupMembersTable from "../components/GroupMembersTable";
 
 const MyOrganizationTraining: React.FC = () => {
   const {
-    myOrganization,
-    myOrganizationLoading,
+    currentOrganization: myOrganization,
+    currentOrganizationLoading: myOrganizationLoading,
     isUnitContext,
     currentUnitSlug,
     roleGroups,
     roleGroupsLoading,
-  } = useContext(MyOrganizationContext);
+  } = useContext(OrganizationsContext);
   const { isGlobalAdmin } = useAuth();
 
   const trainingAdminGroupName = useMemo(

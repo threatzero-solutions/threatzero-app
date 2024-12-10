@@ -1,12 +1,21 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import {
-  Unit,
-  Organization,
-  Location,
+  IsUniqueResponse,
+  KeycloakGroupDto,
+  OrganizationIdpDto,
+  OrganizationUser,
+} from "../types/api";
+import { DeepPartial } from "../types/core";
+import {
   LmsTrainingToken,
   LmsTrainingTokenValue,
+  Location,
+  Organization,
+  Unit,
 } from "../types/entities";
+import { ScormVersion } from "../types/training";
 import {
   buildUrl,
   deleteOne,
@@ -22,15 +31,6 @@ import {
   save,
   updateOne,
 } from "./utils";
-import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
-import { DeepPartial } from "../types/core";
-import {
-  IsUniqueResponse,
-  KeycloakGroupDto,
-  OrganizationIdpDto,
-  OrganizationUser,
-} from "../types/api";
-import { ScormVersion } from "../types/training";
 
 export const getOrganizations = (query?: ItemFilterQueryParams) =>
   findMany<Organization>("/organizations/organizations/", query);
@@ -190,6 +190,11 @@ export const saveOrganizationUser = (
   id: Organization["id"],
   user: DeepPartial<OrganizationUser>
 ) => save<OrganizationUser>(`/organizations/organizations/${id}/users/`, user);
+
+export const deleteOrganizationUser = (
+  id: Organization["id"],
+  userId: string
+) => deleteOne(`/organizations/organizations/${id}/users/`, userId);
 
 export const assignOrganizationUserToRoleGroup = (
   id: Organization["id"],

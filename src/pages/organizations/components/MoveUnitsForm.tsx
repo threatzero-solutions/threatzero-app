@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { saveOrganizationUser } from "../../../queries/organizations";
 import { OrganizationUser } from "../../../types/api";
 import { Unit } from "../../../types/entities";
@@ -25,9 +25,8 @@ const MoveUnitsForm: React.FC<MoveUnitsFormProps> = ({
     setClose: setConfirmationClose,
     setConfirmationOptions,
   } = useContext(ConfirmationContext);
-  const { allUnits, invalidateOrganizationUsersQuery } = useContext(
-    MyOrganizationContext
-  );
+  const { allUnits, invalidateOrganizationUsersQuery } =
+    useContext(OrganizationsContext);
 
   const previousUnit = useMemo(
     () => allUnits?.find((u) => u.slug === user.attributes.unit?.[0]),

@@ -1,5 +1,3 @@
-import { NavLink, Outlet, useLocation } from "react-router";
-import { classNames, humanizeSlug } from "../../utils/core";
 import {
   BookOpenIcon,
   BuildingOffice2Icon,
@@ -10,31 +8,35 @@ import {
   PencilIcon,
   UsersIcon,
 } from "@heroicons/react/20/solid";
-import {
-  MyOrganizationContext,
-  MyOrganizationContextProvider,
-} from "../../contexts/my-organization/my-organization-context";
 import { useContext, useMemo, useState } from "react";
-import { Unit } from "../../types/entities";
+import { NavLink, Outlet, To, useLocation } from "react-router";
 import SlideOver from "../../components/layouts/slide-over/SlideOver";
-import EditOrganizationBasic from "./components/EditOrganizationBasic";
 import { useAuth } from "../../contexts/auth/useAuth";
+import {
+  OrganizationsContext,
+  OrganizationsContextProvider,
+} from "../../contexts/organizations/organizations-context";
+import { Organization, Unit } from "../../types/entities";
+import { classNames, humanizeSlug } from "../../utils/core";
+import EditOrganizationBasic from "./components/EditOrganizationBasic";
 
-const MyOrganizationRootInner: React.FC = () => {
+const OrganizationsRootInner: React.FC = () => {
   const [editBasicInfoOpen, setEditBasicInfoOpen] = useState(false);
 
   const { isGlobalAdmin } = useAuth();
 
   const {
-    myOrganization,
-    myOrganizationLoading,
+    currentOrganization: myOrganization,
+    currentOrganizationLoading: myOrganizationLoading,
     allUnits,
     currentUnit,
     currentUnitLoading,
     unitsPath,
     setUnitsPath,
     isUnitContext,
-  } = useContext(MyOrganizationContext);
+    invalidateCurrentUnitQuery,
+    invalidateOrganizationQuery,
+  } = useContext(OrganizationsContext);
 
   const paths = useMemo(() => unitsPath?.split("/") ?? [], [unitsPath]);
 
@@ -211,6 +213,11 @@ const MyOrganizationRootInner: React.FC = () => {
             organizationId={myOrganization.id}
             unitId={currentUnit?.id}
             level={isUnitContext ? "unit" : "organization"}
+            onSaveSuccess={() =>
+              isUnitContext
+                ? invalidateCurrentUnitQuery()
+                : invalidateOrganizationQuery()
+            }
           />
         </SlideOver>
       )}
@@ -218,12 +225,18 @@ const MyOrganizationRootInner: React.FC = () => {
   );
 };
 
-const MyOrganizationRoot: React.FC = () => {
+const OrganizationsRoot: React.FC<{
+  organizationId?: Organization["id"];
+  organizationDeleteRedirect?: To;
+}> = ({ organizationId, organizationDeleteRedirect }) => {
   return (
-    <MyOrganizationContextProvider>
-      <MyOrganizationRootInner />
-    </MyOrganizationContextProvider>
+    <OrganizationsContextProvider
+      currentOrganizationId={organizationId}
+      organizationDeleteRedirect={organizationDeleteRedirect}
+    >
+      <OrganizationsRootInner />
+    </OrganizationsContextProvider>
   );
 };
 
-export default MyOrganizationRoot;
+export default OrganizationsRoot;

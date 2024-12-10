@@ -1,45 +1,54 @@
-import { useContext, useMemo } from "react";
-import { MyOrganizationContext } from "../../../contexts/my-organization/my-organization-context";
-import LargeFormSection from "../../../components/forms/LargeFormSection";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { useMutation } from "@tanstack/react-query";
-import { deleteOrganization, deleteUnit } from "../../../queries/organizations";
-import InlineNotice from "../../../components/layouts/InlineNotice";
-import { classNames, Path } from "../../../utils/core";
 import { TrashIcon } from "@heroicons/react/20/solid";
-import IconButton from "../../../components/layouts/buttons/IconButton";
-import { CoreContext } from "../../../contexts/core/core-context";
+import { useMutation } from "@tanstack/react-query";
+import { useContext, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
+import LargeFormSection from "../../../components/forms/LargeFormSection";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+import InlineNotice from "../../../components/layouts/InlineNotice";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
+import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
+import { deleteOrganization, deleteUnit } from "../../../queries/organizations";
+import { classNames, Path } from "../../../utils/core";
 
 const MyOrganizationSettings: React.FC = () => {
   const {
-    myOrganization,
-    myOrganizationLoading,
+    currentOrganization: myOrganization,
+    currentOrganizationLoading: myOrganizationLoading,
     invalidateAllUnitsQuery,
     currentUnit,
     isUnitContext,
     unitsPath,
     setUnitsPath,
-  } = useContext(MyOrganizationContext);
+    organizationDeleteRedirect,
+  } = useContext(OrganizationsContext);
   const { accessTokenClaims } = useAuth();
-  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+  const {
+    setOpen: setConfirmationOpen,
+    setClose: setConfirmationClose,
+    setConfirmationOptions,
+  } = useContext(ConfirmationContext);
   const navigate = useNavigate();
 
-  const { mutate: doDeleteOrganization } = useMutation({
-    mutationFn: deleteOrganization,
-    onSuccess: () => {
-      navigate("/");
-    },
-  });
+  const { mutate: doDeleteOrganization, isPending: isOrganizationDeleting } =
+    useMutation({
+      mutationFn: deleteOrganization,
+      onSuccess: () => {
+        setConfirmationClose();
+        navigate(organizationDeleteRedirect);
+      },
+    });
 
-  const { mutate: doDeleteCurrentUnit } = useMutation({
-    mutationFn: deleteUnit,
-    onSuccess: () => {
-      const paths = unitsPath?.split("/") ?? [];
-      setUnitsPath(paths.length > 1 ? paths.slice(0, -1).join("/") : null);
-      invalidateAllUnitsQuery();
-    },
-  });
+  const { mutate: doDeleteCurrentUnit, isPending: isUnitDeleting } =
+    useMutation({
+      mutationFn: deleteUnit,
+      onSuccess: () => {
+        const paths = unitsPath?.split("/") ?? [];
+        setUnitsPath(paths.length > 1 ? paths.slice(0, -1).join("/") : null);
+        invalidateAllUnitsQuery();
+        setConfirmationClose();
+      },
+    });
 
   const deleteDisabled = useMemo(() => {
     if (
@@ -80,6 +89,12 @@ const MyOrganizationSettings: React.FC = () => {
     [isUnitContext, currentUnit, myOrganization]
   );
 
+  useEffect(() => {
+    setConfirmationOptions((draft) => {
+      draft.isPending = isUnitDeleting || isOrganizationDeleting;
+    });
+  }, [isUnitDeleting, isOrganizationDeleting, setConfirmationOptions]);
+
   const handleDelete = () => {
     setConfirmationOpen({
       title: deleteTitle + "?",
@@ -92,10 +107,18 @@ const MyOrganizationSettings: React.FC = () => {
         } else {
           doDeleteOrganization(myOrganization?.id);
         }
-        setConfirmationClose();
       },
       destructive: true,
       confirmText: "Delete",
+      requireTextInput: true,
+      textInputPrompt: `Type ${
+        isUnitContext ? "unit" : "organization"
+      } name to confirm:`,
+      textInputPlaceholder: isUnitContext
+        ? currentUnit?.name
+        : myOrganization?.name,
+      validateTextInput: (text) =>
+        text === (isUnitContext ? currentUnit?.name : myOrganization?.name),
     });
   };
 

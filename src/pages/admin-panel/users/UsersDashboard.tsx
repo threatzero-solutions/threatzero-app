@@ -11,19 +11,20 @@
 // 	}
 // };
 
-import { useImmer } from "use-immer";
-import DataTable from "../../../components/layouts/tables/DataTable";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { getTrainingTokens } from "../../../queries/users";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useResolvedPath } from "react-router";
-import { TrainingToken } from "../../../types/entities";
-import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useContext, useState } from "react";
-import ManageTrainingInvite from "./training-invites/ManageTrainingInvite";
+import { useResolvedPath } from "react-router";
+import { useImmer } from "use-immer";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../contexts/alert/use-alert-id";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { getTrainingTokens } from "../../../queries/users";
+import { TrainingToken } from "../../../types/entities";
+import ManageTrainingInvite from "./training-invites/ManageTrainingInvite";
 
 dayjs.extend(relativeTime);
 
@@ -53,6 +54,7 @@ const UsersDashboard: React.FC = () => {
   const watchTrainingPath = useResolvedPath("/watch-training/");
 
   const { setSuccess } = useContext(AlertContext);
+  const alertId = useAlertId();
 
   const [itemFilterOptions, setItemFilterOptions] =
     useImmer<ItemFilterQueryParams>({});
@@ -65,7 +67,10 @@ const UsersDashboard: React.FC = () => {
   const copyTrainingUrl = (token: TrainingToken) => {
     const url = `${window.location.origin}${watchTrainingPath.pathname}${token.value.trainingItemId}?watchId=${token.key}`;
     navigator.clipboard.writeText(url);
-    setSuccess("Copied training link to clipboard", 5000);
+    setSuccess("Copied training link to clipboard", {
+      id: alertId,
+      timeout: 5000,
+    });
   };
 
   const viewValue = (token: TrainingToken) => {

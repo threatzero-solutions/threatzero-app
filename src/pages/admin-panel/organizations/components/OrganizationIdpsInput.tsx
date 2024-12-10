@@ -1,28 +1,29 @@
-import { Fragment, useContext, useState } from "react";
-import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import EditOrganizationIdp from "./EditOrganizationIdp";
-import { OrganizationIdpDto } from "../../../../types/api";
-import { Organization } from "../../../../types/entities";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { MinusCircleIcon, PencilIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { AnimatePresence, motion } from "motion/react";
+import { Fragment, useContext, useMemo, useState } from "react";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
+import Block from "../../../../components/layouts/content/Block";
+import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
+import { LEVEL } from "../../../../constants/permissions";
+import { useAuth } from "../../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
 import {
   getOrganizationIdp,
   saveOrganization,
 } from "../../../../queries/organizations";
+import { OrganizationIdpDto } from "../../../../types/api";
+import { Organization } from "../../../../types/entities";
 import { classNames } from "../../../../utils/core";
-import { useAuth } from "../../../../contexts/auth/useAuth";
-import { LEVEL } from "../../../../constants/permissions";
-import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { AxiosError } from "axios";
-import { CoreContext } from "../../../../contexts/core/core-context";
-import Block from "../../../../components/layouts/content/Block";
-import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
-import IconButton from "../../../../components/layouts/buttons/IconButton";
+import EditOrganizationIdp from "./EditOrganizationIdp";
 
 interface OrganizationIdpsInputProps {
   organization: Organization;
   idpSlugs: string[];
+  idps?: (OrganizationIdpDto | null)[];
 }
 
 const IdpRow: React.FC<{
@@ -30,11 +31,12 @@ const IdpRow: React.FC<{
   idpSlug: string;
   onSelect?: (idp: OrganizationIdpDto) => void;
   onUnlink?: (idpSlug: string) => void;
-}> = ({ organizationId, idpSlug, onSelect, onUnlink }) => {
+  idp?: OrganizationIdpDto | null;
+}> = ({ organizationId, idpSlug, onSelect, onUnlink, idp: idpProp }) => {
   const { hasPermissions } = useAuth();
   const hasAdminLevel = hasPermissions([LEVEL.ADMIN]);
 
-  const { data: idp, isLoading: idpLoading } = useQuery({
+  const { data: idpData, isLoading: idpLoading } = useQuery({
     queryKey: ["organization-idps", organizationId, idpSlug] as const,
     queryFn: ({ queryKey }) =>
       getOrganizationIdp(queryKey[1], queryKey[2]).catch((e) => {
@@ -43,7 +45,10 @@ const IdpRow: React.FC<{
         }
         throw e;
       }),
+    enabled: !idpProp,
   });
+
+  const idp = idpProp || idpData;
 
   return (
     <Block className="flex items-center justify-between bg-gray-50">
@@ -102,13 +107,15 @@ const IdpRow: React.FC<{
 const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
   organization,
   idpSlugs,
+  idps,
 }) => {
   const [editIdpSliderOpen, setEditIdpSliderOpen] = useState(false);
   const [activeIdp, setActiveIdp] = useState<OrganizationIdpDto | undefined>();
 
   const { isGlobalAdmin } = useAuth();
 
-  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+  const { setOpen: setConfirmationOpen, setClose: setConfirmationClose } =
+    useContext(ConfirmationContext);
 
   const [slugToLink, setSlugToLink] = useState<string>("");
 
@@ -168,6 +175,15 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
     });
   };
 
+  const idpsMap = useMemo(
+    () =>
+      idps?.reduce((acc, idp) => {
+        if (idp) acc.set(idp.slug, idp);
+        return acc;
+      }, new Map<string, OrganizationIdpDto>()),
+    [idps]
+  );
+
   return (
     <>
       <div className="flex flex-col gap-4">
@@ -176,6 +192,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
             key={idpSlug}
             idpSlug={idpSlug}
             organizationId={organization.id}
+            idp={idpsMap?.get(idpSlug)}
             onSelect={(idp) => {
               setActiveIdp(idp);
               setEditIdpSliderOpen(true);

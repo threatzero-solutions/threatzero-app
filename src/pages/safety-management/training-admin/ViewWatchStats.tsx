@@ -1,22 +1,23 @@
-import { useContext, useMemo } from "react";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
-import ViewPercentWatched from "./components/ViewPercentWatched";
-import { simulateDownload, stripHtml } from "../../../utils/core";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import { useContext, useMemo } from "react";
+import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../contexts/alert/use-alert-id";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import {
   getItemCompletions,
   getItemCompletionsCsv,
   getTrainingItems,
 } from "../../../queries/training";
-import dayjs from "dayjs";
-import { AlertContext } from "../../../contexts/alert/alert-context";
-import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ItemCompletion } from "../../../types/entities";
+import { simulateDownload, stripHtml } from "../../../utils/core";
+import ViewPercentWatched from "./components/ViewPercentWatched";
 
 const columnHelper = createColumnHelper<ItemCompletion>();
 
@@ -25,7 +26,8 @@ const ViewWatchStats: React.FC = () => {
     useImmer<ItemFilterQueryParams>({ order: { ["user.familyName"]: "DESC" } });
 
   const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
-  const { setInfo } = useContext(AlertContext);
+  const { setInfo, clearAlert } = useContext(AlertContext);
+  const infoAlertId = useAlertId();
 
   const [debouncedCompletionsQuery] = useDebounceValue(completionsQuery, 300);
   const { data: itemCompletions, isLoading: completionsLoading } = useQuery({
@@ -151,15 +153,15 @@ const ViewWatchStats: React.FC = () => {
     mutationFn: (query: ItemFilterQueryParams) => getItemCompletionsCsv(query),
     onSuccess: (data) => {
       simulateDownload(new Blob([data]), "watch-stats.csv");
-      setTimeout(() => setInfo(), 2000);
+      setTimeout(() => clearAlert(infoAlertId), 2000);
     },
     onError: () => {
-      setInfo();
+      clearAlert(infoAlertId);
     },
   });
 
   const handleDownloadWatchStatsCsv = () => {
-    setInfo("Downloading CSV...");
+    setInfo("Downloading CSV...", { id: infoAlertId });
     itemCompletionsCsvMutation.mutate(completionsQuery);
   };
 

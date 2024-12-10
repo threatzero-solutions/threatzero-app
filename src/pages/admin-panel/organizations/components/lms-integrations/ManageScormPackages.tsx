@@ -1,42 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import SlideOverFormBody from "../../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverHeading from "../../../../../components/layouts/slide-over/SlideOverHeading";
-import {
-  LmsTrainingToken,
-  Organization,
-  TrainingItem,
-} from "../../../../../types/entities";
-import {
-  getTrainingCourse,
-  getTrainingItem,
-} from "../../../../../queries/training";
-import { DEFAULT_THUMBNAIL_URL } from "../../../../../constants/core";
-import ButtonGroup from "../../../../../components/layouts/buttons/ButtonGroup";
-import {
-  ArrowDownTrayIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ClockIcon,
-  LockClosedIcon,
-  LockOpenIcon,
-  PlusCircleIcon,
-  XMarkIcon,
-} from "@heroicons/react/20/solid";
-import IconButton from "../../../../../components/layouts/buttons/IconButton";
-import dayjs from "dayjs";
-import { Fragment, useCallback, useContext, useEffect, useMemo } from "react";
-import {
-  classNames,
-  simulateDownload,
-  slugify,
-  stripHtml,
-} from "../../../../../utils/core";
-import {
-  createOrganizationLmsToken,
-  getLmsScormPackage,
-  saveOrganization,
-  setOrganizationLmsTokenExpirations,
-} from "../../../../../queries/organizations";
 import {
   Menu,
   MenuButton,
@@ -47,15 +8,55 @@ import {
   PopoverPanel,
   Transition,
 } from "@headlessui/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { useFieldArray, useForm } from "react-hook-form";
-import { CoreContext } from "../../../../../contexts/core/core-context";
+import {
+  ArrowDownTrayIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ClockIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+  PlusCircleIcon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import SlideOverFormActionButtons from "../../../../../components/layouts/slide-over/SlideOverFormActionButtons";
-import Input from "../../../../../components/forms/inputs/Input";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { AnimatePresence, motion } from "motion/react";
+import { Fragment, useCallback, useContext, useEffect, useMemo } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
+import Input from "../../../../../components/forms/inputs/Input";
+import ButtonGroup from "../../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../../components/layouts/buttons/IconButton";
+import SlideOverFormActionButtons from "../../../../../components/layouts/slide-over/SlideOverFormActionButtons";
+import SlideOverFormBody from "../../../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../../../components/layouts/slide-over/SlideOverHeading";
+import { DEFAULT_THUMBNAIL_URL } from "../../../../../constants/core";
 import { AlertContext } from "../../../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../../../contexts/alert/use-alert-id";
+import { ConfirmationContext } from "../../../../../contexts/core/confirmation-context";
+import {
+  createOrganizationLmsToken,
+  getLmsScormPackage,
+  saveOrganization,
+  setOrganizationLmsTokenExpirations,
+} from "../../../../../queries/organizations";
+import {
+  getTrainingCourse,
+  getTrainingItem,
+} from "../../../../../queries/training";
+import {
+  LmsTrainingToken,
+  Organization,
+  TrainingItem,
+} from "../../../../../types/entities";
 import { ScormVersion } from "../../../../../types/training";
+import {
+  classNames,
+  simulateDownload,
+  slugify,
+  stripHtml,
+} from "../../../../../utils/core";
 
 const DEFAULT_EXPIRED_DATE = dayjs().startOf("day").subtract(1, "day");
 const DEFAULT_EXPIRATION_DATE = DEFAULT_EXPIRED_DATE.add(1, "year");
@@ -102,8 +103,11 @@ const TrainingItemDisplay: React.FC<{
 const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
   lmsToken,
 }) => {
-  const { setInfo } = useContext(AlertContext);
-  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+  const { setInfo, clearAlert } = useContext(AlertContext);
+  const infoAlertId = useAlertId();
+
+  const { setOpen: setConfirmationOpen, setClose: setConfirmationClose } =
+    useContext(ConfirmationContext);
 
   const { data: item, isLoading: itemLoading } = useQuery({
     queryKey: ["trainingItem", lmsToken.value.trainingItemId] as const,
@@ -186,15 +190,15 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
         new Blob([data]),
         `threatzero_${trainingTitle}_scorm.zip`
       );
-      setTimeout(() => setInfo(), 2000);
+      setTimeout(() => clearAlert(infoAlertId), 2000);
     },
     onError: () => {
-      setInfo();
+      clearAlert(infoAlertId);
     },
   });
 
   const handleDownloadScormPackage = (version: ScormVersion = "1.2") => {
-    setInfo("Downloading SCORM package...");
+    setInfo("Downloading SCORM package...", { id: infoAlertId });
     downloadLmsScormPackageMutation.mutate({
       lmsToken,
       version,

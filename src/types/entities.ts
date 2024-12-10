@@ -47,7 +47,7 @@ export interface Organization extends OrganizationBase {
   groupId: string | null;
   enrollments?: CourseEnrollment[];
   resources?: ResourceItem[];
-  idpSlugs: string[];
+  idpSlugs: string[] | null;
   allowedAudiences: string[];
   trainingAccessSettings: OrganizationTrainingAccessSettings | null;
 }

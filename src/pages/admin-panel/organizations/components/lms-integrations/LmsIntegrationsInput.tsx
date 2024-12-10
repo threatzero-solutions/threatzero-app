@@ -1,13 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import SlideOver from "../../../../../components/layouts/slide-over/SlideOver";
-import ManageScormPackages from "./ManageScormPackages";
+import { getOrganizationLmsTokens } from "../../../../../queries/organizations";
 import {
-  type TrainingCourse,
   type CourseEnrollment,
   type Organization,
+  type TrainingCourse,
 } from "../../../../../types/entities";
-import { getOrganizationLmsTokens } from "../../../../../queries/organizations";
-import { useQuery } from "@tanstack/react-query";
+import ManageScormPackages from "./ManageScormPackages";
 
 interface LmsIntegrationsInputProps {
   organizationId: Organization["id"] | undefined;
@@ -27,12 +27,12 @@ const LmsIntegrationsInput: React.FC<LmsIntegrationsInputProps> = ({
   const { data: lmsTokens } = useQuery({
     queryKey: [
       "lmsTokens",
-      organizationId!,
+      organizationId,
       enrollmentId,
       { limit: 100 },
     ] as const,
     queryFn: ({ queryKey }) =>
-      getOrganizationLmsTokens(queryKey[1], {
+      getOrganizationLmsTokens(queryKey[1]!, {
         "value.enrollmentId": queryKey[2],
         ...queryKey[3],
       }),
