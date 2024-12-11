@@ -37,7 +37,7 @@ const MyOrganizationUsers: React.FC = () => {
           </LargeFormSection>
           {!isUnitContext && (
             <LargeFormSection
-              heading="Identity Providers"
+              heading="SSO (Identity Providers)"
               subheading="Automatically link user data from external management systems."
               defaultOpen
             >

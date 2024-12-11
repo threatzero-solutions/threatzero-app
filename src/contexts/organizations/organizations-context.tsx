@@ -26,6 +26,9 @@ export interface OrganizationsContextType {
   currentUnitLoading: boolean;
   organizationIdps?: (OrganizationIdpDto | null)[];
   organizationIdpsLoading: boolean;
+  getMatchingIdp: (email: string) => OrganizationIdpDto | null;
+  getIdpAttributes: (idp?: OrganizationIdpDto | null) => string[];
+  getIdpRoleGroups: (idp?: OrganizationIdpDto | null) => string[];
   invalidateCurrentUnitQuery: () => void;
   invalidateAllUnitsQuery: () => void;
   unitsPath?: string | null;
@@ -47,6 +50,9 @@ export const OrganizationsContext = createContext<OrganizationsContextType>({
   allUnitsLoading: false,
   currentUnitLoading: false,
   organizationIdpsLoading: false,
+  getMatchingIdp: () => null,
+  getIdpAttributes: () => [],
+  getIdpRoleGroups: () => [],
   invalidateCurrentUnitQuery: () => {},
   invalidateAllUnitsQuery: () => {},
   setUnitsPath: () => {},
@@ -202,6 +208,65 @@ export const OrganizationsContextProvider: React.FC<
     [organizationIdpQueryResults]
   );
 
+  const getMatchingIdp = useCallback(
+    (email: string) => {
+      const [emailDomain] = email.split("@", 2).reverse();
+      return (
+        organizationIdps.find((idp) => idp?.domains.includes(emailDomain)) ??
+        null
+      );
+    },
+    [organizationIdps]
+  );
+
+  const getIdpAttributes = (idp?: OrganizationIdpDto | null): string[] => {
+    if (idp === null) {
+      return [];
+    }
+
+    if (idp === undefined) {
+      return [...new Set(organizationIdps.flatMap((i) => getIdpAttributes(i)))];
+    }
+
+    const attributes: string[] = ["firstName", "lastName", "username"];
+    if (idp.audienceMatchers?.length || idp.defaultAudience) {
+      attributes.push("audience");
+    }
+
+    if (idp.unitMatchers?.length) {
+      attributes.push("unit");
+      attributes.push("organization_unit_path");
+    }
+
+    idp.syncAttributes?.forEach((a) => {
+      attributes.push(a.internalName);
+    });
+
+    return attributes;
+  };
+
+  const getIdpRoleGroups = (idp?: OrganizationIdpDto | null): string[] => {
+    if (idp === null) {
+      return [];
+    }
+
+    if (idp === undefined) {
+      return [...new Set(organizationIdps.flatMap((i) => getIdpRoleGroups(i)))];
+    }
+
+    const groups: string[] = [];
+    if (idp.roleGroupMatchers) {
+      idp.roleGroupMatchers.forEach((rg) => {
+        groups.push(rg.roleGroup);
+      });
+    }
+    if (idp.defaultRoleGroups) {
+      groups.push(...idp.defaultRoleGroups);
+    }
+
+    return groups;
+  };
+
   const invalidateAllUnitsQuery = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: ["units"],
@@ -287,6 +352,9 @@ export const OrganizationsContextProvider: React.FC<
         currentUnitLoading,
         organizationIdps,
         organizationIdpsLoading,
+        getMatchingIdp,
+        getIdpRoleGroups,
+        getIdpAttributes,
         invalidateCurrentUnitQuery,
         invalidateAllUnitsQuery,
         unitsPath,

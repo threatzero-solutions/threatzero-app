@@ -1,3 +1,4 @@
+import { BoltIcon } from "@heroicons/react/20/solid";
 import { useContext, useMemo } from "react";
 import { DeepPartial, FormProvider, useForm } from "react-hook-form";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
@@ -21,6 +22,7 @@ const MyOrganizationTraining: React.FC = () => {
     currentUnitSlug,
     roleGroups,
     roleGroupsLoading,
+    getIdpRoleGroups,
   } = useContext(OrganizationsContext);
   const { isGlobalAdmin } = useAuth();
 
@@ -45,6 +47,12 @@ const MyOrganizationTraining: React.FC = () => {
   const enrollmentFormMethods = useForm<DeepPartial<Organization>>({
     values: myOrganization ?? {},
   });
+
+  const idpRoleGroups = useMemo(() => getIdpRoleGroups(), [getIdpRoleGroups]);
+  const usingSyncedAdminGroup = useMemo(
+    () => idpRoleGroups.includes(trainingAdminGroupName),
+    [idpRoleGroups, trainingAdminGroupName]
+  );
 
   return (
     <div>
@@ -86,6 +94,19 @@ const MyOrganizationTraining: React.FC = () => {
                         level="warning"
                         heading="Training Admin Role Group Unavailable"
                         body={`No role group exists with name "${trainingAdminGroupName}". Please make sure an appropriate role group exists with this name.`}
+                      />
+                    )}
+                    {usingSyncedAdminGroup && (
+                      <InlineNotice
+                        level="info"
+                        heading={
+                          <>
+                            <BoltIcon className="size-3 inline text-green-500" />{" "}
+                            Access is being managed automatically for some users
+                            by SSO
+                          </>
+                        }
+                        body="You can still manage access manually here, but changes may be overridden for some users upon next login."
                       />
                     )}
                     <div

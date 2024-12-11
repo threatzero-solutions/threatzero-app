@@ -1,13 +1,19 @@
+import { BoltIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useCallback, useContext, useMemo } from "react";
+import { Fragment, useCallback, useContext, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import Checkbox from "../../../components/forms/inputs/Checkbox";
 import Input from "../../../components/forms/inputs/Input";
+import InlineNotice from "../../../components/layouts/InlineNotice";
 import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
-import { TRAINING_PARTICIPANT_ROLE_GROUP_PATH } from "../../../constants/organizations";
+import PillBadge from "../../../components/PillBadge";
+import {
+  TRAINING_PARTICIPANT_GROUP_NAME,
+  TRAINING_PARTICIPANT_ROLE_GROUP_PATH,
+} from "../../../constants/organizations";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import {
   assignOrganizationUserToRoleGroup,
@@ -36,6 +42,16 @@ interface TransientUser {
   audienceSlugs: string[];
 }
 
+const RELEVANT_USER_ATTRIBUTES = ["firstName", "lastName", "audience"];
+
+const humanizeAttributeName = (name: string) =>
+  name
+    .replace(/([A-Z])/g, " $1")
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .trim();
+
 const INITIAL_USER: TransientUser = {
   firstName: "",
   lastName: "",
@@ -51,6 +67,9 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
   const {
     currentOrganization: organization,
     currentUnitSlug: unitSlug,
+    getMatchingIdp,
+    getIdpAttributes,
+    getIdpRoleGroups,
     invalidateOrganizationUsersQuery,
   } = useContext(OrganizationsContext);
 
@@ -116,7 +135,32 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     formState: { isDirty, dirtyFields },
   } = formMethods;
 
+  const email = watch("email");
   const canAccessTraining = watch("canAccessTraining");
+
+  const matchingIdp = useMemo(
+    () => getMatchingIdp(email),
+    [email, getMatchingIdp]
+  );
+  const idpAttributes = useMemo(
+    () => getIdpAttributes(matchingIdp),
+    [getIdpAttributes, matchingIdp]
+  );
+  const idpRoleGroups = useMemo(
+    () => getIdpRoleGroups(matchingIdp),
+    [getIdpRoleGroups, matchingIdp]
+  );
+  const displayIdpAttributes = useMemo(() => {
+    const autoAttributes = idpAttributes
+      .filter((a) => RELEVANT_USER_ATTRIBUTES.includes(a))
+      .map(humanizeAttributeName);
+
+    if (idpRoleGroups.includes(TRAINING_PARTICIPANT_GROUP_NAME)) {
+      autoAttributes.push("training access");
+    }
+
+    return autoAttributes;
+  }, [idpAttributes, idpRoleGroups]);
 
   const { mutate: save, isPending } = useMutation({
     mutationFn: (user: TransientUser) =>
@@ -177,6 +221,37 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {...register("email")}
             className="w-full"
           />
+          {matchingIdp && (
+            <InlineNotice
+              level="info"
+              heading={
+                <>
+                  <BoltIcon className="size-3 inline text-green-500" /> This
+                  email domain ({email.split("@").at(-1)}) is linked to SSO
+                </>
+              }
+              body={
+                <>
+                  When a user logs in with this email, they will be logged in
+                  via SSO. This may overwrite any changes made to their{" "}
+                  {displayIdpAttributes.map((a, idx) => (
+                    <Fragment key={a}>
+                      {idx > 0 &&
+                        idx === displayIdpAttributes.length - 1 &&
+                        "or "}
+                      <span className="font-semibold">{a}</span>
+                      {idx < displayIdpAttributes.length - 1
+                        ? displayIdpAttributes.length > 2
+                          ? ", "
+                          : " "
+                        : ""}
+                    </Fragment>
+                  ))}
+                  .
+                </>
+              }
+            />
+          )}
         </SlideOverField>
         <SlideOverField name="firstName" label="First Name">
           <Input
@@ -185,6 +260,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {...register("firstName")}
             className="w-full"
           />
+          {idpAttributes.includes("firstName") && <SSOField />}
         </SlideOverField>
         <SlideOverField name="lastName" label="Last Name">
           <Input
@@ -193,6 +269,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {...register("lastName")}
             className="w-full"
           />
+          {idpAttributes.includes("lastName") && <SSOField />}
         </SlideOverField>
         {(!userData || canAccessTraining !== undefined) && (
           <SlideOverField
@@ -209,6 +286,9 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
                 />
               )}
             />
+            {idpRoleGroups.includes(TRAINING_PARTICIPANT_GROUP_NAME) && (
+              <SSOField />
+            )}
           </SlideOverField>
         )}
         <SlideOverField
@@ -235,6 +315,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
               />
             )}
           />
+          {idpAttributes.includes("audience") && <SSOField />}
         </SlideOverField>
       </SlideOverFormBody>
     </SlideOverForm>
@@ -242,6 +323,17 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
 };
 
 export default EditOrganizationUser;
+
+const SSOField = () => (
+  <PillBadge
+    displayValue={
+      <>
+        <BoltIcon className="size-3" /> SSO field
+      </>
+    }
+    color="green"
+  />
+);
 
 const toOrgUser = (user: TransientUser): Partial<OrganizationUser> => ({
   id: user.id,

@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useEffect } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import { useImmer } from "use-immer";
 import { classNames } from "../../../utils/core";
 
@@ -21,10 +21,9 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
   onChange,
 }) => {
   const [selected, setSelected] = useImmer<string[]>([]);
-  const optionKeys = options.map((o) => o.key);
   const allSelected = useMemo(
     () => options.every((o) => o.disabled || selected.includes(o.key)),
-    [selected.length, optionKeys.length]
+    [selected, options]
   );
 
   const handleSelectAll = () => {

@@ -1,3 +1,4 @@
+import { BoltIcon } from "@heroicons/react/20/solid";
 import { useContext, useMemo } from "react";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
 import InlineNotice from "../../../components/layouts/InlineNotice";
@@ -24,6 +25,7 @@ const MyOrganizationUnits: React.FC = () => {
     isUnitContext,
     roleGroups,
     roleGroupsLoading,
+    getIdpRoleGroups,
   } = useContext(OrganizationsContext);
   const { isGlobalAdmin } = useAuth();
 
@@ -41,6 +43,12 @@ const MyOrganizationUnits: React.FC = () => {
   const organizationAdminGroupNotFound = useMemo(
     () => !roleGroupsLoading && !organizationAdminGroupId,
     [roleGroupsLoading, organizationAdminGroupId]
+  );
+
+  const idpRoleGroups = useMemo(() => getIdpRoleGroups(), [getIdpRoleGroups]);
+  const usingSyncedAdminGroup = useMemo(
+    () => idpRoleGroups.includes(organizationAdminGroupName),
+    [idpRoleGroups, organizationAdminGroupName]
   );
 
   return (
@@ -99,6 +107,19 @@ const MyOrganizationUnits: React.FC = () => {
                         isUnitContext ? "Unit" : "Organization"
                       } Admin Role Group Unavailable`}
                       body={`No role group exists with name "${organizationAdminGroupName}". Please make sure an appropriate role group exists with this name.`}
+                    />
+                  )}
+                  {usingSyncedAdminGroup && (
+                    <InlineNotice
+                      level="info"
+                      heading={
+                        <>
+                          <BoltIcon className="size-3 inline text-green-500" />{" "}
+                          Access is being managed automatically for some users
+                          by SSO
+                        </>
+                      }
+                      body="You can still manage access manually here, but changes may be overridden for some users upon next login."
                     />
                   )}
                   <div

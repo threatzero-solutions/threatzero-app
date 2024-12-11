@@ -1,5 +1,7 @@
+export const TRAINING_PARTICIPANT_GROUP_NAME = "Training Participant";
+
 export const TRAINING_PARTICIPANT_ROLE_GROUP_PATH =
-  "/Role Groups/Training Participant";
+  "/Role Groups/" + TRAINING_PARTICIPANT_GROUP_NAME;
 
 export const UNIT_ADMIN_GROUP_NAME = "Unit Admin";
 export const ORGANIZATION_ADMIN_GROUP_NAME = "Organization Admin";

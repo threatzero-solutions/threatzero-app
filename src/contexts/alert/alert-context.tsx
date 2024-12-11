@@ -143,7 +143,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
       };
 
       setAlerts((draft) => {
-        const idx = alerts.findIndex((a) => a.id === alert.id);
+        const idx = draft.findIndex((a) => a.id === alert.id);
         if (idx !== -1) {
           draft[idx] = alert;
           return;
@@ -168,7 +168,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
         close: () => clearAlert(alert.id),
       };
     },
-    [setAlerts, alerts, clearAlert]
+    [setAlerts, clearAlert]
   );
 
   const setSuccess = (
@@ -234,11 +234,9 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
                     message={message}
                     onClose={() => removeAlertByIdx(idx)}
                     as={motion.div}
-                    // animate={{ x: 100 }}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    // transition={{ duration: 0.3 }}
                   />
                 ))}
               </AnimatePresence>

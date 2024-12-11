@@ -1,5 +1,6 @@
 import {
   ArrowUturnRightIcon,
+  BoltIcon,
   EllipsisVerticalIcon,
   PencilIcon,
   TrashIcon,
@@ -56,7 +57,8 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
     setConfirmationOptions,
     setClose: setConfirmationClose,
   } = useContext(ConfirmationContext);
-  const { invalidateOrganizationUsersQuery } = useContext(OrganizationsContext);
+  const { getMatchingIdp, invalidateOrganizationUsersQuery } =
+    useContext(OrganizationsContext);
 
   const [usersQuery, setUsersQuery] = useImmer<ItemFilterQueryParams>({
     order: { createdTimestamp: "DESC" },
@@ -147,6 +149,18 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         id: "lastName",
         header: "Last Name",
       }),
+      columnHelper.display({
+        id: "sso-linked",
+        header: "SSO",
+        cell: ({ row }) =>
+          getMatchingIdp(row.original.email) ? (
+            <span className="text-green-500">
+              <BoltIcon className="size-4 inline" /> Linked
+            </span>
+          ) : (
+            <span>&#45;</span>
+          ),
+      }),
       columnHelper.accessor((t) => t.attributes.unit, {
         id: "unit",
         header: "Unit",
@@ -218,7 +232,13 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         enableSorting: false,
       }),
     ],
-    [units?.results, thisUnit, hasMultipleUnitAccess, handleDeleteUser]
+    [
+      units?.results,
+      thisUnit,
+      hasMultipleUnitAccess,
+      handleDeleteUser,
+      getMatchingIdp,
+    ]
   );
 
   return (
