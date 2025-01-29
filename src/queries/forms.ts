@@ -1,8 +1,8 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { Field, FieldGroup, Form } from "../types/entities";
 import { deleteOne, findMany, findOneByIdOrFail, save } from "./utils";
-import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
 export const getForm = (formId?: string) =>
   findOneByIdOrFail<Form>("/forms/", formId);
@@ -54,59 +54,3 @@ export const saveField = (field: Partial<Field>) =>
 
 export const deleteField = (fieldId?: string) =>
   deleteOne("/forms/fields/", fieldId);
-
-export interface FilePreloadResult {
-  key: string;
-  url: string;
-}
-
-export interface FilePreloadResponse {
-  fileResults: FilePreloadResult[];
-}
-
-export interface GetPresignedUploadUrlsResult {
-  putUrl: string;
-  getUrl: string;
-  key: string;
-  filename: string;
-  fileId: string;
-}
-export const filePreload = async (
-  getPresignedUploadUrlsUrl: string,
-  files: File[]
-): Promise<FilePreloadResult[]> =>
-  axios
-    .post<GetPresignedUploadUrlsResult[]>(getPresignedUploadUrlsUrl, {
-      files: files.map((f) => ({
-        filename: f.name,
-        fileId: `${f.name}_${f.size}`,
-        mimeType: f.type,
-      })),
-    })
-    .then((res) => res.data)
-    .then((data) =>
-      Promise.all(
-        data
-          .map(
-            (result) =>
-              [
-                result,
-                files.find((f) => `${f.name}_${f.size}` === result.fileId),
-              ] as const
-          )
-          .filter((v) => !!v[1])
-          .map(async ([result, file]) => {
-            return axios
-              .create()
-              .put(result.putUrl, file, {
-                headers: {
-                  "Content-Type": file!.type,
-                },
-              })
-              .then(() => ({
-                key: result.key,
-                url: result.getUrl,
-              }));
-          })
-      )
-    );

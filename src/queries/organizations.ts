@@ -9,6 +9,7 @@ import {
 } from "../types/api";
 import { DeepPartial } from "../types/core";
 import {
+  CourseEnrollment,
   LmsTrainingToken,
   LmsTrainingTokenValue,
   Location,
@@ -23,7 +24,6 @@ import {
   findMany,
   findManyRaw,
   findOne,
-  findOneById,
   findOneByIdOrFail,
   findOneOrFail,
   insertOne,
@@ -58,9 +58,22 @@ export const isIdpSlugUnique = (slug: string) =>
     },
   });
 
-export const getCourseEnrollments = (id?: Organization["id"]) =>
-  findOneById<Organization>("/organizations/organizations/", id).then(
-    (organization) => organization?.enrollments ?? []
+export const getCourseEnrollments = (
+  id: Organization["id"],
+  query?: ItemFilterQueryParams
+) =>
+  findMany<CourseEnrollment>(
+    `/organizations/organizations/${id}/enrollments/`,
+    query
+  );
+
+export const getCourseEnrollment = (
+  id: Organization["id"],
+  enrollmentId?: CourseEnrollment["id"]
+) =>
+  findOneByIdOrFail<CourseEnrollment>(
+    `/organizations/organizations/${id}/enrollments/`,
+    enrollmentId
   );
 
 export const getOrganizationLmsTokens = (
@@ -134,6 +147,14 @@ export const generateQrCode = async (locationId: string) => {
     .then((res) => ({ locationId, data: res.data }));
 };
 
+export const getGenerateOrganizationPolicyUploadUrlsUrl = (
+  organizationId: string
+) =>
+  `${API_BASE_URL}/organizations/organizations/${organizationId}/generate-policy-upload-urls/`;
+
+export const getGenerateUnitPolicyUploadUrlsUrl = (unitId: string) =>
+  `${API_BASE_URL}/organizations/units/${unitId}/generate-policy-upload-urls/`;
+
 // ------------- MUTATIONS -------------
 
 export const saveOrganization = (organization: DeepPartial<Organization>) =>
@@ -141,6 +162,20 @@ export const saveOrganization = (organization: DeepPartial<Organization>) =>
 
 export const deleteOrganization = (id: string | undefined) =>
   deleteOne("/organizations/organizations/", id);
+
+export const saveCourseEnrollment = (
+  id: Organization["id"],
+  enrollment: DeepPartial<CourseEnrollment>
+) =>
+  save<CourseEnrollment>(
+    `/organizations/organizations/${id}/enrollments/`,
+    enrollment
+  );
+
+export const deleteCourseEnrollment = (
+  id: Organization["id"],
+  enrollmentId: CourseEnrollment["id"]
+) => deleteOne(`/organizations/organizations/${id}/enrollments/`, enrollmentId);
 
 export const createOrganizationLmsToken = (
   id: Organization["id"],

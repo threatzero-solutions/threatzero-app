@@ -10,8 +10,17 @@ import {
 } from "../../../constants/organizations";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { saveOrganization, saveUnit } from "../../../queries/organizations";
-import { SafetyContact } from "../../../types/entities";
+import {
+  getGenerateOrganizationPolicyUploadUrlsUrl,
+  getGenerateUnitPolicyUploadUrlsUrl,
+  saveOrganization,
+  saveUnit,
+} from "../../../queries/organizations";
+import {
+  Organization,
+  OrganizationPolicyFile,
+  SafetyContact,
+} from "../../../types/entities";
 import { classNames } from "../../../utils/core";
 import GroupMembersTable from "../components/GroupMembersTable";
 
@@ -58,20 +67,20 @@ const MyOrganizationSafety: React.FC = () => {
     },
   });
 
-  const handleSaveSafetyContact = useCallback(
-    (safetyContact: Partial<SafetyContact> | undefined | null) => {
+  const handleSaveOrganization = useCallback(
+    (data: Partial<Organization>) => {
       if (isUnitContext) {
         if (currentUnit?.id) {
           saveCurrentUnit({
             id: currentUnit.id,
-            safetyContact,
+            ...data,
           });
         }
       } else {
         if (myOrganization?.id) {
           saveOrganizationMutate({
             id: myOrganization.id,
-            safetyContact,
+            ...data,
           });
         }
       }
@@ -105,7 +114,11 @@ const MyOrganizationSafety: React.FC = () => {
                   ? currentUnit?.safetyContact
                   : myOrganization.safetyContact
               }
-              onChange={(e) => handleSaveSafetyContact(e.target?.value)}
+              onChange={(e) =>
+                handleSaveOrganization({
+                  safetyContact: e.target?.value as SafetyContact | null,
+                })
+              }
             />
           </LargeFormSection>
           <LargeFormSection
@@ -119,7 +132,18 @@ const MyOrganizationSafety: React.FC = () => {
                   ? currentUnit?.policiesAndProcedures
                   : myOrganization.policiesAndProcedures
               }
-              // onChange={(e) => field.onChange(e.target?.value)}
+              generatePolicyUploadsUrlsUrl={
+                isUnitContext
+                  ? getGenerateUnitPolicyUploadUrlsUrl(currentUnit?.id ?? "")
+                  : getGenerateOrganizationPolicyUploadUrlsUrl(
+                      myOrganization.id
+                    )
+              }
+              onValueChange={(data) =>
+                handleSaveOrganization({
+                  policiesAndProcedures: data as OrganizationPolicyFile[],
+                })
+              }
             />
           </LargeFormSection>
           {(!tatGroupNotFound || isGlobalAdmin) && (

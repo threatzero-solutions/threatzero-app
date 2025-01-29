@@ -1,47 +1,40 @@
-import { useMemo, useState } from "react";
-import { SimpleChangeEvent } from "../../types/core";
-import { OrganizationPolicyFile } from "../../types/entities";
-import SlideOver from "../layouts/slide-over/SlideOver";
-import EditOrganizationPolicyFile from "./EditOrganizationPolicyFile";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { useMemo } from "react";
+import { useOpenData } from "../../hooks/use-open-data";
+import { OrganizationPolicyFile } from "../../types/entities";
 import FormField from "../forms/FormField";
-import Block from "../layouts/content/Block";
 import ButtonGroup from "../layouts/buttons/ButtonGroup";
 import IconButton from "../layouts/buttons/IconButton";
+import Block from "../layouts/content/Block";
+import SlideOver from "../layouts/slide-over/SlideOver";
+import EditOrganizationPolicyFile from "./EditOrganizationPolicyFile";
 
 interface PolicyProcedureInputProps {
+  generatePolicyUploadsUrlsUrl: string;
   value?: Partial<OrganizationPolicyFile>[];
-  onChange?: (
-    event: SimpleChangeEvent<Partial<OrganizationPolicyFile>[]>
-  ) => void;
+  onValueChange?: (data: Partial<OrganizationPolicyFile>[]) => void;
   name?: string;
   label?: string;
   helpText?: string;
 }
 
 const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
+  generatePolicyUploadsUrlsUrl,
   value,
-  onChange,
+  onValueChange,
   name,
   label,
   helpText,
 }) => {
-  const [editPolicyProcedureSliderOpen, setPolicyProcedureSliderOpen] =
-    useState(false);
-
-  const [activeOrganizationPolicyFile, setActiveOrganizationPolicyFile] =
-    useState<Partial<OrganizationPolicyFile>>();
+  const editPolicyProcedure = useOpenData<Partial<OrganizationPolicyFile>>();
 
   const handleChange = (updatedValue: Partial<OrganizationPolicyFile>[]) => {
-    onChange?.({
-      target: {
-        name: name ?? "policyAndProcedures",
-        value: updatedValue.map((v) => ({
-          ...v,
-          id: v.id?.startsWith("TEMP-ID-") ? undefined : v.id,
-        })),
-      },
-    });
+    onValueChange?.(
+      updatedValue.map((v) => ({
+        ...v,
+        id: v.id?.startsWith("TEMP-ID-") ? undefined : v.id,
+      }))
+    );
   };
 
   const localValue = useMemo(
@@ -53,18 +46,6 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
     [value]
   );
 
-  const handleNewOrganizationPolicyFile = () => {
-    setActiveOrganizationPolicyFile(undefined);
-    setPolicyProcedureSliderOpen(true);
-  };
-
-  const handleEditOrganizationPolicyFile = (
-    organizationPolicyFile: Partial<OrganizationPolicyFile>
-  ) => {
-    setActiveOrganizationPolicyFile(organizationPolicyFile);
-    setPolicyProcedureSliderOpen(true);
-  };
-
   const handleRemoveOrganizationPolicyFile = (
     organizationPolicyFile: Partial<OrganizationPolicyFile>
   ) => {
@@ -74,7 +55,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
   const handleSaveOrganizationPolicyFile = (
     organizationPolicyFile: Partial<OrganizationPolicyFile>
   ) => {
-    setPolicyProcedureSliderOpen(false);
+    editPolicyProcedure.close();
 
     const newValue = organizationPolicyFile.id
       ? localValue.map((v) => {
@@ -106,7 +87,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
             className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
             text="Add Policy or Procedure"
             type="button"
-            onClick={() => handleNewOrganizationPolicyFile()}
+            onClick={() => editPolicyProcedure.openNew()}
           />
         }
         input={
@@ -118,7 +99,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
               >
                 <button
                   className="text-sm font-semibold bg-gray-50"
-                  onClick={() => handleEditOrganizationPolicyFile(v)}
+                  onClick={() => editPolicyProcedure.openData(v)}
                 >
                   {v.name ?? v.pdfS3Key ?? ""}{" "}
                   <span className="text-xs font-normal">(edit)</span>
@@ -143,13 +124,14 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
         }
       />
       <SlideOver
-        open={editPolicyProcedureSliderOpen}
-        setOpen={setPolicyProcedureSliderOpen}
+        open={editPolicyProcedure.open}
+        setOpen={editPolicyProcedure.setOpen}
       >
         <EditOrganizationPolicyFile
-          organizationPolicyFile={activeOrganizationPolicyFile}
-          setOrganizationPolicyFile={handleSaveOrganizationPolicyFile}
-          setOpen={setPolicyProcedureSliderOpen}
+          generatePolicyUploadsUrlsUrl={generatePolicyUploadsUrlsUrl}
+          organizationPolicyFile={editPolicyProcedure.data ?? undefined}
+          onSave={handleSaveOrganizationPolicyFile}
+          setOpen={editPolicyProcedure.setOpen}
         />
       </SlideOver>
     </>

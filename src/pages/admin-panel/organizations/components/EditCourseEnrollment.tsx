@@ -1,18 +1,18 @@
-import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
-import { CourseEnrollment, FieldType } from "../../../../types/entities";
-import { ChangeEvent, useContext, useEffect, useMemo, useState } from "react";
-import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
-import FormInput from "../../../../components/forms/inputs/FormInput";
 import dayjs from "dayjs";
-import CourseSelect from "../../../../components/forms/inputs/CourseSelect";
-import SlideOverFormActionButtons from "../../../../components/layouts/slide-over/SlideOverFormActionButtons";
-import { Controller, DeepPartial, useForm } from "react-hook-form";
-import InputRadioOptions from "../../../training-library/components/edit-training-item/InputRadioOptions";
-import DurationInput from "../../../../components/forms/inputs/DurationInput";
 import duration from "dayjs/plugin/duration";
+import { ChangeEvent, useContext, useEffect, useMemo, useState } from "react";
+import { Controller, DeepPartial, useForm } from "react-hook-form";
+import CourseSelect from "../../../../components/forms/inputs/CourseSelect";
+import DurationInput from "../../../../components/forms/inputs/DurationInput";
+import FormInput from "../../../../components/forms/inputs/FormInput";
+import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
+import SlideOverFormActionButtons from "../../../../components/layouts/slide-over/SlideOverFormActionButtons";
+import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
 import { DurationObject } from "../../../../types/api";
-import { CoreContext } from "../../../../contexts/core/core-context";
+import { CourseEnrollment, FieldType } from "../../../../types/entities";
+import InputRadioOptions from "../../../training-library/components/edit-training-item/InputRadioOptions";
 
 dayjs.extend(duration);
 
@@ -43,10 +43,8 @@ const asDate = (
 interface EditCourseEnrollmentProps {
   enrollment?: DeepPartial<CourseEnrollment>;
   setOpen: (open: boolean) => void;
-  index?: number;
-  onAdd: (enrollment: DeepPartial<CourseEnrollment>) => void;
-  onUpdate: (idx: number, enrollment: DeepPartial<CourseEnrollment>) => void;
-  onRemove: (idx?: number) => void;
+  onSave: (enrollment: Partial<CourseEnrollment>) => void;
+  onDelete: (enrollmentId: string) => void;
 }
 
 const DEFAULT_FORMAT = "YYYY-MM-DD";
@@ -60,17 +58,18 @@ const DEFAULT_END_DATE = DAYJS_DEFAULT_START_DATE.add(1, "year").format(
 const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
   enrollment: enrollmentProp,
   setOpen,
-  index,
-  onAdd,
-  onUpdate,
-  onRemove,
+  onSave,
+  onDelete,
 }) => {
   const [selectedEndDateType, setSelectedEndDateType] =
     useState<string>("relative-end-date");
 
-  const { setConfirmationOpen, setConfirmationClose } = useContext(CoreContext);
+  const { setOpen: setConfirmationOpen, setClose: setConfirmationClose } =
+    useContext(ConfirmationContext);
 
-  const { register, getValues, setValue, watch, control } = useForm({
+  const { register, getValues, setValue, watch, control } = useForm<
+    Partial<CourseEnrollment>
+  >({
     defaultValues: enrollmentProp ?? {
       startDate: DEFAULT_START_DATE,
       endDate: DEFAULT_END_DATE,
@@ -96,37 +95,27 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
 
   const handleSaveEnrollment = () => {
     const enrollment = getValues();
-    if (index === undefined) {
-      onAdd(enrollment);
-    } else {
-      onUpdate(index, enrollment);
-    }
-    setOpen(false);
+    onSave(enrollment);
   };
 
-  const handleRemoveEnrollment = () => {
+  const handleDeleteEnrollment = () => {
     setConfirmationOpen({
-      title: "Remove Course Enrollment",
+      title: "Delete Course Enrollment",
       message: (
         <span className="grid grid-cols-1">
-          <span>Are you sure you want to remove this enrollment?</span>
+          <span>Are you sure you want to delete this enrollment?</span>
           <span className="font-bold mt-2">
-            Upon saving the organization, this enrollment will be deleted, which
-            will affect watch stats and viewer access.
-          </span>
-          <span className="italic text-xs text-gray-400 mt-3">
-            Removal isn't final until the organization is saved. If you remove
-            an enrollment but later click "Cancel" instead of saving the
-            organization, the enrollment will be restored.
+            Upon clicking "Delete", this enrollment will be deleted, which will
+            affect watch stats and viewer access.
           </span>
         </span>
       ),
-      confirmText: "Remove",
+      confirmText: "Delete",
       destructive: true,
       cancelText: "Go Back",
       onConfirm: () => {
-        onRemove(index);
-        setOpen(false);
+        if (!enrollmentProp?.id) return;
+        onDelete(enrollmentProp.id);
         setConfirmationClose();
       },
     });
@@ -263,10 +252,9 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
       <SlideOverFormActionButtons
         onDone={() => handleSaveEnrollment()}
         onClose={() => setOpen(false)}
-        onDelete={() => handleRemoveEnrollment()}
+        onDelete={() => handleDeleteEnrollment()}
         submitText={isNew ? "Add" : "Update"}
         hideDelete={isNew}
-        deleteText="Remove"
       />
     </div>
   );

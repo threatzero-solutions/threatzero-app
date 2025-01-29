@@ -1,23 +1,28 @@
-import { useState } from "react";
-import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import {
-  CourseEnrollment,
-  type Organization,
-  TrainingVisibility,
-} from "../../../../types/entities";
-import CourseAvailabilityDates from "../../../training-library/components/CourseActiveStatus";
-import { classNames, stripHtml } from "../../../../utils/core";
-import EditCourseEnrollment from "./EditCourseEnrollment";
-import { useFormContext, useFieldArray, DeepPartial } from "react-hook-form";
 import {
   ArrowRightEndOnRectangleIcon,
   EyeIcon,
   EyeSlashIcon,
 } from "@heroicons/react/20/solid";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import FormField from "../../../../components/forms/FormField";
-import Block from "../../../../components/layouts/content/Block";
 import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../../components/layouts/buttons/IconButton";
+import Block from "../../../../components/layouts/content/Block";
+import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
+import { useOpenData } from "../../../../hooks/use-open-data";
+import {
+  deleteCourseEnrollment,
+  getCourseEnrollments,
+  saveCourseEnrollment,
+} from "../../../../queries/organizations";
+import {
+  CourseEnrollment,
+  type Organization,
+  TrainingVisibility,
+} from "../../../../types/entities";
+import { classNames, stripHtml } from "../../../../utils/core";
+import CourseAvailabilityDates from "../../../training-library/components/CourseActiveStatus";
+import EditCourseEnrollment from "./EditCourseEnrollment";
 import LmsIntegrationsInput from "./lms-integrations/LmsIntegrationsInput";
 
 interface CourseEnrollmentsInputProps {
@@ -35,30 +40,36 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
   organizationId,
   accessSettings,
 }) => {
-  const [editCourseEnrollmentSliderOpen, setEditCourseEnrollmentSliderOpen] =
-    useState(false);
-  const [activeCourseEnrollmentIdx, setActiveCourseEnrollmentIdx] = useState<
-    number | undefined
-  >();
-
-  const { watch, control } = useFormContext<{
-    [key: string]: DeepPartial<CourseEnrollment>[];
-  }>();
-  const { fields, append, update, remove } = useFieldArray({
-    control,
-    name,
-    keyName: "keyId",
+  const editEnrollment = useOpenData<CourseEnrollment>();
+  const { data: allCourseEnrollments } = useQuery({
+    queryKey: ["course-enrollments", organizationId] as const,
+    queryFn: ({ queryKey }) =>
+      getCourseEnrollments(queryKey[1], { limit: 1000 }).then((r) => r.results),
   });
 
-  const activeEnrollment =
-    activeCourseEnrollmentIdx !== undefined
-      ? watch(`${name}.${activeCourseEnrollmentIdx}`)
-      : undefined;
+  const queryClient = useQueryClient();
 
-  const handleEditEnrollment = (idx?: number) => {
-    setActiveCourseEnrollmentIdx(idx);
-    setEditCourseEnrollmentSliderOpen(true);
-  };
+  const { mutate: saveEnrollment } = useMutation({
+    mutationFn: (data: Partial<CourseEnrollment>) =>
+      saveCourseEnrollment(organizationId, data),
+    onSuccess: () => {
+      editEnrollment.close();
+      queryClient.invalidateQueries({
+        queryKey: ["course-enrollments", organizationId],
+      });
+    },
+  });
+
+  const { mutate: deleteEnrollment } = useMutation({
+    mutationFn: (id: CourseEnrollment["id"]) =>
+      deleteCourseEnrollment(organizationId, id),
+    onSuccess: () => {
+      editEnrollment.close();
+      queryClient.invalidateQueries({
+        queryKey: ["course-enrollments", organizationId],
+      });
+    },
+  });
 
   return (
     <>
@@ -75,15 +86,15 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
             className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
             text="Enroll in New Course"
             type="button"
-            onClick={() => handleEditEnrollment()}
+            onClick={() => editEnrollment.openNew()}
           />
         }
         input={
           <div className="flex flex-col gap-2">
-            {fields.map((enrollment, index) => (
+            {(allCourseEnrollments || []).map((enrollment) => (
               <Block
                 className="flex flex-col gap-4 bg-gray-50"
-                key={enrollment.keyId}
+                key={enrollment.id}
               >
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col gap-2 grow">
@@ -91,7 +102,7 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
                       <button
                         type="button"
                         className="w-max cursor-pointer text-gray-900 hover:text-gray-600 transition-colors"
-                        onClick={() => handleEditEnrollment(index)}
+                        onClick={() => editEnrollment.openData(enrollment)}
                       >
                         <span className="text-sm font-semibold">
                           {stripHtml(enrollment.course?.metadata?.title)}
@@ -134,8 +145,8 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
                           : "Click to make visible"
                       }
                       onClick={() =>
-                        update(index, {
-                          ...enrollment,
+                        saveEnrollment({
+                          id: enrollment.id,
                           visibility:
                             enrollment.visibility === TrainingVisibility.VISIBLE
                               ? TrainingVisibility.HIDDEN
@@ -156,17 +167,12 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
           </div>
         }
       />
-      <SlideOver
-        open={editCourseEnrollmentSliderOpen}
-        setOpen={setEditCourseEnrollmentSliderOpen}
-      >
+      <SlideOver open={editEnrollment.open} setOpen={editEnrollment.setOpen}>
         <EditCourseEnrollment
-          enrollment={activeEnrollment}
-          setOpen={setEditCourseEnrollmentSliderOpen}
-          index={activeCourseEnrollmentIdx}
-          onAdd={append}
-          onUpdate={update}
-          onRemove={remove}
+          enrollment={editEnrollment.data ?? undefined}
+          setOpen={editEnrollment.setOpen}
+          onSave={saveEnrollment}
+          onDelete={deleteEnrollment}
         />
       </SlideOver>
     </>

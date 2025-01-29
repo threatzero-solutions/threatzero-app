@@ -1,15 +1,15 @@
-import { useImmer } from "use-immer";
-import { CourseEnrollment } from "../../../types/entities";
-import { stripHtml } from "../../../utils/core";
 import { useQuery } from "@tanstack/react-query";
-import { getMyCourseEnrollments } from "../../../queries/training";
-import Autocomplete from "./Autocomplete";
 import { useMemo } from "react";
+import { DeepPartial } from "react-hook-form";
+import { useImmer } from "use-immer";
 import { LEVEL } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
-import { SimpleChangeEvent } from "../../../types/core";
-import { DeepPartial } from "react-hook-form";
 import { getCourseEnrollments } from "../../../queries/organizations";
+import { getMyCourseEnrollments } from "../../../queries/training";
+import { SimpleChangeEvent } from "../../../types/core";
+import { CourseEnrollment } from "../../../types/entities";
+import { stripHtml } from "../../../utils/core";
+import Autocomplete from "./Autocomplete";
 
 type EnrollmentInput =
   | CourseEnrollment
@@ -26,8 +26,9 @@ const displayCourse = (enrollment?: EnrollmentInput, admin = false) => {
     stripHtml(enrollment.course.metadata?.title) +
     " " +
     (admin && enrollment.course.metadata?.tag
-      ? `(${enrollment.course.metadata.tag})`
-      : "")
+      ? `[${enrollment.course.metadata.tag}] `
+      : "") +
+    `(${enrollment.startDate} - ${enrollment.endDate})`
   );
 };
 
@@ -59,7 +60,9 @@ const EnrollmentSelect: React.FC<EnrollmentSelectProps> = ({
     ] as const,
     queryFn: ({ queryKey }) =>
       queryKey[1]
-        ? getCourseEnrollments(queryKey[1])
+        ? getCourseEnrollments(queryKey[1], { limit: 1000 }).then(
+            (r) => r.results
+          )
         : getMyCourseEnrollments(),
   });
 
