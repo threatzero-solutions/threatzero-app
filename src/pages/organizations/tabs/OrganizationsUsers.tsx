@@ -6,8 +6,8 @@ import AllUsersTable from "../components/AllUsersTable";
 
 const MyOrganizationUsers: React.FC = () => {
   const {
-    currentOrganization: myOrganization,
-    currentOrganizationLoading: myOrganizationLoading,
+    currentOrganization,
+    currentOrganizationLoading,
     currentUnitSlug,
     isUnitContext,
     organizationIdps,
@@ -16,7 +16,7 @@ const MyOrganizationUsers: React.FC = () => {
 
   return (
     <div>
-      {myOrganizationLoading || !myOrganization ? (
+      {currentOrganizationLoading || !currentOrganization ? (
         <div className="space-y-4">
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
@@ -30,7 +30,7 @@ const MyOrganizationUsers: React.FC = () => {
           >
             <div className="space-y-2">
               <AllUsersTable
-                organizationId={myOrganization.id}
+                organizationId={currentOrganization.id}
                 unitSlug={currentUnitSlug}
               />
             </div>
@@ -44,8 +44,8 @@ const MyOrganizationUsers: React.FC = () => {
               <div className="6">
                 {organizationIdps && !organizationIdpsLoading ? (
                   <OrganizationIdpsInput
-                    organization={myOrganization}
-                    idpSlugs={myOrganization.idpSlugs ?? []}
+                    organization={currentOrganization}
+                    idpSlugs={currentOrganization.idpSlugs ?? []}
                     idps={organizationIdps}
                   />
                 ) : (

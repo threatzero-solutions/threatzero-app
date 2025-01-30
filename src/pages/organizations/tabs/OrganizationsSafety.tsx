@@ -26,8 +26,8 @@ import GroupMembersTable from "../components/GroupMembersTable";
 
 const MyOrganizationSafety: React.FC = () => {
   const {
-    currentOrganization: myOrganization,
-    currentOrganizationLoading: myOrganizationLoading,
+    currentOrganization,
+    currentOrganizationLoading,
     invalidateOrganizationQuery,
     currentUnitSlug,
     currentUnit,
@@ -53,14 +53,15 @@ const MyOrganizationSafety: React.FC = () => {
     [roleGroupsLoading, tatGroupId]
   );
 
-  const { mutate: saveOrganizationMutate } = useMutation({
-    mutationFn: saveOrganization,
-    onSuccess: () => {
-      invalidateOrganizationQuery();
-    },
-  });
+  const { mutate: saveOrganizationMutate, isPending: organizationIsSaving } =
+    useMutation({
+      mutationFn: saveOrganization,
+      onSuccess: () => {
+        invalidateOrganizationQuery();
+      },
+    });
 
-  const { mutate: saveCurrentUnit } = useMutation({
+  const { mutate: saveCurrentUnit, isPending: unitIsSaving } = useMutation({
     mutationFn: saveUnit,
     onSuccess: () => {
       invalidateCurrentUnitQuery();
@@ -77,9 +78,9 @@ const MyOrganizationSafety: React.FC = () => {
           });
         }
       } else {
-        if (myOrganization?.id) {
+        if (currentOrganization?.id) {
           saveOrganizationMutate({
-            id: myOrganization.id,
+            id: currentOrganization.id,
             ...data,
           });
         }
@@ -88,7 +89,7 @@ const MyOrganizationSafety: React.FC = () => {
     [
       isUnitContext,
       currentUnit?.id,
-      myOrganization?.id,
+      currentOrganization?.id,
       saveCurrentUnit,
       saveOrganizationMutate,
     ]
@@ -96,7 +97,7 @@ const MyOrganizationSafety: React.FC = () => {
 
   return (
     <div>
-      {myOrganizationLoading || !myOrganization ? (
+      {currentOrganizationLoading || !currentOrganization ? (
         <div className="space-y-4">
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
@@ -112,7 +113,7 @@ const MyOrganizationSafety: React.FC = () => {
               value={
                 isUnitContext
                   ? currentUnit?.safetyContact
-                  : myOrganization.safetyContact
+                  : currentOrganization.safetyContact
               }
               onChange={(e) =>
                 handleSaveOrganization({
@@ -130,13 +131,13 @@ const MyOrganizationSafety: React.FC = () => {
               value={
                 isUnitContext
                   ? currentUnit?.policiesAndProcedures
-                  : myOrganization.policiesAndProcedures
+                  : currentOrganization.policiesAndProcedures
               }
               generatePolicyUploadsUrlsUrl={
                 isUnitContext
                   ? getGenerateUnitPolicyUploadUrlsUrl(currentUnit?.id ?? "")
                   : getGenerateOrganizationPolicyUploadUrlsUrl(
-                      myOrganization.id
+                      currentOrganization.id
                     )
               }
               onValueChange={(data) =>
@@ -144,6 +145,7 @@ const MyOrganizationSafety: React.FC = () => {
                   policiesAndProcedures: data as OrganizationPolicyFile[],
                 })
               }
+              saving={isUnitContext ? unitIsSaving : organizationIsSaving}
             />
           </LargeFormSection>
           {(!tatGroupNotFound || isGlobalAdmin) && (
@@ -171,7 +173,7 @@ const MyOrganizationSafety: React.FC = () => {
                     )}
                   >
                     <GroupMembersTable
-                      organizationId={myOrganization.id}
+                      organizationId={currentOrganization.id}
                       unitSlug={currentUnitSlug}
                       joinText="Add TAT Member"
                       leaveText="Leave TAT"

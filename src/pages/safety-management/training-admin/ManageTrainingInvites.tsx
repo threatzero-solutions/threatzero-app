@@ -59,8 +59,8 @@ import {
   TrainingToken,
 } from "../../../types/entities";
 import { simulateDownload, stripHtml } from "../../../utils/core";
-import ManageTrainingInvite from "../../admin-panel/users/training-invites/ManageTrainingInvite";
 import ViewPercentWatched from "./components/ViewPercentWatched";
+import ManageTrainingInvite from "./ManageTrainingInvite";
 
 interface InviteCsvRow {
   firstName: string;

@@ -110,9 +110,9 @@ export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
     slug
   );
 
-export const getOrganizationIdpRoleGroups = (id: Organization["id"]) =>
+export const getRoleGroupsForOrganization = (id: Organization["id"]) =>
   findManyRaw<KeycloakGroupDto[]>(
-    `/organizations/organizations/${id}/idps/role-groups/`
+    `/organizations/organizations/${id}/role-groups/`
   );
 
 export const getUnits = (query?: ItemFilterQueryParams) =>

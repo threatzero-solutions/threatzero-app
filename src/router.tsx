@@ -19,7 +19,6 @@ import { ViewLanguages } from "./pages/admin-panel/languages/ViewLanguages";
 import ManageOrganization from "./pages/admin-panel/organizations/levels/ManageOrganization";
 import Organizations from "./pages/admin-panel/organizations/Organizations";
 import { ViewResources } from "./pages/admin-panel/resources/ViewResources";
-import UsersDashboard from "./pages/admin-panel/users/UsersDashboard";
 import Dashboard from "./pages/dashboard/Dashboard";
 import ErrorPage from "./pages/ErrorPage";
 import HelpCenter from "./pages/HelpCenter";
@@ -339,11 +338,6 @@ export const router = createBrowserRouter(
                       path: "languages",
                       handle: { title: "Languages" },
                       element: <ViewLanguages />,
-                    },
-                    {
-                      path: "users",
-                      handle: { title: "Users" },
-                      element: <UsersDashboard />,
                     },
                     {
                       path: "*?",

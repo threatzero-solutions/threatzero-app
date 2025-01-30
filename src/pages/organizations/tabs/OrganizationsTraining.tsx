@@ -14,8 +14,8 @@ import GroupMembersTable from "../components/GroupMembersTable";
 
 const MyOrganizationTraining: React.FC = () => {
   const {
-    currentOrganization: myOrganization,
-    currentOrganizationLoading: myOrganizationLoading,
+    currentOrganization,
+    currentOrganizationLoading,
     isUnitContext,
     currentUnitSlug,
     roleGroups,
@@ -50,7 +50,7 @@ const MyOrganizationTraining: React.FC = () => {
 
   return (
     <div>
-      {myOrganizationLoading || !myOrganization ? (
+      {currentOrganizationLoading || !currentOrganization ? (
         <div className="space-y-4">
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
@@ -65,8 +65,8 @@ const MyOrganizationTraining: React.FC = () => {
             >
               <CourseEnrollmentsInput
                 name="enrollments"
-                organizationId={myOrganization.id}
-                accessSettings={myOrganization.trainingAccessSettings}
+                organizationId={currentOrganization.id}
+                accessSettings={currentOrganization.trainingAccessSettings}
               />
             </LargeFormSection>
           )}
@@ -110,7 +110,7 @@ const MyOrganizationTraining: React.FC = () => {
                     )}
                   >
                     <GroupMembersTable
-                      organizationId={myOrganization.id}
+                      organizationId={currentOrganization.id}
                       unitSlug={currentUnitSlug}
                       joinText="Add Training Admin"
                       leaveText="Revoke Access"

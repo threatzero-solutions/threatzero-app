@@ -11,11 +11,13 @@ import {
 import { useContext, useMemo, useState } from "react";
 import { NavLink, Outlet, To, useLocation } from "react-router";
 import SlideOver from "../../components/layouts/slide-over/SlideOver";
+import { myOrganizationPermissionOptions } from "../../constants/permission-options";
 import { useAuth } from "../../contexts/auth/useAuth";
 import {
   OrganizationsContext,
   OrganizationsContextProvider,
 } from "../../contexts/organizations/organizations-context";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { Organization, Unit } from "../../types/entities";
 import { classNames, humanizeSlug } from "../../utils/core";
 import EditOrganizationBasic from "./components/EditOrganizationBasic";
@@ -26,8 +28,8 @@ const OrganizationsRootInner: React.FC = () => {
   const { isGlobalAdmin } = useAuth();
 
   const {
-    currentOrganization: myOrganization,
-    currentOrganizationLoading: myOrganizationLoading,
+    currentOrganization,
+    currentOrganizationLoading,
     allUnits,
     currentUnit,
     currentUnitLoading,
@@ -86,7 +88,10 @@ const OrganizationsRootInner: React.FC = () => {
   return (
     <>
       <div className="space-y-4">
-        <nav aria-label="Breadcrumb" className="flex">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex max-w-full overflow-x-scroll"
+        >
           <ol role="list" className="flex items-center space-x-4">
             <li>
               <div className="flex items-center">
@@ -120,12 +125,13 @@ const OrganizationsRootInner: React.FC = () => {
           </ol>
         </nav>
         <div>
-          {(isUnitContext && currentUnitLoading) || myOrganizationLoading ? (
+          {(isUnitContext && currentUnitLoading) ||
+          currentOrganizationLoading ? (
             <div className="animate-pulse rounded bg-slate-200 w-full h-12" />
           ) : (
             <>
               <h1 className="text-2xl font-semibold leading-6 text-gray-900 inline-flex items-center gap-2">
-                {isUnitContext ? currentUnit?.name : myOrganization?.name}
+                {isUnitContext ? currentUnit?.name : currentOrganization?.name}
                 <PencilIcon
                   onClick={() => setEditBasicInfoOpen(true)}
                   className="size-5 cursor-pointer text-gray-400 hover:text-gray-500"
@@ -134,27 +140,13 @@ const OrganizationsRootInner: React.FC = () => {
               <p className="text-sm pt-2">
                 {(isUnitContext
                   ? currentUnit?.address
-                  : myOrganization?.address) || <span>&mdash;</span>}
+                  : currentOrganization?.address) || <span>&mdash;</span>}
               </p>
             </>
           )}
         </div>
         <div>
-          <div className="grid grid-cols-1 sm:hidden">
-            {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
-            <select
-              defaultValue={tabs.find((tab) => tab)?.name}
-              aria-label="Select a tab"
-              className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pl-3 pr-8 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-secondary-600"
-            >
-              {tabs
-                .filter((tab) => !tab.hidden)
-                .map((tab) => (
-                  <option key={tab.name}>{tab.name}</option>
-                ))}
-            </select>
-          </div>
-          <div className="hidden sm:block">
+          <div className="max-w-full overflow-x-scroll">
             <div className="border-b border-gray-200">
               <nav aria-label="Tabs" className="-mb-px flex space-x-8">
                 {tabs
@@ -205,12 +197,12 @@ const OrganizationsRootInner: React.FC = () => {
         </div>
         <Outlet />
       </div>
-      {myOrganization?.id && (
+      {currentOrganization?.id && (
         <SlideOver open={editBasicInfoOpen} setOpen={setEditBasicInfoOpen}>
           <EditOrganizationBasic
             setOpen={setEditBasicInfoOpen}
             create={false}
-            organizationId={myOrganization.id}
+            organizationId={currentOrganization.id}
             unitId={currentUnit?.id}
             level={isUnitContext ? "unit" : "organization"}
             onSaveSuccess={() =>
@@ -228,15 +220,18 @@ const OrganizationsRootInner: React.FC = () => {
 const OrganizationsRoot: React.FC<{
   organizationId?: Organization["id"];
   organizationDeleteRedirect?: To;
-}> = ({ organizationId, organizationDeleteRedirect }) => {
-  return (
-    <OrganizationsContextProvider
-      currentOrganizationId={organizationId}
-      organizationDeleteRedirect={organizationDeleteRedirect}
-    >
-      <OrganizationsRootInner />
-    </OrganizationsContextProvider>
-  );
-};
+}> = withRequirePermissions(
+  ({ organizationId, organizationDeleteRedirect }) => {
+    return (
+      <OrganizationsContextProvider
+        currentOrganizationId={organizationId}
+        organizationDeleteRedirect={organizationDeleteRedirect}
+      >
+        <OrganizationsRootInner />
+      </OrganizationsContextProvider>
+    );
+  },
+  myOrganizationPermissionOptions
+);
 
 export default OrganizationsRoot;

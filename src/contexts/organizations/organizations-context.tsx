@@ -6,7 +6,7 @@ import {
   getOrganization,
   getOrganizationBySlug,
   getOrganizationIdp,
-  getOrganizationIdpRoleGroups,
+  getRoleGroupsForOrganization,
   getUnits,
 } from "../../queries/organizations";
 import { KeycloakGroupDto, OrganizationIdpDto } from "../../types/api";
@@ -333,7 +333,7 @@ export const OrganizationsContextProvider: React.FC<
   const { data: roleGroups, isLoading: roleGroupsLoading } = useQuery({
     queryKey: ["roleGroups", currentOrganization?.id] as const,
     queryFn: ({ queryKey }) =>
-      queryKey[1] ? getOrganizationIdpRoleGroups(queryKey[1]) : null,
+      queryKey[1] ? getRoleGroupsForOrganization(queryKey[1]) : null,
     enabled: !!currentOrganization?.id,
   });
 

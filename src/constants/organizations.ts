@@ -10,3 +10,5 @@ export const ORGANIZATION_TRAINING_ADMIN_GROUP_NAME =
 export const UNIT_TRAINING_ADMIN_GROUP_NAME = "Training Admin";
 export const ORGANIZATION_TAT_GROUP_NAME = "Organization TAT Member";
 export const UNIT_TAT_GROUP_NAME = "Unit TAT Member";
+
+export const DISABLED_ROLE_GROUPS = ["ThreatZero Administrator"];

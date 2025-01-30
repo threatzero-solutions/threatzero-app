@@ -1,18 +1,18 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { Field, FieldType, TrainingToken } from "../../../../types/entities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTrainingToken } from "../../../../queries/users";
-import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
-import FormInput from "../../../../components/forms/inputs/FormInput";
-import { SimpleChangeEvent } from "../../../../types/core";
-import { orderSort } from "../../../../utils/core";
-import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
-import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
-import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
-import { getTrainingItem } from "../../../../queries/training";
-import TrainingItemTile from "../../../training-library/components/TrainingItemTile";
-import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import ManageItems from "../../../training-library/components/ManageItems";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import FormInput from "../../../components/forms/inputs/FormInput";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
+import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import { getTrainingItem } from "../../../queries/training";
+import { createTrainingToken } from "../../../queries/users";
+import { SimpleChangeEvent } from "../../../types/core";
+import { Field, FieldType, TrainingToken } from "../../../types/entities";
+import { orderSort } from "../../../utils/core";
+import ManageItems from "../../training-library/components/ManageItems";
+import TrainingItemTile from "../../training-library/components/TrainingItemTile";
 
 const INPUT_DATA: Array<Partial<Field>> = [
   {

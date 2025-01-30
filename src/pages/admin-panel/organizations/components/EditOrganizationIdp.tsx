@@ -21,6 +21,7 @@ import SlideOverField from "../../../../components/layouts/slide-over/SlideOverF
 import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import { DISABLED_ROLE_GROUPS } from "../../../../constants/organizations";
 import { AlertContext } from "../../../../contexts/alert/alert-context";
 import { useAlertId } from "../../../../contexts/alert/use-alert-id";
 import { useAuth } from "../../../../contexts/auth/useAuth";
@@ -29,7 +30,7 @@ import { useAutoSlug } from "../../../../hooks/use-auto-slug";
 import {
   createOrganizationIdp,
   deleteOrganizationIdp,
-  getOrganizationIdpRoleGroups,
+  getRoleGroupsForOrganization,
   isIdpSlugUnique,
   updateOrganizationIdp,
 } from "../../../../queries/organizations";
@@ -45,8 +46,6 @@ const SERVICE_PROVIDER_ENTITY_ID =
   "https://auth.threatzero.org/realms/threatzero";
 const SERVICE_PROVIDER_REDIRECT_URL = (slug: string) =>
   `https://auth.threatzero.org/realms/threatzero/broker/${slug}/endpoint`;
-
-const DISABLED_ROLE_GROUPS = ["ThreatZero Administrator"];
 
 interface EditOrganizationIdpProps {
   organization: Organization;
@@ -198,8 +197,8 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
   } = useContext(ConfirmationContext);
 
   const { data: allowedRoleGroups } = useQuery({
-    queryKey: ["roleGroups", organization.id] as const,
-    queryFn: ({ queryKey }) => getOrganizationIdpRoleGroups(queryKey[1]),
+    queryKey: ["organization-role-groups", organization.id] as const,
+    queryFn: ({ queryKey }) => getRoleGroupsForOrganization(queryKey[1]),
   });
 
   const queryClient = useQueryClient();

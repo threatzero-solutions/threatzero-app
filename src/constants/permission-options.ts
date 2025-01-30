@@ -57,6 +57,6 @@ export const adminPanelPermissionOptions = {
 
 // MY ORGANIZATION
 export const myOrganizationPermissionOptions = {
-  permissions: [],
+  permissions: [WRITE.ORGANIZATIONS, READ.ORGANIZATIONS],
   type: "all" as const,
 };

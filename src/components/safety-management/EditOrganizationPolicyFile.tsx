@@ -1,5 +1,6 @@
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/20/solid";
 import { useMutation } from "@tanstack/react-query";
-import { ChangeEvent, useRef } from "react";
+import { ChangeEvent, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   GetPresignedUploadUrlsResult,
@@ -27,6 +28,7 @@ interface EditOrganizationPolicyFileProps {
   organizationPolicyFile?: Partial<OrganizationPolicyFile>;
   setOpen: (open: boolean) => void;
   onSave: (data: TForm) => void;
+  saving?: boolean;
 }
 
 const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
@@ -34,6 +36,7 @@ const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
   organizationPolicyFile,
   setOpen,
   onSave,
+  saving = false,
 }) => {
   const formMethods = useForm<TForm>({
     values: {
@@ -43,7 +46,10 @@ const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
     },
   });
 
-  const presignedUrlResult = useRef<
+  const { watch } = formMethods;
+  const pdfS3Key = watch("pdfS3Key");
+
+  const [presignedUrlResult, setPresignedUrlResult] = useState<
     [GetPresignedUploadUrlsResult, File] | undefined
   >();
 
@@ -58,7 +64,7 @@ const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
 
     if (!results.length) return;
 
-    presignedUrlResult.current = results[0];
+    setPresignedUrlResult(results[0]);
     formMethods.setValue("pdfS3Key", results[0][0].filename);
   };
 
@@ -72,15 +78,15 @@ const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
       onSave(data);
     };
 
-    if (!presignedUrlResult.current) {
+    if (!presignedUrlResult) {
       doSave();
       return;
     }
 
     uploadDocument(
       {
-        url: presignedUrlResult.current[0].putUrl,
-        file: presignedUrlResult.current[1],
+        url: presignedUrlResult[0].putUrl,
+        file: presignedUrlResult[1],
       },
       {
         onSuccess: () => {
@@ -94,6 +100,7 @@ const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
       onSubmit={formMethods.handleSubmit(handleSubmit)}
       onClose={() => setOpen(false)}
       submitText="Done"
+      isSaving={saving}
     >
       <SlideOverHeading
         title={
@@ -115,15 +122,31 @@ const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
         </SlideOverField>
         <SlideOverField
           key="pdfS3Key"
-          label="Policy or Procedure File"
+          label="Policy or Procedure PDF"
           name="pdfS3Key"
-          helpText="Select and upload the document for this policy or procedure."
+          helpText="Select and upload the PDF document for this policy or procedure."
         >
           <Input
             type="file"
             onChange={handleFileChange}
             className="pl-2 w-full"
+            accept="application/pdf"
           />
+          {(organizationPolicyFile?.pdfUrl ?? presignedUrlResult?.[1]) && (
+            <a
+              href={
+                organizationPolicyFile?.pdfUrl ??
+                URL.createObjectURL(presignedUrlResult![1])
+              }
+              target="_blank"
+              rel="noreferrer"
+              className="text-secondary-600 hover:text-secondary-500 transition-colors inline-flex items-center gap-1 text-sm"
+            >
+              Preview{" "}
+              <span className="font-semibold">{pdfS3Key.split("/").pop()}</span>{" "}
+              <ArrowTopRightOnSquareIcon className="size-4" />
+            </a>
+          )}
         </SlideOverField>
       </SlideOverFormBody>
     </SlideOverForm>

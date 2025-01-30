@@ -17,8 +17,8 @@ const MyOrganizationUnits: React.FC = () => {
   const {
     allUnits,
     allUnitsLoading,
-    currentOrganization: myOrganization,
-    currentOrganizationLoading: myOrganizationLoading,
+    currentOrganization,
+    currentOrganizationLoading,
     currentUnitSlug,
     currentUnit,
     setUnitsPath,
@@ -53,7 +53,7 @@ const MyOrganizationUnits: React.FC = () => {
 
   return (
     <div>
-      {myOrganizationLoading || !myOrganization ? (
+      {currentOrganizationLoading || !currentOrganization ? (
         <div className="space-y-4">
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
@@ -61,7 +61,7 @@ const MyOrganizationUnits: React.FC = () => {
       ) : (
         <div className="space-y-4">
           <SubunitsTable
-            organizationId={myOrganization.id}
+            organizationId={currentOrganization.id}
             units={allUnits}
             unitsLoading={allUnitsLoading}
             unitId={currentUnitSlug}
@@ -130,7 +130,7 @@ const MyOrganizationUnits: React.FC = () => {
                     )}
                   >
                     <GroupMembersTable
-                      organizationId={myOrganization.id}
+                      organizationId={currentOrganization.id}
                       unitSlug={currentUnitSlug}
                       joinText={
                         isUnitContext

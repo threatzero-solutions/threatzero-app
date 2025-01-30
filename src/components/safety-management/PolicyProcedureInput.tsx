@@ -16,6 +16,7 @@ interface PolicyProcedureInputProps {
   name?: string;
   label?: string;
   helpText?: string;
+  saving?: boolean;
 }
 
 const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
@@ -25,6 +26,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
   name,
   label,
   helpText,
+  saving,
 }) => {
   const editPolicyProcedure = useOpenData<Partial<OrganizationPolicyFile>>();
 
@@ -132,6 +134,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
           organizationPolicyFile={editPolicyProcedure.data ?? undefined}
           onSave={handleSaveOrganizationPolicyFile}
           setOpen={editPolicyProcedure.setOpen}
+          saving={saving}
         />
       </SlideOver>
     </>

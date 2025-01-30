@@ -1,20 +1,29 @@
 import { TrashIcon } from "@heroicons/react/20/solid";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
+import FormField from "../../../components/forms/FormField";
+import MultipleSelect from "../../../components/forms/inputs/MultipleSelect";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import InlineNotice from "../../../components/layouts/InlineNotice";
+import { DISABLED_ROLE_GROUPS } from "../../../constants/organizations";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { deleteOrganization, deleteUnit } from "../../../queries/organizations";
+import {
+  deleteOrganization,
+  deleteUnit,
+  getRoleGroupsForOrganization,
+  saveOrganization,
+} from "../../../queries/organizations";
 import { classNames, Path } from "../../../utils/core";
 
 const MyOrganizationSettings: React.FC = () => {
   const {
-    currentOrganization: myOrganization,
-    currentOrganizationLoading: myOrganizationLoading,
+    currentOrganization,
+    currentOrganizationLoading,
+    invalidateOrganizationQuery,
     invalidateAllUnitsQuery,
     currentUnit,
     isUnitContext,
@@ -22,13 +31,29 @@ const MyOrganizationSettings: React.FC = () => {
     setUnitsPath,
     organizationDeleteRedirect,
   } = useContext(OrganizationsContext);
-  const { accessTokenClaims } = useAuth();
+  const { accessTokenClaims, isGlobalAdmin } = useAuth();
   const {
     setOpen: setConfirmationOpen,
     setClose: setConfirmationClose,
     setConfirmationOptions,
   } = useContext(ConfirmationContext);
   const navigate = useNavigate();
+
+  const { data: allRoleGroups } = useQuery({
+    queryKey: [
+      "organization-role-groups",
+      currentOrganization?.id ?? "",
+    ] as const,
+    queryFn: ({ queryKey }) => getRoleGroupsForOrganization(queryKey[1]),
+    enabled: !!currentOrganization,
+  });
+
+  const { mutate: doSaveOrganization } = useMutation({
+    mutationFn: saveOrganization,
+    onSuccess: () => {
+      invalidateOrganizationQuery();
+    },
+  });
 
   const { mutate: doDeleteOrganization, isPending: isOrganizationDeleting } =
     useMutation({
@@ -71,22 +96,22 @@ const MyOrganizationSettings: React.FC = () => {
     if (
       !isUnitContext &&
       accessTokenClaims?.organization &&
-      accessTokenClaims.organization === myOrganization?.slug
+      accessTokenClaims.organization === currentOrganization?.slug
     ) {
       return true;
     }
 
     return false;
-  }, [isUnitContext, accessTokenClaims, myOrganization, unitsPath]);
+  }, [isUnitContext, accessTokenClaims, currentOrganization, unitsPath]);
 
   const deleteTitle = useMemo(
     () =>
       `Delete ${
         isUnitContext
           ? currentUnit?.name ?? "Unit"
-          : myOrganization?.name ?? "Organization"
+          : currentOrganization?.name ?? "Organization"
       }`,
-    [isUnitContext, currentUnit, myOrganization]
+    [isUnitContext, currentUnit, currentOrganization]
   );
 
   useEffect(() => {
@@ -105,7 +130,7 @@ const MyOrganizationSettings: React.FC = () => {
         if (isUnitContext) {
           doDeleteCurrentUnit(currentUnit?.id);
         } else {
-          doDeleteOrganization(myOrganization?.id);
+          doDeleteOrganization(currentOrganization?.id);
         }
       },
       destructive: true,
@@ -116,21 +141,50 @@ const MyOrganizationSettings: React.FC = () => {
       } name to confirm:`,
       textInputPlaceholder: isUnitContext
         ? currentUnit?.name
-        : myOrganization?.name,
+        : currentOrganization?.name,
       validateTextInput: (text) =>
-        text === (isUnitContext ? currentUnit?.name : myOrganization?.name),
+        text ===
+        (isUnitContext ? currentUnit?.name : currentOrganization?.name),
     });
   };
 
   return (
     <div>
-      {myOrganizationLoading || !myOrganization ? (
+      {currentOrganizationLoading || !currentOrganization ? (
         <div className="space-y-4">
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
           <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
         </div>
       ) : (
         <div className="space-y-4">
+          {isGlobalAdmin && (
+            <LargeFormSection heading="Administration" defaultOpen>
+              <FormField
+                field={{
+                  label: "Allowed Role Groups",
+                  helpText:
+                    "Select role groups that this organization's administrators are allowed to grant to their own users.",
+                }}
+                input={
+                  <MultipleSelect
+                    prefix="allowed-role-groups"
+                    options={(allRoleGroups ?? []).map((rg) => ({
+                      key: rg.id,
+                      label: rg.name,
+                      disabled: DISABLED_ROLE_GROUPS.includes(rg.name),
+                    }))}
+                    value={currentOrganization.allowedRoleGroups ?? []}
+                    onChange={(allowedRoleGroups) =>
+                      doSaveOrganization({
+                        id: currentOrganization.id,
+                        allowedRoleGroups,
+                      })
+                    }
+                  />
+                }
+              />
+            </LargeFormSection>
+          )}
           <LargeFormSection
             heading="Advanced"
             // subheading="This is the primary safety contact displayed to users."
@@ -152,7 +206,7 @@ const MyOrganizationSettings: React.FC = () => {
                     text={`Delete ${
                       isUnitContext
                         ? currentUnit?.name ?? "Unit"
-                        : myOrganization.name ?? "Organization"
+                        : currentOrganization.name ?? "Organization"
                     }`}
                     onClick={() => handleDelete()}
                     disabled={deleteDisabled}
