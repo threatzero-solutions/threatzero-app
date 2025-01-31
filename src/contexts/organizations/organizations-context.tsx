@@ -1,7 +1,7 @@
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { createContext, PropsWithChildren, useCallback, useMemo } from "react";
-import { To, useSearchParams } from "react-router";
+import { To, useNavigate, useSearchParams } from "react-router";
 import {
   getOrganization,
   getOrganizationBySlug,
@@ -41,7 +41,7 @@ export interface OrganizationsContextType {
   invalidateOrganizationUsersQuery: (
     unitsSlugs?: (string | undefined)[]
   ) => void;
-  organizationDeleteRedirect: To;
+  navigateAfterDelete: () => void;
 }
 
 export const OrganizationsContext = createContext<OrganizationsContextType>({
@@ -59,7 +59,7 @@ export const OrganizationsContext = createContext<OrganizationsContextType>({
   isUnitContext: false,
   roleGroupsLoading: false,
   invalidateOrganizationUsersQuery: () => {},
-  organizationDeleteRedirect: "/",
+  navigateAfterDelete: () => {},
 });
 
 export interface OrganizationsContextProviderProps extends PropsWithChildren {
@@ -76,6 +76,7 @@ export const OrganizationsContextProvider: React.FC<
 }) => {
   const { myOrganizationSlug } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const organizationId = useMemo(
     () => currentOrganizationIdProp ?? myOrganizationSlug,
@@ -337,6 +338,23 @@ export const OrganizationsContextProvider: React.FC<
     enabled: !!currentOrganization?.id,
   });
 
+  const navigateAfterDelete = useCallback(() => {
+    const unitsPath = searchParams.get("unitsPath");
+    if (!unitsPath) {
+      navigate(organizationDeleteRedirect ?? "/");
+      return;
+    }
+
+    const unitPaths = unitsPath.split("/");
+    if (unitPaths.length > 1) {
+      searchParams.set("unitsPath", unitPaths.slice(0, -1).join("/"));
+    } else {
+      searchParams.delete("unitsPath");
+    }
+
+    navigate(`./units?${searchParams.toString()}`);
+  }, [searchParams, navigate, organizationDeleteRedirect]);
+
   return (
     <OrganizationsContext.Provider
       value={{
@@ -363,7 +381,7 @@ export const OrganizationsContextProvider: React.FC<
         roleGroups,
         roleGroupsLoading,
         invalidateOrganizationUsersQuery,
-        organizationDeleteRedirect: organizationDeleteRedirect ?? "/",
+        navigateAfterDelete,
       }}
     >
       {children}

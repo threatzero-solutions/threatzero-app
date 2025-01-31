@@ -90,7 +90,9 @@ export const useAutoSlug = <
           return onChange(e);
         },
         onBlur: (e) => {
-          disableAutoSlug.current = true;
+          if (e.target.value) {
+            disableAutoSlug.current = true;
+          }
           return onBlur(e);
         },
       } as UseFormRegisterReturn<Path<T>>;

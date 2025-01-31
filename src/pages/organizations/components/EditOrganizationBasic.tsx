@@ -329,7 +329,8 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
         {create && !isOrganization && (
           <SlideOverField
             name="autoAddLocation"
-            label="Automatically Add Location"
+            label="Add Default SOS Location"
+            helpText="Automatically add a default location, used for tracking the physical location of safety concern (SOS) submissions, for this new unit. Locations can be added manually later."
           >
             <Checkbox
               onChange={(checked) => setAutoAddLocation(checked)}

@@ -26,6 +26,7 @@ const MyOrganizationUnits: React.FC = () => {
     roleGroups,
     roleGroupsLoading,
     getIdpRoleGroups,
+    invalidateAllUnitsQuery,
   } = useContext(OrganizationsContext);
   const { isGlobalAdmin } = useAuth();
 
@@ -78,6 +79,7 @@ const MyOrganizationUnits: React.FC = () => {
                 {children}
               </LargeFormSection>
             )}
+            onAddSubunitSuccess={() => invalidateAllUnitsQuery()}
           />
           {isUnitContext && currentUnit && (
             <LargeFormSection

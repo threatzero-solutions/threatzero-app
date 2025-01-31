@@ -1,23 +1,23 @@
 import { ArrowRightIcon, MinusIcon, PlusIcon } from "@heroicons/react/20/solid";
-import { classNames } from "../../../utils/core";
-import FilterBar from "../../../components/layouts/FilterBar";
-import BaseTable from "../../../components/layouts/tables/BaseTable";
 import {
-  useReactTable,
+  ExpandedState,
+  createColumnHelper,
   getCoreRowModel,
-  getSortedRowModel,
   getExpandedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  ExpandedState,
-  createColumnHelper,
+  getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table";
 import { ReactNode, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
-import { Unit } from "../../../types/entities";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
+import FilterBar from "../../../components/layouts/FilterBar";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import BaseTable from "../../../components/layouts/tables/BaseTable";
+import { Unit } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
 import EditOrganizationBasic from "./EditOrganizationBasic";
 
 const DEPTH_COLORS = [
@@ -54,6 +54,7 @@ interface SubunitsTableProps {
   render?: (children: ReactNode) => ReactNode;
   unitsLabelSingular?: string;
   unitsLabelPlural?: string;
+  onAddSubunitSuccess?: () => void;
 }
 
 const SubunitsTable: React.FC<SubunitsTableProps> = ({
@@ -67,6 +68,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
   render = (children) => children,
   unitsLabelSingular = "Unit",
   unitsLabelPlural = "Units",
+  onAddSubunitSuccess,
 }) => {
   const [addBaseOrganizationOpen, setAddBaseOrganizationOpen] = useState(false);
 
@@ -258,6 +260,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
             organizationId={organizationId}
             parentUnitId={thisUnit?.id}
             level="unit"
+            onSaveSuccess={() => onAddSubunitSuccess?.()}
           />
         </SlideOver>
       </>

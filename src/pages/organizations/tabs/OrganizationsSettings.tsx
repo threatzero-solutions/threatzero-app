@@ -1,7 +1,6 @@
 import { TrashIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
 import FormField from "../../../components/forms/FormField";
 import MultipleSelect from "../../../components/forms/inputs/MultipleSelect";
 import LargeFormSection from "../../../components/forms/LargeFormSection";
@@ -28,8 +27,7 @@ const MyOrganizationSettings: React.FC = () => {
     currentUnit,
     isUnitContext,
     unitsPath,
-    setUnitsPath,
-    organizationDeleteRedirect,
+    navigateAfterDelete,
   } = useContext(OrganizationsContext);
   const { accessTokenClaims, isGlobalAdmin } = useAuth();
   const {
@@ -37,7 +35,6 @@ const MyOrganizationSettings: React.FC = () => {
     setClose: setConfirmationClose,
     setConfirmationOptions,
   } = useContext(ConfirmationContext);
-  const navigate = useNavigate();
 
   const { data: allRoleGroups } = useQuery({
     queryKey: [
@@ -60,7 +57,7 @@ const MyOrganizationSettings: React.FC = () => {
       mutationFn: deleteOrganization,
       onSuccess: () => {
         setConfirmationClose();
-        navigate(organizationDeleteRedirect);
+        navigateAfterDelete();
       },
     });
 
@@ -68,10 +65,9 @@ const MyOrganizationSettings: React.FC = () => {
     useMutation({
       mutationFn: deleteUnit,
       onSuccess: () => {
-        const paths = unitsPath?.split("/") ?? [];
-        setUnitsPath(paths.length > 1 ? paths.slice(0, -1).join("/") : null);
         invalidateAllUnitsQuery();
         setConfirmationClose();
+        navigateAfterDelete();
       },
     });
 
