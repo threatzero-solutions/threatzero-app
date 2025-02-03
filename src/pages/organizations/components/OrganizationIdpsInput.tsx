@@ -4,20 +4,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { AnimatePresence, motion } from "motion/react";
 import { Fragment, useContext, useMemo, useState } from "react";
-import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
-import IconButton from "../../../../components/layouts/buttons/IconButton";
-import Block from "../../../../components/layouts/content/Block";
-import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import { LEVEL } from "../../../../constants/permissions";
-import { useAuth } from "../../../../contexts/auth/useAuth";
-import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+import Block from "../../../components/layouts/content/Block";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import { LEVEL } from "../../../constants/permissions";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import {
   getOrganizationIdp,
   saveOrganization,
-} from "../../../../queries/organizations";
-import { OrganizationIdpDto } from "../../../../types/api";
-import { Organization } from "../../../../types/entities";
-import { classNames } from "../../../../utils/core";
+} from "../../../queries/organizations";
+import { OrganizationIdpDto } from "../../../types/api";
+import { Organization } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
 import EditOrganizationIdp from "./EditOrganizationIdp";
 
 interface OrganizationIdpsInputProps {

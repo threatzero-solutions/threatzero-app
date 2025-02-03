@@ -12,31 +12,31 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useDebounceValue } from "usehooks-ts";
 import { isURL } from "validator";
-import Input from "../../../../components/forms/inputs/Input";
-import MultilineTextInput from "../../../../components/forms/inputs/MultilineTextInput";
-import MultipleSelect from "../../../../components/forms/inputs/MultipleSelect";
-import Select from "../../../../components/forms/inputs/Select";
-import UnitSelect from "../../../../components/forms/inputs/UnitSelect";
-import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
-import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
-import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
-import { DISABLED_ROLE_GROUPS } from "../../../../constants/organizations";
-import { AlertContext } from "../../../../contexts/alert/alert-context";
-import { useAlertId } from "../../../../contexts/alert/use-alert-id";
-import { useAuth } from "../../../../contexts/auth/useAuth";
-import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
-import { useAutoSlug } from "../../../../hooks/use-auto-slug";
+import Input from "../../../components/forms/inputs/Input";
+import MultilineTextInput from "../../../components/forms/inputs/MultilineTextInput";
+import MultipleSelect from "../../../components/forms/inputs/MultipleSelect";
+import Select from "../../../components/forms/inputs/Select";
+import UnitSelect from "../../../components/forms/inputs/UnitSelect";
+import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
+import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import { DISABLED_ROLE_GROUPS } from "../../../constants/organizations";
+import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../contexts/alert/use-alert-id";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
+import { useAutoSlug } from "../../../hooks/use-auto-slug";
 import {
   createOrganizationIdp,
   deleteOrganizationIdp,
   getRoleGroupsForOrganization,
   isIdpSlugUnique,
   updateOrganizationIdp,
-} from "../../../../queries/organizations";
-import { OrganizationIdpDto } from "../../../../types/api";
-import { Organization, Unit } from "../../../../types/entities";
-import { classNames } from "../../../../utils/core";
+} from "../../../queries/organizations";
+import { OrganizationIdpDto } from "../../../types/api";
+import { Organization, Unit } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
 import IdpMetadataInput from "./IdpMetadataInput";
 import MultiAttributeMatchersInput from "./MultiAttributeMatchersInput";
 import RoleGroupMatchersInput from "./RoleGroupMatchersInput";

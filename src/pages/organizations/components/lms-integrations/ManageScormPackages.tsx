@@ -25,38 +25,38 @@ import { AnimatePresence, motion } from "motion/react";
 import { Fragment, useCallback, useContext, useEffect, useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
-import Input from "../../../../../components/forms/inputs/Input";
-import ButtonGroup from "../../../../../components/layouts/buttons/ButtonGroup";
-import IconButton from "../../../../../components/layouts/buttons/IconButton";
-import SlideOverFormActionButtons from "../../../../../components/layouts/slide-over/SlideOverFormActionButtons";
-import SlideOverFormBody from "../../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverHeading from "../../../../../components/layouts/slide-over/SlideOverHeading";
-import { DEFAULT_THUMBNAIL_URL } from "../../../../../constants/core";
-import { AlertContext } from "../../../../../contexts/alert/alert-context";
-import { useAlertId } from "../../../../../contexts/alert/use-alert-id";
-import { ConfirmationContext } from "../../../../../contexts/core/confirmation-context";
+import Input from "../../../../components/forms/inputs/Input";
+import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../../components/layouts/buttons/IconButton";
+import SlideOverFormActionButtons from "../../../../components/layouts/slide-over/SlideOverFormActionButtons";
+import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import { DEFAULT_THUMBNAIL_URL } from "../../../../constants/core";
+import { AlertContext } from "../../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../../contexts/alert/use-alert-id";
+import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
 import {
   createOrganizationLmsToken,
   getLmsScormPackage,
   saveOrganization,
   setOrganizationLmsTokenExpirations,
-} from "../../../../../queries/organizations";
+} from "../../../../queries/organizations";
 import {
   getTrainingCourse,
   getTrainingItem,
-} from "../../../../../queries/training";
+} from "../../../../queries/training";
 import {
   LmsTrainingToken,
   Organization,
   TrainingItem,
-} from "../../../../../types/entities";
-import { ScormVersion } from "../../../../../types/training";
+} from "../../../../types/entities";
+import { ScormVersion } from "../../../../types/training";
 import {
   classNames,
   simulateDownload,
   slugify,
   stripHtml,
-} from "../../../../../utils/core";
+} from "../../../../utils/core";
 
 const DEFAULT_EXPIRED_DATE = dayjs().startOf("day").subtract(1, "day");
 const DEFAULT_EXPIRATION_DATE = DEFAULT_EXPIRED_DATE.add(1, "year");

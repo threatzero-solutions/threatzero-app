@@ -13,16 +13,16 @@ import {
   useFormContext,
   UseFormRegister,
 } from "react-hook-form";
-import Input from "../../../../components/forms/inputs/Input";
-import Select from "../../../../components/forms/inputs/Select";
-import InformationButton from "../../../../components/layouts/buttons/InformationButton";
-import DataTable from "../../../../components/layouts/tables/DataTable";
-import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
+import Input from "../../../components/forms/inputs/Input";
+import Select from "../../../components/forms/inputs/Select";
+import InformationButton from "../../../components/layouts/buttons/InformationButton";
+import DataTable from "../../../components/layouts/tables/DataTable";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import {
   OrganizationIdpDto,
   SyncAttributeToAttributeDto,
-} from "../../../../types/api";
-import { KeysOfType } from "../../../../types/core";
+} from "../../../types/api";
+import { KeysOfType } from "../../../types/core";
 
 type TName = KeysOfType<OrganizationIdpDto, SyncAttributeToAttributeDto[]>;
 

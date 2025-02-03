@@ -5,17 +5,21 @@ import {
   ListboxOptions,
   Transition,
 } from "@headlessui/react";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import {
-  SelectHTMLAttributes,
+  CheckIcon,
+  ChevronUpDownIcon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
+import {
+  ChangeEvent,
   DetailedHTMLProps,
   Fragment,
-  useState,
-  useEffect,
   ReactNode,
-  ChangeEvent,
+  SelectHTMLAttributes,
+  useEffect,
+  useState,
 } from "react";
-import { classNames } from "../../../utils/core";
+import { classNames, cn } from "../../../utils/core";
 
 interface SelectProps
   extends DetailedHTMLProps<
@@ -30,9 +34,15 @@ interface SelectProps
   }[];
   readOnly?: boolean;
   showClear?: boolean;
+  clearButtonPosition?: "bottom" | "right";
 }
 
-const Select: React.FC<SelectProps> = ({ options, showClear, ...attrs }) => {
+const Select: React.FC<SelectProps> = ({
+  options,
+  showClear,
+  clearButtonPosition = "bottom",
+  ...attrs
+}) => {
   const { name, defaultValue, value, readOnly, disabled } = attrs;
 
   const [selected, setSelected] = useState(defaultValue as string);
@@ -60,7 +70,14 @@ const Select: React.FC<SelectProps> = ({ options, showClear, ...attrs }) => {
   };
 
   return (
-    <div className="w-full">
+    <div
+      className={cn(
+        "w-full flex",
+        clearButtonPosition === "bottom"
+          ? "flex-col items-stretch gap-1"
+          : "flex-row items-center"
+      )}
+    >
       <Listbox
         defaultValue={defaultValue}
         value={value}
@@ -70,7 +87,7 @@ const Select: React.FC<SelectProps> = ({ options, showClear, ...attrs }) => {
       >
         {({ open }) => (
           <>
-            <div className="relative">
+            <div className="relative grow">
               <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary-600 sm:text-sm sm:leading-6">
                 <span
                   className={classNames(
@@ -157,12 +174,16 @@ const Select: React.FC<SelectProps> = ({ options, showClear, ...attrs }) => {
         <button
           type="button"
           className={classNames(
-            "pl-1 text-xs font-semibol text-secondary-600 disabled:text-gray-400"
+            "pl-1 text-xs font-semibol text-secondary-600 disabled:text-gray-400 disabled:opacity-60 shrink text-start"
           )}
           disabled={!value}
           onClick={() => handleSelect(undefined)}
         >
-          clear
+          {clearButtonPosition === "bottom" ? (
+            "clear"
+          ) : (
+            <XMarkIcon className="size-5" />
+          )}
         </button>
       )}
     </div>

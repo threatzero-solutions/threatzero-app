@@ -1,15 +1,15 @@
+import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import React, { MouseEvent } from "react";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import Input from "../../../components/forms/inputs/Input";
+import Select from "../../../components/forms/inputs/Select";
+import DataTable from "../../../components/layouts/tables/DataTable";
 import {
   KeycloakGroupDto,
   OrganizationIdpDto,
   RoleGroupMatcherDto,
-} from "../../../../types/api";
-import DataTable from "../../../../components/layouts/tables/DataTable";
-import Input from "../../../../components/forms/inputs/Input";
-import React, { MouseEvent } from "react";
-import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
-import Select from "../../../../components/forms/inputs/Select";
-import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
-import { useFieldArray, useFormContext } from "react-hook-form";
+} from "../../../types/api";
 
 interface RoleGroupMatchersInputProps {
   allowedRoleGroups: KeycloakGroupDto[];

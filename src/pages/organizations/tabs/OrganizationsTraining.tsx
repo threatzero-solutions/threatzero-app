@@ -9,7 +9,7 @@ import {
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { classNames } from "../../../utils/core";
-import CourseEnrollmentsInput from "../../admin-panel/organizations/components/CourseEnrollmentsInput";
+import CourseEnrollmentsInput from "../components/CourseEnrollmentsInput";
 import GroupMembersTable from "../components/GroupMembersTable";
 
 const MyOrganizationTraining: React.FC = () => {

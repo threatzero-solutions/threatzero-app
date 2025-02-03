@@ -5,6 +5,7 @@ import {
   PencilIcon,
   TrashIcon,
   UserPlusIcon,
+  UsersIcon,
 } from "@heroicons/react/20/solid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -21,6 +22,7 @@ import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { useOpenData } from "../../../hooks/use-open-data";
 import {
   deleteOrganizationUser,
   getOrganizationUsers,
@@ -30,6 +32,7 @@ import { OrganizationUser } from "../../../types/api";
 import { type Organization } from "../../../types/entities";
 import { classNames, humanizeSlug } from "../../../utils/core";
 import { canAccessTraining } from "../../../utils/organization";
+import BulkUserUploadSlideOver from "./BulkUserUploadSlideOver";
 import EditOrganizationUser from "./EditOrganizationUser";
 import { default as MoveUnitsForm } from "./MoveUnitsForm";
 
@@ -44,12 +47,9 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
   organizationId,
   unitSlug,
 }) => {
-  const [editUserOpen, setEditUserOpen] = useState(false);
-  const [moveUserDialogOpen, setMoveUserDialogOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
-  const [selectedUserToMove, setSelectedUserToMove] = useState<
-    OrganizationUser | undefined
-  >();
+  const editUser = useOpenData<string>();
+  const moveUser = useOpenData<OrganizationUser>();
+  const [isBulkUserUploadOpen, setIsBulkUserUploadOpen] = useState(false);
 
   const { hasMultipleUnitAccess } = useAuth();
   const {
@@ -88,15 +88,6 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
     () => units?.results?.find((u) => u.slug === unitSlug),
     [units, unitSlug]
   );
-
-  const handleEditUser = (userId?: string) => {
-    setSelectedUserId(userId);
-    setEditUserOpen(true);
-  };
-
-  const handleNewUser = () => {
-    handleEditUser();
-  };
 
   const { mutate: doDelete, isPending: isDeletePending } = useMutation({
     mutationFn: (userId: string) =>
@@ -201,10 +192,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                       <ArrowUturnRightIcon className="size-4 inline" /> Move
                     </span>
                   ),
-                  action: () => {
-                    setSelectedUserToMove(row.original);
-                    setMoveUserDialogOpen(true);
-                  },
+                  action: () => moveUser.openData(row.original),
                   hidden: !thisUnit || !hasMultipleUnitAccess,
                 },
                 {
@@ -214,7 +202,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                       <PencilIcon className="size-4 inline" /> Edit
                     </span>
                   ),
-                  action: () => handleEditUser(row.original.id),
+                  action: () => editUser.openData(row.original.id),
                 },
                 {
                   id: "delete",
@@ -238,12 +226,14 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
       hasMultipleUnitAccess,
       handleDeleteUser,
       getMatchingIdp,
+      editUser,
+      moveUser,
     ]
   );
 
   return (
     <>
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center gap-4 flex-wrap">
         <button
           type="button"
           className={classNames(
@@ -256,11 +246,23 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
               ? "New users can only be added within the context of a unit."
               : ""
           }
-          onClick={() => handleNewUser()}
+          onClick={() => editUser.openNew()}
         >
           <UserPlusIcon className="size-4 inline" />
           New User
         </button>
+        <button
+          type="button"
+          className={classNames(
+            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
+            "inline-flex items-center gap-x-1"
+          )}
+          onClick={() => setIsBulkUserUploadOpen(true)}
+        >
+          <UsersIcon className="size-4 inline" />
+          Upload CSV
+        </button>
+        <div className="flex-1"></div>
         <FilterBar
           searchOptions={{
             placeholder: "Search by name or email...",
@@ -286,22 +288,26 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         noRowsMessage="No users found."
         showSearch={false}
       />
-      <SlideOver open={editUserOpen} setOpen={setEditUserOpen}>
+      <SlideOver open={editUser.open} setOpen={editUser.setOpen}>
         <EditOrganizationUser
-          setOpen={setEditUserOpen}
-          create={!selectedUserId}
-          userId={selectedUserId}
+          setOpen={editUser.setOpen}
+          create={!editUser.data}
+          userId={editUser.data ?? undefined}
         />
       </SlideOver>
-      <Modal open={moveUserDialogOpen} setOpen={setMoveUserDialogOpen}>
-        {selectedUserToMove && (
+      <Modal open={moveUser.open} setOpen={moveUser.setOpen}>
+        {moveUser.data && (
           <MoveUnitsForm
             organizationId={organizationId}
-            user={selectedUserToMove}
-            setOpen={setMoveUserDialogOpen}
+            user={moveUser.data}
+            setOpen={moveUser.setOpen}
           />
         )}
       </Modal>
+      <BulkUserUploadSlideOver
+        open={isBulkUserUploadOpen}
+        setOpen={setIsBulkUserUploadOpen}
+      />{" "}
     </>
   );
 };

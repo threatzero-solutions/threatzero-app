@@ -4,24 +4,24 @@ import {
   EyeSlashIcon,
 } from "@heroicons/react/20/solid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import FormField from "../../../../components/forms/FormField";
-import ButtonGroup from "../../../../components/layouts/buttons/ButtonGroup";
-import IconButton from "../../../../components/layouts/buttons/IconButton";
-import Block from "../../../../components/layouts/content/Block";
-import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
-import { useOpenData } from "../../../../hooks/use-open-data";
+import FormField from "../../../components/forms/FormField";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+import Block from "../../../components/layouts/content/Block";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import { useOpenData } from "../../../hooks/use-open-data";
 import {
   deleteCourseEnrollment,
   getCourseEnrollments,
   saveCourseEnrollment,
-} from "../../../../queries/organizations";
+} from "../../../queries/organizations";
 import {
   CourseEnrollment,
   type Organization,
   TrainingVisibility,
-} from "../../../../types/entities";
-import { classNames, stripHtml } from "../../../../utils/core";
-import CourseAvailabilityDates from "../../../training-library/components/CourseActiveStatus";
+} from "../../../types/entities";
+import { classNames, stripHtml } from "../../../utils/core";
+import CourseAvailabilityDates from "../../training-library/components/CourseActiveStatus";
 import EditCourseEnrollment from "./EditCourseEnrollment";
 import LmsIntegrationsInput from "./lms-integrations/LmsIntegrationsInput";
 

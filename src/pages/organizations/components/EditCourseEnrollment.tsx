@@ -2,17 +2,17 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import { ChangeEvent, useContext, useEffect, useMemo, useState } from "react";
 import { Controller, DeepPartial, useForm } from "react-hook-form";
-import CourseSelect from "../../../../components/forms/inputs/CourseSelect";
-import DurationInput from "../../../../components/forms/inputs/DurationInput";
-import FormInput from "../../../../components/forms/inputs/FormInput";
-import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
-import SlideOverFormActionButtons from "../../../../components/layouts/slide-over/SlideOverFormActionButtons";
-import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
-import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
-import { DurationObject } from "../../../../types/api";
-import { CourseEnrollment, FieldType } from "../../../../types/entities";
-import InputRadioOptions from "../../../training-library/components/edit-training-item/InputRadioOptions";
+import CourseSelect from "../../../components/forms/inputs/CourseSelect";
+import DurationInput from "../../../components/forms/inputs/DurationInput";
+import FormInput from "../../../components/forms/inputs/FormInput";
+import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
+import SlideOverFormActionButtons from "../../../components/layouts/slide-over/SlideOverFormActionButtons";
+import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
+import { DurationObject } from "../../../types/api";
+import { CourseEnrollment, FieldType } from "../../../types/entities";
+import InputRadioOptions from "../../training-library/components/edit-training-item/InputRadioOptions";
 
 dayjs.extend(duration);
 

@@ -1,20 +1,20 @@
-import { SimpleChangeEvent } from "../../../../types/core";
 import {
   CheckCircleIcon,
   InformationCircleIcon,
   PauseCircleIcon,
 } from "@heroicons/react/20/solid";
-import InputRadioOptions from "../../../training-library/components/edit-training-item/InputRadioOptions";
-import Input from "../../../../components/forms/inputs/Input";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { useDebounceCallback } from "usehooks-ts";
+import { isURL } from "validator";
+import Input from "../../../components/forms/inputs/Input";
 import {
   importOrganizationIdpMetadata,
   ImportOrganizationIdpMetadataPayload,
-} from "../../../../queries/organizations";
-import { useDebounceCallback } from "usehooks-ts";
-import { useState } from "react";
-import { classNames } from "../../../../utils/core";
-import { isURL } from "validator";
+} from "../../../queries/organizations";
+import { SimpleChangeEvent } from "../../../types/core";
+import { classNames } from "../../../utils/core";
+import InputRadioOptions from "../../training-library/components/edit-training-item/InputRadioOptions";
 
 interface IdpMetadataInputProps<K extends string | number | symbol> {
   name: K;

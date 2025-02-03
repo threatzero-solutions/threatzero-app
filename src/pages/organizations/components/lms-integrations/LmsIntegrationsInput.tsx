@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import SlideOver from "../../../../../components/layouts/slide-over/SlideOver";
-import { getOrganizationLmsTokens } from "../../../../../queries/organizations";
+import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
+import { getOrganizationLmsTokens } from "../../../../queries/organizations";
 import {
   type CourseEnrollment,
   type Organization,
   type TrainingCourse,
-} from "../../../../../types/entities";
+} from "../../../../types/entities";
 import ManageScormPackages from "./ManageScormPackages";
 
 interface LmsIntegrationsInputProps {

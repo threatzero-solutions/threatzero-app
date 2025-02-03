@@ -72,7 +72,7 @@ interface InviteCsvRow {
   trainingItemId: string;
 }
 
-const CSV_HEADERS_MAPPER = new Map<string, InviteCsvRow[keyof InviteCsvRow]>([
+const CSV_HEADERS_MAPPER = new Map<string, keyof InviteCsvRow>([
   ["firstname", "firstName"],
   ["lastname", "lastName"],
   ["email", "email"],
@@ -525,6 +525,7 @@ const ManageTrainingInvites: React.FC = () => {
                 <input
                   type="file"
                   onChange={inviteCSVUploadMutation.mutate}
+                  accept=".csv"
                   className="hidden"
                 />
               </label>

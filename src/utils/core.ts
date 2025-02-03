@@ -1,9 +1,15 @@
 import { PaginationState, SortingState } from "@tanstack/react-table";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 import { OrderOptions, Ordering } from "../types/core";
 import { Paginated } from "../types/entities";
 
 export const classNames = (...classes: (string | undefined)[]) =>
   classes.filter(Boolean).join(" ");
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export const orderSort = (a: { order?: number }, b: { order?: number }) => {
   return (a.order ?? 0) - (b.order ?? 0);
