@@ -1,5 +1,23 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext, useMemo, useState } from "react";
+import { Controller, FieldPath, useForm } from "react-hook-form";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useDebounceCallback } from "usehooks-ts";
+import AddNew from "../../../components/forms/builder/AddNew";
+import FormField from "../../../components/forms/FormField";
+import LargeFormSection from "../../../components/forms/LargeFormSection";
+import BackButtonLink from "../../../components/layouts/BackButtonLink";
+import SuccessButton from "../../../components/layouts/buttons/SuccessButton";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import { courseBuilderPermissionsOptions } from "../../../constants/permission-options";
+import { CoreContext } from "../../../contexts/core/core-context";
 import { TrainingContext } from "../../../contexts/training/training-context";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
+import {
+  deleteTrainingCourse,
+  getTrainingCourse,
+  saveTrainingCourse,
+} from "../../../queries/training";
 import {
   Audience,
   Field,
@@ -11,28 +29,10 @@ import {
   TrainingVisibility,
 } from "../../../types/entities";
 import { stripHtml } from "../../../utils/core";
-import FormField from "../../../components/forms/FormField";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  deleteTrainingCourse,
-  getTrainingCourse,
-  saveTrainingCourse,
-} from "../../../queries/training";
-import BackButtonLink from "../../../components/layouts/BackButtonLink";
-import TrainingSections from "../../training-library/components/TrainingSections";
-import AddNew from "../../../components/forms/builder/AddNew";
 import AudiencesSelect from "../../training-library/components/AudiencesSelect";
-import { withRequirePermissions } from "../../../guards/with-require-permissions";
-import SuccessButton from "../../../components/layouts/buttons/SuccessButton";
-import { useNavigate, useParams, useSearchParams } from "react-router";
-import { CoreContext } from "../../../contexts/core/core-context";
-import { courseBuilderPermissionsOptions } from "../../../constants/permission-options";
 import CourseVisibilityTag from "../../training-library/components/CourseVisibilityTag";
-import { Controller, FieldPath, useForm } from "react-hook-form";
-import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import EditTrainingSection from "../../training-library/components/EditTrainingSection";
-import LargeFormSection from "../../../components/forms/LargeFormSection";
-import { useDebounceCallback } from "usehooks-ts";
+import TrainingSections from "../../training-library/components/TrainingSections";
 
 type CourseFieldType = Partial<Field> & { name: FieldPath<TrainingCourse> };
 
@@ -293,7 +293,7 @@ const CourseBuilder = withRequirePermissions(() => {
             {!isNew && (
               <button
                 type="button"
-                className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500"
+                className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-red-500"
                 onClick={handleDelete}
               >
                 Delete
@@ -324,7 +324,7 @@ const CourseBuilder = withRequirePermissions(() => {
                     payload: true,
                   });
                 }}
-                className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
               >
                 Manage items
               </button>
@@ -333,7 +333,7 @@ const CourseBuilder = withRequirePermissions(() => {
                   type="button"
                   onClick={() => handleEditSection()}
                   disabled={isNew}
-                  className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50"
+                  className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50"
                 >
                   + New Section
                 </button>

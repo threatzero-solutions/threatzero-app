@@ -122,7 +122,7 @@ const MoveUnitsForm: React.FC<MoveUnitsFormProps> = ({
         <button
           type="button"
           onClick={() => handleMoveUnits()}
-          className="inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-sm enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto"
           disabled={!selectedUnit || selectedUnit.slug === previousUnit?.slug}
           title={
             selectedUnit?.slug === previousUnit?.slug

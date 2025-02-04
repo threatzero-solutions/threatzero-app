@@ -192,7 +192,7 @@ const FormInput = forwardRef(
         case InternalFieldType.HTML:
         case InternalFieldType.JSON:
           return (
-            <div className="rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-gray-300 overflow-hidden">
+            <div className="rounded-md border-0 text-gray-900 shadow-xs ring-1 ring-gray-300 overflow-hidden">
               {control ? (
                 <Controller
                   name={attrs.name ?? ""}
@@ -227,7 +227,7 @@ const FormInput = forwardRef(
         case FieldType.CHECKBOX:
           return (
             <input
-              className="h-4 w-4 rounded border-gray-300 text-secondary-600 focus:ring-secondary-600"
+              className="h-4 w-4 rounded-sm border-gray-300 text-secondary-600 focus:ring-secondary-600"
               {...({
                 ...attrs,
                 ...(attrs.readOnly ? { disabled: true } : {}),

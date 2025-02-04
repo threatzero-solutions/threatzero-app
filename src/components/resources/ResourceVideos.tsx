@@ -35,7 +35,7 @@ export const ResourceVideoTile: React.FC<{
           to={`/resources/${category}/${video.id}`}
           state={{ from: location }}
           className={classNames(
-            "absolute inset-0 focus:outline-none",
+            "absolute inset-0 focus:outline-hidden",
             disabled ? "pointer-events-none" : ""
           )}
         >
@@ -79,7 +79,7 @@ const ResourceVideos: React.FC = () => {
           Array.from({ length: 3 }).map((_, idx) => (
             <div
               key={idx}
-              className="animate-pulse bg-slate-200 rounded aspect-video"
+              className="animate-pulse bg-slate-200 rounded-sm aspect-video"
             ></div>
           ))}
       </ul>

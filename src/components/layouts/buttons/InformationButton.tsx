@@ -21,7 +21,7 @@ const InformationButton: React.FC<{ text: string }> = ({ text }) => {
           <AnimatePresence>
             {open && (
               <PopoverPanel
-                className="bg-gray-600 text-white shadow sm:rounded-lg [--anchor-gap:4px]"
+                className="bg-gray-600 text-white shadow-sm sm:rounded-lg [--anchor-gap:4px]"
                 anchor="bottom start"
                 static
                 as={motion.div}

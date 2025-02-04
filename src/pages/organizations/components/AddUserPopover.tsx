@@ -108,7 +108,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
                 displayValue={() => ""}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search by name or email..."
-                className="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+                className="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
               />
               {usersLoading && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -118,13 +118,13 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
             </div>
             <ComboboxOptions
               anchor="bottom start"
-              className="empty:invisible mt-1 rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+              className="empty:invisible mt-1 rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm"
             >
               {users.map((user) => (
                 <ComboboxOption
                   key={user.id}
                   value={user}
-                  className="relative cursor-default select-none py-2 px-3 text-gray-900 data-[focus]:bg-secondary-600 data-[focus]:text-white"
+                  className="relative cursor-default select-none py-2 px-3 text-gray-900 data-focus:bg-secondary-600 data-focus:text-white"
                 >
                   {formatUser(user)}
                 </ComboboxOption>
@@ -157,7 +157,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
           type="button"
           onClick={() => onAddUsers(selectedUsers, close)}
           className={classNames(
-            "inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-sm enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto",
+            "inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto",
             isPending ? "animate-pulse" : ""
           )}
           disabled={selectedUsers.length === 0 || isPending}
@@ -181,7 +181,7 @@ const AddUserPopover: React.FC<AddUserPopoverProps> = ({
           <AnimatePresence>
             {open && (
               <PopoverPanel
-                className="bg-white shadow sm:rounded-lg [--anchor-gap:8px] w-[600px]"
+                className="bg-white shadow-sm sm:rounded-lg [--anchor-gap:8px] w-[600px]"
                 anchor="bottom start"
                 static
                 as={motion.div}

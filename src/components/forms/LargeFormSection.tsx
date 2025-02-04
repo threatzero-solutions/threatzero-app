@@ -22,7 +22,7 @@ const LargeFormSection: React.FC<
             {subheading}
           </span>
         </span>
-        <ChevronDownIcon className="size-5 group-data-[open]:rotate-180" />
+        <ChevronDownIcon className="size-5 group-data-open:rotate-180" />
       </DisclosureButton>
       <DisclosurePanel className="rounded-lg bg-white ring-1 ring-gray-900/5 p-4">
         {children}

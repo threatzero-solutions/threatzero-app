@@ -264,7 +264,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                               <input
                                 type="checkbox"
                                 readOnly={true}
-                                className="pointer-events-none h-4 w-4 mr-2 rounded border-gray-300 text-secondary-600 focus:ring-secondary-600"
+                                className="pointer-events-none h-4 w-4 mr-2 rounded-sm border-gray-300 text-secondary-600 focus:ring-secondary-600"
                                 checked={o.selected}
                               />
                               {o.label}
@@ -278,7 +278,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                   {
                     id: "loading",
                     value: (
-                      <div className="animate-pulse rounded-md bg-slate-100 px-4 py-4 shadow sm:p-3" />
+                      <div className="animate-pulse rounded-md bg-slate-100 px-4 py-4 shadow-sm sm:p-3" />
                     ),
                     disabled: true,
                     hidden: !f.isLoading,

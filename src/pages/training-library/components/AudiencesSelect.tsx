@@ -7,17 +7,17 @@ import {
   Label,
 } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import { Audience } from "../../../types/entities";
-import { getTrainingAudiences } from "../../../queries/training";
-import React, { useContext, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import PillBadge from "../../../components/PillBadge";
-import { TrainingContext } from "../../../contexts/training/training-context";
-import { classNames, humanizeSlug } from "../../../utils/core";
+import React, { useContext, useMemo, useState } from "react";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
-import ViewTrainingAudiences from "./ViewTrainingAudiences";
-import { SimpleChangeEvent } from "../../../types/core";
+import PillBadge from "../../../components/PillBadge";
 import { useAuth } from "../../../contexts/auth/useAuth";
+import { TrainingContext } from "../../../contexts/training/training-context";
+import { getTrainingAudiences } from "../../../queries/training";
+import { SimpleChangeEvent } from "../../../types/core";
+import { Audience } from "../../../types/entities";
+import { classNames, humanizeSlug } from "../../../utils/core";
+import ViewTrainingAudiences from "./ViewTrainingAudiences";
 
 interface AudiencesSelectProps {
   value?: Audience[];
@@ -103,19 +103,19 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
           )}
           <div className="relative">
             <ComboboxInput
-              className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+              className="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
               onChange={(event) => setAudienceQuery(event.target.value)}
               placeholder={`Search ${propertyNamePlural}...`}
               displayValue={() => ""}
             />
-            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
+            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-hidden">
               <ChevronUpDownIcon
                 className="h-5 w-5 text-gray-400"
                 aria-hidden="true"
               />
             </ComboboxButton>
 
-            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
               {(isGlobalAdmin || audiences?.length === 0) && (
                 <ComboboxOption
                   value={null}
@@ -126,7 +126,7 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
                     <button
                       onClick={() => handleEditAudience()}
                       type="button"
-                      className="block capitalize w-max rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                      className="block capitalize w-max rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                     >
                       + Create New {propertyNameSingular}
                     </button>

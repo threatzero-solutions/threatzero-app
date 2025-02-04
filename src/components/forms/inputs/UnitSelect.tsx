@@ -145,7 +145,7 @@ const UnitSelect = <
         )}
         <div className="relative">
           <ComboboxInput
-            className="w-full rounded-md border-0 bg-white py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+            className="w-full rounded-md border-0 bg-white py-1.5 px-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
             onChange={(e) => setUnitQuery(e.target.value)}
             displayValue={(unit: Unit | string) =>
               many
@@ -163,13 +163,13 @@ const UnitSelect = <
             <button
               type="button"
               onClick={() => handleChange(null as TUnit)}
-              className="absolute inset-y-1 right-1 bg-white flex items-center rounded-r-md px-2 focus:outline-none hover:opacity-80 transition-opacity"
+              className="absolute inset-y-1 right-1 bg-white flex items-center rounded-r-md px-2 focus:outline-hidden hover:opacity-80 transition-opacity"
             >
               <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
             </button>
           )}
           {units && (
-            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
               {units.length === 0 && (
                 <ComboboxOption
                   value={null}

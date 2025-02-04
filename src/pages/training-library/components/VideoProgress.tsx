@@ -27,7 +27,7 @@ const VideoProgress: React.FC<VideoProgressProps> = ({
           complete
             ? "fill-primary-400 stroke-primary-400"
             : "fill-none stroke-gray-200",
-          "stroke-[4] transition-all"
+          "stroke-4 transition-all"
         )}
         style={{
           strokeLinecap: "round",
@@ -37,7 +37,7 @@ const VideoProgress: React.FC<VideoProgressProps> = ({
               a 16 16 0 0 1 0 -32"
       />
       <path
-        className="fill-none stroke-primary-400 stroke-[4] transition-all"
+        className="fill-none stroke-primary-400 stroke-4 transition-all"
         style={{
           strokeLinecap: "round",
         }}

@@ -13,7 +13,7 @@ const TextArea = forwardRef<HTMLTextAreaElement, HLTextareaProps>(
         {...attrs}
         className={(b) =>
           classNames(
-            "block rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6 disabled:text-gray-500",
+            "block rounded-md border-0 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6 disabled:text-gray-500",
             typeof className === "function" ? className(b) : className
           )
         }

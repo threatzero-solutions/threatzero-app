@@ -37,7 +37,7 @@ const HelpCenter: React.FC = () => {
 	return (
 		<div className="grid grid-cols-1 gap-6 sm:gap-12 xl:grid-cols-2">
 			<section>
-				<h1 className="text-3xl font-bold mb-4 text-transparent w-min whitespace-nowrap bg-clip-text bg-gradient-to-r from-secondary-800 to-secondary-500">
+				<h1 className="text-3xl font-bold mb-4 text-transparent w-min whitespace-nowrap bg-clip-text bg-linear-to-r from-secondary-800 to-secondary-500">
 					Help Center
 				</h1>
 				<p>Questions? We're here for you.</p>

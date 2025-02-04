@@ -71,7 +71,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
   return (
     <fieldset className="border-b-2 border-b-gray-200 pb-2">
       <legend className="sr-only">{prefix} Multiple Select</legend>
-      <div className="rounded bg-gray-100 px-4 py-2 relative flex items-start">
+      <div className="rounded-sm bg-gray-100 px-4 py-2 relative flex items-start">
         <label
           htmlFor={prefix + "_select_all"}
           className="flex items-center h-6 gap-3 cursor-pointer"
@@ -80,7 +80,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
             id={prefix + "_select_all"}
             name={prefix + "_select_all"}
             type="checkbox"
-            className="h-4 w-4 cursor-pointer rounded border-gray-300 text-secondary-600 focus:ring-secondary-600"
+            className="h-4 w-4 cursor-pointer rounded-sm border-gray-300 text-secondary-600 focus:ring-secondary-600"
             checked={allSelected}
             onChange={handleSelectAll}
           />
@@ -107,7 +107,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
               name={prefix + "_option_" + option.key}
               type="checkbox"
               disabled={option.disabled}
-              className="h-4 w-4 rounded cursor-pointer border-gray-300 text-secondary-600 focus:ring-secondary-600 disabled:cursor-default disabled:text-gray-400"
+              className="h-4 w-4 rounded-sm cursor-pointer border-gray-300 text-secondary-600 focus:ring-secondary-600 disabled:cursor-default disabled:text-gray-400"
               checked={selected.includes(option.key)}
               onChange={() => handleSelect(option.key)}
             />

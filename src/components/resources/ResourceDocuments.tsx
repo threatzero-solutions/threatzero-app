@@ -41,7 +41,7 @@ export const ResourceDocumentTile: React.FC<{
           to={`/resources/${category}/${document.id}`}
           state={{ from: location }}
           className={classNames(
-            "rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
+            "rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
             disabled ? "pointer-events-none opacity-50" : ""
           )}
         >
@@ -82,10 +82,10 @@ const ResourceDocuments: React.FC = () => {
               className="flex items-center justify-between gap-x-6 py-5"
             >
               <div className="min-w-0">
-                <div className="animate-pulse rounded bg-slate-200 h-6 w-72"></div>
-                <div className="mt-1 animate-pulse rounded bg-slate-200 h-4 w-20"></div>
+                <div className="animate-pulse rounded-sm bg-slate-200 h-6 w-72"></div>
+                <div className="mt-1 animate-pulse rounded-sm bg-slate-200 h-4 w-20"></div>
               </div>
-              <div className="animate-pulse rounded bg-slate-200 h-8 w-14"></div>
+              <div className="animate-pulse rounded-sm bg-slate-200 h-8 w-14"></div>
             </li>
           ))}
       </ul>

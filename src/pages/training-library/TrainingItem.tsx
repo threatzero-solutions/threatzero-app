@@ -270,9 +270,9 @@ const TrainingItem: React.FC = () => {
       ) : (
         <div className="w-full">
           <div className="animate-pulse flex-1">
-            <div className="aspect-video bg-slate-200 rounded" />
-            <div className="h-8 bg-slate-200 rounded mt-4 mb-1" />
-            <div className="h-6 bg-slate-200 rounded" />
+            <div className="aspect-video bg-slate-200 rounded-sm" />
+            <div className="h-8 bg-slate-200 rounded-sm mt-4 mb-1" />
+            <div className="h-6 bg-slate-200 rounded-sm" />
           </div>
         </div>
       )}

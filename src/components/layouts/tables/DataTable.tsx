@@ -229,7 +229,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                   noSort
                                     ? "pointer-events-none hidden w-0"
                                     : "cursor-pointer",
-                                  "ml-2 flex-none inline-flex items-center gap-0.5 rounded transition-colors",
+                                  "ml-2 flex-none inline-flex items-center gap-0.5 rounded-sm transition-colors",
                                   currentOrder[sortKey ?? key]
                                     ? "bg-gray-200 text-gray-900 group-hover:bg-gray-300"
                                     : "text-gray-300 group-hover:text-gray-600"

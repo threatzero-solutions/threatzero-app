@@ -148,8 +148,8 @@ const MyOrganizationSettings: React.FC = () => {
     <div>
       {currentOrganizationLoading || !currentOrganization ? (
         <div className="space-y-4">
-          <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
-          <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
+          <div className="animate-pulse rounded-sm bg-slate-200 w-full h-96" />
+          <div className="animate-pulse rounded-sm bg-slate-200 w-full h-96" />
         </div>
       ) : (
         <div className="space-y-4">
@@ -197,7 +197,7 @@ const MyOrganizationSettings: React.FC = () => {
                     type="button"
                     icon={TrashIcon}
                     className={classNames(
-                      "block rounded-md bg-red-600 px-3 py-2 ring-transparent text-center text-sm font-semibold text-white shadow-sm enabled:hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50"
+                      "block rounded-md bg-red-600 px-3 py-2 ring-transparent text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50"
                     )}
                     text={`Delete ${
                       isUnitContext

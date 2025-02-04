@@ -49,7 +49,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <div className="sm:flex sm:items-start">
           <div
             className={classNames(
-              "mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10",
+              "mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10",
               destructive ? "bg-red-100" : "bg-secondary-100"
             )}
           >
@@ -102,7 +102,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           onClick={onConfirm}
           disabled={confirmDisabled || isPending}
           className={classNames(
-            "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto disabled:opacity-50",
+            "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto disabled:opacity-50",
             destructive
               ? "bg-red-600 enabled:hover:bg-red-500"
               : "bg-secondary-600 enabled:hover:bg-secondary-500",
@@ -116,7 +116,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           data-autofocus
           onClick={() => (onCancel ? onCancel() : setOpen(false))}
           disabled={isPending}
-          className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-50 sm:mt-0 sm:w-auto"
+          className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-50 sm:mt-0 sm:w-auto"
         >
           {cancelText}
         </button>

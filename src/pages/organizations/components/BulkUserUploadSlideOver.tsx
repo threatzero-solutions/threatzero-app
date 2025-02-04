@@ -2,26 +2,36 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
+  PencilSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/20/solid";
+import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import Fuse from "fuse.js";
 import Papa from "papaparse";
 import {
   ChangeEvent,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useImmer } from "use-immer";
 import { useMap } from "usehooks-ts";
+import FormField from "../../../components/forms/FormField";
 import Input from "../../../components/forms/inputs/Input";
 import Select from "../../../components/forms/inputs/Select";
+import Modal from "../../../components/layouts/modal/Modal";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverFormActionButtons from "../../../components/layouts/slide-over/SlideOverFormActionButtons";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import {
   Step,
@@ -31,6 +41,10 @@ import {
 } from "../../../components/layouts/Steps2";
 import VirtualizedTable from "../../../components/layouts/tables/VirtualizedTable";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
+import { useOpenData } from "../../../hooks/use-open-data";
+import { getTrainingAudiences } from "../../../queries/training";
+import { Audience, Unit } from "../../../types/entities";
+import { humanizeSlug } from "../../../utils/core";
 
 interface Props {
   open: boolean;
@@ -38,14 +52,56 @@ interface Props {
 }
 
 export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
-  const { isUnitContext } = useContext(OrganizationsContext);
+  const { isUnitContext, allUnits } = useContext(OrganizationsContext);
+
+  const { data: audiences } = useQuery({
+    queryKey: ["training-audiences"],
+    queryFn: () => getTrainingAudiences({ limit: 100 }).then((r) => r.results),
+  });
 
   const [file, setFile] = useState<File | null>(null);
   const [rawCsvHeaders, setRawCsvHeaders] = useState<string[] | null>(null);
   const [headerMappings, { set: setHeaderMapping, setAll: setHeaderMappings }] =
-    useMap<keyof UserCsvRow, string>();
+    useMap<string, keyof UserCsvRow>();
+  const reversedHeaderMappings = useMemo(
+    () => new Map(Array.from(headerMappings.entries()).map(([k, v]) => [v, k])),
+    [headerMappings]
+  );
 
-  const [usersToUpload, setUsersToUpload] = useState<UserCsvRow[]>([]);
+  const editUser = useOpenData<number>();
+
+  const [usersToUpload, setUsersToUpload] = useImmer<PreparedUserRow[]>([]);
+  const userdataErrors = useMemo(() => {
+    const errors: string[] = [];
+    const emails = new Set<string>();
+
+    usersToUpload.forEach((user, index) => {
+      if (!user.email) {
+        errors.push(`Email is required for row ${index + 1}.`);
+        return;
+      }
+
+      if (!user.firstName) {
+        errors.push(`First name is required for ${user.email}.`);
+      }
+
+      if (!user.lastName) {
+        errors.push(`Last name is required for ${user.email}.`);
+      }
+
+      if (emails.has(user.email)) {
+        errors.push(`Duplicate email: ${user.email}`);
+      } else {
+        emails.add(user.email);
+      }
+
+      if (!user.unit) {
+        errors.push(`Unit is required for ${user.email}.`);
+      }
+    });
+
+    return errors;
+  }, [usersToUpload]);
 
   const opened = useRef(false);
   useEffect(() => {
@@ -56,6 +112,42 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
       opened.current = true;
     }
   }, [open]);
+
+  const unitsFuse = useMemo(
+    () =>
+      allUnits
+        ? new Fuse(allUnits, {
+            keys: ["name", "slug"],
+            threshold: 0.2,
+          })
+        : null,
+    [allUnits]
+  );
+  const findUnit = useCallback(
+    (search: string) => {
+      if (!unitsFuse) return null;
+      return unitsFuse.search(search).at(0)?.item ?? null;
+    },
+    [unitsFuse]
+  );
+
+  const audiencesFuse = useMemo(
+    () =>
+      audiences
+        ? new Fuse(audiences, {
+            keys: ["slug"],
+            threshold: 0.2,
+          })
+        : null,
+    [audiences]
+  );
+  const findAudience = useCallback(
+    (search: string) => {
+      if (!audiencesFuse) return null;
+      return audiencesFuse.search(search).at(0)?.item ?? null;
+    },
+    [audiencesFuse]
+  );
 
   const extractCsvHeaders = (file: File) => {
     Papa.parse<Record<string, string>>(file, {
@@ -68,8 +160,8 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
         setHeaderMappings(
           rawHeaders
             .map(normalizeHeader)
-            .map((h) => [CSV_HEADERS_MAPPER.get(h), h])
-            .filter((v): v is [keyof UserCsvRow, string] => !!v[0])
+            .map((h) => [h, CSV_HEADERS_MAPPER.get(h)])
+            .filter((v): v is [string, keyof UserCsvRow] => !!v[1])
         );
       },
     });
@@ -91,53 +183,129 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
   );
 
   const allFieldsSatisfied = useMemo(
-    () => userFields.every((f) => !f.required || !!headerMappings.get(f.name)),
-    [headerMappings, userFields]
+    () =>
+      userFields.every(
+        (f) => !f.required || !!reversedHeaderMappings.get(f.name)
+      ),
+    [reversedHeaderMappings, userFields]
   );
 
   useEffect(() => {
-    if (allFieldsSatisfied && file) {
-      const reversedHeaderMappings = new Map(
-        Array.from(headerMappings.entries()).map(([k, v]) => [v, k])
-      );
-      Papa.parse<UserCsvRow>(file, {
+    if (allFieldsSatisfied && file && allUnits && audiences) {
+      Papa.parse<PreparedUserRow>(file, {
         header: true,
         skipEmptyLines: true,
-        transformHeader: (h) =>
-          reversedHeaderMappings.get(normalizeHeader(h)) ?? h,
+        transformHeader: (h) => headerMappings.get(normalizeHeader(h)) ?? h,
+        transform: (v, h) => {
+          if (h === "unit") {
+            return findUnit(v);
+          }
+          if (h === "trainingGroup") {
+            return findAudience(v);
+          }
+          return v;
+        },
         complete: (results) => {
-          console.debug(results);
           setUsersToUpload(results.data);
         },
       });
     }
-  }, [allFieldsSatisfied, file, headerMappings]);
+  }, [
+    allFieldsSatisfied,
+    file,
+    headerMappings,
+    findUnit,
+    findAudience,
+    allUnits,
+    audiences,
+    setUsersToUpload,
+  ]);
 
   const usersTable = useReactTable({
     data: usersToUpload,
     columns: [
       {
+        id: "actions",
+        cell: ({ row }) => (
+          <div className="flex gap-2 items-center">
+            <button
+              type="button"
+              className="cursor-pointer enabled:hover:opacity-75"
+              onClick={() =>
+                setUsersToUpload((draft) => {
+                  draft.splice(row.index, 1);
+                })
+              }
+            >
+              <TrashIcon className="size-5 text-red-500" />
+            </button>
+            <button
+              type="button"
+              className="cursor-pointer enabled:hover:opacity-75"
+              onClick={() => editUser.openData(row.index)}
+            >
+              <PencilSquareIcon className="size-5 text-gray-500" />
+            </button>
+          </div>
+        ),
+        size: 70,
+      },
+      {
         accessorKey: "firstName",
         header: "First Name",
+        size: 125,
+        cell: ({ getValue }) => (
+          <div className="overflow-hidden text-ellipsis">{getValue()}</div>
+        ),
       },
       {
         accessorKey: "lastName",
         header: "Last Name",
+        size: 125,
+        cell: ({ getValue }) => (
+          <div className="overflow-hidden text-ellipsis">{getValue()}</div>
+        ),
       },
       {
         accessorKey: "email",
         header: "Email",
+        size: 250,
         cell: ({ getValue }) => (
-          <span className="overflow-hidden text-ellipses">{getValue()}</span>
+          <div className="overflow-hidden text-ellipsis">{getValue()}</div>
         ),
       },
       {
-        accessorKey: "unit",
+        accessorKey: "unit.name",
         header: "Unit",
+        cell: ({ getValue, row }) => {
+          const unitName = getValue();
+          return unitName ? (
+            <div className="overflow-hidden text-ellipsis">{getValue()}</div>
+          ) : (
+            <div className="text-red-500 text-xs inline-flex items-center gap-1">
+              <ExclamationCircleIcon className="size-4" />
+              Unit required -
+              <button
+                className="underline font-semibold cursor-pointer"
+                onClick={() => editUser.openData(row.index)}
+              >
+                Fix
+              </button>
+            </div>
+          );
+        },
       },
       {
-        accessorKey: "trainingGroup",
+        accessorKey: "trainingGroup.slug",
         header: "Training Group",
+        cell: ({ getValue }) => {
+          const value = getValue();
+          return (
+            <div className="overflow-hidden text-ellipsis">
+              {value ? humanizeSlug(value) : <>&mdash;</>}
+            </div>
+          );
+        },
       },
     ],
     getCoreRowModel: getCoreRowModel(),
@@ -146,104 +314,257 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
   });
 
   return (
-    <SlideOver open={open} setOpen={setOpen}>
-      <SlideOverForm
-        onSubmit={(e) => e.preventDefault()}
-        onClose={() => setOpen(false)}
-      >
-        <SlideOverHeading
-          title="Upload Users CSV"
-          description={"Use this tool to upload users in bulk from a CSV file."}
-          setOpen={setOpen}
-        />
-        <div className="flex flex-col gap-4 p-4 h-full">
-          <Steps2>
-            <Step
-              name="Step 1: Select CSV File to Upload"
-              canProceed={!!rawCsvHeaders}
-            >
-              <Input
-                type="file"
-                name="file"
-                accept=".csv"
-                className="pl-2 w-full"
-                onChange={handleCsvUpload}
-              />
-              <div className="flex justify-end mt-10">
-                <StepForwardButton>Next</StepForwardButton>
-              </div>
-            </Step>
-            <Step
-              name="Step 2: Match Column Names"
-              description="Select the column names in the CSV file that match the user fields in the table below."
-              canProceed={allFieldsSatisfied}
-            >
-              <div className="grid grid-cols-4 space-y-2 divide-y divide-y-gray-200">
-                <div className="text-sm font-semibold col-span-full grid grid-cols-subgrid">
-                  <div>User Field</div>
-                  <div></div>
-                  <div>CSV Header</div>
-                  <div></div>
+    <>
+      <SlideOver open={open} setOpen={setOpen}>
+        <SlideOverForm
+          onSubmit={(e) => e.preventDefault()}
+          onClose={() => setOpen(false)}
+        >
+          <SlideOverHeading
+            title="Upload Users CSV"
+            description={
+              "Use this tool to upload users in bulk from a CSV file."
+            }
+            setOpen={setOpen}
+          />
+          <div className="flex flex-col gap-4 p-4 h-full">
+            <Steps2>
+              <Step
+                name="Step 1: Select CSV File to Upload"
+                canProceed={!!rawCsvHeaders}
+              >
+                <Input
+                  type="file"
+                  name="file"
+                  accept=".csv"
+                  className="pl-2 w-full"
+                  onChange={handleCsvUpload}
+                />
+                <div className="flex justify-end mt-10">
+                  <StepForwardButton>Next</StepForwardButton>
                 </div>
-                {USER_FIELDS.filter(
-                  (f) => !isUnitContext || f.name !== "unit"
-                ).map((userField) => {
-                  const selectedHeader = headerMappings.get(userField.name);
-                  return (
-                    <div
-                      key={userField.name}
-                      className="col-span-full grid grid-cols-subgrid pt-2 items-center"
-                    >
-                      <div className="text-sm font-regular">
-                        {userField.label}
+              </Step>
+              <Step
+                name="Step 2: Match Column Names"
+                description="Select the column names in the CSV file that match the user fields in the table below."
+                canProceed={allFieldsSatisfied}
+              >
+                <div className="grid grid-cols-4 divide-y divide-y-gray-200">
+                  <div className="text-sm font-semibold col-span-full grid grid-cols-subgrid">
+                    <div>User Field</div>
+                    <div></div>
+                    <div>CSV Header</div>
+                    <div></div>
+                  </div>
+                  {USER_FIELDS.filter(
+                    (f) => !isUnitContext || f.name !== "unit"
+                  ).map((userField) => {
+                    const selectedHeader = reversedHeaderMappings.get(
+                      userField.name
+                    );
+                    return (
+                      <div
+                        key={userField.name}
+                        className="col-span-full grid grid-cols-subgrid py-2 items-center"
+                      >
+                        <div className="text-sm font-regular">
+                          {userField.label}
+                        </div>
+                        <ArrowRightIcon className="size-4" />
+                        <Select
+                          value={selectedHeader}
+                          onChange={(e) =>
+                            setHeaderMapping(e.target.value, userField.name)
+                          }
+                          options={(rawCsvHeaders ?? []).map((h) => ({
+                            label: h,
+                            key: normalizeHeader(h),
+                          }))}
+                          showClear
+                          clearButtonPosition="right"
+                        />
+                        <div className="w-full flex items-center justify-center">
+                          {selectedHeader ? (
+                            <CheckCircleIcon className="size-5 text-green-500" />
+                          ) : userField.required ? (
+                            <ExclamationCircleIcon
+                              className="size-5 text-red-500"
+                              title="Please select matching header."
+                            />
+                          ) : (
+                            <ExclamationCircleIcon
+                              className="size-5 text-gray-500"
+                              title="(Optional) Please select matching header."
+                            />
+                          )}
+                        </div>
                       </div>
-                      <ArrowRightIcon className="size-4" />
-                      <Select
-                        value={selectedHeader}
-                        onChange={(e) =>
-                          setHeaderMapping(userField.name, e.target.value)
-                        }
-                        options={(rawCsvHeaders ?? []).map((h) => ({
-                          label: h,
-                          key: normalizeHeader(h),
-                        }))}
-                        showClear
-                        clearButtonPosition="right"
-                      />
-                      <div className="w-full flex items-center justify-center">
-                        {selectedHeader ? (
-                          <CheckCircleIcon className="size-5 text-green-500" />
-                        ) : userField.required ? (
-                          <ExclamationCircleIcon
-                            className="size-5 text-red-500"
-                            title="Please select matching header."
-                          />
-                        ) : (
-                          <ExclamationCircleIcon
-                            className="size-5 text-gray-500"
-                            title="(Optional) Please select matching header."
-                          />
-                        )}
-                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-4 mt-10">
+                  <StepBackwardButton>Back</StepBackwardButton>
+                  <StepForwardButton>Next</StepForwardButton>
+                </div>
+              </Step>
+              <Step name="Step 3: Review & Upload">
+                <VirtualizedTable table={usersTable} height="400px" />
+                {userdataErrors.length > 0 && (
+                  <div className="mt-4">
+                    <div className="text-sm text-red-500 inline-flex items-center gap-1">
+                      <ExclamationCircleIcon className="size-4" />
+                      There are{" "}
+                      <span className="font-bold">
+                        {userdataErrors.length}
+                      </span>{" "}
+                      errors. Please resolve them to finish uploading users.
+                      <button
+                        className="underline font-semibold cursor-pointer"
+                        type="button"
+                      >
+                        View details.
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-between mt-10">
-                <StepBackwardButton>Back</StepBackwardButton>
-                <StepForwardButton>Next</StepForwardButton>
-              </div>
-            </Step>
-            <Step name="Step 3: Review & Upload">
-              <VirtualizedTable table={usersTable} height="400px" />
-              <div className="flex mt-10">
-                <StepBackwardButton>Back</StepBackwardButton>
-              </div>
-            </Step>
-          </Steps2>
-        </div>
-      </SlideOverForm>
-    </SlideOver>
+                  </div>
+                )}
+                <div className="flex gap-4 mt-10">
+                  <StepBackwardButton>Back</StepBackwardButton>
+                  <button
+                    type="button"
+                    className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
+                    disabled={userdataErrors.length > 0}
+                  >
+                    Upload
+                  </button>
+                </div>
+              </Step>
+            </Steps2>
+          </div>
+        </SlideOverForm>
+      </SlideOver>
+      <Modal open={editUser.open} setOpen={editUser.setOpen}>
+        {editUser.data !== null ? (
+          <EditUserForm
+            user={usersToUpload.at(editUser.data)}
+            allUnits={allUnits}
+            audiences={audiences}
+            onClose={editUser.close}
+            onUpdate={(data) => {
+              setUsersToUpload((draft) => {
+                if (editUser.data === null) return;
+                draft.splice(editUser.data, 1, data);
+              });
+              editUser.close();
+            }}
+          />
+        ) : (
+          <></>
+        )}
+      </Modal>
+    </>
+  );
+}
+
+function EditUserForm({
+  user,
+  allUnits,
+  audiences,
+  onClose,
+  onUpdate,
+}: {
+  user: PreparedUserRow | undefined;
+  allUnits: Unit[] | undefined | null;
+  audiences: Audience[] | undefined | null;
+  onClose: () => void;
+  onUpdate: (data: PreparedUserRow) => void;
+}) {
+  const formMethods = useForm<PreparedUserRow>({
+    values: user ?? {
+      firstName: "",
+      lastName: "",
+      email: "",
+      unit: null,
+      trainingGroup: null,
+    },
+  });
+
+  return (
+    <div className="grid gap-4 p-8">
+      <h2 className="text-lg font-semibold">Edit User</h2>
+      <FormField
+        field={{
+          label: "First Name",
+        }}
+        {...formMethods.register("firstName")}
+      />
+      <FormField
+        field={{
+          label: "Last Name",
+        }}
+        {...formMethods.register("lastName")}
+      />
+      <FormField
+        field={{
+          label: "Email",
+        }}
+        {...formMethods.register("email")}
+      />
+      <FormField
+        field={{
+          label: "Unit",
+        }}
+        input={
+          <Controller
+            control={formMethods.control}
+            name="unit"
+            render={({ field }) => (
+              <Select
+                value={field.value?.id}
+                onChange={(a) =>
+                  field.onChange(allUnits?.find((u) => u.id === a.target.value))
+                }
+                options={(allUnits ?? []).map((u) => ({
+                  key: u.id,
+                  label: u.name,
+                }))}
+              />
+            )}
+          />
+        }
+      />
+      <FormField
+        field={{
+          label: "Training Group",
+        }}
+        input={
+          <Controller
+            control={formMethods.control}
+            name="trainingGroup"
+            render={({ field }) => (
+              <Select
+                value={field.value?.id}
+                onChange={(a) =>
+                  field.onChange(
+                    audiences?.find((u) => u.id === a.target.value)
+                  )
+                }
+                options={(audiences ?? []).map((u) => ({
+                  key: u.id,
+                  label: humanizeSlug(u.slug),
+                }))}
+              />
+            )}
+          />
+        }
+      />
+      <SlideOverFormActionButtons
+        onClose={onClose}
+        closeText="Cancel"
+        submitText="Update"
+        onDone={() => onUpdate(formMethods.getValues())}
+        className="px-0 sm:px-0"
+      />
+    </div>
   );
 }
 
@@ -254,6 +575,11 @@ interface UserCsvRow {
   unit: string;
   trainingGroup?: string;
 }
+
+type PreparedUserRow = Omit<UserCsvRow, "unit" | "trainingGroup"> & {
+  unit: Unit | null;
+  trainingGroup: Audience | null;
+};
 
 interface UserField<K extends keyof UserCsvRow> {
   name: K;

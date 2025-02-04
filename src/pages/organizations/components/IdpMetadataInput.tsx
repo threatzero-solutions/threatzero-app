@@ -165,7 +165,7 @@ const IdpMetadataInput = <K extends string | number | symbol = string>({
                   className={classNames(
                     "w-full",
                     selected && urlErrorMsg
-                      ? "ring-red-300 text-red-900 focus:!ring-red-500"
+                      ? "ring-red-300 text-red-900 focus:ring-red-500!"
                       : ""
                   )}
                 />

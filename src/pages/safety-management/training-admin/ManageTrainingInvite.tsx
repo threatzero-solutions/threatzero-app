@@ -144,7 +144,7 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
             >
               {input.name === "trainingItemId" ? (
                 trainingItemLoading ? (
-                  <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow sm:p-6"></div>
+                  <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow-sm sm:p-6"></div>
                 ) : trainingItem ? (
                   <div className="space-y-4 mb-4">
                     <TrainingItemTile
@@ -156,7 +156,7 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
                     {!readOnly && (
                       <button
                         type="button"
-                        className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
                         onClick={() => setSelectItemOpen(true)}
                       >
                         Change training item
@@ -168,7 +168,7 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
                 ) : (
                   <button
                     type="button"
-                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
                     onClick={() => setSelectItemOpen(true)}
                   >
                     Select a training item

@@ -299,7 +299,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
               <div
                 className={classNames(
                   "flex flex-col gap-3 transition-all duration-500 ease-in-out max-h-32 overflow-hidden mt-3",
-                  "data-[closed]:max-h-0 data-[closed]:mt-0 data-[closed]:opacity-0"
+                  "data-closed:max-h-0 data-closed:mt-0 data-closed:opacity-0"
                 )}
               >
                 <IdpConfigValue
@@ -362,8 +362,8 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                   "w-full pr-7 pl-10",
                   slug
                     ? !isUniqueSlug
-                      ? "ring-red-300 text-red-900 focus:!ring-red-500"
-                      : "ring-green-300 text-green-900 focus:!ring-green-500"
+                      ? "ring-red-300 text-red-900 focus:ring-red-500!"
+                      : "ring-green-300 text-green-900 focus:ring-green-500!"
                     : ""
                 )}
                 autoComplete="off"
@@ -375,7 +375,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                 onClick={() => resetSlug()}
                 disabled={!name}
               >
-                <ArrowPathIcon className="size-4 group-hover:group-enabled:rotate-180 duration-500 transition-transform" />
+                <ArrowPathIcon className="size-4 group-enabled:group-hover:rotate-180 duration-500 transition-transform" />
               </button>
             </div>
             {!isUniqueSlug && (

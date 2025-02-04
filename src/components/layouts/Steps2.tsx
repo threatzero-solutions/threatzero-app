@@ -207,20 +207,20 @@ export const Step: React.FC<StepProps> = ({
             className={cn(
               "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
               isPastStep
-                ? "bg-secondary-600 group-enabled:group-hover:bg-secondary-800"
+                ? "bg-secondary-600 group-hover:group-enabled:bg-secondary-800"
                 : isCurrentStep
                 ? "border-2 border-secondary-600 bg-white"
-                : "border-2 border-gray-300 bg-white group-enabled:group-hover:border-gray-400"
+                : "border-2 border-gray-300 bg-white group-hover:group-enabled:border-gray-400"
             )}
           >
             <span
               className={cn(
                 "h-2.5 w-2.5 rounded-full",
                 isPastStep
-                  ? "bg-white group-enabled:group-hover:bg-gray-300"
+                  ? "bg-white group-hover:group-enabled:bg-gray-300"
                   : isCurrentStep
                   ? "bg-secondary-600"
-                  : " bg-transparent group-enabled:group-hover:bg-gray-300"
+                  : " bg-transparent group-hover:group-enabled:bg-gray-300"
               )}
             />
           </span>
@@ -260,7 +260,7 @@ export function StepBackwardButton({ children }: PropsWithChildren) {
     <button
       onClick={stepBackward}
       type="button"
-      className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-70"
+      className="cursor-pointer rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-70"
       disabled={!getCanStepBackward(stepIndex)}
     >
       {children}
@@ -276,7 +276,7 @@ export function StepForwardButton({ children }: PropsWithChildren) {
     <button
       onClick={stepForward}
       type="button"
-      className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
+      className="cursor-pointer inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
       disabled={!getCanStepForward(stepIndex)}
     >
       {children}

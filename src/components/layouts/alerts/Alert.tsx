@@ -58,7 +58,7 @@ const Alert = <T extends React.ElementType = "div">({
       {...props}
       className={classNames(
         "w-[24rem] max-w-full",
-        // "transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95"
+        // "transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in sm:data-closed:translate-y-0 sm:data-closed:scale-95"
         className
       )}
     >
@@ -69,7 +69,7 @@ const Alert = <T extends React.ElementType = "div">({
           "flex items-start"
         )}
       >
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <styleProps.icon
             className={classNames("h-6 w-6", styleProps.iconClassName)}
             aria-hidden="true"
@@ -89,10 +89,10 @@ const Alert = <T extends React.ElementType = "div">({
               : message}
           </p>
         </div>
-        <div className="ml-4 flex flex-shrink-0">
+        <div className="ml-4 flex shrink-0">
           <button
             type="button"
-            className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2"
+            className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2"
             onClick={() => {
               onClose();
             }}

@@ -65,7 +65,7 @@ const IdpRow: React.FC<{
             <span className="block">{idp.name}</span>
             <span
               className={classNames(
-                "rounded font-bold text-white px-2 py-1 uppercase text-xs",
+                "rounded-sm font-bold text-white px-2 py-1 uppercase text-xs",
                 idp.protocol === "saml" ? "bg-green-400" : "bg-secondary-400"
               )}
             >
@@ -204,7 +204,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
           <button
             type="button"
             onClick={() => handleCreateIdp()}
-            className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
           >
             Add Identity Provider
           </button>
@@ -214,14 +214,14 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
                 <>
                   <PopoverButton
                     type="button"
-                    className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                   >
                     Link Existing IDP
                   </PopoverButton>
                   <AnimatePresence>
                     {open && (
                       <PopoverPanel
-                        className="bg-white shadow sm:rounded-lg [--anchor-gap:8px]"
+                        className="bg-white shadow-sm sm:rounded-lg [--anchor-gap:8px]"
                         anchor="bottom end"
                         static
                         as={motion.div}
@@ -255,13 +255,13 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
                                 onKeyUp={(e) =>
                                   e.key === "Enter" && handleLinkIdp(close)
                                 }
-                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
                               />
                             </div>
                             <button
                               type="button"
                               onClick={() => handleLinkIdp(close)}
-                              className="mt-3 inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:ml-3 sm:mt-0 sm:w-auto"
+                              className="mt-3 inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:ml-3 sm:mt-0 sm:w-auto"
                             >
                               Link
                             </button>

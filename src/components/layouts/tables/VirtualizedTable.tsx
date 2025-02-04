@@ -37,9 +37,9 @@ export default function VirtualizedTable<T extends object>({
             : undefined,
         }}
       >
-        <thead className="grid sticky top-0 z-10">
+        <thead className="grid sticky top-0 z-10 bg-white border-b-2 border-b-gray-300">
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
+            <tr key={headerGroup.id} className="flex w-full">
               {headerGroup.headers.map((header, idx) => (
                 <BaseTableHeaderCell
                   key={header.id}
@@ -51,6 +51,7 @@ export default function VirtualizedTable<T extends object>({
                   style={{
                     width: header.getSize(),
                   }}
+                  className="shrink-0"
                 />
               ))}
             </tr>
@@ -130,6 +131,7 @@ function VirtualizedTableBody<T extends object>({
                 style={{
                   width: cell.column.getSize(),
                 }}
+                className="shrink-0"
               />
             ))}
           </tr>

@@ -127,7 +127,7 @@ const OrganizationsRootInner: React.FC = () => {
         <div>
           {(isUnitContext && currentUnitLoading) ||
           currentOrganizationLoading ? (
-            <div className="animate-pulse rounded bg-slate-200 w-full h-12" />
+            <div className="animate-pulse rounded-sm bg-slate-200 w-full h-12" />
           ) : (
             <>
               <h1 className="text-2xl font-semibold leading-6 text-gray-900 inline-flex items-center gap-2">
@@ -187,7 +187,7 @@ const OrganizationsRootInner: React.FC = () => {
         </div>
         <div
           className={classNames(
-            "mb-2 rounded-md text-white font-semibold text-xs py-2 px-3 bg-gradient-to-r",
+            "mb-2 rounded-md text-white font-semibold text-xs py-2 px-3 bg-linear-to-r",
             isUnitContext
               ? "from-secondary-600 to-secondary-500"
               : "from-primary-600 to-primary-500"

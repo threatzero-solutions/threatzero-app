@@ -71,7 +71,7 @@ const MultilineTextInput = <K extends string | number | symbol = string>({
       <button
         type="button"
         onClick={() => handleAddLine()}
-        className="self-end rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        className="self-end rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
       >
         + Add
       </button>

@@ -241,7 +241,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                 <AnimatePresence>
                   {open && (
                     <PopoverPanel
-                      className="bg-white shadow sm:rounded-lg [--anchor-gap:8px]"
+                      className="bg-white shadow-sm sm:rounded-lg [--anchor-gap:8px]"
                       anchor="bottom start"
                       static
                       as={motion.div}
@@ -272,13 +272,13 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                               onKeyUp={(e) =>
                                 e.key === "Enter" && handleSetExpiration(close)
                               }
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
                             />
                           </div>
                           <button
                             type="button"
                             onClick={() => handleSetExpiration(close)}
-                            className="mt-3 inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:ml-3 sm:mt-0 sm:w-auto"
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:ml-3 sm:mt-0 sm:w-auto"
                           >
                             Set
                           </button>
@@ -540,7 +540,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
             <div
               className={classNames(
                 "flex flex-col gap-3 transition-all duration-500 ease-in-out max-h-32 overflow-hidden mt-3",
-                "data-[closed]:max-h-0 data-[closed]:mt-0 data-[closed]:opacity-0"
+                "data-closed:max-h-0 data-closed:mt-0 data-closed:opacity-0"
               )}
             >
               <div className="flex flex-col gap-1">

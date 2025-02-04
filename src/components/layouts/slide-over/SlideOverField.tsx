@@ -20,7 +20,7 @@ const SlideOverField: React.FC<SlideOverFieldProps> = ({
       <div>
         <label
           htmlFor={name}
-          className="text-sm font-medium leading-6 text-gray-900 group-has-[input]:sm:mt-1.5 inline-flex items-center gap-1"
+          className="text-sm font-medium leading-6 text-gray-900 sm:group-has-[input]:mt-1.5 inline-flex items-center gap-1"
         >
           {label}
           {helpText && discreetHelpText && (

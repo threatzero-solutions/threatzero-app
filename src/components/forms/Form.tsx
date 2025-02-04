@@ -392,7 +392,7 @@ const Form: React.FC<FormProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsPreviewing(!isPreviewing)}
-                  className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none"
+                  className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {isPreviewing ? "Exit Preview" : "Preview"}
                 </button>
@@ -441,7 +441,7 @@ const Form: React.FC<FormProps> = ({
                     disabled={
                       form.language?.code === "en" && versions?.length === 1
                     }
-                    className="inline-flex items-center rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-400 disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-red-400 disabled:opacity-50 disabled:pointer-events-none"
                   >
                     <TrashIcon
                       className="-ml-0.5 mr-1.5 h-4 w-4"
@@ -454,7 +454,7 @@ const Form: React.FC<FormProps> = ({
                   type="button"
                   onClick={() => handlePublish()}
                   disabled={published}
-                  className="inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-90 disabled:pointer-events-none"
+                  className="inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-90 disabled:pointer-events-none"
                 >
                   {published ? (
                     <>
@@ -624,7 +624,7 @@ const Form: React.FC<FormProps> = ({
                           form: form as FormEntity,
                         })
                       }
-                      className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                      className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                     >
                       + Add Field
                     </button>
@@ -706,7 +706,7 @@ const Form: React.FC<FormProps> = ({
                       form: form as FormEntity,
                     })
                   }
-                  className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                  className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                 >
                   + Add Field Group
                 </button>
@@ -729,7 +729,7 @@ const Form: React.FC<FormProps> = ({
                   ref={action.ref}
                   className={classNames(
                     action.className ??
-                      "rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 transition-all",
+                      "rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 transition-all",
                     action.autoExecute ? "opacity-80 pointer-events-none" : "",
                     action.autoExecute && autoExecuteLoading
                       ? "animate-pulse"
@@ -747,12 +747,12 @@ const Form: React.FC<FormProps> = ({
       ) : (
         <div className="w-full">
           <div className="animate-pulse flex-1">
-            <div className="h-6 bg-slate-200 rounded" />
-            <div className="h-64 bg-slate-200 rounded mt-3" />
-            <div className="h-6 bg-slate-200 rounded mt-6" />
-            <div className="h-64 bg-slate-200 rounded mt-3" />
-            <div className="h-6 bg-slate-200 rounded mt-6" />
-            <div className="h-64 bg-slate-200 rounded mt-3" />
+            <div className="h-6 bg-slate-200 rounded-sm" />
+            <div className="h-64 bg-slate-200 rounded-sm mt-3" />
+            <div className="h-6 bg-slate-200 rounded-sm mt-6" />
+            <div className="h-64 bg-slate-200 rounded-sm mt-3" />
+            <div className="h-6 bg-slate-200 rounded-sm mt-6" />
+            <div className="h-64 bg-slate-200 rounded-sm mt-3" />
           </div>
         </div>
       )}

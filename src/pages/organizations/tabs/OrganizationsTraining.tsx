@@ -52,8 +52,8 @@ const MyOrganizationTraining: React.FC = () => {
     <div>
       {currentOrganizationLoading || !currentOrganization ? (
         <div className="space-y-4">
-          <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
-          <div className="animate-pulse rounded bg-slate-200 w-full h-96" />
+          <div className="animate-pulse rounded-sm bg-slate-200 w-full h-96" />
+          <div className="animate-pulse rounded-sm bg-slate-200 w-full h-96" />
         </div>
       ) : (
         <div className="space-y-4">
@@ -79,7 +79,7 @@ const MyOrganizationTraining: React.FC = () => {
               defaultOpen
             >
               {roleGroupsLoading ? (
-                <div className="animate-pulse rounded bg-slate-200 w-full h-48" />
+                <div className="animate-pulse rounded-sm bg-slate-200 w-full h-48" />
               ) : (
                 <div className="space-y-4">
                   {trainingAdminGroupNotFound && (

@@ -1,5 +1,5 @@
-import { Link } from "react-router";
 import { FolderOpenIcon } from "@heroicons/react/20/solid";
+import { Link } from "react-router";
 import { trainingLibraryPermissionsOptions } from "../../../constants/permission-options";
 import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import {
@@ -41,7 +41,7 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
                   <button
                     type="button"
                     onClick={onSeeOtherCourses}
-                    className="w-max mb-2 rounded bg-secondary-100 px-2 py-1 text-sm font-semibold text-secondary-600 shadow-sm hover:bg-secondary-200"
+                    className="w-max mb-2 rounded-sm bg-secondary-100 px-2 py-1 text-sm font-semibold text-secondary-600 shadow-xs hover:bg-secondary-200"
                   >
                     See other courses &rarr;
                   </button>
@@ -91,7 +91,7 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
               {isTrainingAdmin && (
                 <Link
                   to="/admin-panel/organizations"
-                  className="mt-4 inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                  className="mt-4 inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                 >
                   Manage Organization Course Enrollments
                 </Link>

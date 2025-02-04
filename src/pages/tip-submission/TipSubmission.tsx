@@ -1,4 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import Form from "../../components/forms/Form";
+import BackButton from "../../components/layouts/BackButton";
+import Dropdown, { DropdownAction } from "../../components/layouts/Dropdown";
+import EditableCell from "../../components/layouts/EditableCell";
+import SlideOver from "../../components/layouts/slide-over/SlideOver";
+import ManageNotes from "../../components/notes/ManageNotes";
+import { TIP_SUBMISSION_FORM_SLUG } from "../../constants/forms";
+import { LEVEL, READ, WRITE } from "../../constants/permissions";
+import { useAuth } from "../../contexts/auth/useAuth";
+import { API_BASE_URL } from "../../contexts/core/constants";
 import {
   addTipNote,
   getTipForm,
@@ -8,26 +20,14 @@ import {
   saveTip,
   submitTip,
 } from "../../queries/safety-management";
-import Form from "../../components/forms/Form";
+import { DeepPartial } from "../../types/core";
 import {
   FormState,
   FormSubmission,
   Tip,
   TipStatus,
 } from "../../types/entities";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { useCallback, useMemo, useState } from "react";
-import { TIP_SUBMISSION_FORM_SLUG } from "../../constants/forms";
-import { LEVEL, READ, WRITE } from "../../constants/permissions";
-import Dropdown, { DropdownAction } from "../../components/layouts/Dropdown";
 import StatusPill from "./components/StatusPill";
-import SlideOver from "../../components/layouts/slide-over/SlideOver";
-import ManageNotes from "../../components/notes/ManageNotes";
-import { API_BASE_URL } from "../../contexts/core/constants";
-import BackButton from "../../components/layouts/BackButton";
-import EditableCell from "../../components/layouts/EditableCell";
-import { DeepPartial } from "../../types/core";
-import { useAuth } from "../../contexts/auth/useAuth";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
@@ -203,7 +203,7 @@ const TipSubmission: React.FC = () => {
             <button
               type="button"
               onClick={() => setManageNotesOpen(true)}
-              className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             >
               Notes {notes && <span>({notes?.results.length ?? 0})</span>}
             </button>
@@ -220,7 +220,7 @@ const TipSubmission: React.FC = () => {
             <Link to={`/admin-panel/forms/${TIP_SUBMISSION_FORM_SLUG}`}>
               <button
                 type="button"
-                className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
               >
                 {form ? "Edit Draft" : "+ Create Safety Concern Form"}
               </button>

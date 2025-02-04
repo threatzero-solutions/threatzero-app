@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { getTrainingAudiences } from "../../../queries/training";
-import { useState } from "react";
-import { Audience } from "../../../types/entities";
-import { humanizeSlug } from "../../../utils/core";
 import { Dialog } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import EditTrainingAudience from "./EditTrainingAudience";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import { getTrainingAudiences } from "../../../queries/training";
+import { Audience } from "../../../types/entities";
+import { humanizeSlug } from "../../../utils/core";
+import EditTrainingAudience from "./EditTrainingAudience";
 
 interface ViewTrainingAudiencesProps {
   setOpen: (open: boolean) => void;
@@ -76,7 +76,7 @@ const ViewTrainingAudiences: React.FC<ViewTrainingAudiencesProps> = ({
                     <button
                       type="button"
                       onClick={() => handleManageAudience(audience)}
-                      className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                      className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     >
                       Manage
                       <span className="sr-only">, {audience.slug}</span>
@@ -88,12 +88,12 @@ const ViewTrainingAudiences: React.FC<ViewTrainingAudiencesProps> = ({
         </div>
 
         {/* Action buttons */}
-        <div className="flex-shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
+        <div className="shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
           <div className="flex space-x-3">
             <div className="grow"></div>
             <button
               type="button"
-              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
               onClick={() => setOpen(false)}
             >
               Cancel
@@ -101,7 +101,7 @@ const ViewTrainingAudiences: React.FC<ViewTrainingAudiencesProps> = ({
             <button
               type="button"
               onClick={() => handleManageAudience()}
-              className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             >
               + Create New Audience
             </button>

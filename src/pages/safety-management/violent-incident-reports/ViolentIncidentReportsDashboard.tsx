@@ -1,33 +1,33 @@
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { useMemo, useState } from "react";
+import { Link, useLocation } from "react-router";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+import EditableCell from "../../../components/layouts/EditableCell";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import StatsDisplay from "../../../components/StatsDisplay";
+import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
+import { WRITE } from "../../../constants/permissions";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
-import {
-  ViolentIncidentReport,
-  ViolentIncidentReportStatus,
-} from "../../../types/entities";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import {
   SafetyManagementResourceFilterOptions,
   getViolentIncidentReportSubmissionStats,
   getViolentIncidentReports,
   saveViolentIncidentReport,
 } from "../../../queries/safety-management";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { Link, useLocation } from "react-router";
-import { WRITE } from "../../../constants/permissions";
-import StatsDisplay from "../../../components/StatsDisplay";
+import {
+  ViolentIncidentReport,
+  ViolentIncidentReportStatus,
+} from "../../../types/entities";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
-import EditableCell from "../../../components/layouts/EditableCell";
-import { withRequirePermissions } from "../../../guards/with-require-permissions";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
-import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
-import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import IconButton from "../../../components/layouts/buttons/IconButton";
-import { ArrowRightIcon } from "@heroicons/react/20/solid";
 
 dayjs.extend(relativeTime);
 
@@ -235,7 +235,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
           <Link to={"./new"}>
             <button
               type="button"
-              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             >
               + Report Violent Incident
             </button>

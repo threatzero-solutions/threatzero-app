@@ -298,8 +298,8 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                 slugReadOnly ? "" : "pr-7 pl-10",
                 slug && !slugReadOnly
                   ? !isUniqueSlug
-                    ? "ring-red-300 text-red-900 focus:!ring-red-500"
-                    : "ring-green-300 text-green-900 focus:!ring-green-500"
+                    ? "ring-red-300 text-red-900 focus:ring-red-500!"
+                    : "ring-green-300 text-green-900 focus:ring-green-500!"
                   : ""
               )}
               autoComplete="off"
@@ -314,7 +314,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
               onClick={() => resetSlug()}
               disabled={!name}
             >
-              <ArrowPathIcon className="size-4 group-hover:group-enabled:rotate-180 duration-500 transition-transform" />
+              <ArrowPathIcon className="size-4 group-enabled:group-hover:rotate-180 duration-500 transition-transform" />
             </button>
           </div>
           {!isUniqueSlug && (

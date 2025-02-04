@@ -51,7 +51,7 @@ const CourseAvailabilityDates: React.FC<CourseAvailabilityDates> = ({
   return status || showOnBlank ? (
     <span
       className={classNames(
-        "text-xs font-semibold text-white rounded px-2 py-1 w-max inline-flex items-center h-max shrink-0",
+        "text-xs font-semibold text-white rounded-sm px-2 py-1 w-max inline-flex items-center h-max shrink-0",
         status === "upcoming"
           ? "bg-secondary-400"
           : status === "ongoing"

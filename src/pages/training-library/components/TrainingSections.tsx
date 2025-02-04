@@ -71,10 +71,10 @@ const TrainingSections: React.FC<TrainingSectionsProps> = ({
   ) : (
     <div className="mt-12 w-full">
       <div className="animate-pulse flex-1">
-        <div className="h-6 bg-slate-200 rounded" />
+        <div className="h-6 bg-slate-200 rounded-sm" />
         <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-2">
-          <div className="h-72 bg-slate-200 rounded" />
-          <div className="h-72 bg-slate-200 rounded" />
+          <div className="h-72 bg-slate-200 rounded-sm" />
+          <div className="h-72 bg-slate-200 rounded-sm" />
         </div>
       </div>
     </div>

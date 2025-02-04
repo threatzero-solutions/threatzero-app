@@ -29,7 +29,7 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({
           stats.map((item) => (
             <div
               key={item.key}
-              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 overflow-hidden rounded-lg bg-white p-3 shadow sm:p-4"
+              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 overflow-hidden rounded-lg bg-white p-3 shadow-sm sm:p-4"
             >
               <dt className="truncate text-sm font-medium text-gray-500">
                 {item.name}
@@ -44,9 +44,9 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({
           ))
         ) : (
           <>
-            <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow sm:p-6" />
-            <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow sm:p-6" />
-            <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow sm:p-6" />
+            <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow-sm sm:p-6" />
+            <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow-sm sm:p-6" />
+            <div className="animate-pulse rounded-lg bg-slate-200 px-4 py-5 shadow-sm sm:p-6" />
           </>
         )}
       </dl>

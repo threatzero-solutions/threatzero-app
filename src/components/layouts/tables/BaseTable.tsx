@@ -155,12 +155,14 @@ export function BaseTableHeaderCell<T extends object>({
   dense = false,
   headersCount,
   style,
+  className,
 }: {
   table: Table<T>;
   header: Header<T, unknown>;
   idx: number;
   dense?: boolean;
   headersCount: number;
+  className?: string;
   style?: React.CSSProperties;
 }) {
   return (
@@ -172,7 +174,7 @@ export function BaseTableHeaderCell<T extends object>({
           : undefined,
         ...style,
       }}
-      className={classNames(
+      className={cn(
         dense ? "py-1.5 text-xs" : "py-3.5 text-sm",
         "relative text-left font-semibold text-gray-900",
         idx === 0
@@ -185,7 +187,8 @@ export function BaseTableHeaderCell<T extends object>({
             : "pl-3 pr-4 sm:pl-0"
           : dense
           ? "px-1.5"
-          : "px-2"
+          : "px-2",
+        className
       )}
     >
       {header.isPlaceholder ? null : (
@@ -203,7 +206,7 @@ export function BaseTableHeaderCell<T extends object>({
               !header.column.getCanSort()
                 ? "pointer-events-none hidden w-0"
                 : "cursor-pointer",
-              "ml-2 flex-none inline-flex items-center gap-0.5 rounded transition-colors",
+              "ml-2 flex-none inline-flex items-center gap-0.5 rounded-sm transition-colors",
               header.column.getIsSorted()
                 ? "bg-gray-200 text-gray-900 group-hover:bg-gray-300"
                 : "text-gray-300 group-hover:text-gray-600"

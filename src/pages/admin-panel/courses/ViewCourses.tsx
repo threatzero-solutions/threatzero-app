@@ -1,18 +1,20 @@
-import { TrainingVisibility } from "../../../types/entities";
+import {
+  DocumentDuplicateIcon,
+  EyeIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/20/solid";
+import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { Link } from "react-router";
+import { useImmer } from "use-immer";
+import { useDebounceValue } from "usehooks-ts";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import DataTable from "../../../components/layouts/tables/DataTable";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { getTrainingCourses } from "../../../queries/training";
+import { TrainingVisibility } from "../../../types/entities";
 import CourseCustomTag from "../../training-library/components/CourseCustomTag";
 import CourseVisibilityTag from "../../training-library/components/CourseVisibilityTag";
-import { useQuery } from "@tanstack/react-query";
-import { getTrainingCourses } from "../../../queries/training";
-import DataTable from "../../../components/layouts/tables/DataTable";
-import { DocumentDuplicateIcon } from "@heroicons/react/20/solid";
-import { PencilSquareIcon } from "@heroicons/react/20/solid";
-import { EyeIcon } from "@heroicons/react/20/solid";
-import { useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import { useDebounceValue } from "usehooks-ts";
-import dayjs from "dayjs";
-import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 
 const ViewCourses: React.FC = () => {
   const [courseFilterOptions, setCourseFilterOptions] =
@@ -84,7 +86,7 @@ const ViewCourses: React.FC = () => {
               <ButtonGroup className="w-full justify-end">
                 <Link
                   to={`preview/${course.id}`}
-                  className="flex gap-1 items-center w-max rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                  className="flex gap-1 items-center w-max rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 >
                   <EyeIcon className="h-4 w-4" aria-hidden="true" />
                   Preview
@@ -94,7 +96,7 @@ const ViewCourses: React.FC = () => {
                 </Link>
                 <Link
                   to={course.id}
-                  className="flex gap-1 items-center w-max rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                  className="flex gap-1 items-center w-max rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 >
                   <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
                   Edit
@@ -102,7 +104,7 @@ const ViewCourses: React.FC = () => {
                 </Link>
                 <Link
                   to={`new?duplicate_course_id=${course.id}`}
-                  className="flex gap-1 items-center w-max rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                  className="flex gap-1 items-center w-max rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 >
                   <DocumentDuplicateIcon
                     className="h-4 w-4"
@@ -122,7 +124,7 @@ const ViewCourses: React.FC = () => {
         action={
           <Link
             to="new"
-            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
           >
             + Create New Course
           </Link>

@@ -110,7 +110,7 @@ const ViewTrainingItem: React.FC<{ trainingItemId?: string }> = ({
   });
   const title = stripHtml(trainingItemMetadata?.title);
   return isLoading ? (
-    <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
+    <div className="animate-pulse rounded-sm bg-slate-200 w-full h-6" />
   ) : (
     <span>
       {trainingItemMetadata ? (
@@ -142,7 +142,7 @@ const ViewOrganization: React.FC<{ organizationSlug?: string }> = ({
     enabled: !!organizationSlug,
   });
   return isLoading ? (
-    <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
+    <div className="animate-pulse rounded-sm bg-slate-200 w-full h-6" />
   ) : (
     <span className="line-clamp-3" title={organizationName ?? undefined}>
       {organizationName ? organizationName : "—"}
@@ -158,7 +158,7 @@ const ViewUnit: React.FC<{ unitSlug?: string }> = ({ unitSlug }) => {
     enabled: !!unitSlug,
   });
   return isLoading ? (
-    <div className="animate-pulse rounded bg-slate-200 w-full h-6" />
+    <div className="animate-pulse rounded-sm bg-slate-200 w-full h-6" />
   ) : (
     <span className="line-clamp-3" title={unitName ?? undefined}>
       {unitName ? unitName : "—"}
@@ -520,7 +520,7 @@ const ManageTrainingInvites: React.FC = () => {
               </p>
             </div>
             <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
                 + Upload From CSV
                 <input
                   type="file"
@@ -683,7 +683,7 @@ const ManageTrainingInvites: React.FC = () => {
             </p>
             <button
               type="submit"
-              className="w-max self-center block rounded-lg bg-primary-500 px-3 py-2 text-center text-base font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
+              className="w-max self-center block rounded-lg bg-primary-500 px-3 py-2 text-center text-base font-semibold text-white shadow-xs hover:bg-primary-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
             >
               Send Invites
             </button>
@@ -804,7 +804,7 @@ const ManageTrainingInvites: React.FC = () => {
               resend: (
                 <button
                   type="button"
-                  className="rounded-md bg-primary-500 px-2 py-1 text-center text-xs font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
+                  className="rounded-md bg-primary-500 px-2 py-1 text-center text-xs font-semibold text-white shadow-xs hover:bg-primary-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
                   onClick={() => handleResendInvite(t)}
                 >
                   Resend
@@ -843,7 +843,7 @@ const ManageTrainingInvites: React.FC = () => {
           action={
             <button
               type="button"
-              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
               onClick={() => handleDownloadTrainingLinksCsv()}
             >
               Download (.csv)
