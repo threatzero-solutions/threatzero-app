@@ -260,7 +260,7 @@ export function StepBackwardButton({ children }: PropsWithChildren) {
     <button
       onClick={stepBackward}
       type="button"
-      className="cursor-pointer rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-70"
+      className="enabled:cursor-pointer rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-70"
       disabled={!getCanStepBackward(stepIndex)}
     >
       {children}
@@ -276,7 +276,7 @@ export function StepForwardButton({ children }: PropsWithChildren) {
     <button
       onClick={stepForward}
       type="button"
-      className="cursor-pointer inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
+      className="enabled:cursor-pointer inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
       disabled={!getCanStepForward(stepIndex)}
     >
       {children}

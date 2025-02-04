@@ -410,7 +410,7 @@ function Step1UploadCsvFile(props: Partial<ComponentProps<typeof Step>>) {
         className="pl-2 w-full"
         onChange={handleCsvUpload}
       />
-      <div className="flex justify-end mt-10">
+      <div className="flex mt-10">
         <StepForwardButton>Next</StepForwardButton>
       </div>
     </Step>
@@ -505,17 +505,25 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
     <Step
       {...props}
       name="Step 2: Match Column Names"
-      description="Select the column names in the CSV file that match the user fields in the table below."
+      description="Select the column names from your CSV upload that match the user fields in the table below."
       canProceed={allFieldsSatisfied}
     >
       <div className="grid grid-cols-[130px_50px_1fr_1fr_50px] divide-y divide-y-gray-200 w-full">
         <div className="text-sm font-semibold col-span-full grid grid-cols-subgrid">
-          <div>User Field</div>
+          <div className="inline-flex items-center gap-1">
+            User Field
+            <InformationButton text="The system's name for the user field." />
+          </div>
+
           <div></div>
-          <div>CSV Header</div>
+          <div className="inline-flex items-center gap-1">
+            CSV Header
+            <InformationButton text="The name of the CSV column header from your file upload. Make sure this correctly matches the appropriate user field to the left." />
+          </div>
+
           <div className="inline-flex items-center gap-1">
             Default
-            <InformationButton text="Default value if corresponding value in CSV is missing or blank." />
+            <InformationButton text="Default value to use when the corresponding column is missing or the column value for any row is missing or empty." />
           </div>
           <div></div>
         </div>
@@ -588,12 +596,12 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
                   ) : userField.required ? (
                     <ExclamationCircleIcon
                       className="size-5 text-red-500"
-                      title="Please select matching header."
+                      title="Please select corresponding CSV header or provide a default value (if applicable)."
                     />
                   ) : (
                     <ExclamationCircleIcon
                       className="size-5 text-gray-500"
-                      title="(Optional) Please select matching header."
+                      title="(Optional) Please select corresponding CSV header or provide a default value (if applicable)."
                     />
                   )}
                 </div>
