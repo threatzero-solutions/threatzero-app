@@ -1,6 +1,7 @@
 import {
   ArrowRightIcon,
   CheckCircleIcon,
+  ClockIcon,
   ExclamationCircleIcon,
   PencilSquareIcon,
   TrashIcon,
@@ -11,6 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import Fuse from "fuse.js";
 import Papa from "papaparse";
 import {
@@ -45,7 +47,7 @@ import { OrganizationsContext } from "../../../contexts/organizations/organizati
 import { useOpenData } from "../../../hooks/use-open-data";
 import { getTrainingAudiences } from "../../../queries/training";
 import { Audience, Unit } from "../../../types/entities";
-import { humanizeSlug } from "../../../utils/core";
+import { cn, humanizeSlug } from "../../../utils/core";
 
 interface Props {
   open: boolean;
@@ -53,11 +55,17 @@ interface Props {
 }
 
 export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
-  const { isUnitContext, allUnits } = useContext(OrganizationsContext);
+  const { isUnitContext, allUnits, currentOrganization } =
+    useContext(OrganizationsContext);
 
   const { data: audiences } = useQuery({
     queryKey: ["training-audiences"],
-    queryFn: () => getTrainingAudiences({ limit: 100 }).then((r) => r.results),
+    queryFn: () =>
+      getTrainingAudiences({ limit: 100 }).then((r) =>
+        r.results.filter(
+          (a) => !!currentOrganization?.allowedAudiences.includes(a.slug)
+        )
+      ),
   });
 
   const [file, setFile] = useState<File | null>(null);
@@ -74,8 +82,8 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
   const [defaultAudience, setDefaultAudience] = useState<Audience | null>(null);
 
   const [usersToUpload, setUsersToUpload] = useImmer<PreparedUserRow[]>([]);
-  const [showUserDataErrors, setShowUserDataErrors] = useState(false);
-  const userdataErrors = useMemo(() => {
+  const displayErrors = useOpenData<string[]>();
+  const userDataErrors = useMemo(() => {
     const errors: string[] = [];
     const emails = new Set<string>();
 
@@ -107,15 +115,59 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
     return errors;
   }, [usersToUpload]);
 
+  const [
+    userUploadProgress,
+    { set: setUserUploadProgress, setAll: setUserUploadProgresses },
+  ] = useMap<string, UserUploadProgress>();
+
+  const uploadState = useMemo(() => {
+    const statuses = Array.from(userUploadProgress.values());
+    return {
+      allWaiting:
+        statuses.length === 0 || statuses.every((p) => p.status === "waiting"),
+      inProgress:
+        statuses.length > 0 && statuses.some((p) => p.status === "uploading"),
+      finished:
+        statuses.length === usersToUpload.length &&
+        statuses.every((p) => p.status === "error" || p.status === "success"),
+      hasErrors:
+        statuses.length > 0 && statuses.some((p) => p.status === "error"),
+      errors: statuses
+        .filter(
+          (p): p is UserUploadProgress & { error: string } =>
+            p.status === "error" && !!p.error
+        )
+        .map((p) => p.error),
+    };
+  }, [userUploadProgress, usersToUpload]);
+
+  const reset = useCallback(() => {
+    setFile(null);
+    setRawCsvHeaders(null);
+    setHeaderMappings([]);
+    setDefaultUnit(null);
+    setDefaultAudience(null);
+    setUsersToUpload([]);
+    setUserUploadProgresses([]);
+  }, [
+    setFile,
+    setRawCsvHeaders,
+    setHeaderMappings,
+    setDefaultUnit,
+    setDefaultAudience,
+    setUsersToUpload,
+    setUserUploadProgresses,
+  ]);
+
   const opened = useRef(false);
   useEffect(() => {
     if (opened && !open) {
-      setRawCsvHeaders(null);
+      reset();
     }
     if (open) {
       opened.current = true;
     }
-  }, [open]);
+  }, [reset, open]);
 
   const unitsFuse = useMemo(
     () =>
@@ -189,9 +241,12 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
   const allFieldsSatisfied = useMemo(
     () =>
       userFields.every(
-        (f) => !f.required || !!reversedHeaderMappings.get(f.name)
+        (f) =>
+          !f.required ||
+          !!reversedHeaderMappings.get(f.name) ||
+          (f.name === "unit" && !!defaultUnit)
       ),
-    [reversedHeaderMappings, userFields]
+    [reversedHeaderMappings, userFields, defaultUnit]
   );
 
   useEffect(() => {
@@ -207,10 +262,25 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
           if (h === "trainingGroup") {
             return findAudience(v) ?? defaultAudience;
           }
+          if (h === "email") {
+            return v.toLowerCase();
+          }
           return v;
         },
         complete: (results) => {
-          setUsersToUpload(results.data);
+          setUsersToUpload(
+            results.data.map((row) => {
+              if (!row.unit && defaultUnit) {
+                row.unit = defaultUnit;
+              }
+
+              if (!row.trainingGroup && defaultAudience) {
+                row.trainingGroup = defaultAudience;
+              }
+
+              return row;
+            })
+          );
         },
       });
     }
@@ -226,6 +296,34 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
     defaultUnit,
     defaultAudience,
   ]);
+
+  const handleUserUpload = useCallback(async () => {
+    const stubUpload = async (user: PreparedUserRow) => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return user;
+    };
+
+    const batchSize = 10;
+    const iterations = Math.ceil(usersToUpload.length / batchSize);
+
+    for (let i = 0; i < iterations; i++) {
+      const batch = usersToUpload.slice(i * batchSize, (i + 1) * batchSize);
+      await Promise.allSettled(
+        batch.map(async (user) => {
+          setUserUploadProgress(user.email, { status: "uploading" });
+          try {
+            await stubUpload(user);
+            setUserUploadProgress(user.email, { status: "success" });
+          } catch (e) {
+            setUserUploadProgress(user.email, {
+              status: "error",
+              error: String(e),
+            });
+          }
+        })
+      );
+    }
+  }, [usersToUpload, setUserUploadProgress]);
 
   const usersTable = useReactTable({
     data: usersToUpload,
@@ -257,6 +355,45 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
         size: 70,
       },
       {
+        accessorKey: "email",
+        header: "Email",
+        size: 250,
+        cell: ({ getValue }) => {
+          const email = getValue();
+          return userDataErrors.includes(`Duplicate email: ${email}`) ? (
+            <div className="text-red-500 inline-flex items-center gap-1">
+              <ExclamationCircleIcon className="size-4" />
+              {email} (Duplicate)
+            </div>
+          ) : (
+            <div className="overflow-hidden text-ellipsis">{email}</div>
+          );
+        },
+      },
+      {
+        id: "uploadProgress",
+        size: 50,
+        cell: ({ row }) => {
+          const progress = userUploadProgress.get(row.original.email);
+          return progress && progress.status !== "waiting" ? (
+            <>
+              {progress.status === "uploading" ? (
+                <ClockIcon className="size-5 text-secondary-500" />
+              ) : progress.status === "success" ? (
+                <CheckCircleIcon className="size-5 text-green-500" />
+              ) : (
+                <ExclamationCircleIcon
+                  className="size-5 text-red-500"
+                  title={progress.error}
+                />
+              )}
+            </>
+          ) : (
+            <></>
+          );
+        },
+      },
+      {
         accessorKey: "firstName",
         header: "First Name",
         size: 125,
@@ -268,14 +405,6 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
         accessorKey: "lastName",
         header: "Last Name",
         size: 125,
-        cell: ({ getValue }) => (
-          <div className="overflow-hidden text-ellipsis">{getValue()}</div>
-        ),
-      },
-      {
-        accessorKey: "email",
-        header: "Email",
-        size: 250,
         cell: ({ getValue }) => (
           <div className="overflow-hidden text-ellipsis">{getValue()}</div>
         ),
@@ -434,7 +563,10 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
                           )}
                         </div>
                         <div className="w-full flex items-center justify-center shrink-0">
-                          {selectedHeader ? (
+                          {selectedHeader ||
+                          (userField.name === "unit" && defaultUnit) ||
+                          (userField.name === "trainingGroup" &&
+                            defaultAudience) ? (
                             <CheckCircleIcon className="size-5 text-green-500" />
                           ) : userField.required ? (
                             <ExclamationCircleIcon
@@ -459,35 +591,67 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
               </Step>
               <Step name="Step 3: Review & Upload">
                 <VirtualizedTable table={usersTable} height="400px" />
-                {userdataErrors.length > 0 && (
-                  <div className="mt-4">
+                <div className="mt-4">
+                  {userDataErrors.length > 0 ? (
                     <div className="text-sm text-red-500 inline-flex items-center gap-1">
                       <ExclamationCircleIcon className="size-4" />
                       There are{" "}
                       <span className="font-bold">
-                        {userdataErrors.length}
+                        {userDataErrors.length}
                       </span>{" "}
                       errors. Please resolve them to finish uploading users.
                       <button
                         className="underline font-semibold cursor-pointer"
                         type="button"
                         onClick={() => {
-                          setShowUserDataErrors(true);
+                          displayErrors.openData(userDataErrors);
                         }}
                       >
                         View details.
                       </button>
                     </div>
-                  </div>
-                )}
+                  ) : uploadState.hasErrors ? (
+                    <div className="text-sm text-red-500 inline-flex items-center gap-1">
+                      <ExclamationCircleIcon className="size-4" />
+                      <span className="font-bold">
+                        {uploadState.errors.length}
+                      </span>{" "}
+                      occurred while uploading users.
+                      <button
+                        className="underline font-semibold cursor-pointer"
+                        type="button"
+                        onClick={() => {
+                          displayErrors.openData(uploadState.errors);
+                        }}
+                      >
+                        View details.
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-green-500  inline-flex items-center gap-1">
+                      <CheckCircleIcon className="size-4" />
+                      No errors to resolve.
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-4 mt-10">
                   <StepBackwardButton>Back</StepBackwardButton>
                   <button
                     type="button"
-                    className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
-                    disabled={userdataErrors.length > 0}
+                    className={cn(
+                      "inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400",
+                      uploadState.inProgress && "animate-pulse"
+                    )}
+                    disabled={
+                      userDataErrors.length > 0 || !uploadState.allWaiting
+                    }
+                    onClick={handleUserUpload}
                   >
-                    Upload
+                    {uploadState.inProgress
+                      ? "Uploading..."
+                      : uploadState.finished
+                      ? "Upload Finished"
+                      : "Upload"}
                   </button>
                 </div>
               </Step>
@@ -514,25 +678,11 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
           <></>
         )}
       </Modal>
-      <Modal open={showUserDataErrors} setOpen={setShowUserDataErrors}>
-        <div className="grid gap-4 p-8">
-          <h2 className="text-lg font-semibold">User Data Errors</h2>
-          <div className="grid gap-4">
-            {userdataErrors.map((error) => (
-              <div key={error} className="flex items-center gap-2 text-red-500">
-                <ExclamationCircleIcon className="size-5 text-red-500" />
-                {error}
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowUserDataErrors(false)}
-            className="cursor-pointer rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-70"
-          >
-            Close
-          </button>
-        </div>
+      <Modal open={displayErrors.open} setOpen={displayErrors.setOpen}>
+        <DisplayErrorStrings
+          errors={displayErrors.data ?? []}
+          onClose={displayErrors.close}
+        />
       </Modal>
     </>
   );
@@ -641,6 +791,59 @@ function EditUserForm({
   );
 }
 
+function DisplayErrorStrings({
+  errors,
+  onClose,
+}: {
+  errors: string[];
+  onClose: () => void;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: errors.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 35,
+  });
+
+  return (
+    <div className="grid gap-4 p-8">
+      <h2 className="text-lg font-semibold">Errors Details</h2>
+      <div className="grid gap-4 h-[400px] overflow-auto" ref={parentRef}>
+        <div
+          className="relative w-full"
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+            const error = errors[virtualItem.index];
+            return (
+              <div
+                key={virtualItem.key}
+                className="absolute top-0 left-0 w-full flex items-center gap-2 text-red-500"
+                style={{
+                  height: `${virtualItem.size}px`,
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              >
+                <ExclamationCircleIcon className="size-5 text-red-500" />
+                {error}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => onClose()}
+        className="cursor-pointer rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-70"
+      >
+        Close
+      </button>
+    </div>
+  );
+}
+
 interface UserCsvRow {
   firstName: string;
   lastName: string;
@@ -653,6 +856,11 @@ type PreparedUserRow = Omit<UserCsvRow, "unit" | "trainingGroup"> & {
   unit: Unit | null;
   trainingGroup: Audience | null;
 };
+
+interface UserUploadProgress {
+  status: "waiting" | "uploading" | "success" | "error";
+  error?: string;
+}
 
 interface UserField<K extends keyof UserCsvRow> {
   name: K;
@@ -696,7 +904,9 @@ const USER_FIELDS = [
 
 const CSV_HEADERS_MAPPER = new Map<string, keyof UserCsvRow>([
   ["firstname", "firstName"],
+  ["first", "firstName"],
   ["lastname", "lastName"],
+  ["last", "lastName"],
   ["email", "email"],
   ["givenname", "firstName"],
   ["familyname", "lastName"],

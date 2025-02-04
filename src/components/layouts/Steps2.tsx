@@ -50,7 +50,7 @@ const StepContext = createContext<{
   stepIndex: 0,
 });
 
-export const useSteps = () => {
+const useSteps = () => {
   const value = useContext(StepsContext);
   if (process.env.NODE_ENV !== "production") {
     if (!value) {
