@@ -118,7 +118,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
             </div>
             <ComboboxOptions
               anchor="bottom start"
-              className="empty:invisible mt-1 rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm"
+              className="empty:invisible mt-1 rounded-md bg-white text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm"
             >
               {users.map((user) => (
                 <ComboboxOption
@@ -157,7 +157,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
           type="button"
           onClick={() => onAddUsers(selectedUsers, close)}
           className={classNames(
-            "inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto",
+            "inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto",
             isPending ? "animate-pulse" : ""
           )}
           disabled={selectedUsers.length === 0 || isPending}

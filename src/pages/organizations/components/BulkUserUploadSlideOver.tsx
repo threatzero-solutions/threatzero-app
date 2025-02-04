@@ -28,6 +28,7 @@ import { useMap } from "usehooks-ts";
 import FormField from "../../../components/forms/FormField";
 import Input from "../../../components/forms/inputs/Input";
 import Select from "../../../components/forms/inputs/Select";
+import InformationButton from "../../../components/layouts/buttons/InformationButton";
 import Modal from "../../../components/layouts/modal/Modal";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
@@ -69,8 +70,11 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
   );
 
   const editUser = useOpenData<number>();
+  const [defaultUnit, setDefaultUnit] = useState<Unit | null>(null);
+  const [defaultAudience, setDefaultAudience] = useState<Audience | null>(null);
 
   const [usersToUpload, setUsersToUpload] = useImmer<PreparedUserRow[]>([]);
+  const [showUserDataErrors, setShowUserDataErrors] = useState(false);
   const userdataErrors = useMemo(() => {
     const errors: string[] = [];
     const emails = new Set<string>();
@@ -198,10 +202,10 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
         transformHeader: (h) => headerMappings.get(normalizeHeader(h)) ?? h,
         transform: (v, h) => {
           if (h === "unit") {
-            return findUnit(v);
+            return findUnit(v) ?? defaultUnit;
           }
           if (h === "trainingGroup") {
-            return findAudience(v);
+            return findAudience(v) ?? defaultAudience;
           }
           return v;
         },
@@ -219,6 +223,8 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
     allUnits,
     audiences,
     setUsersToUpload,
+    defaultUnit,
+    defaultAudience,
   ]);
 
   const usersTable = useReactTable({
@@ -349,11 +355,15 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
                 description="Select the column names in the CSV file that match the user fields in the table below."
                 canProceed={allFieldsSatisfied}
               >
-                <div className="grid grid-cols-4 divide-y divide-y-gray-200">
+                <div className="grid grid-cols-[130px_50px_1fr_1fr_50px] divide-y divide-y-gray-200 w-full">
                   <div className="text-sm font-semibold col-span-full grid grid-cols-subgrid">
                     <div>User Field</div>
                     <div></div>
                     <div>CSV Header</div>
+                    <div className="inline-flex items-center gap-1">
+                      Default
+                      <InformationButton text="Default value if corresponding value in CSV is missing or blank." />
+                    </div>
                     <div></div>
                   </div>
                   {USER_FIELDS.filter(
@@ -365,12 +375,12 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
                     return (
                       <div
                         key={userField.name}
-                        className="col-span-full grid grid-cols-subgrid py-2 items-center"
+                        className="col-span-full grid grid-cols-subgrid gap-x-6 py-2 items-center w-full"
                       >
-                        <div className="text-sm font-regular">
+                        <div className="text-sm font-regular shrink-0">
                           {userField.label}
                         </div>
-                        <ArrowRightIcon className="size-4" />
+                        <ArrowRightIcon className="size-4 shrink-0" />
                         <Select
                           value={selectedHeader}
                           onChange={(e) =>
@@ -382,8 +392,48 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
                           }))}
                           showClear
                           clearButtonPosition="right"
+                          className="shrink-0"
                         />
-                        <div className="w-full flex items-center justify-center">
+                        <div className="shrink-0">
+                          {userField.name === "unit" ? (
+                            <Select
+                              value={defaultUnit?.id}
+                              onChange={(e) =>
+                                setDefaultUnit(
+                                  allUnits?.find(
+                                    (u) => u.id === e.target.value
+                                  ) ?? null
+                                )
+                              }
+                              options={(allUnits ?? []).map((u) => ({
+                                key: u.id,
+                                label: u.name,
+                              }))}
+                              showClear
+                              clearButtonPosition="right"
+                            />
+                          ) : userField.name === "trainingGroup" ? (
+                            <Select
+                              value={defaultAudience?.id}
+                              onChange={(e) =>
+                                setDefaultAudience(
+                                  audiences?.find(
+                                    (a) => a.id === e.target.value
+                                  ) ?? null
+                                )
+                              }
+                              options={(audiences ?? []).map((s) => ({
+                                key: s.id,
+                                label: s.slug,
+                              }))}
+                              showClear
+                              clearButtonPosition="right"
+                            />
+                          ) : (
+                            <>&mdash;</>
+                          )}
+                        </div>
+                        <div className="w-full flex items-center justify-center shrink-0">
                           {selectedHeader ? (
                             <CheckCircleIcon className="size-5 text-green-500" />
                           ) : userField.required ? (
@@ -421,6 +471,9 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
                       <button
                         className="underline font-semibold cursor-pointer"
                         type="button"
+                        onClick={() => {
+                          setShowUserDataErrors(true);
+                        }}
                       >
                         View details.
                       </button>
@@ -431,7 +484,7 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
                   <StepBackwardButton>Back</StepBackwardButton>
                   <button
                     type="button"
-                    className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
+                    className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
                     disabled={userdataErrors.length > 0}
                   >
                     Upload
@@ -460,6 +513,26 @@ export default function BulkUserUploadSlideOver({ open, setOpen }: Props) {
         ) : (
           <></>
         )}
+      </Modal>
+      <Modal open={showUserDataErrors} setOpen={setShowUserDataErrors}>
+        <div className="grid gap-4 p-8">
+          <h2 className="text-lg font-semibold">User Data Errors</h2>
+          <div className="grid gap-4">
+            {userdataErrors.map((error) => (
+              <div key={error} className="flex items-center gap-2 text-red-500">
+                <ExclamationCircleIcon className="size-5 text-red-500" />
+                {error}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowUserDataErrors(false)}
+            className="cursor-pointer rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 enabled:hover:bg-gray-50 disabled:opacity-70"
+          >
+            Close
+          </button>
+        </div>
       </Modal>
     </>
   );

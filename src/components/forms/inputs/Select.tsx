@@ -114,7 +114,7 @@ const Select: React.FC<SelectProps> = ({
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
+                <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm">
                   {options.map(({ key, label, disabled, disabledText }) => (
                     <ListboxOption
                       key={key}
@@ -174,7 +174,7 @@ const Select: React.FC<SelectProps> = ({
         <button
           type="button"
           className={classNames(
-            "pl-1 text-xs font-semibol text-secondary-600 disabled:text-gray-400 disabled:opacity-60 shrink text-start"
+            "cursor-pointer pl-1 text-xs font-semibol text-secondary-600 disabled:text-gray-400 disabled:opacity-60 shrink text-start"
           )}
           disabled={!value}
           onClick={() => handleSelect(undefined)}

@@ -5,9 +5,9 @@ import {
   ComboboxOptions,
   Label,
 } from "@headlessui/react";
-import { classNames } from "../../../utils/core";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useDebounceCallback } from "usehooks-ts";
+import { classNames } from "../../../utils/core";
 
 interface AutocompleteProps<V extends { id: string }> {
   value: V | null | undefined;
@@ -73,7 +73,7 @@ const Autocomplete = <V extends { id: string }>({
             </button>
           )}
           {options && (
-            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm">
               {options.length === 0 && (
                 <ComboboxOption
                   value={null}

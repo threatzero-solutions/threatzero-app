@@ -37,7 +37,7 @@ const ErrorPage: React.FC<ErrorPageProps> = ({ friendlyErrorMessage }) => {
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <a
               href={HOME_PAGE}
-              className="rounded-md bg-primary-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400"
+              className="rounded-md bg-primary-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-400"
             >
               Go back home
             </a>

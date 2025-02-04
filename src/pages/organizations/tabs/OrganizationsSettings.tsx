@@ -197,7 +197,7 @@ const MyOrganizationSettings: React.FC = () => {
                     type="button"
                     icon={TrashIcon}
                     className={classNames(
-                      "block rounded-md bg-red-600 px-3 py-2 ring-transparent text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50"
+                      "block rounded-md bg-red-600 px-3 py-2 ring-transparent text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-red-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50"
                     )}
                     text={`Delete ${
                       isUnitContext

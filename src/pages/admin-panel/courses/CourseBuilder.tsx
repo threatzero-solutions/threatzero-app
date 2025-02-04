@@ -333,7 +333,7 @@ const CourseBuilder = withRequirePermissions(() => {
                   type="button"
                   onClick={() => handleEditSection()}
                   disabled={isNew}
-                  className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50"
+                  className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50"
                 >
                   + New Section
                 </button>

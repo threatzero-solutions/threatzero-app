@@ -65,7 +65,7 @@ const Alert = <T extends React.ElementType = "div">({
       <div
         className={classNames(
           "p-4",
-          "pointer-events-auto w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5",
+          "pointer-events-auto w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5",
           "flex items-start"
         )}
       >

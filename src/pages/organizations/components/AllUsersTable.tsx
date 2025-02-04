@@ -237,7 +237,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         <button
           type="button"
           className={classNames(
-            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
+            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
             "inline-flex items-center gap-x-1"
           )}
           disabled={!unitSlug}
@@ -254,7 +254,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         <button
           type="button"
           className={classNames(
-            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
+            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
             "inline-flex items-center gap-x-1"
           )}
           onClick={() => setIsBulkUserUploadOpen(true)}

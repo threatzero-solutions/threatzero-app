@@ -1,4 +1,11 @@
 import {
+  flip,
+  offset,
+  Placement,
+  useFloating,
+  UseFloatingOptions,
+} from "@floating-ui/react";
+import {
   Menu,
   MenuButton,
   MenuItem,
@@ -8,13 +15,6 @@ import {
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { Fragment, MouseEventHandler, ReactNode } from "react";
 import { classNames } from "../../utils/core";
-import {
-  flip,
-  offset,
-  Placement,
-  useFloating,
-  UseFloatingOptions,
-} from "@floating-ui/react";
 
 export interface DropdownAction {
   id: string | number;
@@ -143,7 +143,7 @@ const Dropdown: React.FC<DropdownProps> = ({
           ref={refs.setFloating}
           style={floatingStyles}
           className={classNames(
-            "z-20 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden",
+            "z-20 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden",
             "max-h-[45vh] overflow-y-auto",
             showDividers ? "divide-y divide-gray-100" : ""
           )}

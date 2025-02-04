@@ -223,7 +223,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
           title="Upload a file"
         >
           {!readOnly && (
-            <div className="cursor-pointer rounded-full bg-secondary-600 p-1.5 text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+            <div className="cursor-pointer rounded-full bg-secondary-600 p-1.5 text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
               <PlusIcon className="h-5 w-5" aria-hidden="true" />
             </div>
           )}

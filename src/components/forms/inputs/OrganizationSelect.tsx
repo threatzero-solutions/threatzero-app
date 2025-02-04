@@ -5,18 +5,18 @@ import {
   ComboboxOptions,
   Label,
 } from "@headlessui/react";
-import { Organization } from "../../../types/entities";
-import { useMemo, useState } from "react";
+import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
 import {
   getOrganizationBySlug,
   getOrganizations,
 } from "../../../queries/organizations";
-import { classNames } from "../../../utils/core";
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { SimpleChangeEvent } from "../../../types/core";
+import { Organization } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
 import PillBadge from "../../PillBadge";
-import { useDebounceValue } from "usehooks-ts";
 
 type ConditionalOrganization<M> = M extends true
   ? Organization[]
@@ -162,7 +162,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
             </button>
           )}
           {organizations && (
-            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm">
               {organizations.length === 0 && (
                 <ComboboxOption
                   value={null}

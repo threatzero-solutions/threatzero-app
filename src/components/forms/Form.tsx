@@ -454,7 +454,7 @@ const Form: React.FC<FormProps> = ({
                   type="button"
                   onClick={() => handlePublish()}
                   disabled={published}
-                  className="inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-90 disabled:pointer-events-none"
+                  className="inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-90 disabled:pointer-events-none"
                 >
                   {published ? (
                     <>
@@ -624,7 +624,7 @@ const Form: React.FC<FormProps> = ({
                           form: form as FormEntity,
                         })
                       }
-                      className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                      className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                     >
                       + Add Field
                     </button>
@@ -706,7 +706,7 @@ const Form: React.FC<FormProps> = ({
                       form: form as FormEntity,
                     })
                   }
-                  className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                  className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                 >
                   + Add Field Group
                 </button>
@@ -729,7 +729,7 @@ const Form: React.FC<FormProps> = ({
                   ref={action.ref}
                   className={classNames(
                     action.className ??
-                      "rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 transition-all",
+                      "rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 transition-all",
                     action.autoExecute ? "opacity-80 pointer-events-none" : "",
                     action.autoExecute && autoExecuteLoading
                       ? "animate-pulse"

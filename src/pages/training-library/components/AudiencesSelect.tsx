@@ -115,7 +115,7 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
               />
             </ComboboxButton>
 
-            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm">
               {(isGlobalAdmin || audiences?.length === 0) && (
                 <ComboboxOption
                   value={null}
@@ -126,7 +126,7 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
                     <button
                       onClick={() => handleEditAudience()}
                       type="button"
-                      className="block capitalize w-max rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                      className="block capitalize w-max rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                     >
                       + Create New {propertyNameSingular}
                     </button>
