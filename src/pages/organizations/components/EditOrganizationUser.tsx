@@ -16,9 +16,7 @@ import {
 } from "../../../constants/organizations";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import {
-  assignOrganizationUserToRoleGroup,
   getOrganizationUsers,
-  revokeOrganizationUserToRoleGroup,
   saveOrganizationUser,
 } from "../../../queries/organizations";
 import { getTrainingAudiences } from "../../../queries/training";
@@ -132,7 +130,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     register,
     handleSubmit,
     watch,
-    formState: { isDirty, dirtyFields },
+    formState: { isDirty },
   } = formMethods;
 
   const email = watch("email");
@@ -165,29 +163,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
   const { mutate: save, isPending } = useMutation({
     mutationFn: (user: TransientUser) =>
       organization
-        ? saveOrganizationUser(organization.id, toOrgUser(user)).then(
-            async (updatedUser) => {
-              if (dirtyFields.canAccessTraining) {
-                if (user.canAccessTraining === true) {
-                  return assignOrganizationUserToRoleGroup(
-                    organization.id,
-                    updatedUser.id,
-                    { groupPath: TRAINING_PARTICIPANT_ROLE_GROUP_PATH }
-                  ).then(() => updatedUser);
-                } else if (user.id && user.canAccessTraining === false) {
-                  // Only revoke if user already existed. New users won't be
-                  // assigned to this role group yet anyway.
-                  return revokeOrganizationUserToRoleGroup(
-                    organization.id,
-                    updatedUser.id,
-                    { groupPath: TRAINING_PARTICIPANT_ROLE_GROUP_PATH }
-                  ).then(() => updatedUser);
-                }
-              }
-
-              return Promise.resolve(updatedUser);
-            }
-          )
+        ? saveOrganizationUser(organization.id, toOrgUser(user))
         : Promise.reject(new Error("No organization")),
     onSuccess: () => {
       invalidateOrganizationUsersQuery();
@@ -345,6 +321,7 @@ const toOrgUser = (user: TransientUser): Partial<OrganizationUser> => ({
     audience: user.audienceSlugs,
     ...(user.unitSlug ? { unit: [user.unitSlug] } : {}),
   },
+  canAccessTraining: user.canAccessTraining,
 });
 
 const toTransientUser = (
@@ -357,7 +334,7 @@ const toTransientUser = (
   email: orgUser.email,
   unitSlug: orgUser.attributes.unit?.at(0) ?? unitSlug,
   audienceSlugs: orgUser.attributes.audience ?? [],
-  canAccessTraining: orgUser.groups?.includes(
-    TRAINING_PARTICIPANT_ROLE_GROUP_PATH
-  ),
+  canAccessTraining:
+    orgUser.canAccessTraining ??
+    orgUser.groups?.includes(TRAINING_PARTICIPANT_ROLE_GROUP_PATH),
 });

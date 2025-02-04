@@ -1,4 +1,5 @@
 import { PaginationState, SortingState } from "@tanstack/react-table";
+import { AxiosError } from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { OrderOptions, Ordering } from "../types/core";
@@ -296,3 +297,25 @@ export class Path {
     return [];
   }
 }
+
+export const extractErrorMessage = (error: unknown) => {
+  if (error instanceof AxiosError && error.response?.status) {
+    if (error.response.status >= 400 && error.response.status < 500) {
+      const errMsgRaw = error.response?.data?.message ?? error.message ?? error;
+
+      const cleanErrMsg = (err: unknown) => {
+        return typeof err === "object"
+          ? JSON.stringify(err, null, 2)
+          : `${err}`.replace(/^./, (str) => str.toUpperCase());
+      };
+
+      const errMsg = Array.isArray(errMsgRaw)
+        ? errMsgRaw.map(cleanErrMsg)
+        : cleanErrMsg(errMsgRaw);
+
+      return errMsg;
+    }
+  }
+
+  return null;
+};

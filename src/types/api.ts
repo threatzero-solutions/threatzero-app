@@ -90,6 +90,7 @@ export interface OrganizationUser {
   email: string;
   attributes: Record<string, string[] | undefined>;
   groups?: string[];
+  canAccessTraining?: boolean;
 }
 
 export interface KeycloakGroupDto {
