@@ -8,6 +8,7 @@ import {
   ORGANIZATION_TAT_GROUP_NAME,
   UNIT_TAT_GROUP_NAME,
 } from "../../../constants/organizations";
+import { READ } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import {
@@ -36,7 +37,7 @@ const MyOrganizationSafety: React.FC = () => {
     roleGroups,
     roleGroupsLoading,
   } = useContext(OrganizationsContext);
-  const { isGlobalAdmin } = useAuth();
+  const { isGlobalAdmin, hasPermissions } = useAuth();
 
   const tatGroupName = useMemo(
     () => (isUnitContext ? UNIT_TAT_GROUP_NAME : ORGANIZATION_TAT_GROUP_NAME),
@@ -148,7 +149,8 @@ const MyOrganizationSafety: React.FC = () => {
               saving={isUnitContext ? unitIsSaving : organizationIsSaving}
             />
           </LargeFormSection>
-          {(!tatGroupNotFound || isGlobalAdmin) && (
+          {((!tatGroupNotFound && hasPermissions([READ.ORGANIZATION_USERS])) ||
+            isGlobalAdmin) && (
             <LargeFormSection
               heading="Threat Assessment Team Members"
               subheading="Sort and filter through organization TAT members."

@@ -6,6 +6,7 @@ import {
   ORGANIZATION_TRAINING_ADMIN_GROUP_NAME,
   UNIT_TRAINING_ADMIN_GROUP_NAME,
 } from "../../../constants/organizations";
+import { READ } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { classNames } from "../../../utils/core";
@@ -22,7 +23,7 @@ const MyOrganizationTraining: React.FC = () => {
     roleGroupsLoading,
     getIdpRoleGroups,
   } = useContext(OrganizationsContext);
-  const { isGlobalAdmin } = useAuth();
+  const { isGlobalAdmin, hasPermissions } = useAuth();
 
   const trainingAdminGroupName = useMemo(
     () =>
@@ -70,7 +71,9 @@ const MyOrganizationTraining: React.FC = () => {
               />
             </LargeFormSection>
           )}
-          {(!trainingAdminGroupNotFound || isGlobalAdmin) && (
+          {((!trainingAdminGroupNotFound &&
+            hasPermissions([READ.ORGANIZATION_USERS])) ||
+            isGlobalAdmin) && (
             <LargeFormSection
               heading="Training Admins"
               subheading={`Grant access to manage training for this ${

@@ -6,6 +6,7 @@ import {
   ORGANIZATION_ADMIN_GROUP_NAME,
   UNIT_ADMIN_GROUP_NAME,
 } from "../../../constants/organizations";
+import { READ } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { classNames } from "../../../utils/core";
@@ -28,7 +29,7 @@ const MyOrganizationUnits: React.FC = () => {
     getIdpRoleGroups,
     invalidateAllUnitsQuery,
   } = useContext(OrganizationsContext);
-  const { isGlobalAdmin } = useAuth();
+  const { isGlobalAdmin, hasPermissions } = useAuth();
 
   const organizationAdminGroupName = useMemo(
     () =>
@@ -90,7 +91,9 @@ const MyOrganizationUnits: React.FC = () => {
               <SOSLocationsTable unitId={currentUnit.id} />
             </LargeFormSection>
           )}
-          {(!organizationAdminGroupNotFound || isGlobalAdmin) && (
+          {((!organizationAdminGroupNotFound &&
+            hasPermissions([READ.ORGANIZATION_USERS])) ||
+            isGlobalAdmin) && (
             <LargeFormSection
               heading={isUnitContext ? "Unit Admins" : "Organization Admins"}
               subheading={`Grant access to manage this ${

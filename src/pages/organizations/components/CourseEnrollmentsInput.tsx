@@ -84,7 +84,7 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
           <IconButton
             icon={ArrowRightEndOnRectangleIcon}
             className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
-            text="Enroll in New Course"
+            text="Create New Course Enrollment"
             type="button"
             onClick={() => editEnrollment.openNew()}
           />

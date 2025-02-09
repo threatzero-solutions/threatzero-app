@@ -18,6 +18,7 @@ import FilterBar from "../../../components/layouts/FilterBar";
 import Modal from "../../../components/layouts/modal/Modal";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
@@ -51,7 +52,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
   const moveUser = useOpenData<OrganizationUser>();
   const [isBulkUserUploadOpen, setIsBulkUserUploadOpen] = useState(false);
 
-  const { hasMultipleUnitAccess } = useAuth();
+  const { hasMultipleUnitAccess, hasPermissions } = useAuth();
   const {
     setOpen: setConfirmationOpen,
     setConfirmationOptions,
@@ -234,34 +235,38 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
   return (
     <>
       <div className="flex items-center gap-4 flex-wrap">
-        <button
-          type="button"
-          className={classNames(
-            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
-            "inline-flex items-center gap-x-1"
-          )}
-          disabled={!unitSlug}
-          title={
-            !unitSlug
-              ? "New users can only be added within the context of a unit."
-              : ""
-          }
-          onClick={() => editUser.openNew()}
-        >
-          <UserPlusIcon className="size-4 inline" />
-          New User
-        </button>
-        <button
-          type="button"
-          className={classNames(
-            "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
-            "inline-flex items-center gap-x-1"
-          )}
-          onClick={() => setIsBulkUserUploadOpen(true)}
-        >
-          <UsersIcon className="size-4 inline" />
-          Upload CSV
-        </button>
+        {hasPermissions([WRITE.ORGANIZATION_USERS]) && (
+          <>
+            <button
+              type="button"
+              className={classNames(
+                "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
+                "inline-flex items-center gap-x-1"
+              )}
+              disabled={!unitSlug}
+              title={
+                !unitSlug
+                  ? "New users can only be added within the context of a unit."
+                  : ""
+              }
+              onClick={() => editUser.openNew()}
+            >
+              <UserPlusIcon className="size-4 inline" />
+              New User
+            </button>
+            <button
+              type="button"
+              className={classNames(
+                "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
+                "inline-flex items-center gap-x-1"
+              )}
+              onClick={() => setIsBulkUserUploadOpen(true)}
+            >
+              <UsersIcon className="size-4 inline" />
+              Upload CSV
+            </button>
+          </>
+        )}
         <div className="flex-1"></div>
         <FilterBar
           searchOptions={{
@@ -280,6 +285,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         columns={columns}
         columnVisibility={{
           unit: hasMultipleUnitAccess && !thisUnit,
+          actions: hasPermissions([WRITE.ORGANIZATION_USERS]),
         }}
         data={users?.results ?? []}
         isLoading={usersLoading}

@@ -11,21 +11,30 @@ import {
 import { useContext, useMemo, useState } from "react";
 import { NavLink, Outlet, To, useLocation } from "react-router";
 import SlideOver from "../../components/layouts/slide-over/SlideOver";
-import { myOrganizationPermissionOptions } from "../../constants/permission-options";
+import {
+  myOrganizationPermissionOptions,
+  organizationSafetyManagementPermissionOptions,
+  organizationSettingsPermissionOptions,
+  organizationTrainingManagementPermissionOptions,
+  organizationUserPermissionOptions,
+} from "../../constants/permission-options";
+import { WRITE } from "../../constants/permissions";
 import { useAuth } from "../../contexts/auth/useAuth";
 import {
   OrganizationsContext,
   OrganizationsContextProvider,
 } from "../../contexts/organizations/organizations-context";
 import { withRequirePermissions } from "../../guards/with-require-permissions";
+import { NavigationItem } from "../../types/core";
 import { Organization, Unit } from "../../types/entities";
 import { classNames, humanizeSlug } from "../../utils/core";
+import { useNav } from "../../utils/navigation";
 import EditOrganizationBasic from "./components/EditOrganizationBasic";
 
 const OrganizationsRootInner: React.FC = () => {
   const [editBasicInfoOpen, setEditBasicInfoOpen] = useState(false);
 
-  const { isGlobalAdmin } = useAuth();
+  const { isGlobalAdmin, hasPermissions } = useAuth();
 
   const {
     currentOrganization,
@@ -43,6 +52,7 @@ const OrganizationsRootInner: React.FC = () => {
   const paths = useMemo(() => unitsPath?.split("/") ?? [], [unitsPath]);
 
   const { search } = useLocation();
+  const { canNavigate } = useNav();
 
   const unitSlugMap = useMemo(
     () =>
@@ -54,35 +64,42 @@ const OrganizationsRootInner: React.FC = () => {
   );
 
   const tabs = useMemo(
-    () => [
-      {
-        name: "Units",
-        to: "units",
-        icon: BuildingOffice2Icon,
-      },
-      {
-        name: "Users",
-        to: "users",
-        icon: UsersIcon,
-      },
-      {
-        name: "Training",
-        to: "training",
-        icon: BookOpenIcon,
-      },
-      {
-        name: "Safety",
-        to: "safety",
-        icon: LifebuoyIcon,
-      },
-      {
-        name: "Settings",
-        to: "settings",
-        icon: Cog6ToothIcon,
-        hidden: !isUnitContext && !isGlobalAdmin,
-      },
-    ],
-    [isUnitContext, isGlobalAdmin]
+    () =>
+      (
+        [
+          {
+            name: "Units",
+            to: "units",
+            icon: BuildingOffice2Icon,
+          },
+          {
+            name: "Users",
+            to: "users",
+            icon: UsersIcon,
+            permissionOptions: organizationUserPermissionOptions,
+          },
+          {
+            name: "Training",
+            to: "training",
+            icon: BookOpenIcon,
+            permissionOptions: organizationTrainingManagementPermissionOptions,
+          },
+          {
+            name: "Safety",
+            to: "safety",
+            icon: LifebuoyIcon,
+            permissionOptions: organizationSafetyManagementPermissionOptions,
+          },
+          {
+            name: "Settings",
+            to: "settings",
+            icon: Cog6ToothIcon,
+            hidden: !isUnitContext && !isGlobalAdmin,
+            permissionOptions: organizationSettingsPermissionOptions,
+          },
+        ] as (NavigationItem & { icon: typeof HomeIcon; hidden?: boolean })[]
+      ).filter(canNavigate),
+    [isUnitContext, isGlobalAdmin, canNavigate]
   );
 
   return (
@@ -132,10 +149,12 @@ const OrganizationsRootInner: React.FC = () => {
             <>
               <h1 className="text-2xl font-semibold leading-6 text-gray-900 inline-flex items-center gap-2">
                 {isUnitContext ? currentUnit?.name : currentOrganization?.name}
-                <PencilIcon
-                  onClick={() => setEditBasicInfoOpen(true)}
-                  className="size-5 cursor-pointer text-gray-400 hover:text-gray-500"
-                />
+                {hasPermissions([WRITE.ORGANIZATIONS]) && (
+                  <PencilIcon
+                    onClick={() => setEditBasicInfoOpen(true)}
+                    className="size-5 cursor-pointer text-gray-400 hover:text-gray-500"
+                  />
+                )}
               </h1>
               <p className="text-sm pt-2">
                 {(isUnitContext

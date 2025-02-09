@@ -11,6 +11,7 @@ import FilterBar from "../../../components/layouts/FilterBar";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import {
@@ -41,7 +42,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
   groupId,
   unitSlug,
 }) => {
-  const { hasMultipleUnitAccess } = useAuth();
+  const { hasMultipleUnitAccess, hasPermissions } = useAuth();
 
   const [usersQuery, setUsersQuery] = useImmer<ItemFilterQueryParams>({
     order: { createdTimestamp: "DESC" },
@@ -171,28 +172,32 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
   return (
     <>
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <AddUserPopover
-          organizationId={organizationId}
-          unitSlug={unitSlug}
-          onAddUsers={handleAddUsersToGroup}
-          isPending={isAdmittingUsers}
-          appendQuery={{
-            ["groups.ids"]: [groupId],
-            ["groups.op"]: "none",
-          }}
-          button={
-            <button
-              type="button"
-              className={classNames(
-                "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
-                "inline-flex items-center gap-x-1"
-              )}
-            >
-              <ArrowRightEndOnRectangleIcon className="size-4 inline" />
-              {joinText}
-            </button>
-          }
-        />
+        {hasPermissions([WRITE.ORGANIZATION_USERS]) ? (
+          <AddUserPopover
+            organizationId={organizationId}
+            unitSlug={unitSlug}
+            onAddUsers={handleAddUsersToGroup}
+            isPending={isAdmittingUsers}
+            appendQuery={{
+              ["groups.ids"]: [groupId],
+              ["groups.op"]: "none",
+            }}
+            button={
+              <button
+                type="button"
+                className={classNames(
+                  "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
+                  "inline-flex items-center gap-x-1"
+                )}
+              >
+                <ArrowRightEndOnRectangleIcon className="size-4 inline" />
+                {joinText}
+              </button>
+            }
+          />
+        ) : (
+          <div></div>
+        )}
         <FilterBar
           searchOptions={{
             placeholder: "Search by name or email...",
@@ -210,6 +215,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
         columns={columns}
         columnVisibility={{
           unit: hasMultipleUnitAccess && !thisUnit,
+          actions: hasPermissions([WRITE.ORGANIZATION_USERS]),
         }}
         data={users?.results ?? []}
         isLoading={usersLoading}
