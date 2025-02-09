@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import Footer from "../components/layouts/Footer";
 import { useAuth } from "../contexts/auth/useAuth";
 
@@ -19,7 +19,7 @@ const ErrorPage: React.FC<ErrorPageProps> = ({ friendlyErrorMessage }) => {
           <button
             type="button"
             onClick={() => keycloak?.logout()}
-            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
           >
             Logout
           </button>
@@ -37,7 +37,7 @@ const ErrorPage: React.FC<ErrorPageProps> = ({ friendlyErrorMessage }) => {
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <a
               href={HOME_PAGE}
-              className="rounded-md bg-primary-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400"
+              className="rounded-md bg-primary-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-400"
             >
               Go back home
             </a>

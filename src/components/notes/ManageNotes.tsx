@@ -150,7 +150,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                   addNoteMutation.mutate({ value: newNote });
                 }}
               >
-                <div className="overflow-hidden rounded-lg pb-12 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-secondary-600">
+                <div className="overflow-hidden rounded-lg pb-12 shadow-xs ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-secondary-600">
                   <label htmlFor="comment" className="sr-only">
                     Add your note
                   </label>
@@ -169,10 +169,10 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                   <div className="flex items-center space-x-5">
                     {/* Add extra buttons here */}
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <button
                       type="submit"
-                      className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                      className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     >
                       Add Note
                     </button>
@@ -184,12 +184,12 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
         </div>
 
         {/* Action buttons */}
-        <div className="flex-shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
+        <div className="shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
           <div className="flex space-x-3">
             <div className="grow"></div>
             <button
               type="button"
-              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
               onClick={() => setOpen(false)}
             >
               Close

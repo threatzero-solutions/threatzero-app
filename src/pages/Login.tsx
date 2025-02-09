@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { withAuthenticationRequired } from "../contexts/auth/withAuthenticationRequired";
 
 const Login: React.FC = withAuthenticationRequired(() => {

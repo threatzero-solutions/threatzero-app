@@ -8,7 +8,7 @@ const CourseVisibilityTag: React.FC<{
   return (
     <span
       className={classNames(
-        "font-semibold text-white text-xs rounded px-2 py-1 w-max inline-flex items-center h-max shrink-0",
+        "font-semibold text-white text-xs rounded-sm px-2 py-1 w-max inline-flex items-center h-max shrink-0",
         visibility === TrainingVisibility.HIDDEN
           ? "bg-purple-500"
           : "bg-secondary-500"

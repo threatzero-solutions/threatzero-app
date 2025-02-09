@@ -14,7 +14,7 @@ import UserMenu from "../../UserMenu";
 import SideNavLink from "./SideNavLink";
 import { NavigationItem } from "../../../types/core";
 import { CoreContext } from "../../../contexts/core/core-context";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { classNames } from "../../../utils/core";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { useNav } from "../../../utils/navigation";
@@ -27,7 +27,7 @@ import {
   trainingAdminPermissionOptions,
   resourcePermissionsOptions,
   adminPanelPermissionOptions,
-  // myOrganizationPermissionOptions,
+  myOrganizationPermissionOptions,
 } from "../../../constants/permission-options";
 
 const INITIAL_NAVIGATION: NavigationItem[] = [
@@ -101,11 +101,11 @@ const INITIAL_NAVIGATION: NavigationItem[] = [
     to: "/admin-panel",
     permissionOptions: adminPanelPermissionOptions,
   },
-  // {
-  //   name: "My Organization",
-  //   to: "/my-organization",
-  //   permissionOptions: myOrganizationPermissionOptions,
-  // },
+  {
+    name: "My Organization",
+    to: "/my-organization",
+    permissionOptions: myOrganizationPermissionOptions,
+  },
 ];
 
 const HelpCenterLink: React.FC = () => {

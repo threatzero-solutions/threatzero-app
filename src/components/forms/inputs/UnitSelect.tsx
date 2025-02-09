@@ -5,32 +5,39 @@ import {
   ComboboxOptions,
   Label,
 } from "@headlessui/react";
-import { Unit } from "../../../types/entities";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getUnits, getUnitBySlug } from "../../../queries/organizations";
-import { classNames } from "../../../utils/core";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { SimpleChangeEvent } from "../../../types/core";
-import PillBadge from "../../PillBadge";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
+import { getUnitBySlug, getUnits } from "../../../queries/organizations";
+import { SimpleChangeEvent } from "../../../types/core";
+import { Unit } from "../../../types/entities";
+import { classNames } from "../../../utils/core";
+import PillBadge from "../../PillBadge";
 
 type ConditionalUnit<M> = M extends true
   ? Unit[]
   : Unit | string | null | undefined;
 
-interface UnitSelectProps<M extends boolean | undefined> {
-  value: ConditionalUnit<M>;
-  onChange?: (event: SimpleChangeEvent<ConditionalUnit<M>>) => void;
+interface UnitSelectProps<
+  M extends boolean | undefined,
+  TUnit extends ConditionalUnit<M>
+> {
+  value: TUnit;
+  onChange?: (event: SimpleChangeEvent<TUnit>) => void;
   name?: string;
   label?: string;
   many?: M;
   required?: boolean;
   disabled?: boolean;
   queryFilter?: Record<string, string>;
+  filter?: (u: Unit) => boolean;
 }
 
-const UnitSelect = <M extends boolean | undefined = false>({
+const UnitSelect = <
+  M extends boolean | undefined,
+  TUnit extends ConditionalUnit<M>
+>({
   value,
   onChange,
   name,
@@ -39,7 +46,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
   required,
   disabled = false,
   queryFilter,
-}: UnitSelectProps<M>) => {
+}: UnitSelectProps<M, TUnit>) => {
   const [unitQuery, setUnitQuery] = useState<string>("");
   const [debouncedUnitQuery] = useDebounceValue(unitQuery, 350);
 
@@ -89,7 +96,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
       ?.slice(0, 5);
   }, [unitData, value]);
 
-  const handleChange = (units: ConditionalUnit<M>) => {
+  const handleChange = (units: TUnit) => {
     if (many && !Array.isArray(units) && units) {
       handleAddUnit(units);
       return;
@@ -108,14 +115,14 @@ const UnitSelect = <M extends boolean | undefined = false>({
     if (!many || !Array.isArray(value)) {
       return;
     }
-    handleChange([...value, unit] as ConditionalUnit<M>);
+    handleChange([...value, unit] as TUnit);
   };
 
   const handleRemoveUnit = (unit: Unit) => {
     if (!many || !Array.isArray(value)) {
       return;
     }
-    handleChange(value.filter((o) => o.id !== unit.id) as ConditionalUnit<M>);
+    handleChange(value.filter((o) => o.id !== unit.id) as TUnit);
   };
 
   return (
@@ -138,7 +145,7 @@ const UnitSelect = <M extends boolean | undefined = false>({
         )}
         <div className="relative">
           <ComboboxInput
-            className="w-full rounded-md border-0 bg-white py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+            className="w-full rounded-md border-0 bg-white py-1.5 px-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
             onChange={(e) => setUnitQuery(e.target.value)}
             displayValue={(unit: Unit | string) =>
               many
@@ -155,14 +162,14 @@ const UnitSelect = <M extends boolean | undefined = false>({
           {!many && value && (
             <button
               type="button"
-              onClick={() => handleChange(null as ConditionalUnit<M>)}
-              className="absolute inset-y-1 right-1 bg-white flex items-center rounded-r-md px-2 focus:outline-none hover:opacity-80 transition-opacity"
+              onClick={() => handleChange(null as TUnit)}
+              className="absolute inset-y-1 right-1 bg-white flex items-center rounded-r-md px-2 focus:outline-hidden hover:opacity-80 transition-opacity"
             >
               <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
             </button>
           )}
           {units && (
-            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+            <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm">
               {units.length === 0 && (
                 <ComboboxOption
                   value={null}

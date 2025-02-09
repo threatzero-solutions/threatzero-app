@@ -1,40 +1,32 @@
 import {
+  DefaultError,
   MutationCache,
   QueryCache,
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { PropsWithChildren, useContext, useState } from "react";
+import { PropsWithChildren, useCallback, useContext, useState } from "react";
+import { as, extractErrorMessage } from "../utils/core";
 import { AlertContext } from "./alert/alert-context";
-import { AxiosError } from "axios";
+import { useAlertId } from "./alert/use-alert-id";
 
 const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
   const { setError } = useContext(AlertContext);
+  const defaultErrorAlertId = useAlertId();
 
-  const handleError = (error: unknown) => {
-    console.error(error);
-    if (error instanceof AxiosError && error.response?.status) {
-      if (error.response.status >= 400 && error.response.status < 500) {
-        const errMsgRaw =
-          error.response?.data?.message ?? error.message ?? error;
-
-        const cleanErrMsg = (err: unknown) => {
-          return typeof err === "object"
-            ? JSON.stringify(err, null, 2)
-            : `${err}`.replace(/^./, (str) => str.toUpperCase());
-        };
-
-        const errMsg = Array.isArray(errMsgRaw)
-          ? errMsgRaw.map(cleanErrMsg)
-          : cleanErrMsg(errMsgRaw);
-
-        setError(errMsg);
+  const handleError = useCallback(
+    (error: DefaultError) => {
+      console.error(error);
+      const errMsg = extractErrorMessage(error);
+      if (errMsg) {
+        setError(errMsg, { id: defaultErrorAlertId });
         return;
       }
-    }
 
-    setError("Oops! Something went wrong.");
-  };
+      setError("Oops! Something went wrong.", { id: defaultErrorAlertId });
+    },
+    [defaultErrorAlertId, setError]
+  );
 
   const [queryClient] = useState(() => {
     return new QueryClient({
@@ -42,7 +34,10 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
         onError: handleError,
       }),
       mutationCache: new MutationCache({
-        onError: handleError,
+        onError: (error, _variables, context) => {
+          if (as(context).skipOnError) return;
+          handleError(error);
+        },
       }),
     });
   });

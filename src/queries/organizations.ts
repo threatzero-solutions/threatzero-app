@@ -1,18 +1,29 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import {
-  Unit,
-  Organization,
-  Location,
+  IsUniqueResponse,
+  KeycloakGroupDto,
+  OrganizationIdpDto,
+  OrganizationUser,
+} from "../types/api";
+import { DeepPartial } from "../types/core";
+import {
+  CourseEnrollment,
   LmsTrainingToken,
   LmsTrainingTokenValue,
+  Location,
+  Organization,
+  Unit,
 } from "../types/entities";
+import { ScormVersion } from "../types/training";
 import {
+  buildUrl,
   deleteOne,
   download,
   findMany,
   findManyRaw,
-  findOneById,
+  findOne,
   findOneByIdOrFail,
   findOneOrFail,
   insertOne,
@@ -20,10 +31,6 @@ import {
   save,
   updateOne,
 } from "./utils";
-import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
-import { DeepPartial } from "../types/core";
-import { OrganizationIdpDto, OrganizationUser } from "../types/api";
-import { ScormVersion } from "../types/training";
 
 export const getOrganizations = (query?: ItemFilterQueryParams) =>
   findMany<Organization>("/organizations/organizations/", query);
@@ -37,9 +44,36 @@ export const getMyOrganization = () =>
 export const getOrganizationBySlug = (slug?: string) =>
   findOneByIdOrFail<Organization>("/organizations/organizations/slug/", slug);
 
-export const getCourseEnrollments = (id?: Organization["id"]) =>
-  findOneById<Organization>("/organizations/organizations/", id).then(
-    (organization) => organization?.enrollments ?? []
+export const isOrganizationSlugUnique = (slug: string) =>
+  findOne<IsUniqueResponse>("/organizations/organizations/slug-unique/", {
+    params: {
+      slug,
+    },
+  });
+
+export const isIdpSlugUnique = (slug: string) =>
+  findOne<IsUniqueResponse>("/organizations/organizations/idp-slug-unique/", {
+    params: {
+      slug,
+    },
+  });
+
+export const getCourseEnrollments = (
+  id: Organization["id"],
+  query?: ItemFilterQueryParams
+) =>
+  findMany<CourseEnrollment>(
+    `/organizations/organizations/${id}/enrollments/`,
+    query
+  );
+
+export const getCourseEnrollment = (
+  id: Organization["id"],
+  enrollmentId?: CourseEnrollment["id"]
+) =>
+  findOneByIdOrFail<CourseEnrollment>(
+    `/organizations/organizations/${id}/enrollments/`,
+    enrollmentId
   );
 
 export const getOrganizationLmsTokens = (
@@ -76,8 +110,10 @@ export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
     slug
   );
 
-export const getOrganizationIdpRoleGroups = (id: Organization["id"]) =>
-  findManyRaw<string[]>(`/organizations/organizations/${id}/idps/role-groups/`);
+export const getRoleGroupsForOrganization = (id: Organization["id"]) =>
+  findManyRaw<KeycloakGroupDto[]>(
+    `/organizations/organizations/${id}/role-groups/`
+  );
 
 export const getUnits = (query?: ItemFilterQueryParams) =>
   findMany<Unit>("/organizations/units/", query);
@@ -91,8 +127,16 @@ export const getUnitBySlug = (slug?: string) =>
     throw new Error('Unit not found by slug "' + slug + '"');
   });
 
+export const isUnitSlugUnique = (organizationId: string, slug: string) =>
+  findOne<IsUniqueResponse>("/organizations/units/slug-unique/", {
+    params: { slug, organizationId },
+  });
+
 export const getLocations = (query?: ItemFilterQueryParams) =>
   findMany<Location>("/organizations/locations/", query);
+
+export const getLocation = (id?: Location["id"]) =>
+  findOneByIdOrFail<Location>("/organizations/locations/", id);
 
 export const generateQrCode = async (locationId: string) => {
   const url = `${API_BASE_URL}/organizations/locations/${locationId}/sos-qr-code/`;
@@ -103,6 +147,14 @@ export const generateQrCode = async (locationId: string) => {
     .then((res) => ({ locationId, data: res.data }));
 };
 
+export const getGenerateOrganizationPolicyUploadUrlsUrl = (
+  organizationId: string
+) =>
+  `${API_BASE_URL}/organizations/organizations/${organizationId}/generate-policy-upload-urls/`;
+
+export const getGenerateUnitPolicyUploadUrlsUrl = (unitId: string) =>
+  `${API_BASE_URL}/organizations/units/${unitId}/generate-policy-upload-urls/`;
+
 // ------------- MUTATIONS -------------
 
 export const saveOrganization = (organization: DeepPartial<Organization>) =>
@@ -110,6 +162,20 @@ export const saveOrganization = (organization: DeepPartial<Organization>) =>
 
 export const deleteOrganization = (id: string | undefined) =>
   deleteOne("/organizations/organizations/", id);
+
+export const saveCourseEnrollment = (
+  id: Organization["id"],
+  enrollment: DeepPartial<CourseEnrollment>
+) =>
+  save<CourseEnrollment>(
+    `/organizations/organizations/${id}/enrollments/`,
+    enrollment
+  );
+
+export const deleteCourseEnrollment = (
+  id: Organization["id"],
+  enrollmentId: CourseEnrollment["id"]
+) => deleteOne(`/organizations/organizations/${id}/enrollments/`, enrollmentId);
 
 export const createOrganizationLmsToken = (
   id: Organization["id"],
@@ -153,6 +219,52 @@ export const importOrganizationIdpMetadata = <
   insertOne<T, Record<string, string>>(
     `/organizations/organizations/${id}/idps/load-imported-config/${protocol}/`,
     payload
+  );
+
+export const saveOrganizationUser = (
+  id: Organization["id"],
+  user: DeepPartial<OrganizationUser>
+) => save<OrganizationUser>(`/organizations/organizations/${id}/users/`, user);
+
+export const deleteOrganizationUser = (
+  id: Organization["id"],
+  userId: string
+) => deleteOne(`/organizations/organizations/${id}/users/`, userId);
+
+export const assignOrganizationUserToRoleGroup = (
+  id: Organization["id"],
+  userId: string,
+  groupOptions: {
+    groupId?: string;
+    groupPath?: string;
+  }
+) =>
+  axios.post(
+    buildUrl(
+      `/organizations/organizations/${id}/users/${userId}/assign-role-group/`
+    ),
+    null,
+    {
+      params: groupOptions,
+    }
+  );
+
+export const revokeOrganizationUserToRoleGroup = (
+  id: Organization["id"],
+  userId: string,
+  groupOptions: {
+    groupId?: string;
+    groupPath?: string;
+  }
+) =>
+  axios.post(
+    buildUrl(
+      `/organizations/organizations/${id}/users/${userId}/revoke-role-group/`
+    ),
+    null,
+    {
+      params: groupOptions,
+    }
   );
 
 export const createOrganizationIdp = (

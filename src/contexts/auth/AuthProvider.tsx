@@ -8,12 +8,13 @@ import {
   useState,
 } from "react";
 import configJson from "../../config";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import ErrorPage from "../../pages/ErrorPage";
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
 import axios, { InternalAxiosRequestConfig } from "axios";
 import SplashScreen from "../../components/layouts/SplashScreen";
 import { LEVEL } from "../../constants/permissions";
+import { getUnits } from "../../queries/organizations";
 
 const TOKEN_MIN_VALIDATY_SECONDS = 2;
 
@@ -80,6 +81,7 @@ export interface AuthContextType {
   hasMultipleOrganizationAccess: boolean;
   myOrganizationSlug?: string;
   myUnitSlug?: string;
+  isGlobalAdmin: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -92,6 +94,7 @@ export const AuthContext = createContext<AuthContextType>({
   interceptorReady: false,
   hasMultipleUnitAccess: false,
   hasMultipleOrganizationAccess: false,
+  isGlobalAdmin: false,
 });
 
 const _keycloak = new Keycloak(configJson.keycloak.config as KeycloakConfig);
@@ -265,16 +268,17 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     [accessTokenClaims]
   );
 
-  // Commonly used permission types.
-  const hasMultipleUnitAccess = useMemo(
-    () =>
-      hasPermissions([LEVEL.ORGANIZATION, LEVEL.ADMIN], "any") ||
-      (!!keycloak?.tokenParsed?.peer_units?.length &&
-        keycloak.tokenParsed.peer_units.length > 1),
-    [hasPermissions, keycloak?.tokenParsed]
-  );
+  const [hasMultipleUnitAccess, setHasMultipleUnitAccess] = useState(false);
+  useEffect(() => {
+    if (!interceptorReady) {
+      return;
+    }
+    getUnits({ limit: 1 }).then((units) =>
+      setHasMultipleUnitAccess(units.count > 1)
+    );
+  }, [interceptorReady]);
 
-  const hasMultipleOrganizationAccess = useMemo(
+  const isGlobalAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN]),
     [hasPermissions]
   );
@@ -291,9 +295,10 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         accessTokenClaims,
         interceptorReady,
         hasMultipleUnitAccess,
-        hasMultipleOrganizationAccess,
+        hasMultipleOrganizationAccess: isGlobalAdmin,
         myOrganizationSlug,
         myUnitSlug,
+        isGlobalAdmin,
       }}
     >
       {keycloak ? (

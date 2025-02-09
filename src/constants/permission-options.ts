@@ -57,6 +57,26 @@ export const adminPanelPermissionOptions = {
 
 // MY ORGANIZATION
 export const myOrganizationPermissionOptions = {
-  permissions: [],
+  permissions: [READ.ORGANIZATIONS],
+  type: "all" as const,
+};
+
+export const organizationUserPermissionOptions = {
+  permissions: [READ.ORGANIZATION_USERS],
+  type: "all" as const,
+};
+
+export const organizationTrainingManagementPermissionOptions = {
+  permissions: [READ.COURSE_ENROLLMENTS, WRITE.COURSE_ENROLLMENTS],
+  type: "all" as const,
+};
+
+export const organizationSafetyManagementPermissionOptions = {
+  permissions: [WRITE.ORGANIZATIONS],
+  type: "all" as const,
+};
+
+export const organizationSettingsPermissionOptions = {
+  permissions: [WRITE.ORGANIZATIONS],
   type: "all" as const,
 };

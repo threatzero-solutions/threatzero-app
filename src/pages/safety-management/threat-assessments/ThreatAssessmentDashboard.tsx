@@ -1,8 +1,21 @@
-import { useMemo, useState } from "react";
-import { WRITE } from "../../../constants/permissions";
-import { withRequirePermissions } from "../../../guards/with-require-permissions";
-import { fromDaysKey, fromStatus } from "../../../utils/core";
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { useMemo, useState } from "react";
+import { Link, useLocation } from "react-router";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+import EditableCell from "../../../components/layouts/EditableCell";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import StatsDisplay from "../../../components/StatsDisplay";
+import { threatAssessmentPermissionsOptions } from "../../../constants/permission-options";
+import { WRITE } from "../../../constants/permissions";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
+import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import {
   SafetyManagementResourceFilterOptions,
   getThreatAssessmentStats,
@@ -10,21 +23,8 @@ import {
   saveThreatAssessment,
 } from "../../../queries/safety-management";
 import { AssessmentStatus, ThreatAssessment } from "../../../types/entities";
-import { Link, useLocation } from "react-router-dom";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import { fromDaysKey, fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
-import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
-import EditableCell from "../../../components/layouts/EditableCell";
-import StatsDisplay from "../../../components/StatsDisplay";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
-import { threatAssessmentPermissionsOptions } from "../../../constants/permission-options";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
-import DataTable2 from "../../../components/layouts/DataTable2";
-import IconButton from "../../../components/layouts/buttons/IconButton";
-import { ArrowRightIcon } from "@heroicons/react/20/solid";
 
 dayjs.extend(relativeTime);
 
@@ -230,7 +230,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
           <Link to={"./new"}>
             <button
               type="button"
-              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             >
               + Start New Assessment
             </button>

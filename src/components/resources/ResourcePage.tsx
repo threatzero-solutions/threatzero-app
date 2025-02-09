@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useParams } from "react-router-dom";
+import { NavLink, Outlet, useParams } from "react-router";
 import { classNames } from "../../utils/core";
 import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { resourcePermissionsOptions } from "../../constants/permission-options";

@@ -45,3 +45,10 @@ export type FieldPath<T, Prefix extends string = ""> = {
           >
     : `${Prefix extends "" ? "" : `${Prefix}.`}${K & string}`;
 }[keyof T];
+
+export type KeysOfType<T, U> = Exclude<
+  {
+    [K in keyof T]: T[K] extends U | undefined ? K : never;
+  }[keyof T],
+  undefined
+>;

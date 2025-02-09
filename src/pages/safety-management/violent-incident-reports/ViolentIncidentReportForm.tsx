@@ -1,4 +1,19 @@
+import { CheckIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import Form from "../../../components/forms/Form";
+import BackButton from "../../../components/layouts/BackButton";
+import Dropdown, { DropdownAction } from "../../../components/layouts/Dropdown";
+import EditableCell from "../../../components/layouts/EditableCell";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import ManageNotes from "../../../components/notes/ManageNotes";
+import { VIOLENT_INCIDENT_REPORT_FORM_SLUG } from "../../../constants/forms";
+import { LEVEL, WRITE } from "../../../constants/permissions";
+import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../contexts/alert/use-alert-id";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { API_BASE_URL } from "../../../contexts/core/constants";
 import {
   addViolentIncidentReportNote,
   getViolentIncidentReportForm,
@@ -7,33 +22,14 @@ import {
   saveViolentIncidentReport,
   violentIncidentReportToPdf,
 } from "../../../queries/safety-management";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { DeepPartial } from "../../../types/core";
 import {
   FormState,
   FormSubmission,
   ViolentIncidentReportStatus,
 } from "../../../types/entities";
-import Form from "../../../components/forms/Form";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import StatusPill from "./components/StatusPill";
-import { LEVEL, WRITE } from "../../../constants/permissions";
-import { VIOLENT_INCIDENT_REPORT_FORM_SLUG } from "../../../constants/forms";
-import BackButton from "../../../components/layouts/BackButton";
-import Dropdown, { DropdownAction } from "../../../components/layouts/Dropdown";
-import SlideOver from "../../../components/layouts/slide-over/SlideOver";
-import ManageNotes from "../../../components/notes/ManageNotes";
-import { CheckIcon } from "@heroicons/react/20/solid";
-import { API_BASE_URL } from "../../../contexts/core/constants";
-import EditableCell from "../../../components/layouts/EditableCell";
-import { DeepPartial } from "../../../types/core";
-import { useAuth } from "../../../contexts/auth/useAuth";
 import { simulateDownload } from "../../../utils/core";
-import { AlertContext } from "../../../contexts/alert/alert-context";
+import StatusPill from "./components/StatusPill";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/violent-incident-reports/submissions/presigned-upload-urls`;
 
@@ -44,7 +40,9 @@ const ViolentIncidentReportForm: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const { setInfo } = useContext(AlertContext);
+  const { setInfo, clearAlert } = useContext(AlertContext);
+  const infoAlertId = useAlertId();
+
   const { hasPermissions } = useAuth();
 
   const isEditing = useMemo(() => searchParams.has("edit"), [searchParams]);
@@ -130,10 +128,10 @@ const ViolentIncidentReportForm: React.FC = () => {
     onSuccess: (data) => {
       simulateDownload(new Blob([data]), "violent-incident-report.pdf");
 
-      setTimeout(() => setInfo(), 2000);
+      setTimeout(() => clearAlert(infoAlertId), 2000);
     },
     onError: () => {
-      setInfo();
+      clearAlert(infoAlertId);
     },
   });
 
@@ -149,7 +147,7 @@ const ViolentIncidentReportForm: React.FC = () => {
         id: "pdf",
         value: "Download as PDF",
         action: () => {
-          setInfo("Downloading as PDF...");
+          setInfo("Downloading as PDF...", { id: infoAlertId });
           downloadViolentIncidentReportToPdfMutation.mutate(
             violentIncidentReport?.id
           );
@@ -171,6 +169,7 @@ const ViolentIncidentReportForm: React.FC = () => {
       setIsEditing,
       downloadViolentIncidentReportToPdfMutation,
       setInfo,
+      infoAlertId,
     ]
   );
 
@@ -231,7 +230,7 @@ const ViolentIncidentReportForm: React.FC = () => {
             <button
               type="button"
               onClick={() => setManageNotesOpen(true)}
-              className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             >
               Notes {notes && <span>({notes?.results.length ?? 0})</span>}
             </button>
@@ -251,7 +250,7 @@ const ViolentIncidentReportForm: React.FC = () => {
             >
               <button
                 type="button"
-                className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
               >
                 {form ? "Edit Draft" : "+ Create Violent Incident Log Form"}
               </button>

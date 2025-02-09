@@ -1,0 +1,14 @@
+export const TRAINING_PARTICIPANT_GROUP_NAME = "Training Participant";
+
+export const TRAINING_PARTICIPANT_ROLE_GROUP_PATH =
+  "/Role Groups/" + TRAINING_PARTICIPANT_GROUP_NAME;
+
+export const UNIT_ADMIN_GROUP_NAME = "Unit Admin";
+export const ORGANIZATION_ADMIN_GROUP_NAME = "Organization Admin";
+export const ORGANIZATION_TRAINING_ADMIN_GROUP_NAME =
+  "Organization Training Admin";
+export const UNIT_TRAINING_ADMIN_GROUP_NAME = "Training Admin";
+export const ORGANIZATION_TAT_GROUP_NAME = "Organization TAT Member";
+export const UNIT_TAT_GROUP_NAME = "Unit TAT Member";
+
+export const DISABLED_ROLE_GROUPS = ["ThreatZero Administrator"];

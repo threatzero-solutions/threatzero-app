@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { getLanguages } from "../../../queries/languages";
-import DataTable from "../../../components/layouts/DataTable";
-import SlideOver from "../../../components/layouts/slide-over/SlideOver";
-import EditLanguage from "./EditLanguage";
-import { Language } from "../../../types/entities";
 import { useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useDebounceValue } from "usehooks-ts";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import DataTable from "../../../components/layouts/tables/DataTable";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { getLanguages } from "../../../queries/languages";
+import { Language } from "../../../types/entities";
+import EditLanguage from "./EditLanguage";
 
 export const ViewLanguages: React.FC = () => {
   const [editLanguageSliderOpen, setEditLanguageSliderOpen] = useState(false);
@@ -94,7 +94,7 @@ export const ViewLanguages: React.FC = () => {
         action={
           <button
             type="button"
-            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             onClick={() => handleEditLanguage()}
           >
             + Add New Language

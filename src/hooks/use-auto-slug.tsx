@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import {
   Path,
   PathValue,
+  RegisterOptions,
   UseFormRegister,
   UseFormRegisterReturn,
   UseFormSetValue,
@@ -49,7 +50,7 @@ export const useAutoSlug = <
   // or potential infinite loops.
   const setSlug = useCallback(
     (value: PathValue<T, Path<T>>, prevSlug?: PathValue<T, Path<T>>) => {
-      if (value) {
+      if (typeof value === "string") {
         const cleanedSlug = slugify(value as string);
         if (cleanedSlug !== prevSlug) {
           setValue("slug" as Path<T>, cleanedSlug as PathValue<T, Path<T>>);
@@ -61,7 +62,7 @@ export const useAutoSlug = <
 
   // Auto update slug from name as long as auto slug is not disabled.
   useEffect(() => {
-    if (name && !disableAutoSlug.current) {
+    if (!disableAutoSlug.current) {
       setSlug(name);
     }
   }, [name, setSlug]);
@@ -74,29 +75,38 @@ export const useAutoSlug = <
     debouncedSetSlug(slug, slug);
   }, [slug, debouncedSetSlug]);
 
-  const registerSlug = useCallback(() => {
-    const { onChange, onBlur, ...rest } = register("slug" as Path<T>);
-    // Intercept onChange to slugify user input and onBlur to disable auto
-    // slug once the user interacts with the input.
-    return {
-      ...rest,
-      onChange: (e) => {
-        e.target.value = slugify(e.target.value, false);
-        return onChange(e);
-      },
-      onBlur: (e) => {
-        disableAutoSlug.current = true;
-        return onBlur(e);
-      },
-    } as UseFormRegisterReturn<Path<T>>;
-  }, [register]);
+  const registerSlug = useCallback(
+    (options?: RegisterOptions<T, Path<T>>) => {
+      const { onChange, onBlur, ...rest } = register(
+        "slug" as Path<T>,
+        options
+      );
+      // Intercept onChange to slugify user input and onBlur to disable auto
+      // slug once the user interacts with the input.
+      return {
+        ...rest,
+        onChange: (e) => {
+          e.target.value = slugify(e.target.value, false);
+          return onChange(e);
+        },
+        onBlur: (e) => {
+          if (e.target.value) {
+            disableAutoSlug.current = true;
+          }
+          return onBlur(e);
+        },
+      } as UseFormRegisterReturn<Path<T>>;
+    },
+    [register]
+  );
 
   const resetSlug = useCallback(() => {
     // Reenable auto slug and update slug from name.
     disableAutoSlug.current = false;
     setValue(
       "slug" as Path<T>,
-      slugify(name as string) as PathValue<T, Path<T>>
+      slugify(name as string) as PathValue<T, Path<T>>,
+      { shouldDirty: true }
     );
   }, [name, setValue]);
 

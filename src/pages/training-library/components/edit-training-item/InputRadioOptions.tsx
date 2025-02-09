@@ -4,7 +4,9 @@ import { classNames } from "../../../../utils/core";
 export interface InputRadioOption {
   id: string;
   name: string;
-  children?: React.ReactNode;
+  children?:
+    | React.ReactNode
+    | ((props: { selected: boolean }) => React.ReactNode);
 }
 
 const InputRadioOptions: React.FC<{
@@ -30,7 +32,7 @@ const InputRadioOptions: React.FC<{
 
   const handleSelect = (idx: number) => {
     setIdxSelected(idx);
-    onSelect?.(options[idxSelected].id);
+    onSelect?.(options[idx].id);
   };
 
   return (
@@ -65,7 +67,9 @@ const InputRadioOptions: React.FC<{
                         : ""
                     )}
                   >
-                    {mediaOption.children}
+                    {typeof mediaOption.children === "function"
+                      ? mediaOption.children({ selected: idx === idxSelected })
+                      : mediaOption.children}
                   </div>
                 )}
             </div>

@@ -50,18 +50,18 @@ const MyDashboard: React.FC = () => {
       </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {/* Safety Contact */}
-        <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+        <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow-sm sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
             Safety Contact
           </h3>
-          <p className="mt-1 text-gray-500 flex flex-col">
+          <div className="mt-1 text-gray-500 flex flex-col">
             {orgsLoading ? (
               new Array(3)
                 .fill(0)
                 .map((_, i) => (
                   <span
                     key={i}
-                    className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full mb-1"
+                    className="animate-pulse rounded-lg bg-slate-200 h-6 shadow-sm w-full mb-1"
                   />
                 ))
             ) : mySafetyContact ? (
@@ -69,10 +69,10 @@ const MyDashboard: React.FC = () => {
             ) : (
               "Safety contact not found."
             )}
-          </p>
+          </div>
         </div>
         {/* Policies & Procedures */}
-        <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+        <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow-sm sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
             Policies & Procedures
           </h3>
@@ -83,7 +83,7 @@ const MyDashboard: React.FC = () => {
                   .map((_, i) => (
                     <span
                       key={i}
-                      className="animate-pulse rounded-lg bg-slate-200 h-6 shadow w-full mb-2"
+                      className="animate-pulse rounded-lg bg-slate-200 h-6 shadow-sm w-full mb-2"
                     />
                   ))
               : myPoliciesAndProcedures.length

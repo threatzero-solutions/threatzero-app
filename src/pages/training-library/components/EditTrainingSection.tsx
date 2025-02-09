@@ -1,35 +1,35 @@
-import { useMemo, useState } from "react";
-import {
-  InternalFieldType,
-  TrainingItem,
-  TrainingSection,
-  TrainingSectionItem,
-} from "../../../types/entities";
-import TrainingSectionTile from "./TrainingSectionTile";
-import AddNew from "../../../components/forms/builder/AddNew";
-import TrainingItemTile from "./TrainingItemTile";
-import ManageItems from "./ManageItems";
-import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  deleteTrainingSection,
-  getTrainingSection,
-  saveTrainingSection,
-} from "../../../queries/training";
-import FormInput from "../../../components/forms/inputs/FormInput";
-import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
-import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
-import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
-import DurationInput from "../../../components/forms/inputs/DurationInput";
-import Input from "../../../components/forms/inputs/Input";
+import { useMemo, useState } from "react";
 import {
   Controller,
   DeepPartial,
   useFieldArray,
   useForm,
 } from "react-hook-form";
+import AddNew from "../../../components/forms/builder/AddNew";
+import DurationInput from "../../../components/forms/inputs/DurationInput";
+import FormInput from "../../../components/forms/inputs/FormInput";
+import Input from "../../../components/forms/inputs/Input";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
+import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import {
+  deleteTrainingSection,
+  getTrainingSection,
+  saveTrainingSection,
+} from "../../../queries/training";
 import { DurationObject } from "../../../types/api";
+import {
+  InternalFieldType,
+  TrainingItem,
+  TrainingSection,
+  TrainingSectionItem,
+} from "../../../types/entities";
+import ManageItems from "./ManageItems";
+import TrainingItemTile from "./TrainingItemTile";
+import TrainingSectionTile from "./TrainingSectionTile";
 
 const INITIAL_SECTION_STATE: Partial<TrainingSection> = {
   metadata: {
@@ -236,7 +236,7 @@ const EditTrainingSection: React.FC<EditTrainingSectionProps> = ({
                     <button
                       type="button"
                       onClick={() => handleAddItems()}
-                      className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                      className="ml-3 inline-flex items-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
                     >
                       + Add Items
                     </button>

@@ -1,19 +1,19 @@
+import { PlusIcon } from "@heroicons/react/20/solid";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 import {
-  InputHTMLAttributes,
-  DetailedHTMLProps,
-  useState,
   ChangeEvent,
+  DetailedHTMLProps,
+  InputHTMLAttributes,
+  useContext,
   useEffect,
   useRef,
-  useContext,
+  useState,
 } from "react";
-import { classNames } from "../../../../utils/core";
 import { useImmer } from "use-immer";
-import { PlusIcon } from "@heroicons/react/20/solid";
-import { filePreload } from "../../../../queries/forms";
-import UploadedFileTile, { UploadedFile } from "./UploadedFileTile";
 import { AlertContext } from "../../../../contexts/alert/alert-context";
+import { filePreload } from "../../../../queries/media";
+import { classNames } from "../../../../utils/core";
+import UploadedFileTile, { UploadedFile } from "./UploadedFileTile";
 
 interface FileUploadProps
   extends DetailedHTMLProps<
@@ -223,7 +223,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
           title="Upload a file"
         >
           {!readOnly && (
-            <div className="cursor-pointer rounded-full bg-secondary-600 p-1.5 text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+            <div className="cursor-pointer rounded-full bg-secondary-600 p-1.5 text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
               <PlusIcon className="h-5 w-5" aria-hidden="true" />
             </div>
           )}
@@ -257,7 +257,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
                 <div className="mt-4 flex text-sm leading-6 text-gray-600">
                   <label
                     htmlFor={attrs.id}
-                    className="relative cursor-pointer rounded-md bg-white font-semibold text-secondary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-secondary-600 focus-within:ring-offset-2 hover:text-secondary-500"
+                    className="relative cursor-pointer rounded-md bg-white font-semibold text-secondary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-secondary-600 focus-within:ring-offset-2 hover:text-secondary-500"
                   >
                     <span>Upload a file</span>
                     {fileInput}

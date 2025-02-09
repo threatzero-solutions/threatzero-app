@@ -1,19 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { getTrainingItems } from "../../../queries/training";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import TrainingItemTile from "./TrainingItemTile";
-import AddNew from "../../../components/forms/builder/AddNew";
-import { TrainingItem } from "../../../types/entities";
-import SlideOver from "../../../components/layouts/slide-over/SlideOver";
-import EditTrainingItem from "./edit-training-item/EditTrainingItem";
-import FilterBar from "../../../components/layouts/FilterBar";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
-import Paginator from "../../../components/layouts/Paginator";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { LEVEL } from "../../../constants/permissions";
+import AddNew from "../../../components/forms/builder/AddNew";
+import FilterBar from "../../../components/layouts/FilterBar";
+import Paginator from "../../../components/layouts/Paginator";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import { LEVEL } from "../../../constants/permissions";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { getTrainingItems } from "../../../queries/training";
+import { TrainingItem } from "../../../types/entities";
+import EditTrainingItem from "./edit-training-item/EditTrainingItem";
+import TrainingItemTile from "./TrainingItemTile";
 
 interface ManageItemsProps {
   setOpen: (open: boolean) => void;
@@ -177,12 +177,12 @@ const ManageItems: React.FC<ManageItemsProps> = ({
         </div>
 
         {/* Action buttons */}
-        <div className="flex-shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
+        <div className="shrink-0 border-t border-gray-200 px-4 py-5 sm:px-6">
           <div className="flex space-x-3">
             {!isManagingItems && canManageItems && (
               <button
                 type="button"
-                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 onClick={() => setIsManagingItems(true)}
               >
                 Manage Items
@@ -191,7 +191,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
             <div className="grow" />
             <button
               type="button"
-              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
               onClick={() => setOpen(false)}
             >
               Cancel
@@ -200,7 +200,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
               <button
                 type="button"
                 onClick={() => handleEditItem()}
-                className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
               >
                 + Create New Item
               </button>
@@ -208,7 +208,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
               <button
                 type="button"
                 onClick={() => handleConfirmSelection()}
-                className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:pointer-events-none"
                 disabled={selection.length === 0}
               >
                 {multiple

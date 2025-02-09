@@ -1,6 +1,57 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+
+@theme {
+  --color-ss-threatzero-orange: #f7941d;
+
+  --color-primary-50: #fff7eb;
+  --color-primary-100: #fde9c8;
+  --color-primary-200: #fbd28c;
+  --color-primary-300: #f9b350;
+  --color-primary-400: #f7941d;
+  --color-primary-500: #f1750f;
+  --color-primary-600: #d5530a;
+  --color-primary-700: #b1360c;
+  --color-primary-800: #902b10;
+  --color-primary-900: #762311;
+  --color-primary-950: #440f04;
+
+  --color-secondary-50: #f0f8fe;
+  --color-secondary-100: #deedfb;
+  --color-secondary-200: #c4e2f9;
+  --color-secondary-300: #9bcff5;
+  --color-secondary-400: #6cb4ee;
+  --color-secondary-500: #589fe9;
+  --color-secondary-600: #357bdb;
+  --color-secondary-700: #2c66c9;
+  --color-secondary-800: #2a53a3;
+  --color-secondary-900: #274881;
+  --color-secondary-950: #1c2e4f;
+
+  --grid-template-columns-video-card: repeat(auto-fit, minmax(250px, 1fr));
+
+  --grid-template-rows-video-card: minmax(16rem, min-content) 1fr;
+  --grid-template-rows-video-card-dense: minmax(8rem, min-content) 1fr;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
 
 body {
   margin: 0;

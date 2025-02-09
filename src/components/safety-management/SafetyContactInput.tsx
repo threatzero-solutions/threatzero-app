@@ -10,7 +10,7 @@ import { PencilSquareIcon, PlusIcon } from "@heroicons/react/20/solid";
 import IconButton from "../layouts/buttons/IconButton";
 
 interface SafetyContactInputProps {
-  value?: Partial<SafetyContact>;
+  value?: Partial<SafetyContact> | null;
   onChange?: (event: SimpleChangeEvent<Partial<SafetyContact> | null>) => void;
   name?: string;
   label?: string;
@@ -21,7 +21,7 @@ const SafetyContactInput: React.FC<SafetyContactInputProps> = ({
   value,
   onChange,
   name,
-  label = "Safety Contact",
+  label,
   helpText,
 }) => {
   const [editSafetyContactSliderOpen, setEditSafetyContactSliderOpen] =
@@ -45,18 +45,18 @@ const SafetyContactInput: React.FC<SafetyContactInputProps> = ({
           helpText,
         }}
         fillColumns={false}
-        action={
-          <IconButton
-            icon={value ? PencilSquareIcon : PlusIcon}
-            className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
-            text={`${value ? "Edit " : "Add "}Safety Contact`}
-            type="button"
-            onClick={() => setEditSafetyContactSliderOpen(true)}
-          />
-        }
         input={
-          <Block className="grid grid-col-1 bg-gray-50">
-            {value && <SafetyContactBody value={value} />}
+          <Block className="flex items-center justify-between gap-2 bg-gray-50">
+            <SafetyContactBody value={value} />
+            {onChange && (
+              <IconButton
+                icon={value ? PencilSquareIcon : PlusIcon}
+                className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+                text="Edit"
+                type="button"
+                onClick={() => setEditSafetyContactSliderOpen(true)}
+              />
+            )}
           </Block>
         }
       />

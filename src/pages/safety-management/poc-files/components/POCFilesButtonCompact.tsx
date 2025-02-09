@@ -10,7 +10,7 @@ const POCFilesButtonCompact: React.FC<{
     <button
       type="button"
       className={classNames(
-        "inline-flex items-center gap-x-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors",
+        "inline-flex items-center gap-x-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-xs focus-visible:outline focus-visible:outline-offset-2 transition-colors",
         pocFiles.length
           ? "bg-secondary-600 hover:bg-secondary-700 focus-visible:outline-secondary-700"
           : "bg-gray-400 hover:bg-gray-500 focus-visible:outline-gray-500",

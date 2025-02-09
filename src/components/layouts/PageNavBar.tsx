@@ -4,7 +4,7 @@ import {
   DisclosurePanel,
 } from "@headlessui/react";
 import { XMarkIcon, Bars3Icon } from "@heroicons/react/20/solid";
-import { NavLink, NavLinkProps } from "react-router-dom";
+import { NavLink, NavLinkProps } from "react-router";
 import { classNames } from "../../utils/core";
 import { NavigationItem } from "../../types/core";
 import { useNav } from "../../utils/navigation";
@@ -28,7 +28,7 @@ const PageNavBar: React.FC<PageNavBarProps> = ({ navigation }) => {
             <div className="relative flex h-16 items-center justify-between">
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                 {/* Mobile menu button*/}
-                <DisclosureButton className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                <DisclosureButton className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white">
                   <span className="absolute -inset-0.5" />
                   <span className="sr-only">Open main menu</span>
                   {open ? (

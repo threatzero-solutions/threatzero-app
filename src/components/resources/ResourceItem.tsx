@@ -1,13 +1,13 @@
-import BackButton from "../layouts/BackButton";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/solid";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useParams } from "react-router";
+import { getResourceItem } from "../../queries/media";
 import {
   ResourceItem as ResourceItemEntity,
   ResourceType,
 } from "../../types/entities";
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getResourceItem } from "../../queries/media";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/solid";
+import BackButton from "../layouts/BackButton";
 import VimeoPlayer from "../media/VimeoPlayer";
 
 const VideoItem: React.FC<{ resource: ResourceItemEntity }> = ({
@@ -51,7 +51,7 @@ const DocumentItem: React.FC<{ resource: ResourceItemEntity }> = ({
       >
         <a
           href={resource.resourceUrl}
-          className="inline-flex items-center gap-x-2 rounded-md bg-secondary-600 cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+          className="inline-flex items-center gap-x-2 rounded-md bg-secondary-600 cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
         >
           Download {resource.title}
           <ArrowDownTrayIcon className="-mr-0.5 h-5 w-5" aria-hidden="true" />
@@ -83,7 +83,7 @@ const ResourceItem: React.FC = () => {
           )}
         </>
       ) : isLoading ? (
-        <div className="w-full animate-pulse bg-slate-200 rounded aspect-video" />
+        <div className="w-full animate-pulse bg-slate-200 rounded-sm aspect-video" />
       ) : (
         <div>Not found.</div>
       )}

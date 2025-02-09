@@ -6,6 +6,8 @@ export interface Base {
   updatedOn: string;
 }
 
+export type Transient<T extends Base> = Omit<T, keyof Base> & Partial<Base>;
+
 export interface Paginated<T> {
   results: T[];
   count: number;
@@ -28,7 +30,7 @@ export interface OrganizationBase extends Base {
   slug: string;
   name: string;
   address: string | null;
-  safetyContact?: SafetyContact;
+  safetyContact?: SafetyContact | null;
   policiesAndProcedures: OrganizationPolicyFile[];
 }
 
@@ -45,8 +47,9 @@ export interface Organization extends OrganizationBase {
   groupId: string | null;
   enrollments?: CourseEnrollment[];
   resources?: ResourceItem[];
-  idpSlugs: string[];
+  idpSlugs: string[] | null;
   allowedAudiences: string[];
+  allowedRoleGroups: string[] | null;
   trainingAccessSettings: OrganizationTrainingAccessSettings | null;
 }
 
@@ -60,8 +63,12 @@ export interface CourseEnrollment extends Base {
 
 /** Represents a unit of an organization (ie school, office, college, etc.) */
 export interface Unit extends OrganizationBase {
+  organizationId: string;
   organization: Organization;
-  groupId: string | null;
+  parentUnitId: string | null;
+  parentUnit: Unit | null;
+  subUnits?: Unit[];
+  path?: string;
   tatGroupId: string | null;
 }
 
@@ -150,8 +157,6 @@ export interface ItemCompletion extends Base {
   completed: boolean;
   completedOn: Date | null;
   progress: number;
-  organization?: Organization;
-  unit?: Unit;
   user?: UserRepresentation;
   url: string;
 }
@@ -235,6 +240,7 @@ export interface Field extends Base {
   order: number;
   form?: Form | null;
   group?: FieldGroup | null;
+  validationError?: string;
 }
 
 export interface FieldGroup extends Base {
@@ -277,8 +283,8 @@ export interface UserRepresentation extends Base {
   picture: string | null;
   givenName: string | null;
   familyName: string | null;
-  organizationSlug: string | null;
-  unitSlug: string | null;
+  organization?: Organization;
+  unit?: Unit;
 }
 
 export interface Note extends Base {

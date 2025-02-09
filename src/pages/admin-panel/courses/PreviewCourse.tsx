@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import ViewTrainingCourse from "../../training-library/components/ViewTrainingCourse";
 import { getTrainingCourse } from "../../../queries/training";
 import dayjs from "dayjs";
@@ -18,7 +18,7 @@ const PreviewCourse: React.FC = () => {
   return (
     <>
       <BackButtonLink to="../" value={"Back to Courses"} className="mx-5" />
-      <span className="block text-base font-semibold mx-5 my-4 rounded-md bg-gradient-to-r from-secondary-800 to-secondary-500 text-white py-2 px-4">
+      <span className="block text-base font-semibold mx-5 my-4 rounded-md bg-linear-to-r from-secondary-800 to-secondary-500 text-white py-2 px-4">
         Preview
       </span>
       <ViewTrainingCourse

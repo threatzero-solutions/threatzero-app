@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router";
 import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { useContext, useEffect, useMemo } from "react";
 import Form from "./Form";

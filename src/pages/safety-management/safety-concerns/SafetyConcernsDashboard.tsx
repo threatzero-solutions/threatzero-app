@@ -9,7 +9,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fromDaysKey, fromStatus } from "../../../utils/core";
 import { Tip, TipStatus } from "../../../types/entities";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import dayjs from "dayjs";
 import StatusPill from "../../tip-submission/components/StatusPill";
 import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
@@ -21,7 +21,7 @@ import { useOrganizationFilters } from "../../../hooks/use-organization-filters"
 import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
-import DataTable2 from "../../../components/layouts/DataTable2";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 

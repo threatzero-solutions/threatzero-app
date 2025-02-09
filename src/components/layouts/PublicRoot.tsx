@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 import { AlertContextProvider } from "../../contexts/alert/alert-context";
 import { FormsContextProvider } from "../../contexts/forms/forms-context";
 import QueryContext from "../../contexts/QueryContext";

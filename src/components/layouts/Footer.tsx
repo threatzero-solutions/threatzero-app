@@ -19,7 +19,7 @@ const SocialButton: React.FC<PropsWithChildren<SocialButtonProps>> = ({
 			href={href}
 			target="_blank"
 			rel="noreferrer"
-			className="bg-primary-400 hover:bg-primary-500 transition-colors cursor-pointer p-2 font-semibold text-white inline-flex items-center space-x-2 rounded"
+			className="bg-primary-400 hover:bg-primary-500 transition-colors cursor-pointer p-2 font-semibold text-white inline-flex items-center space-x-2 rounded-sm"
 		>
 			{children}
 		</a>

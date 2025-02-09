@@ -1,22 +1,23 @@
-import { useContext, useMemo } from "react";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
-import ViewPercentWatched from "./components/ViewPercentWatched";
-import { simulateDownload, stripHtml } from "../../../utils/core";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import { useContext, useMemo } from "react";
+import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAlertId } from "../../../contexts/alert/use-alert-id";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import {
   getItemCompletions,
   getItemCompletionsCsv,
   getTrainingItems,
 } from "../../../queries/training";
-import dayjs from "dayjs";
-import { AlertContext } from "../../../contexts/alert/alert-context";
-import DataTable2 from "../../../components/layouts/DataTable2";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ItemCompletion } from "../../../types/entities";
+import { simulateDownload, stripHtml } from "../../../utils/core";
+import ViewPercentWatched from "./components/ViewPercentWatched";
 
 const columnHelper = createColumnHelper<ItemCompletion>();
 
@@ -25,7 +26,8 @@ const ViewWatchStats: React.FC = () => {
     useImmer<ItemFilterQueryParams>({ order: { ["user.familyName"]: "DESC" } });
 
   const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
-  const { setInfo } = useContext(AlertContext);
+  const { setInfo, clearAlert } = useContext(AlertContext);
+  const infoAlertId = useAlertId();
 
   const [debouncedCompletionsQuery] = useDebounceValue(completionsQuery, 300);
   const { data: itemCompletions, isLoading: completionsLoading } = useQuery({
@@ -70,8 +72,8 @@ const ViewWatchStats: React.FC = () => {
 
     if (hasMultipleOrganizationAccess) {
       columns.push(
-        columnHelper.accessor((c) => c.organization?.name ?? "", {
-          id: "organization.name",
+        columnHelper.accessor((c) => c.user?.organization?.name ?? "", {
+          id: "user.organization.name",
           header: "Organization",
           cell: (info) => (
             <span className="line-clamp-2" title={info.getValue() || undefined}>
@@ -84,8 +86,8 @@ const ViewWatchStats: React.FC = () => {
 
     if (hasMultipleUnitAccess) {
       columns.push(
-        columnHelper.accessor((c) => c.unit?.name ?? "", {
-          id: "unit.name",
+        columnHelper.accessor((c) => c.user?.unit?.name ?? "", {
+          id: "user.unit.name",
           header: "Unit",
           cell: (info) => (
             <span className="line-clamp-2" title={info.getValue() || undefined}>
@@ -101,11 +103,14 @@ const ViewWatchStats: React.FC = () => {
         columnHelper.accessor("item.metadata.title", {
           id: "item.metadata.title",
           header: "Training Item",
-          cell: (info) => (
-            <span className="line-clamp-2" title={info.getValue() ?? undefined}>
-              {info.getValue() || "—"}
-            </span>
-          ),
+          cell: (info) => {
+            const strippedValue = stripHtml(info.getValue() ?? "");
+            return (
+              <span className="line-clamp-2" title={strippedValue || undefined}>
+                {strippedValue || "—"}
+              </span>
+            );
+          },
         }),
         columnHelper.accessor("enrollment.startDate", {
           id: "enrollment.startDate",
@@ -139,24 +144,24 @@ const ViewWatchStats: React.FC = () => {
     query: completionsQuery,
     setQuery: setCompletionsQuery,
     organizationsEnabled: hasMultipleOrganizationAccess,
-    organizationKey: "organization.slug",
+    organizationKey: "user.organization.slug",
     unitsEnabled: hasMultipleUnitAccess,
-    unitKey: "unit.slug",
+    unitKey: "user.unit.slug",
   });
 
   const itemCompletionsCsvMutation = useMutation({
     mutationFn: (query: ItemFilterQueryParams) => getItemCompletionsCsv(query),
     onSuccess: (data) => {
       simulateDownload(new Blob([data]), "watch-stats.csv");
-      setTimeout(() => setInfo(), 2000);
+      setTimeout(() => clearAlert(infoAlertId), 2000);
     },
     onError: () => {
-      setInfo();
+      clearAlert(infoAlertId);
     },
   });
 
   const handleDownloadWatchStatsCsv = () => {
-    setInfo("Downloading CSV...");
+    setInfo("Downloading CSV...", { id: infoAlertId });
     itemCompletionsCsvMutation.mutate(completionsQuery);
   };
 
@@ -177,7 +182,7 @@ const ViewWatchStats: React.FC = () => {
         action={
           <button
             type="button"
-            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             onClick={() => handleDownloadWatchStatsCsv()}
           >
             Download (.csv)

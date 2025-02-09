@@ -1,144 +1,249 @@
-import { createContext, Dispatch, PropsWithChildren, useRef } from "react";
-import { ImmerReducer, useImmerReducer } from "use-immer";
-import ErrorNotice from "../../components/layouts/notices/ErrorNotice";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { ErrorBoundary } from "react-error-boundary";
+import { useImmer } from "use-immer";
+import Alert, { AlertVariant } from "../../components/layouts/alerts/Alert";
 import ErrorPage from "../../pages/ErrorPage";
-import SuccessNotice from "../../components/layouts/notices/SuccessNotice";
-import InfoNotice from "../../components/layouts/notices/InfoNotice";
 
-export interface AlertState {
-  errorMessage?: string | string[];
-  showErrorMessage?: boolean;
-  successMessage?: string;
-  showSuccessMessage?: boolean;
-  infoMessage?: string;
-  showInfoMessage?: boolean;
+export interface TSetAlertReturn {
+  alertId: number;
+  close: () => void;
 }
-
-export interface AlertAction {
-  type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload?: any;
-}
-
-const INITIAL_STATE: AlertState = {};
 
 export interface AlertContextType {
-  // REDUCER
-  state: AlertState;
-  dispatch: Dispatch<AlertAction>;
-
-  setError: (error?: string | string[] | null, timeout?: number) => void;
-  setSuccess: (message?: string | null, timeout?: number) => void;
-  setInfo: (message?: string | null, timeout?: number) => void;
+  setAlert: (
+    message: string | string[],
+    options?: SetAlertOptions
+  ) => TSetAlertReturn;
+  setSuccess: (
+    message: string | string[],
+    options?: Omit<SetAlertOptions, "variant">
+  ) => TSetAlertReturn;
+  setError: (
+    message: string | string[],
+    options?: Omit<SetAlertOptions, "variant">
+  ) => TSetAlertReturn;
+  setInfo: (
+    message: string | string[],
+    options?: Omit<SetAlertOptions, "variant">
+  ) => TSetAlertReturn;
+  clearAlert: (id: number | null | undefined) => void;
+  clearAllAlerts: () => void;
+  getAlertId: () => number;
 }
 
 export const AlertContext = createContext<AlertContextType>({
-  state: INITIAL_STATE,
-  dispatch: () => {},
-  setError: () => {},
-  setSuccess: () => {},
-  setInfo: () => {},
+  setAlert: () => ({ alertId: -1, close: () => {} }),
+  setSuccess: () => ({ alertId: -1, close: () => {} }),
+  setError: () => ({ alertId: -1, close: () => {} }),
+  setInfo: () => ({ alertId: -1, close: () => {} }),
+  clearAlert: () => {},
+  clearAllAlerts: () => {},
+  getAlertId: () => -1,
 });
 
-const coreReducer: ImmerReducer<AlertState, AlertAction> = (state, action) => {
-  switch (action.type) {
-    case "SHOW_ERROR_MESSAGE":
-      state.errorMessage = action.payload;
-      state.showErrorMessage = true;
-      break;
-    case "DISMISS_ERROR_MESSAGE":
-      state.showErrorMessage = false;
-      break;
-    case "SHOW_SUCCESS_MESSAGE":
-      state.successMessage = action.payload;
-      state.showSuccessMessage = true;
-      break;
-    case "DISMISS_SUCCESS_MESSAGE":
-      state.showSuccessMessage = false;
-      break;
-    case "SHOW_INFO_MESSAGE":
-      state.infoMessage = action.payload;
-      state.showInfoMessage = true;
-      break;
-    case "DISMISS_INFO_MESSAGE":
-      state.showInfoMessage = false;
-      break;
+interface AlertOptions {
+  id: number;
+  variant: AlertVariant;
+  message: string | string[];
+}
+
+interface SetAlertOptions {
+  timeout?: number;
+  id?: number;
+  variant?: AlertVariant;
+}
+
+const createPortalRoot = () => {
+  let el = document.getElementById("alert-portal");
+  if (el === null) {
+    el = document.createElement("div");
+  }
+  el.id = "alert-portal";
+  document.body.appendChild(el);
+  return el;
+};
+
+const removePortalRoot = () => {
+  const el = document.getElementById("alert-portal");
+  if (el) {
+    document.body.removeChild(el);
+  }
+};
+
+const AlertPortal: React.FC<
+  PropsWithChildren<{ open: boolean; delay?: number }>
+> = ({ children, open, delay = 0 }) => {
+  const [internalOpen, setInternalOpen] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setInternalOpen(true);
+    } else {
+      setTimeout(() => {
+        setInternalOpen(false);
+      }, delay);
+    }
+  }, [open, delay]);
+
+  if (internalOpen) {
+    return createPortal(children, createPortalRoot());
+  } else {
+    removePortalRoot();
+    return <></>;
   }
 };
 
 export const AlertContextProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
-  const [state, dispatch] = useImmerReducer(coreReducer, INITIAL_STATE);
-  const setErrorTimeout = useRef<number>();
-  const setSuccessTimeout = useRef<number>();
-  const setInfoTimeout = useRef<number>();
+  const timeouts = useRef<Map<number, number>>(new Map<number, number>());
+  const [alerts, setAlerts] = useImmer<AlertOptions[]>([]);
+  const atomicCounter = useRef(0);
 
-  const setError = (error?: string | string[] | null, timeout?: number) => {
-    if (error) {
-      dispatch({
-        type: "SHOW_ERROR_MESSAGE",
-        payload: error,
+  const getAlertId = () => atomicCounter.current++;
+
+  const removeAlertByIdx = useCallback(
+    (idx: number) => {
+      setAlerts((draft) => {
+        const els = draft.splice(idx, 1);
+        const id = els.pop()?.id;
+        if (id) {
+          clearTimeout(timeouts.current.get(id));
+          timeouts.current.delete(id);
+        }
       });
-    } else {
-      dispatch({ type: "DISMISS_ERROR_MESSAGE" });
-    }
+    },
+    [setAlerts]
+  );
 
-    if (timeout) {
-      if (setErrorTimeout.current) {
-        clearTimeout(setErrorTimeout.current);
+  const clearAlert = useCallback(
+    (id: number | null | undefined) => {
+      const idx = alerts.findIndex((a) => a.id === id);
+      if (idx === -1) return;
+      removeAlertByIdx(idx);
+    },
+    [alerts, removeAlertByIdx]
+  );
+
+  const setAlert = useCallback(
+    (message: string | string[], options: SetAlertOptions = {}) => {
+      const alert: AlertOptions = {
+        id: options.id ?? getAlertId(),
+        variant: options.variant ?? "info",
+        message,
+      };
+
+      setAlerts((draft) => {
+        const idx = draft.findIndex((a) => a.id === alert.id);
+        if (idx !== -1) {
+          draft[idx] = alert;
+          return;
+        }
+        draft.push(alert);
+      });
+
+      if (options.timeout) {
+        if (timeouts.current.has(alert.id)) {
+          clearTimeout(timeouts.current.get(alert.id));
+        }
+        timeouts.current.set(
+          alert.id,
+          window.setTimeout(() => {
+            clearAlert(alert.id);
+          }, options.timeout)
+        );
       }
-      setErrorTimeout.current = window.setTimeout(() => {
-        dispatch({ type: "DISMISS_ERROR_MESSAGE" });
-      }, timeout);
-    }
+
+      return {
+        alertId: alert.id,
+        close: () => clearAlert(alert.id),
+      };
+    },
+    [setAlerts, clearAlert]
+  );
+
+  const setSuccess = (
+    message: string | string[],
+    options: Omit<SetAlertOptions, "variant"> = {}
+  ) => {
+    return setAlert(message, {
+      ...options,
+      variant: "success",
+    });
   };
 
-  const setSuccess = (message?: string | null, timeout?: number) => {
-    if (message) {
-      dispatch({ type: "SHOW_SUCCESS_MESSAGE", payload: message });
-    } else {
-      dispatch({ type: "DISMISS_SUCCESS_MESSAGE" });
-    }
-
-    if (timeout) {
-      if (setSuccessTimeout.current) {
-        clearTimeout(setSuccessTimeout.current);
-      }
-      setSuccessTimeout.current = window.setTimeout(() => {
-        dispatch({ type: "DISMISS_SUCCESS_MESSAGE" });
-      }, timeout);
-    }
+  const setError = (
+    message: string | string[],
+    options: Omit<SetAlertOptions, "variant"> = {}
+  ) => {
+    return setAlert(message, {
+      ...options,
+      variant: "error",
+    });
   };
 
-  const setInfo = (message?: string | null, timeout?: number) => {
-    if (message) {
-      dispatch({ type: "SHOW_INFO_MESSAGE", payload: message });
-    } else {
-      dispatch({ type: "DISMISS_INFO_MESSAGE" });
-    }
+  const setInfo = (
+    message: string | string[],
+    options: Omit<SetAlertOptions, "variant"> = {}
+  ) => {
+    return setAlert(message, {
+      ...options,
+      variant: "info",
+    });
+  };
 
-    if (timeout) {
-      if (setInfoTimeout.current) {
-        clearTimeout(setInfoTimeout.current);
-      }
-      setInfoTimeout.current = window.setTimeout(() => {
-        dispatch({ type: "DISMISS_INFO_MESSAGE" });
-      }, timeout);
-    }
+  const clearAllAlerts = () => {
+    setAlerts([]);
   };
 
   return (
     <AlertContext.Provider
-      value={{ state, dispatch, setError, setSuccess, setInfo }}
+      value={{
+        setAlert,
+        setSuccess,
+        setError,
+        setInfo,
+        clearAlert,
+        clearAllAlerts,
+        getAlertId,
+      }}
     >
       <ErrorBoundary fallback={<ErrorPage />}>
         {children}
-        {createPortal(<SuccessNotice />, document.body)}
-        {createPortal(<InfoNotice />, document.body)}
-        {createPortal(<ErrorNotice />, document.body)}
+        <AlertPortal open={alerts.length > 0} delay={1000}>
+          <div
+            className="pointer-events-none fixed z-50 inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6"
+            role="alertdialog"
+            aria-live="assertive"
+          >
+            <div className="flex w-full flex-col items-center space-y-4 sm:items-end">
+              <AnimatePresence>
+                {alerts.map(({ id, variant, message }, idx) => (
+                  <Alert
+                    key={id}
+                    variant={variant}
+                    message={message}
+                    onClose={() => removeAlertByIdx(idx)}
+                    as={motion.div}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+        </AlertPortal>
+        ,
       </ErrorBoundary>
     </AlertContext.Provider>
   );
