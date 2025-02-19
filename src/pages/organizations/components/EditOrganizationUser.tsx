@@ -1,9 +1,12 @@
 import { BoltIcon } from "@heroicons/react/20/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Fragment, useCallback, useContext, useMemo } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, Resolver, useForm } from "react-hook-form";
+import { z } from "zod";
 import Checkbox from "../../../components/forms/inputs/Checkbox";
 import Input from "../../../components/forms/inputs/Input";
+import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import InlineNotice from "../../../components/layouts/InlineNotice";
 import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
@@ -21,7 +24,7 @@ import {
 } from "../../../queries/organizations";
 import { getTrainingAudiences } from "../../../queries/training";
 import { OrganizationUser } from "../../../types/api";
-import { FieldType } from "../../../types/entities";
+import { FieldType, Unit } from "../../../types/entities";
 import AudiencesSelect from "../../training-library/components/AudiencesSelect";
 
 interface EditOrganizationUserProps {
@@ -30,15 +33,23 @@ interface EditOrganizationUserProps {
   userId?: string;
 }
 
-interface TransientUser {
-  id?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  unitSlug?: string;
-  canAccessTraining?: boolean;
-  audienceSlugs: string[];
-}
+const createUserSchema = z.object({
+  id: z.string().optional(),
+  firstName: z.string().nonempty(),
+  lastName: z.string().nonempty(),
+  email: z.string().email(),
+  unitSlug: z.string().nonempty("Unit is required"),
+  canAccessTraining: z.boolean().optional(),
+  audienceSlugs: z.array(z.string()),
+});
+
+const createUserResolver = zodResolver(createUserSchema);
+
+const updateUserSchema = createUserSchema.partial();
+
+const updateUserResolver = zodResolver(updateUserSchema);
+
+type TForm = z.infer<typeof createUserSchema & typeof updateUserSchema>;
 
 const RELEVANT_USER_ATTRIBUTES = ["firstName", "lastName", "audience"];
 
@@ -50,11 +61,12 @@ const humanizeAttributeName = (name: string) =>
     .toLowerCase()
     .trim();
 
-const INITIAL_USER: TransientUser = {
+const INITIAL_USER: TForm = {
   firstName: "",
   lastName: "",
   email: "",
   audienceSlugs: [],
+  unitSlug: "",
 };
 
 const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
@@ -117,27 +129,32 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     [allowedAudiences]
   );
 
-  const formMethods = useForm({
-    values: userData
+  const formDefaultValues = useMemo(() => {
+    return userData
       ? toTransientUser(userData)
       : {
           ...INITIAL_USER,
-          unitSlug,
-        },
+          unitSlug: unitSlug ?? "",
+        };
+  }, [unitSlug, userData]);
+
+  const formMethods = useForm<TForm>({
+    resolver: (create
+      ? createUserResolver
+      : updateUserResolver) as Resolver<TForm>,
+    values: formDefaultValues,
   });
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { isDirty },
-  } = formMethods;
+  const { register, handleSubmit, watch, getFieldState, formState } =
+    formMethods;
+
+  const { isDirty } = formState;
 
   const email = watch("email");
   const canAccessTraining = watch("canAccessTraining");
 
   const matchingIdp = useMemo(
-    () => getMatchingIdp(email),
+    () => (email ? getMatchingIdp(email) : null),
     [email, getMatchingIdp]
   );
   const idpAttributes = useMemo(
@@ -161,7 +178,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
   }, [idpAttributes, idpRoleGroups]);
 
   const { mutate: save, isPending } = useMutation({
-    mutationFn: (user: TransientUser) =>
+    mutationFn: (user: TForm) =>
       organization
         ? saveOrganizationUser(organization.id, toOrgUser(user))
         : Promise.reject(new Error("No organization")),
@@ -171,9 +188,11 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     },
   });
 
-  const handleSave = (user: TransientUser) => {
+  const handleSave = (user: TForm) => {
     save(user);
   };
+
+  const unitSlugState = getFieldState("unitSlug", formState);
 
   return (
     <SlideOverForm
@@ -197,7 +216,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {...register("email")}
             className="w-full"
           />
-          {matchingIdp && (
+          {email && matchingIdp && (
             <InlineNotice
               level="info"
               heading={
@@ -247,6 +266,31 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
           />
           {idpAttributes.includes("lastName") && <SSOField />}
         </SlideOverField>
+        {organization && !formDefaultValues.unitSlug && (
+          <SlideOverField name="unitSlug" label="Unit">
+            <Controller
+              name="unitSlug"
+              control={formMethods.control}
+              render={({ field }) => (
+                <UnitSelect
+                  value={field.value}
+                  onChange={(a) =>
+                    field.onChange(
+                      a.target?.value
+                        ? (a.target.value as unknown as Unit).slug
+                        : ""
+                    )
+                  }
+                  queryFilter={{ ["organization.id"]: organization.id }}
+                />
+              )}
+            />
+            {unitSlugState.error?.message && (
+              <p className="text-red-500">{unitSlugState.error.message}</p>
+            )}
+            {idpAttributes.includes("unit") && <SSOField />}
+          </SlideOverField>
+        )}
         {(!userData || canAccessTraining !== undefined) && (
           <SlideOverField
             name="trainingParticipant"
@@ -311,8 +355,8 @@ const SSOField = () => (
   />
 );
 
-const toOrgUser = (user: TransientUser): Partial<OrganizationUser> => ({
-  id: user.id,
+const toOrgUser = (user: TForm): Partial<OrganizationUser> => ({
+  id: "id" in user ? user.id : undefined,
   username: user.email,
   firstName: user.firstName,
   lastName: user.lastName,
@@ -327,12 +371,12 @@ const toOrgUser = (user: TransientUser): Partial<OrganizationUser> => ({
 const toTransientUser = (
   orgUser: OrganizationUser,
   unitSlug?: string
-): TransientUser => ({
+): TForm => ({
   id: orgUser.id,
   firstName: orgUser.firstName,
   lastName: orgUser.lastName,
   email: orgUser.email,
-  unitSlug: orgUser.attributes.unit?.at(0) ?? unitSlug,
+  unitSlug: orgUser.attributes.unit?.at(0) ?? unitSlug ?? "",
   audienceSlugs: orgUser.attributes.audience ?? [],
   canAccessTraining:
     orgUser.canAccessTraining ??
