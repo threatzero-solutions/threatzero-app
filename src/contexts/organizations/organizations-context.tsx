@@ -2,6 +2,7 @@ import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { createContext, PropsWithChildren, useCallback, useMemo } from "react";
 import { To, useNavigate, useSearchParams } from "react-router";
+import { READ } from "../../constants/permissions";
 import {
   getOrganization,
   getOrganizationBySlug,
@@ -74,7 +75,7 @@ export const OrganizationsContextProvider: React.FC<
   organizationDeleteRedirect,
   children,
 }) => {
-  const { myOrganizationSlug } = useAuth();
+  const { myOrganizationSlug, hasPermissions } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -184,7 +185,8 @@ export const OrganizationsContextProvider: React.FC<
                 throw e;
               })
             : Promise.reject("No organization id"),
-        enabled: !!currentOrganization,
+        enabled:
+          !!currentOrganization && hasPermissions([READ.ORGANIZATION_IDPS]),
       };
     }),
   });
