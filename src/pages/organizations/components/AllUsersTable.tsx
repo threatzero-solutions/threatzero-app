@@ -292,6 +292,8 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         showFooter={false}
         noRowsMessage="No users found."
         showSearch={false}
+        setQuery={setUsersQuery}
+        query={usersQuery}
       />
       <SlideOver open={editUser.open} setOpen={editUser.setOpen}>
         <EditOrganizationUser
