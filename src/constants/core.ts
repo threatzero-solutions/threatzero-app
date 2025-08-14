@@ -6,4 +6,4 @@ export const ACTUAL_COMPLETION_THRESHOLD = 0.85;
 export const DISPLAY_COMPLETION_THRESHOLD = 0.98;
 
 export const DEFAULT_THUMBNAIL_URL =
-  "https://content.threatzero.org/default_video_thumbnail.png";
+  "https://content.threatzero.org/default_video_thumbnail_2.webp";
