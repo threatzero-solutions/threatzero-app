@@ -4,9 +4,10 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import BaseTable, { BaseTableProps } from "./BaseTable";
-import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { useMemo } from "react";
 import { DraftFunction } from "use-immer";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { Paginated } from "../../../types/entities";
 import {
   asOrdering,
   asPageInfo,
@@ -14,10 +15,9 @@ import {
   asSortingState,
   isNil,
 } from "../../../utils/core";
-import { useMemo } from "react";
-import { Paginated } from "../../../types/entities";
-import FilterBar, { FilterBarFilterOptions } from "../FilterBar";
 import { SearchInputProps } from "../../forms/inputs/SearchInput";
+import FilterBar, { FilterBarFilterOptions } from "../FilterBar";
+import BaseTable, { BaseTableProps } from "./BaseTable";
 import TableHeader, { TableHeaderProps } from "./TableHeader";
 
 interface DataTable2Props<T extends object>
@@ -84,6 +84,7 @@ const DataTable2 = <T extends object>({
       }),
     manualPagination: true,
     rowCount: pageState?.count,
+    isMultiSortEvent: () => true,
   });
 
   const searchOptions = useMemo(() => {

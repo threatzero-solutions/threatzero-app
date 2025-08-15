@@ -16,7 +16,7 @@ import {
   Organization,
   Unit,
 } from "../types/entities";
-import { ScormVersion } from "../types/training";
+import { RelativeEnrollmentDto, ScormVersion } from "../types/training";
 import {
   buildUrl,
   deleteOne,
@@ -65,6 +65,39 @@ export const getCourseEnrollments = (
   findMany<CourseEnrollment>(
     `/organizations/organizations/${id}/enrollments/`,
     query
+  );
+
+export const getLatestCourseEnrollments = (
+  id: Organization["id"],
+  query?: ItemFilterQueryParams
+) =>
+  findManyRaw<{ id: string; isOnlyEnrollment: boolean }[]>(
+    `/organizations/organizations/${id}/enrollments/latest`,
+    query
+  );
+
+export const getRelativeEnrollment = (
+  id: Organization["id"],
+  enrollmentId: CourseEnrollment["id"]
+) =>
+  findOne<RelativeEnrollmentDto>(
+    `/organizations/organizations/${id}/enrollments/${enrollmentId}/relative`
+  );
+
+export const getPreviousEnrollment = (
+  id: Organization["id"],
+  enrollmentId: CourseEnrollment["id"]
+) =>
+  findOne<RelativeEnrollmentDto>(
+    `/organizations/organizations/${id}/enrollments/${enrollmentId}/previous`
+  );
+
+export const getNextEnrollment = (
+  id: Organization["id"],
+  enrollmentId: CourseEnrollment["id"]
+) =>
+  findOne<RelativeEnrollmentDto>(
+    `/organizations/organizations/${id}/enrollments/${enrollmentId}/next`
   );
 
 export const getCourseEnrollment = (

@@ -1,11 +1,11 @@
-import { classNames } from "../../utils/core";
-import Dropdown, { DropdownAction, DropdownActionGroup } from "./Dropdown";
-import SearchInput, { SearchInputProps } from "../forms/inputs/SearchInput";
-import { Updater, useImmer } from "use-immer";
-import { ItemFilterQueryParams } from "../../hooks/use-item-filter-query";
-import { useCallback, useEffect, useRef } from "react";
-import { useLocalStorage } from "usehooks-ts";
 import { MinusCircleIcon } from "@heroicons/react/20/solid";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Updater, useImmer } from "use-immer";
+import { useLocalStorage } from "usehooks-ts";
+import { ItemFilterQueryParams } from "../../hooks/use-item-filter-query";
+import { classNames } from "../../utils/core";
+import SearchInput, { SearchInputProps } from "../forms/inputs/SearchInput";
+import Dropdown, { DropdownAction, DropdownActionGroup } from "./Dropdown";
 
 export interface FilterBarFilterOption {
   label: string;
@@ -115,6 +115,19 @@ const FilterBar: React.FC<FilterBarProps> = ({
     buildFilterValues(filterOptions?.filters ?? [])
   );
 
+  const getIsFilterActive = useCallback(
+    (filterKey: string) => {
+      return Array.isArray(filterValues[filterKey])
+        ? !!filterValues[filterKey]?.length
+        : filterValues[filterKey] !== undefined;
+    },
+    [filterValues]
+  );
+
+  const activeFilterCount = useMemo(() => {
+    return Object.keys(filterValues).filter((f) => getIsFilterActive(f)).length;
+  }, [filterValues, getIsFilterActive]);
+
   /** Used for keeping track of selected options, to continue displaying them
    * even when filtered out by a search query.
    */
@@ -207,7 +220,16 @@ const FilterBar: React.FC<FilterBarProps> = ({
     <div className={classNames("flex justify-end gap-4", className)}>
       {filterOptions && (
         <Dropdown
-          value="Filter"
+          value={
+            <div>
+              Filter
+              {activeFilterCount > 0 && (
+                <span className="ml-1 text-white text-xs rounded-full bg-secondary-600 px-1.5 py-0.5">
+                  {activeFilterCount}
+                </span>
+              )}
+            </div>
+          }
           actionGroups={[
             {
               id: "clear-all-filters",
@@ -323,22 +345,16 @@ const FilterBar: React.FC<FilterBarProps> = ({
                       <span
                         className={classNames(
                           "pl-1 text-xs font-semibol",
-                          (
-                            Array.isArray(filterValues[f.key])
-                              ? !filterValues[f.key]?.length
-                              : filterValues[f.key] === undefined
-                          )
-                            ? "text-gray-400"
-                            : "text-secondary-600"
+                          getIsFilterActive(f.key)
+                            ? "text-secondary-600"
+                            : "text-gray-400"
                         )}
                       >
                         clear
                       </span>
                     ),
                     action: (e) => handleSetFilter(e, { f, value: undefined }),
-                    disabled: Array.isArray(filterValues[f.key])
-                      ? !filterValues[f.key]?.length
-                      : filterValues[f.key] === undefined,
+                    disabled: !getIsFilterActive(f.key),
                     hidden: f.options.some((o) => o.value === undefined),
                   },
                 ],

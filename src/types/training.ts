@@ -1,7 +1,7 @@
-import { Updater } from "use-immer";
-import { TrainingMetadata, TrainingSection, Video } from "./entities";
 import { Dayjs } from "dayjs";
+import { Updater } from "use-immer";
 import { SCORM_VERSIONS } from "../constants/training";
+import { TrainingMetadata, TrainingSection, Video } from "./entities";
 
 export type EditableItem = Partial<Video> & { metadata: TrainingMetadata };
 export type ItemUpdater = Updater<EditableItem>;
@@ -19,3 +19,14 @@ export type SectionAndWindow = {
 };
 
 export type ScormVersion = (typeof SCORM_VERSIONS)[number];
+
+export interface RelativeEnrollmentDto {
+  id: string;
+  courseId: string;
+  startDate: string;
+  endDate: string;
+  visibility: string;
+  organizationId: string;
+  isEarliest: boolean;
+  isLatest: boolean;
+}

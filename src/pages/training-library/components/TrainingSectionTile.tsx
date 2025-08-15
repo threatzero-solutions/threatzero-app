@@ -1,7 +1,16 @@
+import {
+  ArrowLeftCircleIcon,
+  ArrowRightCircleIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/20/solid";
+import {
+  EllipsisVerticalIcon,
+  Square3Stack3DIcon,
+} from "@heroicons/react/24/outline";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { TrainingSection } from "../../../types/entities";
 import {
   KeyboardEvent,
   MouseEvent,
@@ -11,23 +20,14 @@ import {
   useState,
 } from "react";
 import { useLocation, useNavigate } from "react-router";
-import {
-  EllipsisVerticalIcon,
-  Square3Stack3DIcon,
-} from "@heroicons/react/24/outline";
-import { classNames } from "../../../utils/core";
-import { TrainingContext } from "../../../contexts/training/training-context";
-import VideoProgress from "./VideoProgress";
-import { FeaturedWindow } from "../../../types/training";
-import { DEFAULT_THUMBNAIL_URL } from "../../../constants/core";
 import Dropdown from "../../../components/layouts/Dropdown";
-import {
-  ArrowRightCircleIcon,
-  ArrowLeftCircleIcon,
-  PencilSquareIcon,
-} from "@heroicons/react/20/solid";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { DEFAULT_THUMBNAIL_URL } from "../../../constants/core";
+import { TrainingContext } from "../../../contexts/training/training-context";
 import { swapTrainingSectionOrders } from "../../../queries/training";
+import { TrainingSection } from "../../../types/entities";
+import { FeaturedWindow } from "../../../types/training";
+import { cn } from "../../../utils/core";
+import VideoProgress from "./VideoProgress";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -40,6 +40,15 @@ interface TrainingSectionTileProps {
   featuredWindow?: FeaturedWindow | null;
   previousSection?: Partial<TrainingSection>;
   nextSection?: Partial<TrainingSection>;
+  dense?: boolean;
+  onNavigate?: (
+    e: MouseEvent | KeyboardEvent,
+    section: Partial<TrainingSection>
+  ) => void;
+  classNames?: {
+    container?: string;
+    card?: string;
+  };
 }
 
 const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
@@ -50,6 +59,9 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
   featuredWindow,
   previousSection,
   nextSection,
+  dense,
+  onNavigate,
+  classNames,
 }) => {
   const { state } = useContext(TrainingContext);
 
@@ -144,6 +156,11 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
 
   const navigateToSection = useCallback(
     (e: MouseEvent | KeyboardEvent) => {
+      if (onNavigate) {
+        onNavigate(e, section);
+        return;
+      }
+
       if (e.type === "keyup" && (e as KeyboardEvent).key !== "Enter") {
         return;
       }
@@ -156,14 +173,15 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
         state: { from: location },
       });
     },
-    [location, navigate, section.id, navigateDisabled]
+    [location, navigate, navigateDisabled, onNavigate, section]
   );
 
   return (
     <div
-      className={classNames(
+      className={cn(
         "relative",
-        !navigateDisabled ? "cursor-pointer" : ""
+        !navigateDisabled ? "cursor-pointer" : "",
+        classNames?.container
       )}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
@@ -171,18 +189,23 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
       onKeyUp={navigateToSection}
     >
       <div
-        className={classNames(
-          "col-span-1 grid grid-cols-video-card rounded-md overflow-hidden grid-rows-video-card h-full",
-          className
+        className={cn(
+          "col-span-1 grid grid-cols-video-card rounded-md overflow-hidden h-full",
+          dense ? "grid-rows-video-card-dense" : "grid-rows-video-card",
+          className,
+          classNames?.card
         )}
       >
-        <div className={"flex pt-64 overflow-hidden relative"}>
+        <div
+          className={cn(
+            "flex overflow-hidden relative",
+            dense ? "pt-32" : "pt-64"
+          )}
+        >
           <img
-            className={classNames(
-              isHover && !navigateDisabled
-                ? "w-[105%] h-[105%]"
-                : "w-full h-full",
-              "absolute object-cover transition-all duration-300 ease-out inset-0"
+            className={cn(
+              isHover && !navigateDisabled ? "scale-105" : "scale-100",
+              "absolute object-cover transition-all duration-300 ease-out inset-0 h-full w-full"
             )}
             src={firstItem?.thumbnailUrl ?? DEFAULT_THUMBNAIL_URL}
             alt={firstItem?.metadata?.title ?? "Training Material"}
@@ -192,23 +215,28 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
           <div>
             <p className="text-gray-500 text-xs">{availability}</p>
             <h2
-              className="text-lg my-1"
+              className={cn(
+                dense ? "mt-1 text-base line-clamp-2" : "my-1 text-lg"
+              )}
               // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
               dangerouslySetInnerHTML={{
                 __html:
                   (singleItem
                     ? firstItem?.metadata.title
-                    : section.metadata?.title) ?? "",
+                    : section.metadata?.title) || "Untitled",
               }}
             />
             <p
-              className="text-gray-500 text-md line-clamp-5"
+              className={cn(
+                "text-gray-500",
+                dense ? "text-sm line-clamp-3" : "text-base line-clamp-5"
+              )}
               // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
               dangerouslySetInnerHTML={{
                 __html:
                   (singleItem
                     ? firstItem?.metadata.description
-                    : section.metadata?.description) ?? "",
+                    : section.metadata?.description) || "&mdash;",
               }}
             />
           </div>
@@ -228,9 +256,12 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
               )}
             </p>
             <div className="grow" />
-            {!onEditSection && !navigateDisabled && completionProps && (
-              <VideoProgress {...completionProps} className="h-10 w-10" />
-            )}
+            {!dense &&
+              !onEditSection &&
+              !navigateDisabled &&
+              completionProps && (
+                <VideoProgress {...completionProps} className="h-10 w-10" />
+              )}
             {onEditSection && (
               <Dropdown
                 value="Open training section actions"
@@ -257,7 +288,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
                     id: "move-back",
                     value: (
                       <span
-                        className={classNames(
+                        className={cn(
                           "inline-flex items-center",
                           !previousSection ? "opacity-50" : ""
                         )}
@@ -280,7 +311,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
                     id: "move-forward",
                     value: (
                       <span
-                        className={classNames(
+                        className={cn(
                           "inline-flex items-center",
                           !nextSection ? "opacity-50" : ""
                         )}
