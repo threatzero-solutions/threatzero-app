@@ -13,6 +13,7 @@ export interface Paginated<T> {
   count: number;
   offset: number;
   limit: number;
+  pageCount: number;
 }
 
 // ------------------ LANGUAGES ------------------

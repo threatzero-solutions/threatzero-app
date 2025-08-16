@@ -94,15 +94,14 @@ export const asPageInfo = (
 ): Omit<Paginated<unknown>, "results" | "count"> => ({
   offset: pagination.pageIndex * pagination.pageSize,
   limit: pagination.pageSize,
+  pageCount: pagination.pageSize,
 });
 
-export const asPaginationState = (
-  pageInfo: {
-    offset?: number | string;
-    limit?: number | string;
-  },
-  pageSize = 10
-) => {
+export const asPaginationState = (pageInfo: {
+  offset?: number | string;
+  limit?: number | string;
+}) => {
+  const pageSize = pageInfo.limit ? Number(pageInfo.limit) : 10;
   return {
     pageSize,
     pageIndex: Math.floor(+(pageInfo.offset || 0) / pageSize),

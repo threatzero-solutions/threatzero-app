@@ -1,6 +1,7 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import { useMemo } from "react";
 import { classNames } from "../../utils/core";
+import Select from "../forms/inputs/Select";
 
 export interface PageOptions {
   limit: number;
@@ -21,6 +22,8 @@ export interface Paginator2Props {
   pageIndex: number;
 
   className?: string;
+  pageSize?: number;
+  setPageSize?: (pageSize: number) => void;
 }
 
 const MAX_PAGE_BUTTONS = 7;
@@ -39,6 +42,8 @@ const Paginator2: React.FC<Paginator2Props> = ({
   setPageIndex,
   pageIndex,
   className,
+  pageSize,
+  setPageSize,
 }) => {
   const totalPages = useMemo(() => {
     return Array.from({ length: pageCount }, (_, i) => i + 1);
@@ -100,8 +105,26 @@ const Paginator2: React.FC<Paginator2Props> = ({
         </button>
       </div>
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        {pageSize && setPageSize && (
+          <div className="flex items-center space-x-2">
+            <p className="text-xs sm:text-sm">Page size</p>
+            <Select
+              value={`${pageSize}`}
+              onChange={(value) => {
+                setPageSize(Number(value.target.value));
+              }}
+              options={[
+                { key: "10", label: "10" },
+                { key: "20", label: "20" },
+                { key: "30", label: "30" },
+                { key: "40", label: "40" },
+                { key: "50", label: "50" },
+              ]}
+            ></Select>
+          </div>
+        )}
         <div>
-          <p className="text-sm text-gray-700">
+          <p className="text-xs sm:text-sm text-gray-700">
             Showing <span className="font-medium">{rowStart}</span> to{" "}
             <span className="font-medium">{rowEnd}</span> of{" "}
             <span className="font-medium">{rowTotal}</span> results

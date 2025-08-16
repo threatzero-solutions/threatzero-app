@@ -111,6 +111,8 @@ const BaseTable = <T extends object>({
           pageCount={table.getPageCount()}
           setPageIndex={table.setPageIndex}
           pageIndex={table.getState().pagination.pageIndex}
+          pageSize={table.getState().pagination.pageSize}
+          setPageSize={table.setPageSize}
         />
       )}
     </>
