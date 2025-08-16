@@ -13,7 +13,7 @@ import { stripHtml } from "../../../../../../utils/core";
 import CourseAvailabilityDates from "../../../../../training-library/components/CourseActiveStatus";
 import CourseCustomTag from "../../../../../training-library/components/CourseCustomTag";
 import CourseVisibilityTag from "../../../../../training-library/components/CourseVisibilityTag";
-import Step from "../components/step";
+import Step from "../components/Step";
 
 export default function StepSelectCourseEnrollment({
   courseEnrollments,

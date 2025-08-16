@@ -6,7 +6,7 @@ import {
 import { SectionAndWindow } from "../../../../../../types/training";
 import { getSectionFeaturedWindows } from "../../../../../../utils/training";
 import TrainingSectionTile from "../../../../../training-library/components/TrainingSectionTile";
-import Step from "../components/step";
+import Step from "../components/Step";
 
 export default function StepSelectTrainingSection({
   isFirstStep,
