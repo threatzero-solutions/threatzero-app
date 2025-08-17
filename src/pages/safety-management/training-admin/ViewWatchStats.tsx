@@ -35,7 +35,7 @@ import {
   RelativeEnrollmentDto,
   SectionAndWindow,
 } from "../../../types/training";
-import { isNil, simulateDownload, stripHtml } from "../../../utils/core";
+import { cn, isNil, simulateDownload, stripHtml } from "../../../utils/core";
 import {
   getLatestAvailableSection,
   getSectionAndWindowBySectionId,
@@ -61,7 +61,11 @@ const ViewWatchStats: React.FC = () => {
   });
   const [changingOrganization, setChangingOrganization] = useState(false);
 
-  const { data: defaultReportInputData } = useQuery({
+  const {
+    data: defaultReportInputData,
+    isLoading: defaultReportInputDataLoading,
+    isPending: defaultReportInputDataPending,
+  } = useQuery({
     queryKey: ["default-report-input-data", organization?.id] as const,
     queryFn: ({ queryKey }) =>
       queryKey[1]
@@ -138,7 +142,11 @@ const ViewWatchStats: React.FC = () => {
     ),
   };
 
-  const { data: itemCompletions, isLoading: completionsLoading } = useQuery({
+  const {
+    data: itemCompletions,
+    isLoading: completionsLoading,
+    isPending: completionsPending,
+  } = useQuery({
     queryKey: ["item-completions", itemCompletionsQuery] as const,
     queryFn: ({ queryKey }) => getItemCompletions(queryKey[1]),
     enabled: !!reportInputData?.relativeEnrollment?.id,
@@ -239,10 +247,10 @@ const ViewWatchStats: React.FC = () => {
           Generate Training Completion Report
         </h1>
       </div>
-      <div className="grid grid-cols-[auto_1fr] gap-x-8 gap-y-6 mb-8">
+      <div className="grid grid-cols-[auto_1fr] content-center gap-x-8 gap-y-6 mb-8">
         {hasMultipleOrganizationAccess && (
           <>
-            <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+            <label className="block text-sm font-medium leading-6 text-gray-900">
               Organization
             </label>
             <div className="mt-2 sm:mt-0 flex flex-col items-start">
@@ -273,7 +281,7 @@ const ViewWatchStats: React.FC = () => {
               ) : (
                 <>
                   {organizationLoading ? (
-                    "Loading..."
+                    <div className="animate-pulse rounded-md bg-slate-200 h-5 w-32 my-1 shadow-sm" />
                   ) : (
                     <span onClick={() => setChangingOrganization(true)}>
                       {organization?.name}
@@ -292,70 +300,84 @@ const ViewWatchStats: React.FC = () => {
           </>
         )}
 
-        <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+        <label className="block text-sm font-medium leading-6 text-gray-900">
           Training
         </label>
-        <div className="mt-2 sm:mt-0 flex flex-col items-stretch gap-2">
-          <div className="flex items-center gap-2">
-            <div className="rounded-md py-1 px-2 bg-secondary-600 text-white text-xs">
-              Course
-            </div>
-            {stripHtml(
-              reportInputData?.trainingCourse?.metadata.title ?? "Unknown"
+        {defaultReportInputDataPending ? (
+          <div className="animate-pulse rounded-md bg-slate-200 h-54 w-full shadow-sm" />
+        ) : reportInputData?.relativeEnrollment === null ? (
+          <div className="text-gray-500 text-xs flex items-center grow">
+            No training enrollments found.
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "mt-2 sm:mt-0 flex flex-col items-stretch gap-2",
+              defaultReportInputDataLoading &&
+                "animate-pulse pointer-events-none"
             )}
+          >
+            <div className="flex items-center gap-2">
+              <div className="rounded-md py-1 px-2 bg-secondary-600 text-white text-xs">
+                Course
+              </div>
+              {stripHtml(
+                reportInputData?.trainingCourse?.metadata.title ?? "Unknown"
+              )}
+            </div>
+            {reportInputData?.trainingSectionAndWindow?.section ? (
+              <TrainingSectionTile
+                featuredWindow={reportInputData.trainingSectionAndWindow.window}
+                section={reportInputData.trainingSectionAndWindow.section}
+                navigateDisabled
+                dense
+              />
+            ) : (
+              <>&mdash;</>
+            )}
+            <div className="flex items-center gap-2 text-secondary-600 text-xs">
+              <button
+                type="button"
+                className="hover:text-secondary-500 transition-colors cursor-pointer"
+                onClick={() => setTrainingPickerOpen(true)}
+              >
+                Change Training
+              </button>
+              <span>|</span>
+              <button
+                type="button"
+                className="hover:text-secondary-500 transition-colors cursor-pointer disabled:text-gray-400 disabled:cursor-default"
+                disabled={
+                  !reportInputData?.relativeEnrollment ||
+                  reportInputData.relativeEnrollment.isEarliest ||
+                  isPreviousEnrollmentLoading
+                }
+                onClick={() =>
+                  reportInputData?.relativeEnrollment &&
+                  setPreviousEnrollment(reportInputData.relativeEnrollment.id)
+                }
+              >
+                Previous Enrollment Period
+              </button>
+              <span>|</span>
+              <button
+                type="button"
+                className="hover:text-secondary-500 transition-colors cursor-pointer disabled:text-gray-400 disabled:cursor-default"
+                disabled={
+                  !reportInputData?.relativeEnrollment ||
+                  reportInputData.relativeEnrollment.isLatest ||
+                  isNextEnrollmentLoading
+                }
+                onClick={() =>
+                  reportInputData?.relativeEnrollment &&
+                  setNextEnrollment(reportInputData.relativeEnrollment.id)
+                }
+              >
+                Next Enrollment Period
+              </button>
+            </div>
           </div>
-          {reportInputData?.trainingSectionAndWindow?.section ? (
-            <TrainingSectionTile
-              featuredWindow={reportInputData.trainingSectionAndWindow.window}
-              section={reportInputData.trainingSectionAndWindow.section}
-              navigateDisabled
-              dense
-            />
-          ) : (
-            <>&mdash;</>
-          )}
-          <div className="flex items-center gap-2 text-secondary-600 text-xs">
-            <button
-              type="button"
-              className="hover:text-secondary-500 transition-colors cursor-pointer"
-              onClick={() => setTrainingPickerOpen(true)}
-            >
-              Change Training
-            </button>
-            <span>|</span>
-            <button
-              type="button"
-              className="hover:text-secondary-500 transition-colors cursor-pointer disabled:text-gray-400 disabled:cursor-default"
-              disabled={
-                !reportInputData?.relativeEnrollment ||
-                reportInputData.relativeEnrollment.isEarliest ||
-                isPreviousEnrollmentLoading
-              }
-              onClick={() =>
-                reportInputData?.relativeEnrollment &&
-                setPreviousEnrollment(reportInputData.relativeEnrollment.id)
-              }
-            >
-              Previous Enrollment Period
-            </button>
-            <span>|</span>
-            <button
-              type="button"
-              className="hover:text-secondary-500 transition-colors cursor-pointer disabled:text-gray-400 disabled:cursor-default"
-              disabled={
-                !reportInputData?.relativeEnrollment ||
-                reportInputData.relativeEnrollment.isLatest ||
-                isNextEnrollmentLoading
-              }
-              onClick={() =>
-                reportInputData?.relativeEnrollment &&
-                setNextEnrollment(reportInputData.relativeEnrollment.id)
-              }
-            >
-              Next Enrollment Period
-            </button>
-          </div>
-        </div>
+        )}
       </div>
       <DataTable2
         data={itemCompletions?.results ?? []}
@@ -363,7 +385,15 @@ const ViewWatchStats: React.FC = () => {
         dense
         title="Preview Completion Report"
         subtitle="Sort and filter through completion progress for each user."
-        isLoading={completionsLoading}
+        isLoading={
+          reportInputData?.relativeEnrollment !== null &&
+          (completionsLoading || completionsPending)
+        }
+        noRowsMessage={
+          reportInputData?.relativeEnrollment !== null
+            ? "No completion data for the given query."
+            : "No training enrollments found."
+        }
         columnVisibility={{
           "user.unit.name": !!hasMultipleUnitAccess,
           "item.metadata.title":
@@ -462,27 +492,27 @@ function TrainingPickerModal({
 
 interface ReportInputData {
   organizationId: string;
-  relativeEnrollment: RelativeEnrollmentDto | undefined;
-  trainingCourse: TrainingCourse | undefined;
-  trainingSectionAndWindow: SectionAndWindow | undefined;
+  relativeEnrollment: RelativeEnrollmentDto | null;
+  trainingCourse: TrainingCourse | null;
+  trainingSectionAndWindow: SectionAndWindow | null;
 }
 
 type UpdateReportInputData = Partial<
   Omit<ReportInputData, "relativeEnrollment"> & {
-    relativeEnrollment: RelativeEnrollmentDto | CourseEnrollment;
+    relativeEnrollment: RelativeEnrollmentDto | CourseEnrollment | null;
   }
 >;
 
 const getDefaultReportInputData = async (organizationId: string) => {
   const returnInputData: ReportInputData = {
     organizationId,
-    relativeEnrollment: undefined,
-    trainingCourse: undefined,
-    trainingSectionAndWindow: undefined,
+    relativeEnrollment: null,
+    trainingCourse: null,
+    trainingSectionAndWindow: null,
   };
 
   const latestEnrollments = await getLatestCourseEnrollments(organizationId);
-  const latestEnrollment = latestEnrollments.at(1);
+  const latestEnrollment = latestEnrollments.at(0);
 
   if (!latestEnrollment) {
     return returnInputData;
@@ -546,7 +576,13 @@ const updateReportInputData = async (
     if (isNil(a) && isNil(b)) {
       return true;
     }
-    if (typeof a === "object" && typeof b === "object") {
+
+    if (
+      typeof a === "object" &&
+      a !== null &&
+      typeof b === "object" &&
+      b !== null
+    ) {
       if ("id" in a && "id" in b) {
         return a.id === b.id;
       } else if ("section" in a && "section" in b) {
@@ -635,7 +671,9 @@ const updateReportInputData = async (
   if (updated(draft, "trainingCourse") && !newData.trainingSectionAndWindow) {
     draft.trainingSectionAndWindow =
       getLatestAvailableSection(
-        draft.relativeEnrollment ?? reportInputData?.relativeEnrollment,
+        draft.relativeEnrollment ??
+          reportInputData?.relativeEnrollment ??
+          undefined,
         draft.trainingCourse.sections
       ) ?? undefined;
   }
