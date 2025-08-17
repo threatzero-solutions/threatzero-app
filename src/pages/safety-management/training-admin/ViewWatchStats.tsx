@@ -130,7 +130,9 @@ const ViewWatchStats: React.FC = () => {
   const [trainingPickerOpen, setTrainingPickerOpen] = useState(false);
 
   const [tableFiltersQuery, setTableFiltersQuery] =
-    useImmer<ItemFilterQueryParams>({ order: { ["user.familyName"]: "DESC" } });
+    useImmer<ItemFilterQueryParams>({
+      order: { progress: "ASC", ["user.familyName"]: "DESC" },
+    });
   const [debouncedTableFiltersQuery] = useDebounceValue(tableFiltersQuery, 300);
 
   const itemCompletionsQuery = {
