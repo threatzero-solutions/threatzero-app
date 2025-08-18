@@ -20,8 +20,14 @@ function* buildSectionFeaturedWindows(
   }
 
   let lastEnd = dayjs(enrollment.startDate);
+  const enrollmentEnd = enrollment.endDate ? dayjs(enrollment.endDate) : null;
+
   for (const section of sections.slice().sort(orderSort)) {
     const nextEnd = lastEnd.add(dayjs.duration(section.duration));
+
+    if (enrollmentEnd !== null && nextEnd.isAfter(enrollmentEnd)) {
+      break;
+    }
 
     yield {
       window: {
@@ -118,7 +124,7 @@ export const getSectionAndWindowBySectionId = (
   sectionId: string,
   enrollment: CourseEnrollment | RelativeEnrollmentDto | undefined,
   sections: TrainingSection[]
-): SectionAndWindow | undefined => {
+): SectionAndWindow | null => {
   for (const { window, section } of buildSectionFeaturedWindows(
     enrollment,
     sections
@@ -127,6 +133,8 @@ export const getSectionAndWindowBySectionId = (
       return { section, window };
     }
   }
+
+  return null;
 };
 
 export const getCourseAvailability = (

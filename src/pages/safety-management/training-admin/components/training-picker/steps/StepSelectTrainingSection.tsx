@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
   CourseEnrollment,
   TrainingSection,
@@ -33,15 +33,6 @@ export default function StepSelectTrainingSection({
           ),
     [selectedEnrollment, trainingSections]
   );
-
-  useEffect(() => {
-    if (sectionWindowMap.size === 1) {
-      const sectionAndWindow = sectionWindowMap.values().next().value;
-      if (sectionAndWindow) {
-        onSelectTrainingSectionAndWindow(sectionAndWindow);
-      }
-    }
-  }, [onSelectTrainingSectionAndWindow, sectionWindowMap]);
 
   return (
     <Step
