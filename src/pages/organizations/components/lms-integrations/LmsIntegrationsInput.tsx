@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
+import { READ } from "../../../../constants/permissions";
+import { useAuth } from "../../../../contexts/auth/useAuth";
 import { getOrganizationLmsTokens } from "../../../../queries/organizations";
 import {
   type CourseEnrollment,
@@ -22,6 +24,11 @@ const LmsIntegrationsInput: React.FC<LmsIntegrationsInputProps> = ({
   courseId,
   accessSettings,
 }) => {
+  const { hasPermissions } = useAuth();
+  const canViewLmsIntegrations = hasPermissions([
+    READ.ORGANIZATION_LMS_CONTENT,
+  ]);
+
   const [scormPackagesSliderOpen, setScormPackagesSliderOpen] = useState(false);
 
   const { data: lmsTokens } = useQuery({
@@ -36,8 +43,12 @@ const LmsIntegrationsInput: React.FC<LmsIntegrationsInputProps> = ({
         "value.enrollmentId": queryKey[2],
         ...queryKey[3],
       }),
-    enabled: !!organizationId && !!enrollmentId,
+    enabled: !!canViewLmsIntegrations && !!organizationId && !!enrollmentId,
   });
+
+  if (!canViewLmsIntegrations) {
+    return null;
+  }
 
   return (
     lmsTokens && (

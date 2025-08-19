@@ -154,7 +154,9 @@ const ViewUnit: React.FC<{ unitSlug?: string }> = ({ unitSlug }) => {
   const { data: unitName, isLoading } = useQuery({
     queryKey: ["unit-name", unitSlug] as const,
     queryFn: ({ queryKey }) =>
-      getUnitBySlug(queryKey[1]).then((u) => u?.name ?? null),
+      getUnitBySlug(queryKey[1])
+        .then((u) => u?.name ?? null)
+        .catch(() => null),
     enabled: !!unitSlug,
   });
   return isLoading ? (
@@ -274,9 +276,9 @@ const ManageTrainingInvites: React.FC = () => {
     query: itemFilterOptions,
     setQuery: setItemFilterOptions,
     organizationsEnabled: hasMultipleOrganizationAccess,
-    organizationKey: "organizationSlug",
+    organizationKey: "value.organizationSlug",
     unitsEnabled: hasMultipleUnitAccess,
-    unitKey: "unitSlug",
+    unitKey: "value.unitSlug",
     locationsEnabled: false,
   });
 

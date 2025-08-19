@@ -14,6 +14,7 @@ import { ItemFilterQueryParams } from "../../../../hooks/use-item-filter-query";
 import { getOrganizations } from "../../../../queries/organizations";
 import { Organization } from "../../../../types/entities";
 import EditOrganizationBasic from "../../../organizations/components/EditOrganizationBasic";
+import { OrganizationStatusBadge } from "../../../organizations/components/OrganizationStatusBadge";
 
 const columnHelper = createColumnHelper<Organization>();
 const columns = [
@@ -28,6 +29,10 @@ const columns = [
   columnHelper.accessor("createdOn", {
     header: "Created On",
     cell: (info) => dayjs(info.getValue()).format("ll"),
+  }),
+  columnHelper.accessor("status", {
+    header: "Status",
+    cell: (info) => <OrganizationStatusBadge status={info.getValue()} />,
   }),
   columnHelper.display({
     id: "actions",

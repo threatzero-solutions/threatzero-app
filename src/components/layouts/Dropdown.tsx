@@ -32,7 +32,7 @@ export interface DropdownActionGroup {
 }
 
 interface DropdownProps extends UseFloatingOptions {
-  value?: string;
+  value?: ReactNode;
   valueIcon?: ReactNode;
   iconOnly?: boolean;
   actions?: DropdownAction[];

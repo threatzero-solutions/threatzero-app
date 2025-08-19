@@ -20,10 +20,13 @@ export const formBuilderPermissionsOptions = {
 
 // SAFETY MANAGEMENT
 export const safetyManagementPermissionOptions = {
+  type: "any" as const,
   permissions: [
     READ.TIPS,
     READ.THREAT_ASSESSMENTS,
     READ.VIOLENT_INCIDENT_REPORTS,
+    READ.TRAINING_STATS,
+    WRITE.TRAINING_LINKS,
   ],
 };
 
@@ -41,7 +44,7 @@ export const violentIncidentReportPermissionsOptions = {
 
 export const trainingAdminPermissionOptions = {
   permissions: [WRITE.TRAINING_LINKS, READ.TRAINING_STATS],
-  type: "all" as const,
+  type: "any" as const,
 };
 
 // RESOURCES

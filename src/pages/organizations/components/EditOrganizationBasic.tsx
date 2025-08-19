@@ -5,10 +5,11 @@ import {
 } from "@heroicons/react/24/outline";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useDebounceValue } from "usehooks-ts";
 import Checkbox from "../../../components/forms/inputs/Checkbox";
 import Input from "../../../components/forms/inputs/Input";
+import RadioOptions from "../../../components/forms/inputs/RadioOptions";
 import TextArea from "../../../components/forms/inputs/TextArea";
 import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
@@ -30,10 +31,12 @@ import {
   FieldType,
   Organization,
   OrganizationBase,
+  OrganizationStatus,
   Transient,
   Unit,
 } from "../../../types/entities";
 import { classNames, slugify } from "../../../utils/core";
+import { OrganizationStatusBadge } from "./OrganizationStatusBadge";
 
 interface EditOrganizationBasicProps {
   setOpen: (open: boolean) => void;
@@ -51,6 +54,7 @@ type TransientOrganizationBase = Omit<
 > & {
   parentUnit?: Pick<Unit, "id"> | null;
   organization?: Pick<Organization, "id">;
+  status?: OrganizationStatus;
 };
 
 const INITIAL_ORGANIZATION_BASE: TransientOrganizationBase = {
@@ -68,7 +72,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   parentUnitId,
   onSaveSuccess,
 }) => {
-  const { isGlobalAdmin } = useAuth();
+  const { accessTokenClaims, isGlobalAdmin } = useAuth();
   const { openConfirmDiscard } = useContext(ConfirmationContext);
 
   const { data: organizationData } = useQuery({
@@ -96,6 +100,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
       id: baseData.id,
       name: baseData.name,
       slug: baseData.slug,
+      status: baseData.status,
       address: baseData.address,
     };
 
@@ -249,6 +254,32 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
         setOpen={setOpen}
       />
       <SlideOverFormBody>
+        {isOrganization && isGlobalAdmin && (
+          <SlideOverField name="status" label="Status">
+            <Controller
+              control={formMethods.control}
+              name="status"
+              render={({ field }) => (
+                <RadioOptions
+                  orientation="horizontal"
+                  options={Object.values(OrganizationStatus).reduce(
+                    (acc, status) => ({
+                      ...acc,
+                      [status]: <OrganizationStatusBadge status={status} />,
+                    }),
+                    {}
+                  )}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  disabled={
+                    accessTokenClaims?.organization === organizationData?.slug
+                  }
+                />
+              )}
+            />
+          </SlideOverField>
+        )}
         <SlideOverField
           name="name"
           label="Name"

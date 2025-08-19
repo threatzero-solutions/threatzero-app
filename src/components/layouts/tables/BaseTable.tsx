@@ -111,6 +111,8 @@ const BaseTable = <T extends object>({
           pageCount={table.getPageCount()}
           setPageIndex={table.setPageIndex}
           pageIndex={table.getState().pagination.pageIndex}
+          pageSize={table.getState().pagination.pageSize}
+          setPageSize={table.setPageSize}
         />
       )}
     </>
@@ -211,7 +213,6 @@ export function BaseTableHeaderCell<T extends object>({
                 ? "bg-gray-200 text-gray-900 group-hover:bg-gray-300"
                 : "text-gray-300 group-hover:text-gray-600"
             )}
-            title="SHIFT + click for multi-column sorting"
           >
             {header.column.getIsSorted() === "desc" ? (
               <ChevronDownIcon

@@ -1,17 +1,18 @@
 import dayjs, { Dayjs } from "dayjs";
+import duration from "dayjs/plugin/duration";
 import { CourseEnrollment, TrainingSection } from "../types/entities";
 import {
   FeaturedWindow,
+  RelativeEnrollmentDto,
   SectionAndWindow,
   TrainingAvailability,
 } from "../types/training";
 import { orderSort } from "./core";
-import duration from "dayjs/plugin/duration";
 
 dayjs.extend(duration);
 
 function* buildSectionFeaturedWindows(
-  enrollment: CourseEnrollment | undefined,
+  enrollment: CourseEnrollment | RelativeEnrollmentDto | undefined,
   sections: TrainingSection[]
 ): IterableIterator<SectionAndWindow> {
   if (!enrollment) {
@@ -19,8 +20,14 @@ function* buildSectionFeaturedWindows(
   }
 
   let lastEnd = dayjs(enrollment.startDate);
-  for (const section of sections.sort(orderSort)) {
+  const enrollmentEnd = enrollment.endDate ? dayjs(enrollment.endDate) : null;
+
+  for (const section of sections.slice().sort(orderSort)) {
     const nextEnd = lastEnd.add(dayjs.duration(section.duration));
+
+    if (enrollmentEnd !== null && nextEnd.isAfter(enrollmentEnd)) {
+      break;
+    }
 
     yield {
       window: {
@@ -44,8 +51,9 @@ const isInFeaturedWindow = (window: FeaturedWindow, today?: Dayjs) => {
   );
 };
 
+/** Return the section and window that is either currently available or next available. */
 export const getNextAvailableSection = (
-  enrollment: CourseEnrollment | undefined,
+  enrollment: CourseEnrollment | RelativeEnrollmentDto | undefined,
   sections: TrainingSection[]
 ): Partial<SectionAndWindow> => {
   const firstSectionAndWindow: Partial<SectionAndWindow> = {};
@@ -68,8 +76,33 @@ export const getNextAvailableSection = (
   return firstSectionAndWindow;
 };
 
+/** Return the section and window that is either currently available or most recently available. */
+export const getLatestAvailableSection = (
+  enrollment: CourseEnrollment | RelativeEnrollmentDto | undefined,
+  sections: TrainingSection[]
+): SectionAndWindow | null => {
+  let firstSectionAndWindow: SectionAndWindow | null = null;
+  let latestSectionAndWindow: SectionAndWindow | null = null;
+
+  for (const { window, section } of buildSectionFeaturedWindows(
+    enrollment,
+    sections
+  )) {
+    // Store first section and window as default.
+    if (!firstSectionAndWindow) {
+      firstSectionAndWindow = { section, window };
+    }
+
+    if (window && !dayjs(window.featuredUntil).isAfter(dayjs())) {
+      latestSectionAndWindow = { section, window };
+    }
+  }
+
+  return latestSectionAndWindow ?? firstSectionAndWindow;
+};
+
 export const getSectionFeaturedWindows = (
-  enrollment: CourseEnrollment | undefined,
+  enrollment: CourseEnrollment | RelativeEnrollmentDto | undefined,
   sections: TrainingSection[]
 ) => {
   const featuredWindows = new Map<TrainingSection["id"], SectionAndWindow>();
@@ -85,6 +118,23 @@ export const getSectionFeaturedWindows = (
   }
 
   return featuredWindows;
+};
+
+export const getSectionAndWindowBySectionId = (
+  sectionId: string,
+  enrollment: CourseEnrollment | RelativeEnrollmentDto | undefined,
+  sections: TrainingSection[]
+): SectionAndWindow | null => {
+  for (const { window, section } of buildSectionFeaturedWindows(
+    enrollment,
+    sections
+  )) {
+    if (section.id === sectionId) {
+      return { section, window };
+    }
+  }
+
+  return null;
 };
 
 export const getCourseAvailability = (

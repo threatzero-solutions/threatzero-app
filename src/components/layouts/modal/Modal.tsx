@@ -1,10 +1,14 @@
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { PropsWithChildren } from "react";
+import { cn } from "../../../utils/core";
 
 export interface ModalProps extends PropsWithChildren {
   open: boolean;
   setOpen: (open: boolean) => void;
   unmount?: boolean;
+  classNames?: {
+    dialogPanel?: string;
+  };
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -12,6 +16,7 @@ const Modal: React.FC<ModalProps> = ({
   setOpen,
   unmount = true,
   children,
+  classNames,
 }) => {
   return (
     <Dialog
@@ -26,10 +31,13 @@ const Modal: React.FC<ModalProps> = ({
       />
 
       <div className="fixed inset-0 z-50 w-screen overflow-y-auto">
-        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div className="flex min-h-full items-end justify-center text-center sm:items-center p-0">
           <DialogPanel
             transition
-            className="relative transform rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg sm:data-closed:translate-y-0 sm:data-closed:scale-95"
+            className={cn(
+              "relative transform rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg sm:data-closed:translate-y-0 sm:data-closed:scale-95",
+              classNames?.dialogPanel
+            )}
           >
             {children}
           </DialogPanel>

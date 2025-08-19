@@ -30,6 +30,7 @@ import { Organization, Unit } from "../../types/entities";
 import { classNames, humanizeSlug } from "../../utils/core";
 import { useNav } from "../../utils/navigation";
 import EditOrganizationBasic from "./components/EditOrganizationBasic";
+import { OrganizationStatusBadge } from "./components/OrganizationStatusBadge";
 
 const OrganizationsRootInner: React.FC = () => {
   const [editBasicInfoOpen, setEditBasicInfoOpen] = useState(false);
@@ -149,6 +150,11 @@ const OrganizationsRootInner: React.FC = () => {
             <>
               <h1 className="text-2xl font-semibold leading-6 text-gray-900 inline-flex items-center gap-2">
                 {isUnitContext ? currentUnit?.name : currentOrganization?.name}
+                {!isUnitContext && currentOrganization && (
+                  <OrganizationStatusBadge
+                    status={currentOrganization.status}
+                  />
+                )}
                 {hasPermissions([WRITE.ORGANIZATIONS]) && (
                   <PencilIcon
                     onClick={() => setEditBasicInfoOpen(true)}
