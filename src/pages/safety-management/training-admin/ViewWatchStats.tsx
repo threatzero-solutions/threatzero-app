@@ -571,39 +571,76 @@ const getDefaultReportInputData = async (organizationId: string) => {
     trainingSectionAndWindow: null,
   };
 
-  const latestEnrollments = await getLatestCourseEnrollments(organizationId);
-  const latestEnrollment = latestEnrollments.at(0);
-
-  if (!latestEnrollment) {
-    return returnInputData;
-  }
-
-  const relativeEnrollment = await getRelativeEnrollment(
-    organizationId,
-    latestEnrollment.id
+  // Try to get the default enrollment from local storage.
+  const defaultEnrollmentId = localStorage.getItem(
+    getDefaultEnrollmentStorageKey(organizationId)
   );
 
-  if (!relativeEnrollment) {
+  if (defaultEnrollmentId) {
+    try {
+      returnInputData.relativeEnrollment = await getRelativeEnrollment(
+        organizationId,
+        defaultEnrollmentId
+      );
+    } catch (e) {
+      console.warn(
+        `Failed to get relative enrollment by id: ${defaultEnrollmentId}`,
+        e
+      );
+      returnInputData.relativeEnrollment = null;
+    }
+  }
+
+  // If no default enrollment is found (or local storage ID is invalid), try to get the latest enrollment.
+  if (!returnInputData.relativeEnrollment) {
+    const latestEnrollmentId = await getLatestCourseEnrollments(
+      organizationId
+    ).then((e) => e.at(0)?.id);
+    if (latestEnrollmentId) {
+      returnInputData.relativeEnrollment = await getRelativeEnrollment(
+        organizationId,
+        latestEnrollmentId
+      );
+    }
+  }
+
+  if (!returnInputData.relativeEnrollment) {
     return returnInputData;
   }
-  returnInputData.relativeEnrollment = relativeEnrollment;
 
-  const trainingCourse = await getTrainingCourse(relativeEnrollment.courseId);
+  // Get the training course for the default enrollment.
+  const trainingCourse = await getTrainingCourse(
+    returnInputData.relativeEnrollment.courseId
+  );
 
   if (!trainingCourse) {
     return returnInputData;
   }
   returnInputData.trainingCourse = trainingCourse;
 
-  const trainingSectionAndWindow = getLatestAvailableSection(
-    relativeEnrollment,
-    trainingCourse.sections
+  // Try to get the default section from local storage.
+  const defaultSectionId = localStorage.getItem(
+    getDefaultSectionStorageKey(
+      organizationId,
+      returnInputData.relativeEnrollment.courseId
+    )
   );
 
-  if (!trainingSectionAndWindow) {
-    return returnInputData;
+  if (defaultSectionId) {
+    returnInputData.trainingSectionAndWindow = getSectionAndWindowBySectionId(
+      defaultSectionId,
+      returnInputData.relativeEnrollment,
+      trainingCourse.sections
+    );
   }
-  returnInputData.trainingSectionAndWindow = trainingSectionAndWindow;
+
+  // If no default section is found (or local storage ID is invalid), get the latest available section.
+  if (!returnInputData.trainingSectionAndWindow) {
+    returnInputData.trainingSectionAndWindow = getLatestAvailableSection(
+      returnInputData.relativeEnrollment,
+      trainingCourse.sections
+    );
+  }
 
   return returnInputData;
 };
@@ -738,6 +775,31 @@ const updateReportInputData = async (
       ) ?? undefined;
   }
 
+  if (updated(draft, "relativeEnrollment")) {
+    localStorage.setItem(
+      getDefaultEnrollmentStorageKey(
+        draft.organizationId ??
+          reportInputData?.organizationId ??
+          "unknown-organization"
+      ),
+      draft.relativeEnrollment.id
+    );
+  }
+
+  if (updated(draft, "trainingSectionAndWindow")) {
+    localStorage.setItem(
+      getDefaultSectionStorageKey(
+        draft.organizationId ??
+          reportInputData?.organizationId ??
+          "unknown-organization",
+        draft.trainingCourse?.id ??
+          reportInputData?.trainingCourse?.id ??
+          "unknown-course"
+      ),
+      draft.trainingSectionAndWindow.section.id
+    );
+  }
+
   return draft;
 };
 
@@ -754,3 +816,11 @@ const getAdjacentEnrollmentAndUpdateReportInputData = async (
     relativeEnrollment: previousEnrollment,
   });
 };
+
+const getDefaultEnrollmentStorageKey = (organizationId: string) =>
+  `training-report-default-enrollment-${organizationId}`;
+
+const getDefaultSectionStorageKey = (
+  organizationId: string,
+  courseId: string
+) => `training-report-default-section-${organizationId}-${courseId}`;

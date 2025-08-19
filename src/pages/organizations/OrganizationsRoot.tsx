@@ -150,7 +150,7 @@ const OrganizationsRootInner: React.FC = () => {
             <>
               <h1 className="text-2xl font-semibold leading-6 text-gray-900 inline-flex items-center gap-2">
                 {isUnitContext ? currentUnit?.name : currentOrganization?.name}
-                {!isUnitContext && currentOrganization && (
+                {!isUnitContext && currentOrganization && isGlobalAdmin && (
                   <OrganizationStatusBadge
                     status={currentOrganization.status}
                   />
