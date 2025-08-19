@@ -226,10 +226,49 @@ const ViewWatchStats: React.FC = () => {
     unitKey: "user.unit.slug",
   });
 
+  const reportDownloadFilename = useMemo(() => {
+    const stripHtmlAndTruncate = (
+      str: string | undefined | null,
+      length: number
+    ) =>
+      isNil(str)
+        ? undefined
+        : stripHtml(str)
+            .substring(0, length)
+            .replace(/[^\w]/g, "_")
+            .replace(/_+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .replace(/_+/g, "_");
+
+    return (
+      [
+        "completion_report",
+        stripHtmlAndTruncate(
+          reportInputData?.trainingCourse?.metadata.title,
+          15
+        ),
+        stripHtmlAndTruncate(
+          reportInputData?.trainingSectionAndWindow?.section?.metadata.title ||
+            reportInputData?.trainingSectionAndWindow?.section?.items?.at(0)
+              ?.item.metadata.title,
+          15
+        ),
+        dayjs(reportInputData?.relativeEnrollment?.startDate).format(
+          "YYYY_MM_DD"
+        ),
+        dayjs(reportInputData?.relativeEnrollment?.endDate).format(
+          "YYYY_MM_DD"
+        ),
+      ]
+        .filter(Boolean)
+        .join("-") + ".csv"
+    );
+  }, [reportInputData]);
+
   const itemCompletionsCsvMutation = useMutation({
     mutationFn: (query: ItemFilterQueryParams) => getItemCompletionsCsv(query),
     onSuccess: (data) => {
-      simulateDownload(new Blob([data]), "watch-stats.csv");
+      simulateDownload(new Blob([data]), reportDownloadFilename);
       setTimeout(() => clearAlert(infoAlertId), 2000);
     },
     onError: () => {
@@ -244,12 +283,31 @@ const ViewWatchStats: React.FC = () => {
 
   return (
     <>
-      <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center mb-8">
+      <div className="border-b border-gray-200 pb-5 flex flex-col gap-1 mb-4">
         <h1 className="text-base font-semibold leading-6 text-gray-900">
           Generate Training Completion Report
         </h1>
+        <p className="text-sm text-gray-500">
+          This tool allows you to view training completion details for a
+          specific training section and enrollment period for{" "}
+          {hasMultipleOrganizationAccess
+            ? "an organization"
+            : "your organization"}
+          .
+        </p>
       </div>
       <div className="grid grid-cols-[auto_1fr] content-center gap-x-8 gap-y-6 mb-8">
+        <ol className="text-sm text-gray-500 col-span-full list-decimal list-inside">
+          <li>
+            Begin by selecting{" "}
+            {hasMultipleOrganizationAccess ? "an organization and" : ""} a
+            training section.
+          </li>
+          <li>
+            Then, you can preview the results in the table below or download
+            them as a CSV file.
+          </li>
+        </ol>
         {hasMultipleOrganizationAccess && (
           <>
             <label className="block text-sm font-medium leading-6 text-gray-900">
@@ -408,7 +466,7 @@ const ViewWatchStats: React.FC = () => {
             className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
             onClick={() => handleDownloadWatchStatsCsv()}
           >
-            Download (.csv)
+            Download Report (.csv)
           </button>
         }
         query={tableFiltersQuery}
