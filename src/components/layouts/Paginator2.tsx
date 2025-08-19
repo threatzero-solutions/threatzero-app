@@ -28,8 +28,6 @@ export interface Paginator2Props {
 
 const MAX_PAGE_BUTTONS = 7;
 
-export const DEFAULT_PAGE_SIZE = 10;
-
 const Paginator2: React.FC<Paginator2Props> = ({
   pageCount,
   canPreviousPage,
