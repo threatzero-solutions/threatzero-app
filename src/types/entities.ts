@@ -43,8 +43,20 @@ export interface OrganizationTrainingAccessSettings {
   allowedOrigins?: AllowedOrigin[];
 }
 
+export enum OrganizationStatus {
+  PENDING = "pending",
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+}
+
+export interface OrganizationNotificationSettings {
+  initialReminderEmailsEnabled: boolean;
+  followUpReminderEmailsEnabled: boolean;
+}
+
 /** Represents an organization (ie district, company, etc.) */
 export interface Organization extends OrganizationBase {
+  status: OrganizationStatus;
   groupId: string | null;
   enrollments?: CourseEnrollment[];
   resources?: ResourceItem[];
@@ -52,6 +64,7 @@ export interface Organization extends OrganizationBase {
   allowedAudiences: string[];
   allowedRoleGroups: string[] | null;
   trainingAccessSettings: OrganizationTrainingAccessSettings | null;
+  notificationSettings: OrganizationNotificationSettings | null;
 }
 
 export interface CourseEnrollment extends Base {
