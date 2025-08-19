@@ -103,8 +103,8 @@ const BaseTable = <T extends object>({
             table.getRowCount()
           )}
           rowEnd={Math.min(
-            table.getState().pagination.pageIndex +
-              1 * table.getState().pagination.pageSize,
+            (table.getState().pagination.pageIndex + 1) *
+              table.getState().pagination.pageSize,
             table.getRowCount()
           )}
           rowTotal={table.getRowCount()}

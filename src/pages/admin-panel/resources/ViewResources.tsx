@@ -89,6 +89,12 @@ export const ViewResources: React.FC = () => {
         setItemFilterQuery={setItemFilterOptions}
         paginationOptions={{
           ...resources,
+          setPageSize: (ps) => {
+            setItemFilterOptions((q) => {
+              q.limit = ps;
+              q.offset = 0;
+            });
+          },
         }}
         searchOptions={{
           searchQuery: itemFilterOptions.search ?? "",

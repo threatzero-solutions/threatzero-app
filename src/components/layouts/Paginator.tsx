@@ -2,11 +2,13 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import { useMemo } from "react";
 import { Paginated } from "../../types/entities";
 import { classNames } from "../../utils/core";
+import Select from "../forms/inputs/Select";
 
 export interface PageOptions {
   limit: number;
   offset: number;
   search?: string;
+  pageCount: number;
 }
 
 export type CurrentPage = Partial<Omit<Paginated<unknown>, "results">>;
@@ -14,6 +16,7 @@ export type CurrentPage = Partial<Omit<Paginated<unknown>, "results">>;
 export interface PaginatorProps extends CurrentPage {
   pageSize?: number;
   setOffset: (offset: number) => void;
+  setPageSize?: (pageSize: number) => void;
 }
 
 const MAX_PAGE_BUTTONS = 7;
@@ -21,16 +24,22 @@ const MAX_PAGE_BUTTONS = 7;
 export const DEFAULT_PAGE_SIZE = 10;
 
 const Paginator: React.FC<PaginatorProps> = ({
-  pageSize,
+  pageSize: pageSizeProp,
   offset: currentOffset,
   count: total,
   limit,
+  pageCount,
   setOffset,
+  setPageSize,
 }) => {
+  const pageSize = limit ?? pageSizeProp ?? DEFAULT_PAGE_SIZE;
   const nextLimit = useMemo(() => pageSize ?? DEFAULT_PAGE_SIZE, [pageSize]);
   const offset = useMemo(() => currentOffset ?? 0, [currentOffset]);
   const count = useMemo(() => total ?? 0, [total]);
-  const currentLimit = useMemo(() => limit ?? DEFAULT_PAGE_SIZE, [limit]);
+  const currentLimit = useMemo(
+    () => pageCount ?? DEFAULT_PAGE_SIZE,
+    [pageCount]
+  );
 
   const activePage = useMemo(() => offset / nextLimit + 1, [offset, nextLimit]);
 
@@ -97,6 +106,23 @@ const Paginator: React.FC<PaginatorProps> = ({
         </button>
       </div>
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        {pageSize && setPageSize && (
+          <div className="flex items-center space-x-2">
+            <p className="text-xs sm:text-sm">Page size</p>
+            <Select
+              value={`${pageSize}`}
+              onChange={(value) => {
+                setPageSize(Number(value.target.value));
+              }}
+              options={[
+                { key: "10", label: "10" },
+                { key: "25", label: "25" },
+                { key: "50", label: "50" },
+                { key: "100", label: "100" },
+              ]}
+            ></Select>
+          </div>
+        )}
         <div>
           <p className="text-sm text-gray-700">
             Showing <span className="font-medium">{offset + 1}</span> to{" "}
