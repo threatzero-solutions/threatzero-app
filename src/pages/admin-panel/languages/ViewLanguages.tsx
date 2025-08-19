@@ -80,6 +80,12 @@ export const ViewLanguages: React.FC = () => {
         setItemFilterQuery={setLanguagesQuery}
         paginationOptions={{
           ...languages,
+          setPageSize: (ps) => {
+            setLanguagesQuery((q) => {
+              q.limit = ps;
+              q.offset = 0;
+            });
+          },
         }}
         searchOptions={{
           searchQuery: languagesQuery.search ?? "",

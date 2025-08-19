@@ -855,6 +855,12 @@ const ManageTrainingInvites: React.FC = () => {
           setItemFilterQuery={setItemFilterOptions}
           paginationOptions={{
             ...trainingInvites,
+            setPageSize: (ps) => {
+              setItemFilterOptions((q) => {
+                q.limit = ps;
+                q.offset = 0;
+              });
+            },
           }}
           filterOptions={{
             filters: [

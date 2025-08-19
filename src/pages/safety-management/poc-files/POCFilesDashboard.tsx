@@ -9,7 +9,7 @@ import { POCFile } from "../../../types/entities";
 
 const POCFilesDashboard: React.FC = () => {
   const [editPOCFileSliderOpen, setEditPOCFileSliderOpen] = useState(false);
-  const [_, setSelectedPOCFile] = useState<Partial<POCFile> | undefined>();
+  const [, setSelectedPOCFile] = useState<Partial<POCFile> | undefined>();
 
   const [pocFilesQuery, setPocFilesQuery] = useImmer<ItemFilterQueryParams>({});
   // const [debouncedPocFilesQuery] = useDebounceValue(pocFilesQuery, 300);
@@ -67,6 +67,12 @@ const POCFilesDashboard: React.FC = () => {
         setItemFilterQuery={setPocFilesQuery}
         paginationOptions={{
           ...pocFiles,
+          setPageSize: (ps) => {
+            setPocFilesQuery((q) => {
+              q.limit = ps;
+              q.offset = 0;
+            });
+          },
         }}
         searchOptions={{
           searchQuery: pocFilesQuery.search ?? "",

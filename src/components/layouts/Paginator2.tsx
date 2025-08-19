@@ -115,10 +115,9 @@ const Paginator2: React.FC<Paginator2Props> = ({
               }}
               options={[
                 { key: "10", label: "10" },
-                { key: "20", label: "20" },
-                { key: "30", label: "30" },
-                { key: "40", label: "40" },
+                { key: "25", label: "25" },
                 { key: "50", label: "50" },
+                { key: "100", label: "100" },
               ]}
             ></Select>
           </div>

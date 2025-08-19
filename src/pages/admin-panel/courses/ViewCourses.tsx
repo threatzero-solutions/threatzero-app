@@ -131,6 +131,12 @@ const ViewCourses: React.FC = () => {
         }
         paginationOptions={{
           ...courses,
+          setPageSize: (ps) => {
+            setCourseFilterOptions((q) => {
+              q.limit = ps;
+              q.offset = 0;
+            });
+          },
         }}
         searchOptions={{
           searchQuery: courseFilterOptions.search ?? "",
