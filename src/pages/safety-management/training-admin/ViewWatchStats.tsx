@@ -3,7 +3,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
-import { useDebounceValue } from "usehooks-ts";
+import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
 import Modal from "../../../components/layouts/modal/Modal";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
@@ -51,12 +51,22 @@ const ViewWatchStats: React.FC = () => {
   const { setInfo, clearAlert } = useContext(AlertContext);
   const infoAlertId = useAlertId();
 
-  const [selectedOrganizationId, setSelectedOrganizationId] =
-    useState<string>();
+  const [selectedOrganizationId, setSelectedOrganizationId] = useLocalStorage<
+    string | undefined
+  >("training-report-selected-organization-id", undefined);
   const { data: organization, isLoading: organizationLoading } = useQuery({
     queryKey: ["organization", selectedOrganizationId] as const,
-    queryFn: ({ queryKey }) =>
-      queryKey[1] ? getOrganization(queryKey[1]) : getMyOrganization(),
+    queryFn: async ({ queryKey }) => {
+      if (queryKey[1]) {
+        try {
+          return await getOrganization(queryKey[1]);
+        } catch (e) {
+          console.warn(`Failed to get organization by id: ${queryKey[1]}`, e);
+        }
+      }
+
+      return await getMyOrganization();
+    },
     refetchOnWindowFocus: false,
   });
   const [changingOrganization, setChangingOrganization] = useState(false);
