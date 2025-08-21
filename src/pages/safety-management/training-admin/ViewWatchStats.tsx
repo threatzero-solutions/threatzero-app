@@ -163,6 +163,7 @@ const ViewWatchStats: React.FC = () => {
   const {
     data: itemCompletionsSummary,
     isPending: itemCompletionsSummaryPending,
+    isFetching: itemCompletionsSummaryFetching,
   } = useQuery({
     queryKey: [
       "item-completions-summary",
@@ -186,7 +187,10 @@ const ViewWatchStats: React.FC = () => {
   } = useQuery({
     queryKey: ["item-completions", itemCompletionsQuery] as const,
     queryFn: ({ queryKey }) => getItemCompletions(queryKey[1]),
-    enabled: !!organization && !!reportInputData?.relativeEnrollment?.id,
+    enabled:
+      !itemCompletionsSummaryFetching &&
+      !!organization &&
+      !!reportInputData?.relativeEnrollment?.id,
   });
 
   const columns = useMemo(
