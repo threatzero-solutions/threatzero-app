@@ -161,6 +161,9 @@ const CurrentStep = ({
                 });
               }
             }}
+            onStepBackward={() => {
+              stepTo(StepSelectCourseEnrollment.StepId, "backward");
+            }}
           />
         ) : (
           <LoadingStep />

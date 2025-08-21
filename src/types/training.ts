@@ -19,8 +19,7 @@ export interface SectionAndWindow {
 }
 
 export type SectionAndNullableWindow =
-  | SectionAndWindow
-  | {
+  | Exclude<SectionAndWindow, { window: null }> & {
       window: null;
     };
 

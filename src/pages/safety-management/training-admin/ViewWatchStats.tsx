@@ -506,7 +506,7 @@ const ViewWatchStats: React.FC = () => {
           Summary
         </label>
         {itemCompletionsSummaryPending ? (
-          <div className="animate-pulse rounded-md bg-slate-200 h-5 w-64 my-2 shadow-sm" />
+          <div className="animate-pulse rounded-md bg-slate-200 h-6 w-full shadow-sm" />
         ) : itemCompletionsSummary ? (
           <div className="flex flex-col gap-2">
             <div className="grid gap-1">
