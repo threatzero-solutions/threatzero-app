@@ -176,7 +176,7 @@ const ViewWatchStats: React.FC = () => {
   const summaryPercentComplete = itemCompletionsSummary
     ? (itemCompletionsSummary.totalComplete /
         (itemCompletionsSummary.totalComplete +
-          itemCompletionsSummary.totalIncomplete)) *
+          itemCompletionsSummary.totalIncomplete || 1)) *
       100
     : 0;
 
@@ -320,6 +320,10 @@ const ViewWatchStats: React.FC = () => {
     itemCompletionsCsvMutation.mutate(itemCompletionsQuery);
   };
 
+  useEffect(() => {
+    console.debug(reportInputData);
+  }, [reportInputData]);
+
   return (
     <>
       <div className="border-b border-gray-200 pb-5 flex flex-col gap-1 mb-4">
@@ -434,28 +438,30 @@ const ViewWatchStats: React.FC = () => {
                   navigateDisabled
                   dense
                 />
-                <FloatingChevron
-                  direction="left"
-                  hidden={!reportInputData.previousTrainingSectionAndWindow}
-                  onClick={() =>
-                    reportInputData.previousTrainingSectionAndWindow &&
-                    updateReportInputDataMutate({
-                      trainingSectionAndWindow:
-                        reportInputData.previousTrainingSectionAndWindow,
-                    })
-                  }
-                />
-                <FloatingChevron
-                  direction="right"
-                  hidden={!reportInputData.nextTrainingSectionAndWindow}
-                  onClick={() =>
-                    reportInputData.nextTrainingSectionAndWindow &&
-                    updateReportInputDataMutate({
-                      trainingSectionAndWindow:
-                        reportInputData.nextTrainingSectionAndWindow,
-                    })
-                  }
-                />
+                <div className="absolute top-3 left-3 flex gap-1">
+                  <ChevronButton
+                    direction="left"
+                    disabled={!reportInputData.previousTrainingSectionAndWindow}
+                    onClick={() =>
+                      reportInputData.previousTrainingSectionAndWindow &&
+                      updateReportInputDataMutate({
+                        trainingSectionAndWindow:
+                          reportInputData.previousTrainingSectionAndWindow,
+                      })
+                    }
+                  />
+                  <ChevronButton
+                    direction="right"
+                    disabled={!reportInputData.nextTrainingSectionAndWindow}
+                    onClick={() =>
+                      reportInputData.nextTrainingSectionAndWindow &&
+                      updateReportInputDataMutate({
+                        trainingSectionAndWindow:
+                          reportInputData.nextTrainingSectionAndWindow,
+                      })
+                    }
+                  />
+                </div>
               </div>
             ) : (
               <>&mdash;</>
@@ -649,22 +655,21 @@ function TrainingPickerModal({
   );
 }
 
-function FloatingChevron({
+function ChevronButton({
   direction,
   onClick,
-  hidden,
+  disabled,
 }: {
   direction: "left" | "right";
   onClick: () => void;
-  hidden?: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <div
+    <button
       onClick={onClick}
+      disabled={disabled}
       className={cn(
-        "absolute top-3 p-1 rounded-full opacity-100 bg-white/80 backdrop-blur-lg drop-shadow-sm cursor-pointer hover:bg-white/90 hover:drop-shadow-md transition-all text-secondary-600",
-        direction === "left" ? "left-3" : "right-3",
-        hidden && "opacity-0"
+        "rounded-full opacity-100 bg-white/80 backdrop-blur-lg drop-shadow-sm cursor-pointer enabled:hover:bg-white/90 enabled:hover:drop-shadow-md transition-all text-secondary-600 disabled:opacity-50 disabled:cursor-default"
       )}
     >
       {direction === "left" ? (
@@ -672,7 +677,7 @@ function FloatingChevron({
       ) : (
         <ChevronRightIcon className="size-6" />
       )}
-    </div>
+    </button>
   );
 }
 

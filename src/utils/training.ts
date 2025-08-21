@@ -103,8 +103,8 @@ export const getLatestAvailableSectionWithPreviousAndNext = (
       result.relativeAvailability === "ended" ||
       result.relativeAvailability === "ongoing"
     ) {
-      latest = result;
       previousToLatest = latest;
+      latest = result;
     } else if (result.relativeAvailability === "upcoming") {
       if (latest === null) {
         latest = result;

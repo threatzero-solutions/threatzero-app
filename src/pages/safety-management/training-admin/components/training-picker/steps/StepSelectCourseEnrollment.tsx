@@ -127,7 +127,7 @@ function EnrollmentList({
     <div>
       <button
         type="button"
-        className="flex items-center gap-2 text-sm font-semibold leading-6 text-gray-900 line-clamp-1 hover:text-gray-700 transition-colors cursor-pointer"
+        className="flex items-center gap-2 text-xs font-semibold leading-6 text-gray-900 line-clamp-1 hover:text-gray-700 transition-colors cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <motion.div
