@@ -169,8 +169,7 @@ const ViewWatchStats: React.FC = () => {
       itemCompletionsPreviewAndSummaryQuery,
     ] as const,
     queryFn: ({ queryKey }) => getItemCompletionsSummary(queryKey[1]),
-    enabled:
-      !!selectedOrganizationId && !!reportInputData?.relativeEnrollment?.id,
+    enabled: !!organization && !!reportInputData?.relativeEnrollment?.id,
   });
 
   const summaryPercentComplete = itemCompletionsSummary
@@ -187,8 +186,7 @@ const ViewWatchStats: React.FC = () => {
   } = useQuery({
     queryKey: ["item-completions", itemCompletionsQuery] as const,
     queryFn: ({ queryKey }) => getItemCompletions(queryKey[1]),
-    enabled:
-      !!selectedOrganizationId && !!reportInputData?.relativeEnrollment?.id,
+    enabled: !!organization && !!reportInputData?.relativeEnrollment?.id,
   });
 
   const columns = useMemo(
