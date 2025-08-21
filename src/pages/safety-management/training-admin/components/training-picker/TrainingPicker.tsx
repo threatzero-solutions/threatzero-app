@@ -5,7 +5,10 @@ import { Updater, useImmer } from "use-immer";
 import { create } from "zustand";
 import { getCourseEnrollments } from "../../../../../queries/organizations";
 import { getTrainingCourse } from "../../../../../queries/training";
-import { CourseEnrollment } from "../../../../../types/entities";
+import {
+  CourseEnrollment,
+  TrainingVisibility,
+} from "../../../../../types/entities";
 import { SectionAndWindow } from "../../../../../types/training";
 import StepSelectCourseEnrollment from "./steps/StepSelectCourseEnrollment";
 import StepSelectTrainingSection from "./steps/StepSelectTrainingSection";
@@ -108,9 +111,15 @@ const CurrentStep = ({
   }) => void;
 }) => {
   const { data: courseEnrollments } = useQuery({
-    queryKey: ["course-enrollments", pickerState.organizationId] as const,
+    queryKey: [
+      "course-enrollments",
+      pickerState.organizationId,
+      {
+        visibility: TrainingVisibility.VISIBLE,
+      },
+    ] as const,
     queryFn: ({ queryKey }) =>
-      getCourseEnrollments(queryKey[1]).then((r) => r.results),
+      getCourseEnrollments(queryKey[1], queryKey[2]).then((r) => r.results),
   });
 
   const { data: currentTrainingCourse } = useQuery({
@@ -160,6 +169,9 @@ const CurrentStep = ({
                   sectionAndWindow,
                 });
               }
+            }}
+            onStepBackward={() => {
+              stepTo(StepSelectCourseEnrollment.StepId, "backward");
             }}
           />
         ) : (

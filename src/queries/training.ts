@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import {
   Audience,
   ItemCompletion,
@@ -10,11 +11,11 @@ import {
   Video,
   VideoEvent,
 } from "../types/entities";
-import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import {
   deleteOne,
   download,
   findMany,
+  findManyRaw,
   findOne,
   findOneById,
   insertOne,
@@ -79,6 +80,12 @@ export const getMyItemCompletions = (
 
 export const getItemCompletions = (query: ItemFilterQueryParams) =>
   findMany<ItemCompletion>("/training/items/completions/", query);
+
+export const getItemCompletionsSummary = (query: ItemFilterQueryParams) =>
+  findManyRaw<{
+    totalComplete: number;
+    totalIncomplete: number;
+  }>("/training/items/completions/summary/", query);
 
 export const getItemCompletionsCsv = (query: ItemFilterQueryParams) =>
   download("/training/items/completions/csv/", query);

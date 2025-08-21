@@ -1,3 +1,4 @@
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import dayjs from "dayjs";
@@ -23,6 +24,7 @@ import {
 import {
   getItemCompletions,
   getItemCompletionsCsv,
+  getItemCompletionsSummary,
   getTrainingCourse,
 } from "../../../queries/training";
 import {
@@ -37,8 +39,8 @@ import {
 } from "../../../types/training";
 import { cn, isNil, simulateDownload, stripHtml } from "../../../utils/core";
 import {
-  getLatestAvailableSection,
-  getSectionAndWindowBySectionId,
+  getLatestAvailableSectionWithPreviousAndNext,
+  getSectionAndWindowBySectionIdWithPreviousAndNext,
 } from "../../../utils/training";
 import TrainingSectionTile from "../../training-library/components/TrainingSectionTile";
 import TrainingPicker from "./components/training-picker/TrainingPicker";
@@ -141,18 +143,42 @@ const ViewWatchStats: React.FC = () => {
 
   const [tableFiltersQuery, setTableFiltersQuery] =
     useImmer<ItemFilterQueryParams>({
-      order: { progress: "ASC", ["user.familyName"]: "DESC" },
+      order: { progress: "ASC" },
     });
   const [debouncedTableFiltersQuery] = useDebounceValue(tableFiltersQuery, 300);
 
-  const itemCompletionsQuery = {
-    ...debouncedTableFiltersQuery,
+  const itemCompletionsPreviewAndSummaryQuery = {
     ["user.organization.id"]: selectedOrganizationId,
     ["enrollment.id"]: reportInputData?.relativeEnrollment?.id,
     ["item.id"]: reportInputData?.trainingSectionAndWindow?.section?.items?.map(
       (i) => i.item.id
     ),
   };
+
+  const itemCompletionsQuery = {
+    ...debouncedTableFiltersQuery,
+    ...itemCompletionsPreviewAndSummaryQuery,
+  };
+
+  const {
+    data: itemCompletionsSummary,
+    isPending: itemCompletionsSummaryPending,
+    isFetching: itemCompletionsSummaryFetching,
+  } = useQuery({
+    queryKey: [
+      "item-completions-summary",
+      itemCompletionsPreviewAndSummaryQuery,
+    ] as const,
+    queryFn: ({ queryKey }) => getItemCompletionsSummary(queryKey[1]),
+    enabled: !!organization && !!reportInputData?.relativeEnrollment?.id,
+  });
+
+  const summaryPercentComplete = itemCompletionsSummary
+    ? (itemCompletionsSummary.totalComplete /
+        (itemCompletionsSummary.totalComplete +
+          itemCompletionsSummary.totalIncomplete || 1)) *
+      100
+    : 0;
 
   const {
     data: itemCompletions,
@@ -161,7 +187,10 @@ const ViewWatchStats: React.FC = () => {
   } = useQuery({
     queryKey: ["item-completions", itemCompletionsQuery] as const,
     queryFn: ({ queryKey }) => getItemCompletions(queryKey[1]),
-    enabled: !!reportInputData?.relativeEnrollment?.id,
+    enabled:
+      !itemCompletionsSummaryFetching &&
+      !!organization &&
+      !!reportInputData?.relativeEnrollment?.id,
   });
 
   const columns = useMemo(
@@ -396,12 +425,40 @@ const ViewWatchStats: React.FC = () => {
               )}
             </div>
             {reportInputData?.trainingSectionAndWindow?.section ? (
-              <TrainingSectionTile
-                featuredWindow={reportInputData.trainingSectionAndWindow.window}
-                section={reportInputData.trainingSectionAndWindow.section}
-                navigateDisabled
-                dense
-              />
+              <div className="relative">
+                <TrainingSectionTile
+                  featuredWindow={
+                    reportInputData.trainingSectionAndWindow.window
+                  }
+                  section={reportInputData.trainingSectionAndWindow.section}
+                  navigateDisabled
+                  dense
+                />
+                <div className="absolute top-3 left-3 flex gap-1">
+                  <ChevronButton
+                    direction="left"
+                    disabled={!reportInputData.previousTrainingSectionAndWindow}
+                    onClick={() =>
+                      reportInputData.previousTrainingSectionAndWindow &&
+                      updateReportInputDataMutate({
+                        trainingSectionAndWindow:
+                          reportInputData.previousTrainingSectionAndWindow,
+                      })
+                    }
+                  />
+                  <ChevronButton
+                    direction="right"
+                    disabled={!reportInputData.nextTrainingSectionAndWindow}
+                    onClick={() =>
+                      reportInputData.nextTrainingSectionAndWindow &&
+                      updateReportInputDataMutate({
+                        trainingSectionAndWindow:
+                          reportInputData.nextTrainingSectionAndWindow,
+                      })
+                    }
+                  />
+                </div>
+              </div>
             ) : (
               <>&mdash;</>
             )}
@@ -448,6 +505,40 @@ const ViewWatchStats: React.FC = () => {
             </div>
           </div>
         )}
+
+        <label className="block text-sm font-medium leading-6 text-gray-900">
+          Summary
+        </label>
+        {itemCompletionsSummaryPending ? (
+          <div className="animate-pulse rounded-md bg-slate-200 h-6 w-full shadow-sm" />
+        ) : itemCompletionsSummary ? (
+          <div className="flex flex-col gap-2">
+            <div className="grid gap-1">
+              <div className="text-xs text-gray-600 font-semibold">
+                Total Completion: {summaryPercentComplete.toFixed(0)}% (
+                {itemCompletionsSummary.totalComplete}/
+                {itemCompletionsSummary.totalComplete +
+                  itemCompletionsSummary.totalIncomplete}
+                )
+              </div>
+              <div className="relative rounded-md h-3 w-full bg-gray-200 overflow-hidden">
+                <div
+                  className={cn(
+                    "absolute top-0 left-0 bottom-0 rounded-md",
+                    summaryPercentComplete > 85
+                      ? "bg-green-500"
+                      : summaryPercentComplete > 50
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
+                  )}
+                  style={{
+                    width: `${summaryPercentComplete}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
       <DataTable2
         data={itemCompletions?.results ?? []}
@@ -560,11 +651,39 @@ function TrainingPickerModal({
   );
 }
 
+function ChevronButton({
+  direction,
+  onClick,
+  disabled,
+}: {
+  direction: "left" | "right";
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "rounded-full opacity-100 bg-white/80 backdrop-blur-lg drop-shadow-sm cursor-pointer enabled:hover:bg-white/90 enabled:hover:drop-shadow-md transition-all text-secondary-600 disabled:opacity-50 disabled:cursor-default"
+      )}
+    >
+      {direction === "left" ? (
+        <ChevronLeftIcon className="size-6" />
+      ) : (
+        <ChevronRightIcon className="size-6" />
+      )}
+    </button>
+  );
+}
+
 interface ReportInputData {
   organizationId: string;
   relativeEnrollment: RelativeEnrollmentDto | null;
   trainingCourse: TrainingCourse | null;
   trainingSectionAndWindow: SectionAndWindow | null;
+  nextTrainingSectionAndWindow: SectionAndWindow | null;
+  previousTrainingSectionAndWindow: SectionAndWindow | null;
 }
 
 type UpdateReportInputData = Partial<
@@ -579,6 +698,8 @@ const getDefaultReportInputData = async (organizationId: string) => {
     relativeEnrollment: null,
     trainingCourse: null,
     trainingSectionAndWindow: null,
+    nextTrainingSectionAndWindow: null,
+    previousTrainingSectionAndWindow: null,
   };
 
   // Try to get the default enrollment from local storage.
@@ -637,19 +758,27 @@ const getDefaultReportInputData = async (organizationId: string) => {
   );
 
   if (defaultSectionId) {
-    returnInputData.trainingSectionAndWindow = getSectionAndWindowBySectionId(
-      defaultSectionId,
-      returnInputData.relativeEnrollment,
-      trainingCourse.sections
-    );
+    const { previous, matching, next } =
+      getSectionAndWindowBySectionIdWithPreviousAndNext(
+        defaultSectionId,
+        returnInputData.relativeEnrollment,
+        trainingCourse.sections
+      );
+    returnInputData.trainingSectionAndWindow = matching;
+    returnInputData.previousTrainingSectionAndWindow = previous;
+    returnInputData.nextTrainingSectionAndWindow = next;
   }
 
   // If no default section is found (or local storage ID is invalid), get the latest available section.
   if (!returnInputData.trainingSectionAndWindow) {
-    returnInputData.trainingSectionAndWindow = getLatestAvailableSection(
-      returnInputData.relativeEnrollment,
-      trainingCourse.sections
-    );
+    const { previous, latest, next } =
+      getLatestAvailableSectionWithPreviousAndNext(
+        returnInputData.relativeEnrollment,
+        trainingCourse.sections
+      );
+    returnInputData.previousTrainingSectionAndWindow = previous;
+    returnInputData.trainingSectionAndWindow = latest;
+    returnInputData.nextTrainingSectionAndWindow = next;
   }
 
   return returnInputData;
@@ -763,26 +892,32 @@ const updateReportInputData = async (
     !newData.trainingSectionAndWindow &&
     reportInputData.trainingSectionAndWindow?.section
   ) {
-    draft.trainingSectionAndWindow =
-      getSectionAndWindowBySectionId(
+    const { previous, matching, next } =
+      getSectionAndWindowBySectionIdWithPreviousAndNext(
         reportInputData.trainingSectionAndWindow.section.id,
         draft.relativeEnrollment ?? reportInputData?.relativeEnrollment,
         draft.trainingCourse?.sections ??
           reportInputData.trainingCourse?.sections ??
           []
-      ) ?? undefined;
+      );
+    draft.trainingSectionAndWindow = matching;
+    draft.previousTrainingSectionAndWindow = previous;
+    draft.nextTrainingSectionAndWindow = next;
   }
 
   // If the training course gets updated but no new section and window is provided, we need to get a new section
   // window based on the new training course.
   if (updated(draft, "trainingCourse") && !newData.trainingSectionAndWindow) {
-    draft.trainingSectionAndWindow =
-      getLatestAvailableSection(
+    const { previous, latest, next } =
+      getLatestAvailableSectionWithPreviousAndNext(
         draft.relativeEnrollment ??
           reportInputData?.relativeEnrollment ??
           undefined,
         draft.trainingCourse.sections
-      ) ?? undefined;
+      );
+    draft.trainingSectionAndWindow = latest;
+    draft.previousTrainingSectionAndWindow = previous;
+    draft.nextTrainingSectionAndWindow = next;
   }
 
   if (updated(draft, "relativeEnrollment")) {
@@ -808,6 +943,22 @@ const updateReportInputData = async (
       ),
       draft.trainingSectionAndWindow.section.id
     );
+
+    const activeRelativeEnrollment =
+      draft.relativeEnrollment ?? reportInputData?.relativeEnrollment;
+
+    if (activeRelativeEnrollment) {
+      const { previous, next } =
+        getSectionAndWindowBySectionIdWithPreviousAndNext(
+          draft.trainingSectionAndWindow.section.id,
+          activeRelativeEnrollment,
+          draft.trainingCourse?.sections ??
+            reportInputData.trainingCourse?.sections ??
+            []
+        );
+      draft.previousTrainingSectionAndWindow = previous;
+      draft.nextTrainingSectionAndWindow = next;
+    }
   }
 
   return draft;

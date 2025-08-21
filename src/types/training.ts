@@ -8,15 +8,25 @@ export type ItemUpdater = Updater<EditableItem>;
 
 export type TrainingAvailability = "upcoming" | "ended" | "ongoing";
 
-export type FeaturedWindow = {
+export interface FeaturedWindow {
   featuredOn: Dayjs;
   featuredUntil: Dayjs;
-};
+}
 
-export type SectionAndWindow = {
-  window: FeaturedWindow | null;
+export interface SectionAndWindow {
+  window: FeaturedWindow;
   section: TrainingSection;
-};
+}
+
+export type SectionAndNullableWindow =
+  | Exclude<SectionAndWindow, { window: null }> & {
+      window: null;
+    };
+
+export interface SectionAndWindowWithRelativeAvailability
+  extends SectionAndWindow {
+  relativeAvailability: TrainingAvailability;
+}
 
 export type ScormVersion = (typeof SCORM_VERSIONS)[number];
 

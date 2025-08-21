@@ -11,6 +11,7 @@ import ResourcePage from "./components/resources/ResourcePage";
 import ResourceVideos from "./components/resources/ResourceVideos";
 import AuthProvider from "./contexts/auth/AuthProvider";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
+import AdvancedIndex from "./pages/admin-panel/advanced/AdvancedIndex";
 import CourseBuilder from "./pages/admin-panel/courses/CourseBuilder";
 import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
 import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
@@ -338,6 +339,11 @@ export const router = createBrowserRouter(
                       path: "languages",
                       handle: { title: "Languages" },
                       element: <ViewLanguages />,
+                    },
+                    {
+                      path: "advanced",
+                      handle: { title: "Advanced" },
+                      element: <AdvancedIndex />,
                     },
                     {
                       path: "*?",
