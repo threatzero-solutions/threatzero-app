@@ -320,10 +320,6 @@ const ViewWatchStats: React.FC = () => {
     itemCompletionsCsvMutation.mutate(itemCompletionsQuery);
   };
 
-  useEffect(() => {
-    console.debug(reportInputData);
-  }, [reportInputData]);
-
   return (
     <>
       <div className="border-b border-gray-200 pb-5 flex flex-col gap-1 mb-4">

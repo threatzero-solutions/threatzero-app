@@ -8,7 +8,7 @@ import {
   ExclamationCircleIcon,
 } from "@heroicons/react/20/solid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useId, useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useDebounceValue } from "usehooks-ts";
 import { isURL } from "validator";
@@ -23,7 +23,6 @@ import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverF
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import { DISABLED_ROLE_GROUPS } from "../../../constants/organizations";
 import { AlertContext } from "../../../contexts/alert/alert-context";
-import { useAlertId } from "../../../contexts/alert/use-alert-id";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { useAutoSlug } from "../../../hooks/use-auto-slug";
@@ -69,7 +68,7 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
   label,
 }) => {
   const { setSuccess } = useContext(AlertContext);
-  const alertId = useAlertId();
+  const alertId = useId();
 
   return (
     <div className="flex flex-col gap-1">

@@ -1,3 +1,4 @@
+import { Draft } from "immer";
 import { AnimatePresence, motion } from "motion/react";
 import {
   createContext,
@@ -14,7 +15,7 @@ import Alert, { AlertVariant } from "../../components/layouts/alerts/Alert";
 import ErrorPage from "../../pages/ErrorPage";
 
 export interface TSetAlertReturn {
-  alertId: number;
+  alertId: number | string;
   close: () => void;
 }
 
@@ -35,7 +36,7 @@ export interface AlertContextType {
     message: string | string[],
     options?: Omit<SetAlertOptions, "variant">
   ) => TSetAlertReturn;
-  clearAlert: (id: number | null | undefined) => void;
+  clearAlert: (id: number | string | null | undefined) => void;
   clearAllAlerts: () => void;
   getAlertId: () => number;
 }
@@ -51,14 +52,14 @@ export const AlertContext = createContext<AlertContextType>({
 });
 
 interface AlertOptions {
-  id: number;
+  id: number | string;
   variant: AlertVariant;
   message: string | string[];
 }
 
 interface SetAlertOptions {
   timeout?: number;
-  id?: number;
+  id?: number | string;
   variant?: AlertVariant;
 }
 
@@ -105,33 +106,40 @@ const AlertPortal: React.FC<
 export const AlertContextProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
-  const timeouts = useRef<Map<number, number>>(new Map<number, number>());
+  const timeouts = useRef<Map<number | string, number>>(
+    new Map<number | string, number>()
+  );
   const [alerts, setAlerts] = useImmer<AlertOptions[]>([]);
   const atomicCounter = useRef(0);
 
   const getAlertId = () => atomicCounter.current++;
 
+  const handleRemoveAlertByIdx =
+    (idx: number) => (draft: Draft<AlertOptions[]>) => {
+      const els = draft.splice(idx, 1);
+      const id = els.pop()?.id;
+      if (id) {
+        clearTimeout(timeouts.current.get(id));
+        timeouts.current.delete(id);
+      }
+    };
+
   const removeAlertByIdx = useCallback(
     (idx: number) => {
-      setAlerts((draft) => {
-        const els = draft.splice(idx, 1);
-        const id = els.pop()?.id;
-        if (id) {
-          clearTimeout(timeouts.current.get(id));
-          timeouts.current.delete(id);
-        }
-      });
+      setAlerts(handleRemoveAlertByIdx(idx));
     },
     [setAlerts]
   );
 
   const clearAlert = useCallback(
-    (id: number | null | undefined) => {
-      const idx = alerts.findIndex((a) => a.id === id);
-      if (idx === -1) return;
-      removeAlertByIdx(idx);
+    (id: number | string | null | undefined) => {
+      setAlerts((draft) => {
+        const idx = draft.findIndex((a) => a.id === id);
+        if (idx === -1) return;
+        handleRemoveAlertByIdx(idx)(draft);
+      });
     },
-    [alerts, removeAlertByIdx]
+    [setAlerts]
   );
 
   const setAlert = useCallback(

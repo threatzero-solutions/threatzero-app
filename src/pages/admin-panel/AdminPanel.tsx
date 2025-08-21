@@ -9,6 +9,7 @@ const navigation = [
   { name: "Forms", to: "forms" },
   { name: "Resources", to: "resources" },
   { name: "Languages", to: "languages" },
+  { name: "Advanced", to: "advanced" },
 ];
 
 const AdminPanel: React.FC = withRequirePermissions(() => {
