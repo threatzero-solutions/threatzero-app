@@ -156,7 +156,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
             <button
               type="button"
               onClick={() => handleChange(null as ConditionalOrganization<M>)}
-              className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-hidden"
+              className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-hidden cursor-pointer"
             >
               <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
             </button>

@@ -1,24 +1,79 @@
-import { ArrowPathIcon, EyeIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowPathIcon,
+  EyeIcon,
+  FireIcon,
+  PaperAirplaneIcon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import axios from "axios";
 import dayjs from "dayjs";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useImmer } from "use-immer";
+import Input from "../../../components/forms/inputs/Input";
+import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import Modal from "../../../components/layouts/modal/Modal";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import { AlertContext } from "../../../contexts/alert/alert-context";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import {
+  getMyOrganization,
+  getOrganization,
+} from "../../../queries/organizations";
 import { buildUrl } from "../../../queries/utils";
+import TrainingPickerModal from "../../safety-management/training-admin/components/training-picker/TrainingPickerModal";
 
 export default function AdvancedIndex() {
+  const { accessTokenClaims } = useAuth();
   const { setSuccess } = useContext(AlertContext);
+
+  const [selfDestructLoading, setSelfDestructLoading] = useState(false);
   const [showPhonyWebsiteBrokenOverlay, setShowPhonyWebsiteBrokenOverlay] =
     useState(false);
 
-  const { mutate: sendTestReminderEmail } = useMutation({
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedEmail(
+      accessTokenClaims?.email ? String(accessTokenClaims.email) : null
+    );
+  }, [accessTokenClaims?.email]);
+
+  const [trainingPickerOpen, setTrainingPickerOpen] = useState(false);
+  const [trainingData, setTrainingData] = useImmer<{
+    enrollmentId: string | null;
+    itemId: string | null;
+  }>({
+    enrollmentId: null,
+    itemId: null,
+  });
+
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState<
+    string | null
+  >();
+
+  const { data: selectedOrganization } = useQuery({
+    queryKey: ["organizations", selectedOrganizationId] as const,
+    queryFn: ({ queryKey }) =>
+      queryKey[1] ? getOrganization(queryKey[1]) : getMyOrganization(),
+    enabled: selectedOrganizationId !== null,
+  });
+
+  const {
+    mutate: sendTestReminderEmail,
+    isPending: isSendingTestReminderEmail,
+  } = useMutation({
     mutationFn: async () => {
       const response = await axios.post(
-        buildUrl("/admin/send-test-training-reminder-email")
+        buildUrl("/admin/send-test-training-reminder-email"),
+        {
+          email: selectedEmail,
+          enrollmentId: trainingData.enrollmentId,
+          itemId: trainingData.itemId,
+          organizationId: selectedOrganization?.id,
+        }
       );
       return response.data;
     },
@@ -44,24 +99,75 @@ export default function AdvancedIndex() {
           <h4 className="text-sm font-semibold leading-6 text-gray-900">
             Don't push this button!
           </h4>
-          <button
-            className="rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-red-600"
-            onClick={() => setShowPhonyWebsiteBrokenOverlay(true)}
-          >
-            Self-destruct
-          </button>
+          <IconButton
+            icon={FireIcon}
+            text="Self-destruct"
+            loading={selfDestructLoading}
+            className="bg-red-600 text-white hover:bg-red-500 focus-visible:outline-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={selfDestructLoading}
+            onClick={() => {
+              setSelfDestructLoading(true);
+              setTimeout(() => {
+                setShowPhonyWebsiteBrokenOverlay(true);
+                setSelfDestructLoading(false);
+              }, 2000);
+            }}
+          />
         </div>
 
-        <div>
+        <div className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold leading-6 text-gray-900">
-            Useful buttons
+            Useful stuff
           </h4>
-          <button
-            className="rounded-md bg-secondary-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-            onClick={() => sendTestReminderEmail()}
-          >
-            Send test reminder email
-          </button>
+          <div className="flex flex-col gap-2">
+            <h5 className="text-xs font-semibold leading-6 text-gray-900">
+              Send test reminder email
+            </h5>
+            <div className="flex gap-2">
+              <OrganizationSelect
+                value={
+                  selectedOrganizationId === null
+                    ? null
+                    : selectedOrganization?.slug
+                }
+                onChange={(e) => {
+                  if (e.target?.value) {
+                    if (typeof e.target.value === "string") {
+                      setSelectedOrganizationId(e.target.value);
+                    } else {
+                      setSelectedOrganizationId(e.target.value.id);
+                    }
+                  } else {
+                    setSelectedOrganizationId(null);
+                  }
+                }}
+              />
+              <button
+                onClick={() => setTrainingPickerOpen(true)}
+                className="rounded-md bg-secondary-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {trainingData.enrollmentId ? "Change" : "Pick"} Training
+              </button>
+              <Input
+                type="email"
+                value={selectedEmail ?? ""}
+                onChange={(e) => setSelectedEmail(e.target.value)}
+              />
+              <IconButton
+                icon={PaperAirplaneIcon}
+                text="Send"
+                loading={isSendingTestReminderEmail}
+                className="rounded-md bg-secondary-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => sendTestReminderEmail()}
+                disabled={
+                  !selectedEmail ||
+                  !selectedOrganization ||
+                  !trainingData.enrollmentId ||
+                  !trainingData.itemId
+                }
+              />
+            </div>
+          </div>
         </div>
         <div>
           <h4 className="text-sm font-semibold leading-6 text-gray-900">
@@ -72,6 +178,20 @@ export default function AdvancedIndex() {
       </div>
       {showPhonyWebsiteBrokenOverlay && (
         <PhonyWebsiteBrokenOverlay setOpen={setShowPhonyWebsiteBrokenOverlay} />
+      )}
+      {selectedOrganization && (
+        <TrainingPickerModal
+          organizationId={selectedOrganization?.id}
+          open={trainingPickerOpen}
+          setOpen={setTrainingPickerOpen}
+          onChangeTrainingData={(data) => {
+            setTrainingData((draft) => {
+              draft.enrollmentId = data.courseEnrollment.id;
+              draft.itemId =
+                data.sectionAndWindow.section.items?.at(0)?.item.id ?? null;
+            });
+          }}
+        />
       )}
     </div>
   );
