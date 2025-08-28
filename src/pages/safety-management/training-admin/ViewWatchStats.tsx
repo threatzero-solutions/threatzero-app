@@ -6,7 +6,6 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
-import Modal from "../../../components/layouts/modal/Modal";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import { AlertContext } from "../../../contexts/alert/alert-context";
 import { useAlertId } from "../../../contexts/alert/use-alert-id";
@@ -43,7 +42,7 @@ import {
   getSectionAndWindowBySectionIdWithPreviousAndNext,
 } from "../../../utils/training";
 import TrainingSectionTile from "../../training-library/components/TrainingSectionTile";
-import TrainingPicker from "./components/training-picker/TrainingPicker";
+import TrainingPickerModal from "./components/training-picker/TrainingPickerModal";
 import ViewPercentWatched from "./components/ViewPercentWatched";
 
 const columnHelper = createColumnHelper<ItemCompletion>();
@@ -617,39 +616,6 @@ const ViewWatchStats: React.FC = () => {
 };
 
 export default ViewWatchStats;
-
-function TrainingPickerModal({
-  organizationId,
-  open,
-  setOpen,
-  onChangeTrainingData,
-}: {
-  organizationId: string;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  onChangeTrainingData: (data: {
-    courseEnrollment: CourseEnrollment;
-    sectionAndWindow: SectionAndWindow;
-  }) => void;
-}) {
-  return (
-    <Modal
-      open={open}
-      setOpen={setOpen}
-      classNames={{ dialogPanel: "w-full sm:max-w-2xl" }}
-    >
-      <div className="bg-white px-4 py-4 sm:py-6 rounded-lg h-[32rem] w-full overflow-hidden">
-        <TrainingPicker
-          organizationId={organizationId}
-          onChangeTrainingData={(data) => {
-            onChangeTrainingData(data);
-            setOpen(false);
-          }}
-        />
-      </div>
-    </Modal>
-  );
-}
 
 function ChevronButton({
   direction,

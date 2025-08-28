@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "../../../utils/core";
+import Loader from "../Loader";
 
 interface AsProp<T extends React.ElementType> {
   as?: T;
@@ -15,6 +16,7 @@ type IconButtonProps<T extends React.ElementType> = AsProp<T> & {
     text?: string;
     button?: string;
   };
+  loading?: boolean;
 } & React.ComponentProps<T>;
 
 const IconButton = <T extends React.ElementType = "button">({
@@ -24,10 +26,15 @@ const IconButton = <T extends React.ElementType = "button">({
   text,
   trailing = false,
   classNames = {},
+  loading,
   ...props
 }: IconButtonProps<T>) => {
   const parts: ReactNode[] = [
-    <Icon key="icon" className={cn("block size-4", classNames.icon)} />,
+    loading ? (
+      <Loader className="size-4 animate-spin" />
+    ) : (
+      <Icon key="icon" className={cn("block size-4", classNames.icon)} />
+    ),
     <span key="text" className={cn("text-xs font-semibold", classNames.text)}>
       {text}
     </span>,

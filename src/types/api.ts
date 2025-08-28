@@ -84,6 +84,7 @@ export interface OrganizationIdpDto {
 
 export interface OrganizationUser {
   id: string;
+  enabled: boolean;
   username: string;
   firstName: string;
   lastName: string;

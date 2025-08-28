@@ -264,6 +264,22 @@ export const deleteOrganizationUser = (
   userId: string
 ) => deleteOne(`/organizations/organizations/${id}/users/`, userId);
 
+export const activateOrganizationUser = (
+  id: Organization["id"],
+  userId: string
+) =>
+  axios.post(
+    buildUrl(`/organizations/organizations/${id}/users/${userId}/activate/`)
+  );
+
+export const deactivateOrganizationUser = (
+  id: Organization["id"],
+  userId: string
+) =>
+  axios.post(
+    buildUrl(`/organizations/organizations/${id}/users/${userId}/deactivate/`)
+  );
+
 export const assignOrganizationUserToRoleGroup = (
   id: Organization["id"],
   userId: string,
