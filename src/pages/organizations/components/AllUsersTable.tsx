@@ -1,17 +1,19 @@
 import {
   ArrowUturnRightIcon,
   BoltIcon,
+  CheckCircleIcon,
   EllipsisVerticalIcon,
   PencilIcon,
-  TrashIcon,
   UserPlusIcon,
   UsersIcon,
+  XCircleIcon,
 } from "@heroicons/react/20/solid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
+import Checkbox from "../../../components/forms/inputs/Checkbox";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import Dropdown from "../../../components/layouts/Dropdown";
 import FilterBar from "../../../components/layouts/FilterBar";
@@ -25,13 +27,14 @@ import { OrganizationsContext } from "../../../contexts/organizations/organizati
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useOpenData } from "../../../hooks/use-open-data";
 import {
-  deleteOrganizationUser,
+  activateOrganizationUser,
+  deactivateOrganizationUser,
   getOrganizationUsers,
   getUnits,
 } from "../../../queries/organizations";
 import { OrganizationUser } from "../../../types/api";
 import { type Organization } from "../../../types/entities";
-import { classNames, humanizeSlug } from "../../../utils/core";
+import { classNames, cn, humanizeSlug } from "../../../utils/core";
 import { canAccessTraining } from "../../../utils/organization";
 import BulkUserUploadSlideOver from "./BulkUserUploadSlideOver";
 import EditOrganizationUser from "./EditOrganizationUser";
@@ -63,6 +66,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
 
   const [usersQuery, setUsersQuery] = useImmer<ItemFilterQueryParams>({
     order: { createdTimestamp: "DESC" },
+    enabled: true,
   });
   const [debouncedUsersQuery] = useDebounceValue(usersQuery, 500);
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -90,41 +94,45 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
     [units, unitSlug]
   );
 
-  const { mutate: doDelete, isPending: isDeletePending } = useMutation({
-    mutationFn: (userId: string) =>
-      deleteOrganizationUser(organizationId, userId),
-    onSuccess: () => {
-      invalidateOrganizationUsersQuery();
-      setConfirmationClose();
-    },
-  });
+  const { mutate: updateUserActivation, isPending: isUpdatingUserActivation } =
+    useMutation({
+      mutationFn: (data: { userId: string; isDeactivate: boolean }) =>
+        data.isDeactivate
+          ? deactivateOrganizationUser(organizationId, data.userId)
+          : activateOrganizationUser(organizationId, data.userId),
+      onSuccess: () => {
+        invalidateOrganizationUsersQuery();
+        setConfirmationClose();
+      },
+    });
 
   useEffect(() => {
     setConfirmationOptions((draft) => {
-      draft.isPending = isDeletePending;
+      draft.isPending = isUpdatingUserActivation;
     });
-  }, [isDeletePending, setConfirmationOptions]);
+  }, [isUpdatingUserActivation, setConfirmationOptions]);
 
-  const handleDeleteUser = useCallback(
-    (user: OrganizationUser) => {
+  const handleUpdateUserActivation = useCallback(
+    (user: OrganizationUser, isDeactivate: boolean) => {
       setConfirmationOpen({
-        title: "Delete User",
+        title: isDeactivate ? "Deactivate User" : "Activate User",
         message: (
           <span>
-            Are you sure you want to delete the following user account?
+            Are you sure you want to {isDeactivate ? "deactivate" : "activate"}{" "}
+            the following user account?
             <span className="block font-bold mt-2">
               {user.firstName} {user.lastName} ({user.email})
             </span>
           </span>
         ),
         onConfirm: () => {
-          doDelete(user.id);
+          updateUserActivation({ userId: user.id, isDeactivate });
         },
-        destructive: true,
-        confirmText: "Delete",
+        destructive: isDeactivate,
+        confirmText: isDeactivate ? "Deactivate" : "Activate",
       });
     },
-    [setConfirmationOpen, doDelete]
+    [setConfirmationOpen, updateUserActivation]
   );
 
   const columns = useMemo(
@@ -132,6 +140,20 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
       columnHelper.accessor((t) => t.email, {
         id: "email",
         header: "Email",
+        cell: ({ row }) => (
+          <div>
+            <span
+              className={cn(
+                !row.original.enabled && "text-gray-400 line-through"
+              )}
+            >
+              {row.original.email}{" "}
+            </span>
+            {!row.original.enabled && (
+              <span className="font-semibold">(Inactive)</span>
+            )}
+          </div>
+        ),
       }),
       columnHelper.accessor((t) => t.firstName, {
         id: "firstName",
@@ -206,13 +228,29 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                   action: () => editUser.openData(row.original.id),
                 },
                 {
-                  id: "delete",
-                  value: (
-                    <span className="inline-flex items-center gap-1 text-red-500">
-                      <TrashIcon className="size-4 inline" /> Delete
-                    </span>
-                  ),
-                  action: () => handleDeleteUser(row.original),
+                  id: "update-activation",
+                  value: (() => {
+                    const Icon = row.original.enabled
+                      ? XCircleIcon
+                      : CheckCircleIcon;
+                    const enabled = row.original.enabled;
+                    return (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1",
+                          enabled ? "text-red-500" : "text-green-500"
+                        )}
+                      >
+                        <Icon className="size-4 inline" />{" "}
+                        {enabled ? "Deactivate" : "Activate"}
+                      </span>
+                    );
+                  })(),
+                  action: () =>
+                    handleUpdateUserActivation(
+                      row.original,
+                      row.original.enabled
+                    ),
                 },
               ]}
             />
@@ -222,13 +260,13 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
       }),
     ],
     [
+      getMatchingIdp,
       units?.results,
       thisUnit,
       hasMultipleUnitAccess,
-      handleDeleteUser,
-      getMatchingIdp,
-      editUser,
       moveUser,
+      editUser,
+      handleUpdateUserActivation,
     ]
   );
 
@@ -264,6 +302,27 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
               <UsersIcon className="size-4 inline" />
               Upload CSV
             </button>
+            <label
+              className="flex items-center gap-2"
+              htmlFor="include-inactive-users"
+            >
+              <Checkbox
+                id="include-inactive-users"
+                checked={usersQuery.enabled === undefined}
+                onChange={(checked) => {
+                  setUsersQuery((draft) => {
+                    if (checked) {
+                      Reflect.deleteProperty(draft, "enabled");
+                    } else {
+                      draft.enabled = true;
+                    }
+                  });
+                }}
+              />
+              <span className="text-xs font-semibold">
+                Include inactive users
+              </span>
+            </label>
           </>
         )}
         <div className="flex-1"></div>
