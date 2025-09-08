@@ -1,7 +1,7 @@
-import FormInput, { FormInputProps } from "./inputs/FormInput";
-import { classNames } from "../../utils/core";
 import { forwardRef, ReactNode } from "react";
 import { Field } from "../../types/entities";
+import { classNames } from "../../utils/core";
+import FormInput, { FormInputProps } from "./inputs/FormInput";
 
 export interface FormFieldProps extends FormInputProps {
   onEdit?: () => void;
@@ -46,9 +46,11 @@ const FormField = forwardRef(
             <div className="grow">
               <label
                 htmlFor={field.name}
-                className="block text-sm font-medium leading-6 text-gray-900"
-                dangerouslySetInnerHTML={{ __html: field.label ?? "" }}
-              />
+                className="flex gap-1 text-sm font-medium leading-6 text-gray-900"
+              >
+                <div dangerouslySetInnerHTML={{ __html: field.label ?? "" }} />
+                {field.required && <div className="text-red-500">*</div>}
+              </label>
               {helpTextFirst && field.helpText && (
                 <HelpText helpText={field.helpText} className="mb-3" />
               )}

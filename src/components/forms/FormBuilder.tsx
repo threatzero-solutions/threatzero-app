@@ -1,13 +1,13 @@
-import { useParams, useSearchParams } from "react-router";
-import { withRequirePermissions } from "../../guards/with-require-permissions";
-import { useContext, useEffect, useMemo } from "react";
-import Form from "./Form";
-import { getForm, getForms, saveForm } from "../../queries/forms";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FormsContext } from "../../contexts/forms/forms-context";
-import { Language } from "../../types/entities";
-import { getLanguages } from "../../queries/languages";
+import { useContext, useEffect, useMemo } from "react";
+import { useParams, useSearchParams } from "react-router";
 import { formBuilderPermissionsOptions } from "../../constants/permission-options";
+import { FormsContext } from "../../contexts/forms/forms-context";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
+import { getForm, getForms, saveForm } from "../../queries/forms";
+import { getLanguages } from "../../queries/languages";
+import { Language } from "../../types/entities";
+import Form from "./Form";
 
 const FormBuilder: React.FC = withRequirePermissions(() => {
   const params = useParams();
@@ -20,19 +20,25 @@ const FormBuilder: React.FC = withRequirePermissions(() => {
     queryFn: ({ queryKey }) => getForms({ slug: queryKey[1] }),
   });
 
+  const selectedLanguageCode = useMemo(
+    () => searchParams.get("language") ?? "en",
+    [searchParams]
+  );
+  const selectedVersion = useMemo(() => searchParams.get("v"), [searchParams]);
+
   const selectedFormId = useMemo(() => {
     if (!allForms) return undefined;
 
     if (allForms.results.length) {
-      const formsByLanguage = allForms.results.filter(
-        (_f) => (searchParams.get("language") ?? "en") === _f.language?.code
+      const formsForLanguage = allForms.results.filter(
+        (_f) => selectedLanguageCode === _f.language?.code
       );
+      formsForLanguage.sort((a, b) => b.version - a.version);
       const f =
-        formsByLanguage.find(
-          (_f) => _f.version + "" === searchParams.get("v")
-        ) ?? formsByLanguage[0];
+        formsForLanguage.find((_f) => _f.version + "" === selectedVersion) ??
+        formsForLanguage[0];
 
-      if (!f && searchParams.has("language")) {
+      if (!f && selectedLanguageCode) {
         return undefined;
       }
 
@@ -40,7 +46,7 @@ const FormBuilder: React.FC = withRequirePermissions(() => {
     }
 
     return null;
-  }, [allForms, searchParams]);
+  }, [allForms, selectedLanguageCode, selectedVersion]);
 
   const queryClient = useQueryClient();
   const { data: form, isLoading: isLoadingSelectedForm } = useQuery({
@@ -83,14 +89,22 @@ const FormBuilder: React.FC = withRequirePermissions(() => {
           (isLoadingAllForms || isLoadingSelectedForm)
         }
         versions={allForms?.results
-          .filter((f) => f.language.code === searchParams.get("language"))
+          .filter((f) => f.language.code === selectedLanguageCode)
           .map((f) => f.version)}
-        languages={allForms?.results.reduce((langs, f) => {
-          if (!langs.some((l) => l.code === f.language?.code)) {
-            langs.push(f.language);
-          }
-          return langs;
-        }, [] as Language[])}
+        languages={
+          allForms
+            ? Array.from(
+                allForms.results
+                  .reduce((langsMap, f) => {
+                    if (!langsMap.has(f.language?.code)) {
+                      langsMap.set(f.language?.code, f.language);
+                    }
+                    return langsMap;
+                  }, new Map<string, Language>())
+                  .values()
+              )
+            : undefined
+        }
         mediaUploadUrl=""
       />
     </div>
