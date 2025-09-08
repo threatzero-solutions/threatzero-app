@@ -1,11 +1,22 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
+import { ChangeEvent, FormEvent, useContext, useEffect, useMemo } from "react";
+import { DraftFunction, useImmer } from "use-immer";
+import { useDebounceCallback } from "usehooks-ts";
+import FormInput from "../../../../components/forms/inputs/FormInput";
+import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
+import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
+import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
+import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
+import { API_BASE_URL } from "../../../../contexts/core/constants";
+import { TrainingContext } from "../../../../contexts/training/training-context";
 import {
-  ChangeEvent,
-  FormEvent,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+  deleteTrainingItem,
+  getTrainingItem,
+  saveTrainingItem,
+} from "../../../../queries/training";
 import {
   Field,
   FieldType,
@@ -14,27 +25,9 @@ import {
   TrainingMetadata,
   Video,
 } from "../../../../types/entities";
+import { EditableItem } from "../../../../types/training";
 import { orderSort } from "../../../../utils/core";
 import TrainingItemTile from "../TrainingItemTile";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  deleteTrainingItem,
-  getTrainingItem,
-  saveTrainingItem,
-} from "../../../../queries/training";
-import dayjs from "dayjs";
-import duration from "dayjs/plugin/duration";
-import { TrainingContext } from "../../../../contexts/training/training-context";
-import axios from "axios";
-import { API_BASE_URL } from "../../../../contexts/core/constants";
-import FormInput from "../../../../components/forms/inputs/FormInput";
-import { useDebounceValue } from "usehooks-ts";
-import { DraftFunction, useImmer } from "use-immer";
-import { EditableItem } from "../../../../types/training";
-import SlideOverForm from "../../../../components/layouts/slide-over/SlideOverForm";
-import SlideOverHeading from "../../../../components/layouts/slide-over/SlideOverHeading";
-import SlideOverFormBody from "../../../../components/layouts/slide-over/SlideOverFormBody";
-import SlideOverField from "../../../../components/layouts/slide-over/SlideOverField";
 
 dayjs.extend(duration);
 
@@ -125,8 +118,6 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
       minutes: 1,
     },
   });
-  const [debouncedItemToSave] = useDebounceValue(item, 500);
-  const autoSaveEnabled = useRef(false);
 
   const { data: itemProp } = useQuery({
     queryKey: ["training-item", "id", itemId],
@@ -135,10 +126,10 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
   });
 
   useEffect(() => {
-    if (itemProp) {
+    if (itemProp?.id && !item.id) {
       setItem({ ...itemProp });
     }
-  }, [itemProp, setItem]);
+  }, [itemProp, setItem, item.id]);
 
   const { state } = useContext(TrainingContext);
 
@@ -146,7 +137,6 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
 
   const queryClient = useQueryClient();
   const onMutateSuccess = (d?: Partial<Video>) => {
-    autoSaveEnabled.current = false;
     queryClient.invalidateQueries({
       predicate: (q) =>
         [
@@ -156,7 +146,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
         ].some((k) => q.queryKey.join("").includes(k.join(""))),
     });
   };
-  const saveItemMutation = useMutation({
+  const { mutate: saveItemMutate, isPending: isSaving } = useMutation({
     mutationFn: () => saveTrainingItem(item),
     onSuccess: (d) => {
       setItem((item) => ({ ...item, ...d }));
@@ -171,17 +161,13 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
     },
   });
 
-  useEffect(() => {
-    if (debouncedItemToSave && autoSaveEnabled.current) {
-      saveItemMutation.mutate();
-    }
-  }, [debouncedItemToSave, saveItemMutation]);
+  const debouncedSaveItem = useDebounceCallback(saveItemMutate, 500);
 
   const handleSetItem = (
     itemUpdate: SettableItem | DraftFunction<SettableItem>
   ) => {
-    autoSaveEnabled.current = true;
     setItem(itemUpdate);
+    debouncedSaveItem();
   };
 
   const handleMetadataChange = (
@@ -229,7 +215,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    saveItemMutation.mutate();
+    saveItemMutate();
   };
 
   const handleDelete = () => {
@@ -263,7 +249,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
       onDelete={handleDelete}
       submitText={isNew ? "Add" : "Update"}
       closeText={isNew ? "Cancel" : "Close"}
-      isSaving={saveItemMutation.isPending}
+      isSaving={isSaving}
       lastUpdated={item?.updatedOn}
     >
       <SlideOverHeading
