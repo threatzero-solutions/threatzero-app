@@ -1,8 +1,8 @@
 import { useContext, useMemo } from "react";
-import { CourseEnrollment, TrainingSection } from "../../../types/entities";
-import TrainingSectionTile from "./TrainingSectionTile";
 import { TrainingContext } from "../../../contexts/training/training-context";
+import { CourseEnrollment, TrainingSection } from "../../../types/entities";
 import { getSectionFeaturedWindows } from "../../../utils/training";
+import TrainingSectionTile from "./TrainingSectionTile";
 
 interface TrainingSectionsProps {
   enrollment?: CourseEnrollment | null;
@@ -26,7 +26,7 @@ const TrainingSections: React.FC<TrainingSectionsProps> = ({
     [enrollmentProp, state.activeEnrollment]
   );
 
-  const sectionWindowMap = useMemo(
+  const sectionsAndWindows = useMemo(
     () =>
       getSectionFeaturedWindows(
         enrollment,
@@ -36,8 +36,8 @@ const TrainingSections: React.FC<TrainingSectionsProps> = ({
   );
 
   const sections = useMemo(
-    () => Array.from(sectionWindowMap.values()).map(({ section }) => section),
-    [sectionWindowMap]
+    () => sectionsAndWindows.map(({ section }) => section),
+    [sectionsAndWindows]
   );
 
   const loading = useMemo(
@@ -45,26 +45,24 @@ const TrainingSections: React.FC<TrainingSectionsProps> = ({
     [loadingProp, courseLoading]
   );
 
-  return sectionWindowMap && !loading ? (
+  return sectionsAndWindows.length > 0 && !loading ? (
     <>
       <div
         role="grid"
         className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-2"
       >
-        {Array.from(sectionWindowMap.values()).map(
-          ({ section, window }, idx) => (
-            <TrainingSectionTile
-              key={section?.id ?? idx}
-              section={section}
-              previousSection={sections[idx - 1]}
-              nextSection={sections[idx + 1]}
-              featuredWindow={window}
-              className="shadow-xl"
-              onEditSection={onEditSection}
-            />
-          )
-        )}
-        {!sectionWindowMap.size &&
+        {sectionsAndWindows.map(({ section, window }, idx) => (
+          <TrainingSectionTile
+            key={section?.id ?? idx}
+            section={section}
+            previousSection={sections[idx - 1]}
+            nextSection={sections[idx + 1]}
+            featuredWindow={window}
+            className="shadow-xl"
+            onEditSection={onEditSection}
+          />
+        ))}
+        {!sectionsAndWindows.length &&
           (fallback ?? <p className="text-sm text-gray-500">No content.</p>)}
       </div>
     </>

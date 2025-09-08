@@ -134,7 +134,8 @@ export const getSectionFeaturedWindows = (
   enrollment: CourseEnrollment | RelativeEnrollmentDto | undefined,
   sections: TrainingSection[]
 ) => {
-  const featuredWindows = new Map<TrainingSection["id"], SectionAndWindow>();
+  const sectionIds = new Set<TrainingSection["id"]>();
+  const featuredSectionsAndWindows: SectionAndWindow[] = [];
 
   for (const { window, section } of buildSectionFeaturedWindows(
     enrollment,
@@ -143,10 +144,14 @@ export const getSectionFeaturedWindows = (
     if (!section) {
       continue;
     }
-    featuredWindows.set(section.id, { section, window });
+    if (section.id && sectionIds.has(section.id)) {
+      continue;
+    }
+    sectionIds.add(section.id);
+    featuredSectionsAndWindows.push({ section, window });
   }
 
-  return featuredWindows;
+  return featuredSectionsAndWindows;
 };
 
 export const getSectionAndWindowBySectionIdWithPreviousAndNext = (

@@ -30,11 +30,8 @@ export default function StepSelectTrainingSection({
     () =>
       selectedEnrollment
         ? getSectionFeaturedWindows(selectedEnrollment, trainingSections)
-        : new Map(
-            trainingSections.map((section) => [
-              section.id,
-              { section, window: null } as SectionAndNullableWindow,
-            ])
+        : trainingSections.map(
+            (section) => ({ section, window: null } as SectionAndNullableWindow)
           ),
     [selectedEnrollment, trainingSections]
   );
