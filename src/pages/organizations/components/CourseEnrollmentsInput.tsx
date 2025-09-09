@@ -9,6 +9,7 @@ import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import Block from "../../../components/layouts/content/Block";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import { useAuth } from "../../../contexts/auth/useAuth";
 import { useOpenData } from "../../../hooks/use-open-data";
 import {
   deleteCourseEnrollment,
@@ -40,6 +41,8 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
   organizationId,
   accessSettings,
 }) => {
+  const { isGlobalAdmin } = useAuth();
+
   const editEnrollment = useOpenData<CourseEnrollment>();
   const { data: allCourseEnrollments } = useQuery({
     queryKey: ["course-enrollments", organizationId] as const,
@@ -101,13 +104,20 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
                     <div className="flex flex-col">
                       <button
                         type="button"
-                        className="w-max cursor-pointer text-gray-900 hover:text-gray-600 transition-colors"
+                        className="group w-max cursor-pointer text-gray-900 hover:text-gray-600 transition-colors"
                         onClick={() => editEnrollment.openData(enrollment)}
                       >
                         <span className="text-sm font-semibold">
                           {stripHtml(enrollment.course?.metadata?.title)}
+                          {isGlobalAdmin && enrollment.course?.metadata.tag && (
+                            <span className="border border-gray-300 rounded-sm px-1 py-0.5 text-xs ml-1">
+                              {enrollment.course.metadata.tag}
+                            </span>
+                          )}
                         </span>{" "}
-                        <span className="text-xs">(edit)</span>
+                        <span className="text-xs underline text-secondary-600 group-hover:text-secondary-900">
+                          edit
+                        </span>
                       </button>
                       <span className="text-xs text-gray-500">
                         {stripHtml(enrollment.course?.metadata?.description)}
