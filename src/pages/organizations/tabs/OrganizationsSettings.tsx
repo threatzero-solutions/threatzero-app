@@ -155,7 +155,7 @@ const MyOrganizationSettings: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {isGlobalAdmin && (
+          {isGlobalAdmin && !isUnitContext && (
             <LargeFormSection heading="Administration" defaultOpen>
               <FormField
                 field={{
@@ -183,64 +183,67 @@ const MyOrganizationSettings: React.FC = () => {
               />
             </LargeFormSection>
           )}
-          <LargeFormSection heading="Notifications" defaultOpen>
-            <div className="space-y-4">
-              <FormField
-                field={{
-                  label: "Enable Initial Training Reminder Emails",
-                  helpText:
-                    "Enable or disable initial training reminder emails for this organization. These emails are sent to all participants at the beginning of the training availability period.",
-                }}
-                input={
-                  <Toggle
-                    prefix="initial-training-reminder-emails"
-                    loading={isOrganizationSaving}
-                    disabled={isOrganizationSaving}
-                    checked={
-                      currentOrganization.notificationSettings
-                        ?.initialReminderEmailsEnabled ?? false
-                    }
-                    onChange={(initialReminderEmailsEnabled) =>
-                      doSaveOrganization({
-                        id: currentOrganization.id,
-                        notificationSettings: {
-                          ...(currentOrganization.notificationSettings ?? {}),
-                          initialReminderEmailsEnabled,
-                        },
-                      })
-                    }
-                  />
-                }
-              />
-              <FormField
-                field={{
-                  label: "Enable Follow-Up Training Reminder Emails",
-                  helpText:
-                    "Enable or disable follow-up training reminder emails for this organization. These emails are sent up to two weeks after the initial training reminder email for all participants who have not completed the training.",
-                }}
-                input={
-                  <Toggle
-                    prefix="follow-up-training-reminder-emails"
-                    loading={isOrganizationSaving}
-                    disabled={isOrganizationSaving}
-                    checked={
-                      currentOrganization.notificationSettings
-                        ?.followUpReminderEmailsEnabled ?? false
-                    }
-                    onChange={(followUpReminderEmailsEnabled) =>
-                      doSaveOrganization({
-                        id: currentOrganization.id,
-                        notificationSettings: {
-                          ...(currentOrganization.notificationSettings ?? {}),
-                          followUpReminderEmailsEnabled,
-                        },
-                      })
-                    }
-                  />
-                }
-              />
-            </div>
-          </LargeFormSection>
+          {!isUnitContext && (
+            <LargeFormSection heading="Notifications" defaultOpen>
+              <div className="space-y-4">
+                <FormField
+                  field={{
+                    label: "Enable Initial Training Reminder Emails",
+                    helpText:
+                      "Enable or disable initial training reminder emails for this organization. These emails are sent to all participants at the beginning of the training availability period.",
+                  }}
+                  input={
+                    <Toggle
+                      prefix="initial-training-reminder-emails"
+                      loading={isOrganizationSaving}
+                      disabled={isOrganizationSaving}
+                      checked={
+                        currentOrganization.notificationSettings
+                          ?.initialReminderEmailsEnabled ?? false
+                      }
+                      onChange={(initialReminderEmailsEnabled) =>
+                        doSaveOrganization({
+                          id: currentOrganization.id,
+                          notificationSettings: {
+                            ...(currentOrganization.notificationSettings ?? {}),
+                            initialReminderEmailsEnabled,
+                          },
+                        })
+                      }
+                    />
+                  }
+                />
+                <FormField
+                  field={{
+                    label: "Enable Follow-Up Training Reminder Emails",
+                    helpText:
+                      "Enable or disable follow-up training reminder emails for this organization. These emails are sent up to two weeks after the initial training reminder email for all participants who have not completed the training.",
+                  }}
+                  input={
+                    <Toggle
+                      prefix="follow-up-training-reminder-emails"
+                      loading={isOrganizationSaving}
+                      disabled={isOrganizationSaving}
+                      checked={
+                        currentOrganization.notificationSettings
+                          ?.followUpReminderEmailsEnabled ?? false
+                      }
+                      onChange={(followUpReminderEmailsEnabled) =>
+                        doSaveOrganization({
+                          id: currentOrganization.id,
+                          notificationSettings: {
+                            ...(currentOrganization.notificationSettings ?? {}),
+                            followUpReminderEmailsEnabled,
+                          },
+                        })
+                      }
+                    />
+                  }
+                />
+              </div>
+            </LargeFormSection>
+          )}
+
           <LargeFormSection
             heading="Advanced"
             // subheading="This is the primary safety contact displayed to users."
