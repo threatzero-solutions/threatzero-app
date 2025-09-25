@@ -1,12 +1,5 @@
-import { useParams, useSearchParams } from "react-router";
-import {
-  createItemCompletion,
-  getMyItemCompletion,
-  getTrainingItem,
-  updateItemCompletion,
-} from "../../queries/training";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import BackButton from "../../components/layouts/BackButton";
+import type Vimeo from "@vimeo/player";
 import {
   useCallback,
   useContext,
@@ -15,22 +8,28 @@ import {
   useRef,
   useState,
 } from "react";
-import { TrainingContext } from "../../contexts/training/training-context";
-import TrainingItemTile from "./components/TrainingItemTile";
-import { Video } from "../../types/entities";
 import { ErrorBoundary } from "react-error-boundary";
-import { useAuth } from "../../contexts/auth/useAuth";
+import { useParams, useSearchParams } from "react-router";
+import { useImmer } from "use-immer";
+import { useDebounceCallback } from "usehooks-ts";
+import BackButton from "../../components/layouts/BackButton";
 import VimeoPlayer, {
   ProgressEventData,
 } from "../../components/media/VimeoPlayer";
-import type Vimeo from "@vimeo/player";
-import VideoProgress from "./components/VideoProgress";
-import { useImmer } from "use-immer";
-import { useDebounceCallback } from "usehooks-ts";
 import {
   ACTUAL_COMPLETION_THRESHOLD,
   DISPLAY_COMPLETION_THRESHOLD,
 } from "../../constants/core";
+import { useAuth } from "../../contexts/auth/useAuth";
+import { TrainingContext } from "../../contexts/training/training-context";
+import {
+  getMyItemCompletion,
+  getTrainingItem,
+  updateOrCreateItemCompletion,
+} from "../../queries/training";
+import { Video } from "../../types/entities";
+import TrainingItemTile from "./components/TrainingItemTile";
+import VideoProgress from "./components/VideoProgress";
 
 const VideoUnavailable: React.FC = () => (
   <div className="w-full h-full flex justify-center items-center bg-gray-900">
@@ -91,44 +90,27 @@ const TrainingItem: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  const createVideoProgressMutation = useMutation({
-    mutationFn: () =>
-      createItemCompletion(
+  const { mutate: reportTrainingProgress } = useMutation({
+    mutationFn: (input: { progress: number; completed: boolean }) =>
+      updateOrCreateItemCompletion(
         {
-          itemId: itemId!,
+          itemId: itemId ?? "",
           sectionId,
           enrollmentId: state.activeEnrollment?.id,
           url: window.location.href,
+          progress: input.progress,
+          completed: input.completed,
         },
         watchId
       ),
-    onSuccess: (data) => {
-      itemCompletionId.current = data.id;
-    },
-  });
-
-  const updateVideoProgressMutation = useMutation({
-    mutationFn: (input: { progress: number; completed: boolean }) =>
-      itemCompletionId.current
-        ? updateItemCompletion(
-            itemCompletionId.current,
-            input.progress,
-            input.completed,
-            watchId
-          )
-        : Promise.reject("No existing completion data to update."),
   });
 
   const saveVideoProgress = useDebounceCallback(
     (progress: number, completed: boolean) =>
-      itemCompletionId.current
-        ? updateVideoProgressMutation.mutate({
-            progress,
-            completed,
-          })
-        : itemCompletionId.current === null
-        ? createVideoProgressMutation.mutate()
-        : null,
+      reportTrainingProgress({
+        progress,
+        completed,
+      }),
     500,
     {
       maxWait: 2000,
