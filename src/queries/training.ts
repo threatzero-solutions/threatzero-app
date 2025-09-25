@@ -18,7 +18,7 @@ import {
   findManyRaw,
   findOne,
   findOneById,
-  insertOne,
+  putOne,
   save,
   updateOne,
 } from "./utils";
@@ -153,16 +153,18 @@ export const emitVideoEvent = async (
     )
     .then((res) => res.data);
 
-export const createItemCompletion = async (
+export const updateOrCreateItemCompletion = async (
   input: {
     itemId: string;
     sectionId?: string;
     enrollmentId: string | undefined;
     url: string;
+    progress: number;
+    completed: boolean;
   },
   watchId?: string | null
 ) =>
-  insertOne<ItemCompletion>(
+  putOne<ItemCompletion>(
     "/training/items/my-completions/",
     {
       item: {
@@ -171,24 +173,8 @@ export const createItemCompletion = async (
       section: input.sectionId ? { id: input.sectionId } : undefined,
       enrollment: { id: input.enrollmentId },
       url: input.url,
-    },
-    {
-      params: { watch_id: watchId },
-    }
-  );
-
-export const updateItemCompletion = async (
-  id: ItemCompletion["id"],
-  progress: number,
-  completed: boolean,
-  watchId?: string | null
-) =>
-  updateOne<ItemCompletion>(
-    "/training/items/my-completions/",
-    {
-      id,
-      progress,
-      completed,
+      progress: input.progress,
+      completed: input.completed,
     },
     {
       params: { watch_id: watchId },
