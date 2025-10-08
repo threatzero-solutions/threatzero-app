@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import React, {
   createContext,
   Dispatch,
@@ -5,6 +6,18 @@ import React, {
   useEffect,
   useReducer,
 } from "react";
+import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
+import SlideOver from "../../components/layouts/slide-over/SlideOver";
+import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
+import EditTrainingSection from "../../pages/training-library/components/EditTrainingSection";
+import ManageItems from "../../pages/training-library/components/ManageItems";
+import ViewEnrollments from "../../pages/training-library/components/ViewEnrollments";
+import ViewTrainingAudiences from "../../pages/training-library/components/ViewTrainingAudiences";
+import {
+  getMyCourseEnrollments,
+  getMyItemCompletions,
+  getTrainingCourse,
+} from "../../queries/training";
 import {
   Audience,
   CourseEnrollment,
@@ -12,22 +25,9 @@ import {
   TrainingCourse,
   TrainingItem,
 } from "../../types/entities";
-import SlideOver from "../../components/layouts/slide-over/SlideOver";
-import ViewEnrollments from "../../pages/training-library/components/ViewEnrollments";
-import ViewTrainingAudiences from "../../pages/training-library/components/ViewTrainingAudiences";
-import { useQuery } from "@tanstack/react-query";
-import {
-  getMyCourseEnrollments,
-  getMyItemCompletions,
-  getTrainingCourse,
-} from "../../queries/training";
-import EditTrainingSection from "../../pages/training-library/components/EditTrainingSection";
-import ManageItems from "../../pages/training-library/components/ManageItems";
-import EditTrainingAudience from "../../pages/training-library/components/EditTrainingAudience";
-import { useDebounceCallback, useLocalStorage } from "usehooks-ts";
 import { sortEnrollmentsByScoreFn } from "../../utils/training";
-import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 import { useAuth } from "../auth/useAuth";
+import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
 
 export interface TrainingState {
   activeCourse?: TrainingCourse;
@@ -298,7 +298,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
           state,
           dispatch,
           setActiveEnrollmentId,
-          courseLoading,
+          courseLoading: courseLoading,
         }}
       >
         {children}
