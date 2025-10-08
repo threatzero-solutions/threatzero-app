@@ -45,7 +45,7 @@ const TrainingSections: React.FC<TrainingSectionsProps> = ({
     [loadingProp, courseLoading]
   );
 
-  return sectionsAndWindows.length > 0 && !loading ? (
+  return !loading ? (
     <>
       <div
         role="grid"
