@@ -45,7 +45,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
         src={u.picture ?? ""}
         alt={name}
         title={name}
-        className="relative mt-3 h-6 w-6 flex-none rounded-full bg-gray-50"
+        className="relative mt-3 h-6 w-6 flex-none rounded-full bg-gray-50 shrink-0"
         onError={(e) => (e.currentTarget.src = "/img/default-user.svg")}
       />
     );
@@ -96,7 +96,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                     {note.user?.picture ? (
                       profileImg(note.user)
                     ) : (
-                      <span className="relative bg-gray-400 mt-3 h-6 w-6 rounded-full flex items-center justify-center ring-8 ring-white">
+                      <span className="relative bg-gray-400 mt-3 h-6 w-6 rounded-full flex items-center justify-center ring-8 ring-white shrink-0">
                         <UserIcon
                           className="h-4 w-4 text-white"
                           aria-hidden="true"
