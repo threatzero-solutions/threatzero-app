@@ -71,6 +71,12 @@ export interface AuthContextType {
     event: string,
     cb: (kc: Keycloak, ...args: unknown[]) => void
   ) => void;
+  /**
+   * Checks if the user has the required permissions.
+   * @param requiredPermissions An array of permissions to check for
+   * @param type The type of permissions to check for ("any" or "all"). Defaults to "any"
+   * @returns `true` if the user has the required permissions, `false` otherwise
+   */
   hasPermissions: (
     requiredPermissions: string[],
     type?: "any" | "all"

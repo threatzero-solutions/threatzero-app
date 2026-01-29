@@ -70,8 +70,8 @@ export const organizationUserPermissionOptions = {
 };
 
 export const organizationTrainingManagementPermissionOptions = {
-  permissions: [READ.COURSE_ENROLLMENTS, WRITE.COURSE_ENROLLMENTS],
-  type: "all" as const,
+  permissions: [READ.COURSE_ENROLLMENTS, WRITE.COURSE_ENROLLMENTS, WRITE.ORGANIZATION_USERS],
+  type: "any" as const,
 };
 
 export const organizationSafetyManagementPermissionOptions = {
