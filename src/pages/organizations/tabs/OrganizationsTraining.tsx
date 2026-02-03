@@ -6,7 +6,7 @@ import {
   ORGANIZATION_TRAINING_ADMIN_GROUP_NAME,
   UNIT_TRAINING_ADMIN_GROUP_NAME,
 } from "../../../constants/organizations";
-import { READ } from "../../../constants/permissions";
+import { READ, WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { classNames } from "../../../utils/core";
@@ -58,7 +58,7 @@ const MyOrganizationTraining: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {!isUnitContext && (
+          {!isUnitContext && (hasPermissions([READ.COURSE_ENROLLMENTS, WRITE.COURSE_ENROLLMENTS], "all") || isGlobalAdmin) && (
             <LargeFormSection
               heading="Course Enrollments"
               subheading="Enrollments provide access to training content for given windows of time."
