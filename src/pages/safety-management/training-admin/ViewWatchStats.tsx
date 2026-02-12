@@ -1,15 +1,24 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  EnvelopeIcon,
+} from "@heroicons/react/20/solid";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { WRITE } from "../../../constants/permissions";
 import { AlertContext } from "../../../contexts/alert/alert-context";
 import { useAlertId } from "../../../contexts/alert/use-alert-id";
 import { useAuth } from "../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
 import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import {
@@ -26,6 +35,10 @@ import {
   getItemCompletionsSummary,
   getTrainingCourse,
 } from "../../../queries/training";
+import {
+  markTrainingComplete,
+  sendTrainingReminder,
+} from "../../../queries/training-admin";
 import {
   CourseEnrollment,
   ItemCompletion,
@@ -48,9 +61,21 @@ import ViewPercentWatched from "./components/ViewPercentWatched";
 const columnHelper = createColumnHelper<ItemCompletion>();
 
 const ViewWatchStats: React.FC = () => {
-  const { hasMultipleOrganizationAccess, hasMultipleUnitAccess } = useAuth();
-  const { setInfo, clearAlert } = useContext(AlertContext);
+  const {
+    hasMultipleOrganizationAccess,
+    hasMultipleUnitAccess,
+    hasPermissions,
+  } = useAuth();
+  const { setInfo, setSuccess, setError, clearAlert } =
+    useContext(AlertContext);
+  const {
+    setOpen: setConfirmationOpen,
+    setConfirmationOptions,
+    setClose: setConfirmationClose,
+  } = useContext(ConfirmationContext);
   const infoAlertId = useAlertId();
+
+  const canSendReminders = hasPermissions([WRITE.TRAINING_LINKS]);
 
   const [selectedOrganizationId, setSelectedOrganizationId] = useLocalStorage<
     string | undefined
@@ -114,7 +139,7 @@ const ViewWatchStats: React.FC = () => {
         organization.id,
         enrollmentId,
         true,
-        reportInputData
+        reportInputData,
       );
     },
     onSuccess: (data) => {
@@ -130,7 +155,7 @@ const ViewWatchStats: React.FC = () => {
           organization.id,
           enrollmentId,
           false,
-          reportInputData
+          reportInputData,
         );
       },
       onSuccess: (data) => {
@@ -150,7 +175,7 @@ const ViewWatchStats: React.FC = () => {
     ["user.organization.id"]: selectedOrganizationId,
     ["enrollment.id"]: reportInputData?.relativeEnrollment?.id,
     ["item.id"]: reportInputData?.trainingSectionAndWindow?.section?.items?.map(
-      (i) => i.item.id
+      (i) => i.item.id,
     ),
   };
 
@@ -191,6 +216,103 @@ const ViewWatchStats: React.FC = () => {
       !!organization &&
       !!reportInputData?.relativeEnrollment?.id,
   });
+
+  const queryClient = useQueryClient();
+
+  const sendReminderMutation = useMutation({
+    mutationFn: sendTrainingReminder,
+    onSuccess: () => {
+      setSuccess("Training reminder sent!", { timeout: 5000 });
+      setConfirmationClose();
+    },
+    onError: () => {
+      setError("Failed to send training reminder.", { timeout: 5000 });
+      setConfirmationClose();
+    },
+  });
+
+  const markCompleteMutation = useMutation({
+    mutationFn: markTrainingComplete,
+    onSuccess: () => {
+      setSuccess("Training marked as completed.", { timeout: 5000 });
+      setConfirmationClose();
+      queryClient.invalidateQueries({ queryKey: ["item-completions"] });
+      queryClient.invalidateQueries({ queryKey: ["item-completions-summary"] });
+    },
+    onError: () => {
+      setError("Failed to mark training as completed.", { timeout: 5000 });
+      setConfirmationClose();
+    },
+  });
+
+  useEffect(() => {
+    setConfirmationOptions((draft) => {
+      draft.isPending =
+        sendReminderMutation.isPending || markCompleteMutation.isPending;
+    });
+  }, [
+    sendReminderMutation.isPending,
+    markCompleteMutation.isPending,
+    setConfirmationOptions,
+  ]);
+
+  const handleSendReminder = useCallback(
+    (completion: ItemCompletion) => {
+      if (!completion.user || !completion.enrollment || !completion.item)
+        return;
+      const { user, enrollment, item } = completion;
+      setConfirmationOpen({
+        title: "Send Training Reminder?",
+        message: (
+          <span>
+            Send a training reminder email to{" "}
+            <span className="font-bold">
+              {user.givenName} {user.familyName} ({user.email})
+            </span>
+            ?
+          </span>
+        ),
+        confirmText: "Send Reminder",
+        onConfirm: () => {
+          sendReminderMutation.mutate({
+            userId: user.externalId,
+            courseEnrollmentId: enrollment.id,
+            trainingItemId: item.id,
+          });
+        },
+      });
+    },
+    [setConfirmationOpen, sendReminderMutation],
+  );
+
+  const handleMarkComplete = useCallback(
+    (completion: ItemCompletion) => {
+      if (!completion.user || !completion.enrollment || !completion.item)
+        return;
+      const { user, enrollment, item } = completion;
+      setConfirmationOpen({
+        title: "Mark Training as Completed?",
+        message: (
+          <span>
+            Mark training as completed for{" "}
+            <span className="font-bold">
+              {user.givenName} {user.familyName} ({user.email})
+            </span>
+            ? This action cannot be undone.
+          </span>
+        ),
+        confirmText: "Mark Complete",
+        onConfirm: () => {
+          markCompleteMutation.mutate({
+            userId: user.externalId,
+            courseEnrollmentId: enrollment.id,
+            trainingItemId: item.id,
+          });
+        },
+      });
+    },
+    [setConfirmationOpen, markCompleteMutation],
+  );
 
   const columns = useMemo(
     () => [
@@ -252,8 +374,59 @@ const ViewWatchStats: React.FC = () => {
           <ViewPercentWatched percentWatched={info.getValue() * 100} />
         ),
       }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: (info) => {
+          const completion = info.row.original;
+          const canSend =
+            canSendReminders &&
+            completion.user &&
+            completion.enrollment &&
+            completion.item;
+          return (
+            <ButtonGroup className="w-full justify-end">
+              <IconButton
+                icon={EnvelopeIcon}
+                disabled={!canSend || sendReminderMutation.isPending}
+                onClick={() => handleSendReminder(completion)}
+                title={
+                  canSendReminders
+                    ? "Send training reminder email"
+                    : "You do not have permission to send reminders"
+                }
+                className="bg-secondary-600 ring-transparent text-white hover:bg-secondary-500"
+              />
+              <IconButton
+                icon={CheckCircleIcon}
+                disabled={
+                  !canSend ||
+                  completion.completed ||
+                  markCompleteMutation.isPending
+                }
+                onClick={() => handleMarkComplete(completion)}
+                title={
+                  completion.completed
+                    ? "Training already completed"
+                    : canSendReminders
+                      ? "Mark training as completed"
+                      : "You do not have permission"
+                }
+                className="bg-secondary-600 ring-transparent text-white hover:not-disabled:bg-secondary-500 group [&_svg]:group-hover:group-not-disabled:stroke-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </ButtonGroup>
+          );
+        },
+        enableSorting: false,
+      }),
     ],
-    []
+    [
+      canSendReminders,
+      sendReminderMutation.isPending,
+      markCompleteMutation.isPending,
+      handleSendReminder,
+      handleMarkComplete,
+    ],
   );
 
   const organizationFilters = useOrganizationFilters({
@@ -267,7 +440,7 @@ const ViewWatchStats: React.FC = () => {
   const reportDownloadFilename = useMemo(() => {
     const stripHtmlAndTruncate = (
       str: string | undefined | null,
-      length: number
+      length: number,
     ) =>
       isNil(str)
         ? undefined
@@ -283,19 +456,19 @@ const ViewWatchStats: React.FC = () => {
         "completion_report",
         stripHtmlAndTruncate(
           reportInputData?.trainingCourse?.metadata.title,
-          15
+          15,
         ),
         stripHtmlAndTruncate(
           reportInputData?.trainingSectionAndWindow?.section?.metadata.title ||
             reportInputData?.trainingSectionAndWindow?.section?.items?.at(0)
               ?.item.metadata.title,
-          15
+          15,
         ),
         dayjs(reportInputData?.relativeEnrollment?.startDate).format(
-          "YYYY_MM_DD"
+          "YYYY_MM_DD",
         ),
         dayjs(reportInputData?.relativeEnrollment?.endDate).format(
-          "YYYY_MM_DD"
+          "YYYY_MM_DD",
         ),
       ]
         .filter(Boolean)
@@ -362,7 +535,7 @@ const ViewWatchStats: React.FC = () => {
                           ? typeof e.target.value === "string"
                             ? e.target.value
                             : (e.target.value as Organization).id
-                          : undefined
+                          : undefined,
                       );
                       setChangingOrganization(false);
                     }}
@@ -412,7 +585,7 @@ const ViewWatchStats: React.FC = () => {
             className={cn(
               "mt-2 sm:mt-0 flex flex-col items-stretch gap-2",
               defaultReportInputDataLoading &&
-                "animate-pulse pointer-events-none"
+                "animate-pulse pointer-events-none",
             )}
           >
             <div className="flex items-center gap-2">
@@ -420,7 +593,7 @@ const ViewWatchStats: React.FC = () => {
                 Course
               </div>
               {stripHtml(
-                reportInputData?.trainingCourse?.metadata.title ?? "Unknown"
+                reportInputData?.trainingCourse?.metadata.title ?? "Unknown",
               )}
             </div>
             {reportInputData?.trainingSectionAndWindow?.section ? (
@@ -527,8 +700,8 @@ const ViewWatchStats: React.FC = () => {
                     summaryPercentComplete > 85
                       ? "bg-green-500"
                       : summaryPercentComplete > 50
-                      ? "bg-yellow-500"
-                      : "bg-red-500"
+                        ? "bg-yellow-500"
+                        : "bg-red-500",
                   )}
                   style={{
                     width: `${summaryPercentComplete}%`,
@@ -559,6 +732,7 @@ const ViewWatchStats: React.FC = () => {
           "item.metadata.title":
             (reportInputData?.trainingSectionAndWindow?.section?.items
               ?.length ?? 0) > 1,
+          actions: canSendReminders,
         }}
         action={
           <button
@@ -631,7 +805,7 @@ function ChevronButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "rounded-full opacity-100 bg-white/80 backdrop-blur-lg drop-shadow-sm cursor-pointer enabled:hover:bg-white/90 enabled:hover:drop-shadow-md transition-all text-secondary-600 disabled:opacity-50 disabled:cursor-default"
+        "rounded-full opacity-100 bg-white/80 backdrop-blur-lg drop-shadow-sm cursor-pointer enabled:hover:bg-white/90 enabled:hover:drop-shadow-md transition-all text-secondary-600 disabled:opacity-50 disabled:cursor-default",
       )}
     >
       {direction === "left" ? (
@@ -670,19 +844,19 @@ const getDefaultReportInputData = async (organizationId: string) => {
 
   // Try to get the default enrollment from local storage.
   const defaultEnrollmentId = localStorage.getItem(
-    getDefaultEnrollmentStorageKey(organizationId)
+    getDefaultEnrollmentStorageKey(organizationId),
   );
 
   if (defaultEnrollmentId) {
     try {
       returnInputData.relativeEnrollment = await getRelativeEnrollment(
         organizationId,
-        defaultEnrollmentId
+        defaultEnrollmentId,
       );
     } catch (e) {
       console.warn(
         `Failed to get relative enrollment by id: ${defaultEnrollmentId}`,
-        e
+        e,
       );
       returnInputData.relativeEnrollment = null;
     }
@@ -691,12 +865,12 @@ const getDefaultReportInputData = async (organizationId: string) => {
   // If no default enrollment is found (or local storage ID is invalid), try to get the latest enrollment.
   if (!returnInputData.relativeEnrollment) {
     const latestEnrollmentId = await getLatestCourseEnrollments(
-      organizationId
+      organizationId,
     ).then((e) => e.at(0)?.id);
     if (latestEnrollmentId) {
       returnInputData.relativeEnrollment = await getRelativeEnrollment(
         organizationId,
-        latestEnrollmentId
+        latestEnrollmentId,
       );
     }
   }
@@ -707,7 +881,7 @@ const getDefaultReportInputData = async (organizationId: string) => {
 
   // Get the training course for the default enrollment.
   const trainingCourse = await getTrainingCourse(
-    returnInputData.relativeEnrollment.courseId
+    returnInputData.relativeEnrollment.courseId,
   );
 
   if (!trainingCourse) {
@@ -719,8 +893,8 @@ const getDefaultReportInputData = async (organizationId: string) => {
   const defaultSectionId = localStorage.getItem(
     getDefaultSectionStorageKey(
       organizationId,
-      returnInputData.relativeEnrollment.courseId
-    )
+      returnInputData.relativeEnrollment.courseId,
+    ),
   );
 
   if (defaultSectionId) {
@@ -728,7 +902,7 @@ const getDefaultReportInputData = async (organizationId: string) => {
       getSectionAndWindowBySectionIdWithPreviousAndNext(
         defaultSectionId,
         returnInputData.relativeEnrollment,
-        trainingCourse.sections
+        trainingCourse.sections,
       );
     returnInputData.trainingSectionAndWindow = matching;
     returnInputData.previousTrainingSectionAndWindow = previous;
@@ -740,7 +914,7 @@ const getDefaultReportInputData = async (organizationId: string) => {
     const { previous, latest, next } =
       getLatestAvailableSectionWithPreviousAndNext(
         returnInputData.relativeEnrollment,
-        trainingCourse.sections
+        trainingCourse.sections,
       );
     returnInputData.previousTrainingSectionAndWindow = previous;
     returnInputData.trainingSectionAndWindow = latest;
@@ -752,7 +926,7 @@ const getDefaultReportInputData = async (organizationId: string) => {
 
 const updateReportInputData = async (
   reportInputData: ReportInputData | undefined,
-  newData: UpdateReportInputData
+  newData: UpdateReportInputData,
 ) => {
   const draft: UpdateReportInputData = { ...newData };
 
@@ -766,11 +940,11 @@ const updateReportInputData = async (
   const isEqual = <
     K extends keyof UpdateReportInputData,
     T extends UpdateReportInputData,
-    J extends UpdateReportInputData
+    J extends UpdateReportInputData,
   >(
     key: K,
     objA: T,
-    objB: J
+    objB: J,
   ) => {
     const a = objA[key];
     const b = objB[key];
@@ -802,10 +976,10 @@ const updateReportInputData = async (
 
   const updated = <
     T extends UpdateReportInputData,
-    K extends keyof UpdateReportInputData
+    K extends keyof UpdateReportInputData,
   >(
     object: T,
-    key: K
+    key: K,
   ): object is T & Record<K, NonNullable<T[K]>> => {
     return !isNil(object[key]) && !isEqual(key, reportInputData, object);
   };
@@ -813,7 +987,7 @@ const updateReportInputData = async (
   // If organization changes, we need to get a new default course enrollment (unless an enrollment is provided).
   if (updated(draft, "organizationId") && !newData.relativeEnrollment) {
     const latestEnrollments = await getLatestCourseEnrollments(
-      draft.organizationId
+      draft.organizationId,
     );
     const latestEnrollment = latestEnrollments.at(1);
 
@@ -821,7 +995,7 @@ const updateReportInputData = async (
       draft.relativeEnrollment =
         (await getRelativeEnrollment(
           draft.organizationId,
-          latestEnrollment.id
+          latestEnrollment.id,
         )) ?? undefined;
     }
   }
@@ -835,7 +1009,7 @@ const updateReportInputData = async (
     draft.relativeEnrollment =
       (await getRelativeEnrollment(
         reportInputData.organizationId,
-        draft.relativeEnrollment.id
+        draft.relativeEnrollment.id,
       )) ?? undefined;
   }
 
@@ -864,7 +1038,7 @@ const updateReportInputData = async (
         draft.relativeEnrollment ?? reportInputData?.relativeEnrollment,
         draft.trainingCourse?.sections ??
           reportInputData.trainingCourse?.sections ??
-          []
+          [],
       );
     draft.trainingSectionAndWindow = matching;
     draft.previousTrainingSectionAndWindow = previous;
@@ -879,7 +1053,7 @@ const updateReportInputData = async (
         draft.relativeEnrollment ??
           reportInputData?.relativeEnrollment ??
           undefined,
-        draft.trainingCourse.sections
+        draft.trainingCourse.sections,
       );
     draft.trainingSectionAndWindow = latest;
     draft.previousTrainingSectionAndWindow = previous;
@@ -891,9 +1065,9 @@ const updateReportInputData = async (
       getDefaultEnrollmentStorageKey(
         draft.organizationId ??
           reportInputData?.organizationId ??
-          "unknown-organization"
+          "unknown-organization",
       ),
-      draft.relativeEnrollment.id
+      draft.relativeEnrollment.id,
     );
   }
 
@@ -905,9 +1079,9 @@ const updateReportInputData = async (
           "unknown-organization",
         draft.trainingCourse?.id ??
           reportInputData?.trainingCourse?.id ??
-          "unknown-course"
+          "unknown-course",
       ),
-      draft.trainingSectionAndWindow.section.id
+      draft.trainingSectionAndWindow.section.id,
     );
 
     const activeRelativeEnrollment =
@@ -920,7 +1094,7 @@ const updateReportInputData = async (
           activeRelativeEnrollment,
           draft.trainingCourse?.sections ??
             reportInputData.trainingCourse?.sections ??
-            []
+            [],
         );
       draft.previousTrainingSectionAndWindow = previous;
       draft.nextTrainingSectionAndWindow = next;
@@ -934,7 +1108,7 @@ const getAdjacentEnrollmentAndUpdateReportInputData = async (
   organizationId: string,
   enrollmentId: string,
   isPrevious: boolean,
-  reportInputData: ReportInputData | undefined
+  reportInputData: ReportInputData | undefined,
 ) => {
   const fn = isPrevious ? getPreviousEnrollment : getNextEnrollment;
   const previousEnrollment = await fn(organizationId, enrollmentId);
@@ -949,5 +1123,5 @@ const getDefaultEnrollmentStorageKey = (organizationId: string) =>
 
 const getDefaultSectionStorageKey = (
   organizationId: string,
-  courseId: string
+  courseId: string,
 ) => `training-report-default-section-${organizationId}-${courseId}`;
