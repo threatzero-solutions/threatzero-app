@@ -46,6 +46,12 @@ export interface SendTrainingReminderDto {
   trainingItemId: string;
 }
 
+export interface MarkTrainingCompleteDto {
+  userId: string;
+  courseEnrollmentId: string;
+  trainingItemId: string;
+}
+
 export interface ResendTrainingLinksDto {
   trainingTokenIds: string[];
   trainingUrlTemplate: string;

@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import {
+  MarkTrainingCompleteDto,
   ResendTrainingLinksDto,
   SendTrainingLinksDto,
   SendTrainingReminderDto,
@@ -32,6 +33,11 @@ export const resendTrainingLinks = (
 export const sendTrainingReminder = (body: SendTrainingReminderDto) =>
   axios
     .post(`${API_BASE_URL}/training-admin/reminders/`, body)
+    .then((res) => res.data);
+
+export const markTrainingComplete = (body: MarkTrainingCompleteDto) =>
+  axios
+    .post(`${API_BASE_URL}/training-admin/completions/mark-complete`, body)
     .then((res) => res.data);
 
 export const getTrainingInvites = (query?: ItemFilterQueryParams) =>

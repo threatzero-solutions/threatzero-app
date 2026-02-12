@@ -1,12 +1,18 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
-import { EnvelopeIcon } from "@heroicons/react/24/outline";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  EnvelopeIcon,
+} from "@heroicons/react/20/solid";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import OrganizationSelect from "../../../components/forms/inputs/OrganizationSelect";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
 import { WRITE } from "../../../constants/permissions";
 import { AlertContext } from "../../../contexts/alert/alert-context";
@@ -29,7 +35,10 @@ import {
   getItemCompletionsSummary,
   getTrainingCourse,
 } from "../../../queries/training";
-import { sendTrainingReminder } from "../../../queries/training-admin";
+import {
+  markTrainingComplete,
+  sendTrainingReminder,
+} from "../../../queries/training-admin";
 import {
   CourseEnrollment,
   ItemCompletion,
@@ -208,6 +217,8 @@ const ViewWatchStats: React.FC = () => {
       !!reportInputData?.relativeEnrollment?.id,
   });
 
+  const queryClient = useQueryClient();
+
   const sendReminderMutation = useMutation({
     mutationFn: sendTrainingReminder,
     onSuccess: () => {
@@ -220,11 +231,30 @@ const ViewWatchStats: React.FC = () => {
     },
   });
 
+  const markCompleteMutation = useMutation({
+    mutationFn: markTrainingComplete,
+    onSuccess: () => {
+      setSuccess("Training marked as completed.", { timeout: 5000 });
+      setConfirmationClose();
+      queryClient.invalidateQueries({ queryKey: ["item-completions"] });
+      queryClient.invalidateQueries({ queryKey: ["item-completions-summary"] });
+    },
+    onError: () => {
+      setError("Failed to mark training as completed.", { timeout: 5000 });
+      setConfirmationClose();
+    },
+  });
+
   useEffect(() => {
     setConfirmationOptions((draft) => {
-      draft.isPending = sendReminderMutation.isPending;
+      draft.isPending =
+        sendReminderMutation.isPending || markCompleteMutation.isPending;
     });
-  }, [sendReminderMutation.isPending, setConfirmationOptions]);
+  }, [
+    sendReminderMutation.isPending,
+    markCompleteMutation.isPending,
+    setConfirmationOptions,
+  ]);
 
   const handleSendReminder = useCallback(
     (completion: ItemCompletion) => {
@@ -253,6 +283,35 @@ const ViewWatchStats: React.FC = () => {
       });
     },
     [setConfirmationOpen, sendReminderMutation],
+  );
+
+  const handleMarkComplete = useCallback(
+    (completion: ItemCompletion) => {
+      if (!completion.user || !completion.enrollment || !completion.item)
+        return;
+      const { user, enrollment, item } = completion;
+      setConfirmationOpen({
+        title: "Mark Training as Completed?",
+        message: (
+          <span>
+            Mark training as completed for{" "}
+            <span className="font-bold">
+              {user.givenName} {user.familyName} ({user.email})
+            </span>
+            ? This action cannot be undone.
+          </span>
+        ),
+        confirmText: "Mark Complete",
+        onConfirm: () => {
+          markCompleteMutation.mutate({
+            userId: user.externalId,
+            courseEnrollmentId: enrollment.id,
+            trainingItemId: item.id,
+          });
+        },
+      });
+    },
+    [setConfirmationOpen, markCompleteMutation],
   );
 
   const columns = useMemo(
@@ -326,26 +385,48 @@ const ViewWatchStats: React.FC = () => {
             completion.enrollment &&
             completion.item;
           return (
-            <button
-              type="button"
-              disabled={!canSend || sendReminderMutation.isPending}
-              onClick={() => handleSendReminder(completion)}
-              title={
-                canSendReminders
-                  ? "Send training reminder email"
-                  : "You do not have permission to send reminders"
-              }
-              className="inline-flex items-center gap-1 rounded-md bg-secondary-600 px-2 py-1 text-xs font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:cursor-default"
-            >
-              <EnvelopeIcon className="size-4 shrink-0" />
-              Remind
-            </button>
+            <ButtonGroup className="w-full justify-end">
+              <IconButton
+                icon={EnvelopeIcon}
+                disabled={!canSend || sendReminderMutation.isPending}
+                onClick={() => handleSendReminder(completion)}
+                title={
+                  canSendReminders
+                    ? "Send training reminder email"
+                    : "You do not have permission to send reminders"
+                }
+                className="bg-secondary-600 ring-transparent text-white hover:bg-secondary-500"
+              />
+              <IconButton
+                icon={CheckCircleIcon}
+                disabled={
+                  !canSend ||
+                  completion.completed ||
+                  markCompleteMutation.isPending
+                }
+                onClick={() => handleMarkComplete(completion)}
+                title={
+                  completion.completed
+                    ? "Training already completed"
+                    : canSendReminders
+                      ? "Mark training as completed"
+                      : "You do not have permission"
+                }
+                className="bg-secondary-600 ring-transparent text-white hover:not-disabled:bg-secondary-500 group [&_svg]:group-hover:group-not-disabled:stroke-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </ButtonGroup>
           );
         },
         enableSorting: false,
       }),
     ],
-    [canSendReminders, sendReminderMutation.isPending, handleSendReminder],
+    [
+      canSendReminders,
+      sendReminderMutation.isPending,
+      markCompleteMutation.isPending,
+      handleSendReminder,
+      handleMarkComplete,
+    ],
   );
 
   const organizationFilters = useOrganizationFilters({
