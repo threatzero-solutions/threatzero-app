@@ -40,6 +40,12 @@ export interface SendTrainingLinksDto {
   organizationId?: string;
 }
 
+export interface SendTrainingReminderDto {
+  userId: string;
+  courseEnrollmentId: string;
+  trainingItemId: string;
+}
+
 export interface ResendTrainingLinksDto {
   trainingTokenIds: string[];
   trainingUrlTemplate: string;

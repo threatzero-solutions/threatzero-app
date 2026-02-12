@@ -1,6 +1,10 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
-import { ResendTrainingLinksDto, SendTrainingLinksDto } from "../types/api";
+import {
+  ResendTrainingLinksDto,
+  SendTrainingLinksDto,
+  SendTrainingReminderDto,
+} from "../types/api";
 import { TrainingToken } from "../types/entities";
 import { download, findMany } from "./utils";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
@@ -23,6 +27,11 @@ export const resendTrainingLinks = (
     .post(`${API_BASE_URL}/training-admin/invites/resend/`, body, {
       ...options,
     })
+    .then((res) => res.data);
+
+export const sendTrainingReminder = (body: SendTrainingReminderDto) =>
+  axios
+    .post(`${API_BASE_URL}/training-admin/reminders/`, body)
     .then((res) => res.data);
 
 export const getTrainingInvites = (query?: ItemFilterQueryParams) =>
