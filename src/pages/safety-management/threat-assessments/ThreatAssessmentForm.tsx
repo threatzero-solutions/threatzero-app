@@ -281,6 +281,7 @@ const ThreatAssessmentForm: React.FC = () => {
           addNote={(n) => addAssessmentNote(params.assessmentId, n)}
           queryKey={["assessment-notes", params.assessmentId]}
           notes={notes?.results}
+          mediaUploadUrl={MEDIA_UPLOAD_URL}
         />
       </SlideOver>
     </>

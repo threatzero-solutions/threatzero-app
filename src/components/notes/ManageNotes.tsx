@@ -1,18 +1,115 @@
-import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
-import { classNames } from "../../utils/core";
 import { Dialog } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { Note } from "../../types/entities";
-import { useState } from "react";
+import { UserIcon, XCircleIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowDownTrayIcon,
+  DocumentIcon,
+  FilmIcon,
+  MusicalNoteIcon,
+  PaperClipIcon,
+  PhotoIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { UserIcon } from "@heroicons/react/20/solid";
+import { useRef, useState } from "react";
+import { useImmer } from "use-immer";
 import { useAuth } from "../../contexts/auth/useAuth";
+import { filePreload } from "../../queries/media";
+import { AddNotePayload } from "../../queries/safety-management";
+import { Note, NoteAttachment } from "../../types/entities";
+import { classNames } from "../../utils/core";
+import { UploadedFile } from "../forms/inputs/file-upload-input/UploadedFileTile";
+
+type PendingFile = UploadedFile & { _id: string };
+let nextPendingFileId = 0;
+
+const getFileIcon = (filename: string) => {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif":
+    case "heic":
+    case "heif":
+    case "webp":
+      return PhotoIcon;
+    case "mp4":
+    case "mov":
+    case "mkv":
+    case "webm":
+    case "avi":
+      return FilmIcon;
+    case "mp3":
+    case "wav":
+    case "ogg":
+    case "aac":
+      return MusicalNoteIcon;
+    default:
+      return DocumentIcon;
+  }
+};
+
+const FileChip: React.FC<{
+  name: string;
+  url?: string;
+  status: UploadedFile["uploadStatus"];
+  onRemove?: () => void;
+}> = ({ name, url, status, onRemove }) => {
+  const Icon = getFileIcon(name);
+  return (
+    <div
+      className={classNames(
+        "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
+        status === "uploading"
+          ? "border-gray-200 bg-gray-50 text-gray-400 animate-pulse"
+          : status === "error"
+            ? "border-red-200 bg-red-50 text-red-600"
+            : "border-gray-200 bg-gray-50 text-gray-700",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate min-w-0 max-w-[12rem]">{name}</span>
+      {url && status === "uploaded" && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-gray-400 hover:text-gray-600"
+          title="Download"
+        >
+          <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+        </a>
+      )}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="shrink-0 text-gray-400 hover:text-gray-600"
+        >
+          <XCircleIcon className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+const AttachmentChip: React.FC<{ attachment: NoteAttachment }> = ({
+  attachment,
+}) => (
+  <FileChip
+    name={attachment.filename ?? attachment.key}
+    url={attachment.url}
+    status="uploaded"
+  />
+);
 
 interface ManageNotesProps {
   setOpen: (open: boolean) => void;
   notes: Note[] | undefined;
-  addNote: (note: Partial<Note>) => Promise<unknown>;
+  addNote: (note: AddNotePayload) => Promise<unknown>;
   queryKey: QueryKey;
+  mediaUploadUrl?: string;
 }
 
 const ManageNotes: React.FC<ManageNotesProps> = ({
@@ -20,19 +117,94 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
   notes,
   addNote,
   queryKey,
+  mediaUploadUrl,
 }) => {
   const [newNote, setNewNote] = useState("");
+  const [pendingFiles, setPendingFiles] = useImmer<PendingFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
   const addNoteMutation = useMutation({
-    mutationFn: (note: Partial<Note>) => addNote(note),
+    mutationFn: (note: AddNotePayload) => addNote(note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       setNewNote("");
+      setPendingFiles([]);
     },
   });
 
   const { keycloak } = useAuth();
+
+  const isUploading = pendingFiles.some((f) => f.uploadStatus === "uploading");
+  const hasContent =
+    newNote.trim().length > 0 ||
+    pendingFiles.some((f) => f.uploadStatus === "uploaded");
+  const canSubmit = hasContent && !isUploading && !addNoteMutation.isPending;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !mediaUploadUrl) return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const id = `pending-${++nextPendingFileId}`;
+      const upload: PendingFile = {
+        _id: id,
+        local: file,
+        uploadStatus: "uploading",
+      };
+
+      setPendingFiles((draft) => {
+        draft.push(upload);
+      });
+
+      filePreload(mediaUploadUrl, [file])
+        .then((res) => {
+          const { key, url } = res[0];
+          setPendingFiles((draft) => {
+            const match = draft.find((u) => u._id === id);
+            if (match) {
+              match.key = key;
+              match.url = url;
+              match.uploadStatus = "uploaded";
+            }
+          });
+        })
+        .catch(() => {
+          setPendingFiles((draft) => {
+            const match = draft.find((u) => u._id === id);
+            if (match) {
+              match.uploadStatus = "error";
+            }
+          });
+        });
+    }
+
+    // Reset input so the same file can be selected again
+    e.target.value = "";
+  };
+
+  const deletePendingFile = (file: PendingFile) => {
+    setPendingFiles((draft) => draft.filter((u) => u._id !== file._id));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
+    const attachments = pendingFiles
+      .filter((f) => f.uploadStatus === "uploaded" && f.key)
+      .map((f) => ({
+        key: f.key!,
+        filename: f.local?.name ?? f.key!,
+      }));
+
+    const payload: AddNotePayload = {};
+    if (newNote.trim()) payload.value = newNote;
+    if (attachments.length) payload.attachments = attachments;
+
+    addNoteMutation.mutate(payload);
+  };
 
   const profileImg = (u: {
     picture?: string | null;
@@ -87,7 +259,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                     className={classNames(
                       idx === notes.length - 1 ? "h-6" : "-bottom-6",
                       idx === 0 ? "top-3" : "top-0",
-                      "absolute left-0 flex w-6 justify-center"
+                      "absolute left-0 flex w-6 justify-center",
                     )}
                   >
                     <div className="w-px bg-gray-200" />
@@ -111,7 +283,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                             {note.user?.externalId ===
                             keycloak?.tokenParsed?.sub
                               ? "Me"
-                              : note.user?.name ?? "Unknown"}
+                              : (note.user?.name ?? "Unknown")}
                           </span>
                         </div>
                         <time
@@ -121,9 +293,21 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                           {dayjs(note.createdOn).fromNow()}
                         </time>
                       </div>
-                      <p className="text-sm leading-6 text-gray-500">
-                        {note.value}
-                      </p>
+                      {note.value && (
+                        <p className="text-sm leading-6 text-gray-500">
+                          {note.value}
+                        </p>
+                      )}
+                      {!!note.attachments?.length && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {note.attachments.map((attachment) => (
+                            <AttachmentChip
+                              key={attachment.key}
+                              attachment={attachment}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </>
                 </li>
@@ -135,7 +319,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                 profileImg(
                   keycloak.tokenParsed as {
                     picture?: string | null;
-                  }
+                  },
                 )
               ) : (
                 <span className="relative bg-gray-400 h-6 w-6 rounded-full flex items-center justify-center ring-8 ring-white">
@@ -145,12 +329,9 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
               <form
                 action="#"
                 className="relative flex-auto"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  addNoteMutation.mutate({ value: newNote });
-                }}
+                onSubmit={handleSubmit}
               >
-                <div className="overflow-hidden rounded-lg pb-12 shadow-xs ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-secondary-600">
+                <div className="overflow-hidden rounded-lg shadow-xs ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-secondary-600">
                   <label htmlFor="comment" className="sr-only">
                     Add your note
                   </label>
@@ -163,18 +344,61 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
                   />
+
+                  {/* Pending file uploads */}
+                  {pendingFiles.length > 0 && (
+                    <div className="px-3 pb-2 flex flex-wrap gap-1.5">
+                      {pendingFiles.map((file) => (
+                        <FileChip
+                          key={file._id}
+                          name={file.local?.name ?? file.key ?? "file"}
+                          url={file.url}
+                          status={file.uploadStatus}
+                          onRemove={() => deletePendingFile(file)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
+                <div className="mt-2 flex justify-between items-center">
                   <div className="flex items-center space-x-5">
-                    {/* Add extra buttons here */}
+                    {mediaUploadUrl && (
+                      <>
+                        <button
+                          type="button"
+                          className="rounded-full p-1 text-gray-400 hover:text-gray-500"
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Attach files"
+                        >
+                          <PaperClipIcon
+                            className="h-5 w-5"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">Attach files</span>
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          className="sr-only"
+                          onChange={handleFileSelect}
+                        />
+                      </>
+                    )}
                   </div>
                   <div className="shrink-0">
                     <button
                       type="submit"
-                      className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                      disabled={!canSubmit}
+                      className={classNames(
+                        "rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300",
+                        canSubmit
+                          ? "hover:bg-gray-50"
+                          : "opacity-50 cursor-not-allowed",
+                      )}
                     >
-                      Add Note
+                      {isUploading ? "Uploading..." : "Add Note"}
                     </button>
                   </div>
                 </div>

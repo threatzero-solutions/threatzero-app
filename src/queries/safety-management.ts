@@ -13,6 +13,7 @@ import {
   ViolentIncidentReportStatus,
 } from "../types/entities";
 import {
+  buildUrl,
   findMany,
   findManyRaw,
   findOneById,
@@ -169,10 +170,15 @@ export const saveThreatAssessment = async (
 
 export const addAssessmentNote = async (
   assessmentId: string | undefined,
-  note: Partial<Note>
+  note: AddNotePayload
 ) =>
   assessmentId
-    ? insertOne<Note>(`/assessments/submissions/${assessmentId}/notes`, note)
+    ? axios
+        .post<Note>(
+          buildUrl(`/assessments/submissions/${assessmentId}/notes`),
+          note
+        )
+        .then((res) => res.data)
     : Promise.reject(new Error("Threat assessment ID must not be empty."));
 
 // Safety concerns
@@ -188,9 +194,21 @@ export const saveTip = (tip: Partial<Tip>) =>
     ? updateOne<Tip>(`/tips/submissions/`, tip)
     : Promise.reject(new Error("Tip ID must not be empty."));
 
-export const addTipNote = (tipId: string | undefined, note: Partial<Note>) =>
+export interface AddNoteAttachment {
+  key: string;
+  filename: string;
+}
+
+export interface AddNotePayload {
+  value?: string;
+  attachments?: AddNoteAttachment[];
+}
+
+export const addTipNote = (tipId: string | undefined, note: AddNotePayload) =>
   tipId
-    ? insertOne<Note>(`/tips/submissions/${tipId}/notes`, note)
+    ? axios
+        .post<Note>(buildUrl(`/tips/submissions/${tipId}/notes`), note)
+        .then((res) => res.data)
     : Promise.reject(new Error("Tip ID must not be empty."));
 
 // Violent Incident Log
@@ -201,11 +219,13 @@ export const saveViolentIncidentReport = async (
 
 export const addViolentIncidentReportNote = async (
   reportId: string | undefined,
-  note: Partial<Note>
+  note: AddNotePayload
 ) =>
   reportId
-    ? insertOne<Note>(
-        `/violent-incident-reports/submissions/${reportId}/notes`,
-        note
-      )
+    ? axios
+        .post<Note>(
+          buildUrl(`/violent-incident-reports/submissions/${reportId}/notes`),
+          note
+        )
+        .then((res) => res.data)
     : Promise.reject(new Error("Violent Incident Log ID must not be empty."));

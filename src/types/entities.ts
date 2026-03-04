@@ -301,9 +301,16 @@ export interface UserRepresentation extends Base {
   unit?: Unit;
 }
 
+export interface NoteAttachment {
+  key: string;
+  url: string;
+  filename?: string;
+}
+
 export interface Note extends Base {
   value: string;
   user: UserRepresentation | null;
+  attachments?: NoteAttachment[];
 }
 
 // ------------------ SAFETY MANAGEMENT ------------------
