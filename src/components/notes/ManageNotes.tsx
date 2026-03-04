@@ -1,24 +1,24 @@
-import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
-import { classNames } from "../../utils/core";
 import { Dialog } from "@headlessui/react";
+import { UserIcon, XCircleIcon } from "@heroicons/react/20/solid";
 import {
-  XMarkIcon,
-  PaperClipIcon,
   ArrowDownTrayIcon,
   DocumentIcon,
-  PhotoIcon,
   FilmIcon,
   MusicalNoteIcon,
+  PaperClipIcon,
+  PhotoIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { XCircleIcon, UserIcon } from "@heroicons/react/20/solid";
-import { Note, NoteAttachment } from "../../types/entities";
+import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { useRef, useState } from "react";
 import { useImmer } from "use-immer";
-import dayjs from "dayjs";
 import { useAuth } from "../../contexts/auth/useAuth";
 import { filePreload } from "../../queries/media";
-import { UploadedFile } from "../forms/inputs/file-upload-input/UploadedFileTile";
 import { AddNotePayload } from "../../queries/safety-management";
+import { Note, NoteAttachment } from "../../types/entities";
+import { classNames } from "../../utils/core";
+import { UploadedFile } from "../forms/inputs/file-upload-input/UploadedFileTile";
 
 type PendingFile = UploadedFile & { _id: string };
 let nextPendingFileId = 0;
@@ -64,8 +64,8 @@ const FileChip: React.FC<{
         status === "uploading"
           ? "border-gray-200 bg-gray-50 text-gray-400 animate-pulse"
           : status === "error"
-          ? "border-red-200 bg-red-50 text-red-600"
-          : "border-gray-200 bg-gray-50 text-gray-700"
+            ? "border-red-200 bg-red-50 text-red-600"
+            : "border-gray-200 bg-gray-50 text-gray-700",
       )}
     >
       <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -135,9 +135,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
 
   const { keycloak } = useAuth();
 
-  const isUploading = pendingFiles.some(
-    (f) => f.uploadStatus === "uploading"
-  );
+  const isUploading = pendingFiles.some((f) => f.uploadStatus === "uploading");
   const hasContent =
     newNote.trim().length > 0 ||
     pendingFiles.some((f) => f.uploadStatus === "uploaded");
@@ -261,7 +259,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                     className={classNames(
                       idx === notes.length - 1 ? "h-6" : "-bottom-6",
                       idx === 0 ? "top-3" : "top-0",
-                      "absolute left-0 flex w-6 justify-center"
+                      "absolute left-0 flex w-6 justify-center",
                     )}
                   >
                     <div className="w-px bg-gray-200" />
@@ -285,7 +283,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                             {note.user?.externalId ===
                             keycloak?.tokenParsed?.sub
                               ? "Me"
-                              : note.user?.name ?? "Unknown"}
+                              : (note.user?.name ?? "Unknown")}
                           </span>
                         </div>
                         <time
@@ -321,7 +319,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                 profileImg(
                   keycloak.tokenParsed as {
                     picture?: string | null;
-                  }
+                  },
                 )
               ) : (
                 <span className="relative bg-gray-400 h-6 w-6 rounded-full flex items-center justify-center ring-8 ring-white">
@@ -397,7 +395,7 @@ const ManageNotes: React.FC<ManageNotesProps> = ({
                         "rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300",
                         canSubmit
                           ? "hover:bg-gray-50"
-                          : "opacity-50 cursor-not-allowed"
+                          : "opacity-50 cursor-not-allowed",
                       )}
                     >
                       {isUploading ? "Uploading..." : "Add Note"}

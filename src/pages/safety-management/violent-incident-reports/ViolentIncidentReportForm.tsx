@@ -54,18 +54,18 @@ const ViolentIncidentReportForm: React.FC = () => {
           else p.delete("edit");
           return p;
         },
-        { replace: true }
+        { replace: true },
       ),
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const canAlterForm = useMemo(
     () => hasPermissions([LEVEL.ADMIN, WRITE.FORMS]),
-    [hasPermissions]
+    [hasPermissions],
   );
   const canAlterViolentIncidentReport = useMemo(
     () => hasPermissions([WRITE.VIOLENT_INCIDENT_REPORTS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const queryClient = useQueryClient();
@@ -86,8 +86,9 @@ const ViolentIncidentReportForm: React.FC = () => {
     enabled: !params.reportId || !!violentIncidentReport,
   });
 
+  const notesQueryKey = ["violent-incident-report-notes", params.reportId];
   const { data: notes } = useQuery({
-    queryKey: ["violent-incident-report-notes", params.reportId],
+    queryKey: notesQueryKey,
     queryFn: ({ queryKey }) =>
       getViolentIncidentReportNotes(queryKey[1], { limit: 50 }),
     enabled: !!params.reportId,
@@ -120,7 +121,7 @@ const ViolentIncidentReportForm: React.FC = () => {
         status,
       });
     },
-    [violentIncidentReportMutation.mutate, params.reportId]
+    [violentIncidentReportMutation.mutate, params.reportId],
   );
 
   const downloadViolentIncidentReportToPdfMutation = useMutation({
@@ -149,7 +150,7 @@ const ViolentIncidentReportForm: React.FC = () => {
         action: () => {
           setInfo("Downloading as PDF...", { id: infoAlertId });
           downloadViolentIncidentReportToPdfMutation.mutate(
-            violentIncidentReport?.id
+            violentIncidentReport?.id,
           );
         },
         hidden: !violentIncidentReport,
@@ -170,12 +171,12 @@ const ViolentIncidentReportForm: React.FC = () => {
       downloadViolentIncidentReportToPdfMutation,
       setInfo,
       infoAlertId,
-    ]
+    ],
   );
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
-    submission: DeepPartial<FormSubmission>
+    submission: DeepPartial<FormSubmission>,
   ) => {
     event.preventDefault();
 
@@ -287,7 +288,7 @@ const ViolentIncidentReportForm: React.FC = () => {
         <ManageNotes
           setOpen={setManageNotesOpen}
           addNote={(n) => addViolentIncidentReportNote(params.reportId, n)}
-          queryKey={["violet-incident-report-notes", params.reportId]}
+          queryKey={notesQueryKey}
           notes={notes?.results}
           mediaUploadUrl={MEDIA_UPLOAD_URL}
         />
