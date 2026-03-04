@@ -289,6 +289,7 @@ const ViolentIncidentReportForm: React.FC = () => {
           addNote={(n) => addViolentIncidentReportNote(params.reportId, n)}
           queryKey={["violet-incident-report-notes", params.reportId]}
           notes={notes?.results}
+          mediaUploadUrl={MEDIA_UPLOAD_URL}
         />
       </SlideOver>
     </>

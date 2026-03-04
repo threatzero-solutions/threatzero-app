@@ -254,6 +254,7 @@ const TipSubmission: React.FC = () => {
           addNote={(n) => addTipNote(params.tipId, n)}
           queryKey={["tip-notes", params.tipId]}
           notes={notes?.results}
+          mediaUploadUrl={MEDIA_UPLOAD_URL}
         />
       </SlideOver>
     </>
