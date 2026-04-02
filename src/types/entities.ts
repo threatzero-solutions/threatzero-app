@@ -415,34 +415,6 @@ export interface UserSurveyResponse extends Base {
   closedOn: string | null;
 }
 
-export enum VideoEventType {
-  PLAY = "play",
-  END = "end",
-  ERROR = "error",
-  PAUSE = "pause",
-  PROGRESS = "progress",
-  READY = "ready",
-  BUFFER = "buffer",
-  DURATION = "duration",
-  START = "start",
-  SEEK = "seek",
-  BUFFER_END = "buffer_end",
-  CLICK_PREVIEW = "click_preview",
-  ENABLE_PIP = "enable_pip",
-  DISABLE_PIP = "disable_pip",
-}
-
-export interface VideoEvent {
-  timestamp: string;
-  type: VideoEventType;
-  itemId?: string;
-  sectionId?: string;
-  courseId?: string;
-  videoId?: string;
-  eventData: unknown;
-  url: string;
-}
-
 export const ResourceItemCategories = [
   "prevention",
   "preparation",
@@ -494,8 +466,7 @@ export interface TrainingParticipantTokenValue extends ViewingUserTokenValue {
   trainingItemId: string;
 }
 
-export interface TrainingToken
-  extends OpaqueToken<TrainingParticipantTokenValue> {
+export interface TrainingToken extends OpaqueToken<TrainingParticipantTokenValue> {
   completion?: ItemCompletion | null;
 }
 

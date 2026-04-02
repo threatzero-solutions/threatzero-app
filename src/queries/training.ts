@@ -9,7 +9,6 @@ import {
   TrainingItem,
   TrainingSection,
   Video,
-  VideoEvent,
 } from "../types/entities";
 import {
   deleteOne,
@@ -25,7 +24,7 @@ import {
 
 export const getMyCourseEnrollments = () =>
   findOne<Organization>("/organizations/organizations/mine/").then(
-    (organization) => organization?.enrollments ?? []
+    (organization) => organization?.enrollments ?? [],
   );
 
 export const getTrainingAudiences = (options: ItemFilterQueryParams = {}) =>
@@ -54,14 +53,14 @@ export const getPresignedPutUrl = (key: string) =>
       `${API_BASE_URL}/training/items/get-presigned-put-url/`,
       {
         key,
-      }
+      },
     )
     .then((r) => r.data.signedUrl);
 
 export const getMyItemCompletion = (
   itemId: string,
   enrollmentId: string | undefined,
-  watchId?: string | null
+  watchId?: string | null,
 ) =>
   findMany<ItemCompletion>(`/training/items/my-completions/`, {
     watch_id: watchId,
@@ -71,7 +70,7 @@ export const getMyItemCompletion = (
 
 export const getMyItemCompletions = (
   query: ItemFilterQueryParams,
-  watchId?: string | null
+  watchId?: string | null,
 ) =>
   findMany<ItemCompletion>(`/training/items/my-completions/`, {
     ...query,
@@ -106,7 +105,7 @@ export const deleteTrainingSection = async (id?: string) =>
 
 export const swapTrainingSectionOrders = async (
   sectionA: Partial<TrainingSection>,
-  sectionB: Partial<TrainingSection>
+  sectionB: Partial<TrainingSection>,
 ) =>
   Promise.all([
     updateOne<TrainingSection>("/training/sections/", {
@@ -140,19 +139,6 @@ export const saveTrainingAudience = (audience: Partial<Audience>) =>
 export const deleteTrainingAudience = (id?: string) =>
   deleteOne("/training/audiences/", id);
 
-export const emitVideoEvent = async (
-  event: VideoEvent,
-  watchId?: string | null
-) =>
-  axios
-    .post(
-      `${API_BASE_URL}/media/video/events/${
-        watchId ? "?watch_id=" + watchId : ""
-      }`,
-      event
-    )
-    .then((res) => res.data);
-
 export const updateOrCreateItemCompletion = async (
   input: {
     itemId: string;
@@ -162,7 +148,7 @@ export const updateOrCreateItemCompletion = async (
     progress: number;
     completed: boolean;
   },
-  watchId?: string | null
+  watchId?: string | null,
 ) =>
   putOne<ItemCompletion>(
     "/training/items/my-completions/",
@@ -178,5 +164,5 @@ export const updateOrCreateItemCompletion = async (
     },
     {
       params: { watch_id: watchId },
-    }
+    },
   );
