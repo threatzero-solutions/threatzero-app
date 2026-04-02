@@ -122,7 +122,6 @@ const TrainingItem: React.FC = () => {
     // biome-ignore lint/suspicious/noExplicitAny: ...
     (error: unknown, data?: unknown) => {
       console.error("Error loading video", error, data);
-      // emitItemVideoEvent({ type: VideoEventType.ERROR, data: { error } });
     },
     []
   );
