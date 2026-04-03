@@ -56,7 +56,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
   });
 
   const [statsFilterOptions] = useState<SafetyManagementResourceFilterOptions>(
-    {}
+    {},
   );
 
   const { data: assessmentStats, isLoading: assessmentStatsLoading } = useQuery(
@@ -64,9 +64,9 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
       queryKey: ["threat-assessment-stats", statsFilterOptions],
       queryFn: ({ queryKey }) =>
         getThreatAssessmentStats(
-          queryKey[1] as SafetyManagementResourceFilterOptions
+          queryKey[1] as SafetyManagementResourceFilterOptions,
         ),
-    }
+    },
   );
 
   const saveAssessmentMutation = useMutation({
@@ -78,7 +78,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
 
   const canAlterAssessment = useMemo(
     () => hasPermissions([WRITE.THREAT_ASSESSMENTS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const { filters: organizationFilters } = useOrganizationFilters({
@@ -87,7 +87,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
     organizationsEnabled: hasMultipleOrganizationAccess,
     organizationKey: "unit.organization.slug",
     unitsEnabled: hasMultipleUnitAccess,
-    unitKey: "unitSlug",
+    unitKey: "unit.slug",
     locationKey: "location.id",
   });
 
@@ -125,7 +125,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
           header: "Last Updated",
           cell: (info) => dayjs(info.getValue()).fromNow(),
         }),
-      ]
+      ],
     );
 
     if (hasMultipleUnitAccess) {
@@ -134,7 +134,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
           id: "unit.name",
           header: "Unit",
           cell: (info) => info.getValue() || "—",
-        })
+        }),
       );
     }
 
@@ -162,7 +162,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
           ),
           enableSorting: false,
         }),
-      ]
+      ],
     );
 
     return columns;
@@ -194,7 +194,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                 (subtotal / (assessmentStats.total || 1)) *
                 100
               ).toFixed(2)}%`,
-            })
+            }),
           )
         }
       />
@@ -213,7 +213,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                 (subtotal / (assessmentStats.total || 1)) *
                 100
               ).toFixed(2)}%`,
-            })
+            }),
           )
         }
       />

@@ -1,29 +1,29 @@
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import dayjs from "dayjs";
 import { useMemo, useState } from "react";
+import { Link, useLocation } from "react-router";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import IconButton from "../../../components/layouts/buttons/IconButton";
+import EditableCell from "../../../components/layouts/EditableCell";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import StatsDisplay from "../../../components/StatsDisplay";
+import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
 import { WRITE } from "../../../constants/permissions";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { withRequirePermissions } from "../../../guards/with-require-permissions";
+import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
+import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
 import {
   SafetyManagementResourceFilterOptions,
   getTipSubmissionStats,
   getTipSubmissions,
   saveTip,
 } from "../../../queries/safety-management";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { fromDaysKey, fromStatus } from "../../../utils/core";
 import { Tip, TipStatus } from "../../../types/entities";
-import { Link, useLocation } from "react-router";
-import dayjs from "dayjs";
+import { fromDaysKey, fromStatus } from "../../../utils/core";
 import StatusPill from "../../tip-submission/components/StatusPill";
-import { useItemFilterQuery } from "../../../hooks/use-item-filter-query";
-import EditableCell from "../../../components/layouts/EditableCell";
-import StatsDisplay from "../../../components/StatsDisplay";
-import { withRequirePermissions } from "../../../guards/with-require-permissions";
-import { useAuth } from "../../../contexts/auth/useAuth";
-import { useOrganizationFilters } from "../../../hooks/use-organization-filters";
-import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
-import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import { ArrowRightIcon } from "@heroicons/react/20/solid";
-import IconButton from "../../../components/layouts/buttons/IconButton";
 
 const columnHelper = createColumnHelper<Tip>();
 
@@ -53,7 +53,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
   });
 
   const [tipFilterOptions] = useState<SafetyManagementResourceFilterOptions>(
-    {}
+    {},
   );
   const { data: tipStats, isLoading: tipStatsLoading } = useQuery({
     queryKey: ["tip-submission-stats", tipFilterOptions] as const,
@@ -69,7 +69,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
 
   const canAlterTip = useMemo(
     () => hasPermissions([WRITE.TIPS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const { filters: organizationFilters } = useOrganizationFilters({
@@ -78,7 +78,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
     organizationsEnabled: hasMultipleOrganizationAccess,
     organizationKey: "unit.organization.slug",
     unitsEnabled: hasMultipleUnitAccess,
-    unitKey: "unitSlug",
+    unitKey: "unit.slug",
     locationKey: "location.id",
   });
 
@@ -116,7 +116,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
           header: "Last Updated",
           cell: (info) => dayjs(info.getValue()).fromNow(),
         }),
-      ]
+      ],
     );
 
     if (hasMultipleUnitAccess) {
@@ -125,7 +125,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
           id: "unit.name",
           header: "Unit",
           cell: (info) => info.getValue() || "—",
-        })
+        }),
       );
     }
 
@@ -158,7 +158,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
           ),
           enableSorting: false,
         }),
-      ]
+      ],
     );
 
     return columns;
@@ -182,9 +182,9 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
               name: fromDaysKey(key),
               stat: subtotal,
               detail: `${((subtotal / (tipStats.total || 1)) * 100).toFixed(
-                2
+                2,
               )}%`,
-            })
+            }),
           )
         }
       />
@@ -200,9 +200,9 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
               name: <StatusPill status={key as TipStatus} />,
               stat: subtotal,
               detail: `${((subtotal / (tipStats.total || 1)) * 100).toFixed(
-                2
+                2,
               )}%`,
-            })
+            }),
           )
         }
       />

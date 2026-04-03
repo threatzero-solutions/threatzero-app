@@ -62,7 +62,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
   });
 
   const [statsFilterOptions] = useState<SafetyManagementResourceFilterOptions>(
-    {}
+    {},
   );
 
   const {
@@ -72,7 +72,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
     queryKey: ["violent-incident-report-stats", statsFilterOptions],
     queryFn: ({ queryKey }) =>
       getViolentIncidentReportSubmissionStats(
-        queryKey[1] as SafetyManagementResourceFilterOptions
+        queryKey[1] as SafetyManagementResourceFilterOptions,
       ),
   });
 
@@ -85,7 +85,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
 
   const canAlterViolentIncidentReports = useMemo(
     () => hasPermissions([WRITE.VIOLENT_INCIDENT_REPORTS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const { filters: organizationFilters } = useOrganizationFilters({
@@ -94,7 +94,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
     organizationsEnabled: hasMultipleOrganizationAccess,
     organizationKey: "unit.organization.slug",
     unitsEnabled: hasMultipleUnitAccess,
-    unitKey: "unitSlug",
+    unitKey: "unit.slug",
     locationKey: "location.id",
   });
 
@@ -132,7 +132,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
           header: "Last Updated",
           cell: (info) => dayjs(info.getValue()).fromNow(),
         }),
-      ]
+      ],
     );
 
     if (hasMultipleUnitAccess) {
@@ -141,7 +141,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
           id: "unit.name",
           header: "Unit",
           cell: (info) => info.getValue() || "—",
-        })
+        }),
       );
     }
 
@@ -169,7 +169,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
           ),
           enableSorting: false,
         }),
-      ]
+      ],
     );
 
     return columns;
@@ -201,7 +201,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
                 (subtotal / (violentIncidentReportStats.total || 1)) *
                 100
               ).toFixed(2)}%`,
-            })
+            }),
           )
         }
       />
@@ -220,7 +220,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
                 (subtotal / (violentIncidentReportStats.total || 1)) *
                 100
               ).toFixed(2)}%`,
-            })
+            }),
           )
         }
       />
@@ -257,7 +257,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
                 (status) => ({
                   value: status,
                   label: fromStatus(status),
-                })
+                }),
               ),
             },
             ...(organizationFilters ?? []),
