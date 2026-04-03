@@ -558,7 +558,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
                             if (!value) return false;
                             new URL(value);
                             return true;
-                          } catch (e) {
+                          } catch {
                             return false;
                           }
                         },

@@ -178,7 +178,7 @@ const CurrentStep = ({
           <LoadingStep />
         );
       default:
-        null;
+        return null;
     }
   }, [
     stepId,
