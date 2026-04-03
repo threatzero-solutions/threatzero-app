@@ -30,6 +30,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
   params,
   loadedValue,
   readOnly,
+  value,
   ...attrs
 }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -179,6 +180,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
   const fileInput = (
     <input
       {...attrs}
+      value=""
       ref={fileInputRef}
       type="file"
       onChange={handleClickUpload}
