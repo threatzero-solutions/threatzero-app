@@ -114,6 +114,9 @@ const FormInput = forwardRef(
         Reflect.deleteProperty(attrs, "value");
       } else if (attrs.type === FieldType.DATE) {
         attrs.value = dayjs(attrs.value as string).format("YYYY-MM-DD");
+      } else if (attrs.type === FieldType.FILE) {
+        // File input doesn't allow setting value programmatically.
+        Reflect.deleteProperty(attrs, "value");
       } else {
         attrs.value = attrs.value ?? "";
       }
@@ -125,7 +128,7 @@ const FormInput = forwardRef(
       }
 
       switch (attrs.type) {
-        case "file":
+        case FieldType.FILE:
           return (
             <FileUploadInput
               {...attrs}
