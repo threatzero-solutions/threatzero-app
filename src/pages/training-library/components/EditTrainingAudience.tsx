@@ -79,7 +79,7 @@ const EditTrainingAudiences: React.FC<EditTrainingAudiencesProps> = ({
   const debouncedSetAudience = useDebounceCallback(setAudience, 1000);
 
   const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const value = event.target.value;
     if (event.target.name === "slug") {

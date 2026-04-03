@@ -105,7 +105,7 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
             ...v,
             [event.target.name]: event.target.value,
           }
-        : v
+        : v,
     );
   };
 
@@ -204,9 +204,9 @@ const ManageTrainingInvite: React.FC<ManageTrainingInviteProps> = ({
                     value={
                       input.name === "expiresOn"
                         ? trainingTokenValue.expiresOn
-                        : trainingTokenValue.value?.[
+                        : (trainingTokenValue.value?.[
                             input.name as keyof object
-                          ] ?? ""
+                          ] ?? "")
                     }
                     readOnly={readOnly}
                   />

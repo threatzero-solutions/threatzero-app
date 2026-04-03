@@ -177,12 +177,12 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
 
   const slugReadOnly = useMemo(
     () => (!isOrganization && !organizationId) || (!create && !isGlobalAdmin),
-    [isOrganization, organizationId, create, isGlobalAdmin]
+    [isOrganization, organizationId, create, isGlobalAdmin],
   );
 
   const canValidateSlug = useMemo(
     () => isOrganization || !!organizationId,
-    [isOrganization, organizationId]
+    [isOrganization, organizationId],
   );
 
   const queryClient = useQueryClient();
@@ -267,7 +267,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                       ...acc,
                       [status]: <OrganizationStatusBadge status={status} />,
                     }),
-                    {}
+                    {},
                   )}
                   value={field.value}
                   onChange={field.onChange}
@@ -310,7 +310,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                   <CheckCircleIcon
                     className={classNames(
                       "size-5 text-green-500",
-                      !slug ? "grayscale" : ""
+                      !slug ? "grayscale" : "",
                     )}
                     aria-hidden="true"
                   />
@@ -331,7 +331,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                   ? !isUniqueSlug
                     ? "ring-red-300 text-red-900 focus:ring-red-500!"
                     : "ring-green-300 text-green-900 focus:ring-green-500!"
-                  : ""
+                  : "",
               )}
               autoComplete="off"
             />
@@ -339,7 +339,7 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
               type="button"
               className={classNames(
                 "group absolute right-2 top-1/2 -translate-y-1/2 disabled:opacity-50",
-                slugReadOnly ? "hidden" : ""
+                slugReadOnly ? "hidden" : "",
               )}
               title="Generate slug from name"
               onClick={() => resetSlug()}

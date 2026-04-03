@@ -59,9 +59,9 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
         (a) =>
           !value?.some((ca) => ca.slug === a.slug) &&
           (!audienceQuery ||
-            a.slug.toLowerCase().includes(audienceQuery.toLowerCase()))
+            a.slug.toLowerCase().includes(audienceQuery.toLowerCase())),
       ),
-    [allowedAudiences, audienceData, audienceQuery, value]
+    [allowedAudiences, audienceData, audienceQuery, value],
   );
 
   const handleChange = (audiences: Audience[]) => {
@@ -146,7 +146,7 @@ const AudiencesSelect: React.FC<AudiencesSelectProps> = ({
                     className={({ focus }) =>
                       classNames(
                         "relative cursor-default select-none py-2 pl-3 pr-9",
-                        focus ? "bg-secondary-600 text-white" : "text-gray-900"
+                        focus ? "bg-secondary-600 text-white" : "text-gray-900",
                       )
                     }
                   >

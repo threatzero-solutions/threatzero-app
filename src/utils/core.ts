@@ -18,7 +18,7 @@ export const orderSort = (a: { order?: number }, b: { order?: number }) => {
 
 export const noMutateSort = <T>(
   a?: T[],
-  sortFn?: (a: T, b: T) => number
+  sortFn?: (a: T, b: T) => number,
 ): T[] | undefined => (a ? [...a].sort(sortFn) : undefined);
 
 export const humanizeSlug = (slug: string) =>
@@ -61,7 +61,7 @@ export const stringifyOrder = (order: Ordering) =>
     .filter(([field]) => !!field)
     .reduce(
       (acc, [field, order]) => [...acc, order === "DESC" ? `-${field}` : field],
-      [] as string[]
+      [] as string[],
     )
     .join(",");
 
@@ -70,7 +70,7 @@ export const parseOrder = (order: string) =>
     .split(",")
     .filter((field) => !!field)
     .map((field) =>
-      field.startsWith("-") ? [field.slice(1), "DESC"] : [field, "ASC"]
+      field.startsWith("-") ? [field.slice(1), "DESC"] : [field, "ASC"],
     )
     .reduce((acc, [field, order]) => {
       acc[field] = order as OrderOptions;
@@ -90,7 +90,7 @@ export const asSortingState = (ordering: Ordering): SortingState =>
   }));
 
 export const asPageInfo = (
-  pagination: PaginationState
+  pagination: PaginationState,
 ): Omit<Paginated<unknown>, "results" | "count"> => ({
   offset: pagination.pageIndex * pagination.pageSize,
   limit: pagination.pageSize,
@@ -122,7 +122,7 @@ export const pathJoin = (...args: string[]) => {
 export function stripHtml(html: string): string;
 export function stripHtml(html: undefined | null): undefined | null;
 export function stripHtml(
-  html: string | undefined | null
+  html: string | undefined | null,
 ): string | undefined | null;
 export function stripHtml(html: string | undefined | null) {
   if (!html) {
@@ -191,7 +191,7 @@ export const stripPhoneNumber = (phoneNumber: string) => {
 
 export const simulateDownload = (
   data: Blob | MediaSource,
-  filename: string
+  filename: string,
 ) => {
   const a = document.createElement("a");
   a.setAttribute("href", window.URL.createObjectURL(data));
@@ -205,13 +205,13 @@ export const isUndefined = (obj: unknown): obj is undefined =>
   typeof obj === "undefined";
 
 export const isNil = <T>(
-  value: T | null | undefined
+  value: T | null | undefined,
 ): value is null | undefined => value === null || isUndefined(value);
 
 const defaultFallback: Record<string, unknown> = {};
 export const as = <T extends typeof defaultFallback = typeof defaultFallback>(
   context: unknown,
-  fallback: T = defaultFallback as T
+  fallback: T = defaultFallback as T,
 ) => {
   if (context !== null && typeof context === "object") {
     return context as Record<string, unknown>;
@@ -252,13 +252,13 @@ export class Path {
     }
 
     const startIdx = this.segments.findIndex(
-      (segment) => segment === segmentsB[0]
+      (segment) => segment === segmentsB[0],
     );
     if (startIdx === -1) {
       return false;
     }
     return segmentsB.every(
-      (segment, idx) => this.segments[startIdx + idx] === segment
+      (segment, idx) => this.segments[startIdx + idx] === segment,
     );
   }
 

@@ -14,7 +14,7 @@ const InformationButton: React.FC<{ text: string }> = ({ text }) => {
               aria-hidden="true"
               className={classNames(
                 "size-4 transition-colors",
-                open ? "text-gray-400" : "text-gray-500"
+                open ? "text-gray-400" : "text-gray-500",
               )}
             />
           </PopoverButton>

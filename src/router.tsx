@@ -186,7 +186,7 @@ export const router = createBrowserRouter(
                       path: ":tipId",
                       loader: ({ params }) =>
                         redirect(
-                          `../../administrative-reports/safety-concerns/${params.tipId}`
+                          `../../administrative-reports/safety-concerns/${params.tipId}`,
                         ),
                     },
                   ],
@@ -357,7 +357,7 @@ export const router = createBrowserRouter(
                   loader: ({ params }) => {
                     if (
                       !ResourceItemCategories.includes(
-                        params.category as ResourceItemCategory
+                        params.category as ResourceItemCategory,
                       )
                     ) {
                       return redirect("/");
@@ -440,5 +440,5 @@ export const router = createBrowserRouter(
   ],
   {
     basename: import.meta.env.VITE_BASE_NAME ?? "/",
-  }
+  },
 );

@@ -73,15 +73,15 @@ const BaseTable = <T extends object>({
                       idx === 0
                         ? "pl-4 pr-3 sm:pl-0"
                         : idx === footerGroup.headers.length - 1
-                        ? "pl-3 pr-4 sm:pl-0"
-                        : "px-2"
+                          ? "pl-3 pr-4 sm:pl-0"
+                          : "px-2",
                     )}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
                           header.column.columnDef.footer,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </th>
                 ))}
@@ -100,12 +100,12 @@ const BaseTable = <T extends object>({
             table.getState().pagination.pageIndex *
               table.getState().pagination.pageSize +
               1,
-            table.getRowCount()
+            table.getRowCount(),
           )}
           rowEnd={Math.min(
             (table.getState().pagination.pageIndex + 1) *
               table.getState().pagination.pageSize,
-            table.getRowCount()
+            table.getRowCount(),
           )}
           rowTotal={table.getRowCount()}
           pageCount={table.getPageCount()}
@@ -184,20 +184,20 @@ export function BaseTableHeaderCell<T extends object>({
             ? "pl-2.5 pr-1.5 sm:pl-0"
             : "pl-4 pr-3 sm:pl-0"
           : idx === headersCount - 1
-          ? dense
-            ? "pl-1.5 pr-2.5 sm:pl-0"
-            : "pl-3 pr-4 sm:pl-0"
-          : dense
-          ? "px-1.5"
-          : "px-2",
-        className
+            ? dense
+              ? "pl-1.5 pr-2.5 sm:pl-0"
+              : "pl-3 pr-4 sm:pl-0"
+            : dense
+              ? "px-1.5"
+              : "px-2",
+        className,
       )}
     >
       {header.isPlaceholder ? null : (
         <div
           className={classNames(
             "whitespace-nowrap group inline-flex",
-            header.column.getCanSort() ? "cursor-pointer" : ""
+            header.column.getCanSort() ? "cursor-pointer" : "",
           )}
           onClick={header.column.getToggleSortingHandler()}
           onKeyUp={() => {}}
@@ -211,7 +211,7 @@ export function BaseTableHeaderCell<T extends object>({
               "ml-2 flex-none inline-flex items-center gap-0.5 rounded-sm transition-colors",
               header.column.getIsSorted()
                 ? "bg-gray-200 text-gray-900 group-hover:bg-gray-300"
-                : "text-gray-300 group-hover:text-gray-600"
+                : "text-gray-300 group-hover:text-gray-600",
             )}
           >
             {header.column.getIsSorted() === "desc" ? (
@@ -244,7 +244,7 @@ export function BaseTableHeaderCell<T extends object>({
         className={classNames(
           table.options.enableColumnResizing ? "block" : "hidden",
           "absolute top-0 bottom-0 right-0 w-2 transition-colors transparent border-r-2 enabled:hover:border-gray-300 enabled:cursor-col-resize",
-          header.column.getIsResizing() ? "border-gray-300" : "border-gray-100"
+          header.column.getIsResizing() ? "border-gray-300" : "border-gray-100",
         )}
         onMouseDown={header.getResizeHandler()}
         onTouchStart={header.getResizeHandler()}
@@ -355,13 +355,13 @@ export function BaseTableCell<T extends object>({
             ? "pl-2.5 pr-1.5 sm:pl-0"
             : "pl-4 pr-3 sm:pl-0"
           : idx === row.getVisibleCells().length - 1
-          ? dense
-            ? "pl-1.5 pr-2.5 sm:pl-0"
-            : "pl-3 pr-4 sm:pl-0"
-          : dense
-          ? "px-1.5"
-          : "px-2",
-        className
+            ? dense
+              ? "pl-1.5 pr-2.5 sm:pl-0"
+              : "pl-3 pr-4 sm:pl-0"
+            : dense
+              ? "px-1.5"
+              : "px-2",
+        className,
       )}
     >
       {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -42,7 +42,7 @@ export const ResourceDocumentTile: React.FC<{
           state={{ from: location }}
           className={classNames(
             "rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
-            disabled ? "pointer-events-none opacity-50" : ""
+            disabled ? "pointer-events-none opacity-50" : "",
           )}
         >
           View<span className="sr-only">, {document.title}</span>

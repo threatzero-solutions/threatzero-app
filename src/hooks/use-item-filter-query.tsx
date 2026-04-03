@@ -24,7 +24,7 @@ export const useItemFilterQuery = (
     prefix?: string;
     pageSize?: number;
     debounceTime?: number;
-  } = {}
+  } = {},
 ) => {
   const DEFAULT_PREFIX = "tbl_";
   const DEFAULT_PAGE_SIZE = 10;
@@ -34,7 +34,7 @@ export const useItemFilterQuery = (
 
   const parameterizeOptions = <T,>(
     options: ItemFilterQueryParams,
-    valueMap: (v: string | undefined) => T
+    valueMap: (v: string | undefined) => T,
   ) => {
     // Extracting limit from options even though it's not used so only custom params are left.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -43,18 +43,21 @@ export const useItemFilterQuery = (
       offset: valueMap(offset ? `${offset}` : undefined),
       order: valueMap(order && stringifyOrder(order)),
       search: valueMap(search),
-      ...Object.entries(customParams ?? {}).reduce((acc, [k, v]) => {
-        const value = v !== undefined ? `${v}` : v;
-        acc[k] = valueMap(value);
-        return acc;
-      }, {} as Record<string, T>),
+      ...Object.entries(customParams ?? {}).reduce(
+        (acc, [k, v]) => {
+          const value = v !== undefined ? `${v}` : v;
+          acc[k] = valueMap(value);
+          return acc;
+        },
+        {} as Record<string, T>,
+      ),
     };
     return p;
   };
 
   const removeEmpties = (obj: object) => {
     return Object.fromEntries(
-      Object.entries(obj).filter(([, v]) => Number.isInteger(v) || !!v)
+      Object.entries(obj).filter(([, v]) => Number.isInteger(v) || !!v),
     );
   };
 
@@ -71,7 +74,7 @@ export const useItemFilterQuery = (
         }
         return acc;
       },
-      {} as Record<string, string>
+      {} as Record<string, string>,
     );
 
     const orderParam = searchParams.get(`${prefix}order`);
@@ -100,7 +103,7 @@ export const useItemFilterQuery = (
 
   const [debouncedItemFilterOptions] = useDebounceValue(
     params,
-    options.debounceTime ?? 300
+    options.debounceTime ?? 300,
   );
 
   useEffect(() => {
@@ -123,7 +126,7 @@ export const useItemFilterQuery = (
         });
         return draft;
       },
-      { replace: true }
+      { replace: true },
     );
   }, [debouncedItemFilterOptions, options.prefix, setSearchParams, params]);
 

@@ -20,7 +20,7 @@ export const ResourceVideoTile: React.FC<{
       <div
         className={classNames(
           "group aspect-h-7 aspect-w-10 block w-full overflow-hidden rounded-lg bg-gray-100 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100",
-          disabled ? "" : "cursor-pointer"
+          disabled ? "" : "cursor-pointer",
         )}
       >
         <img
@@ -28,7 +28,7 @@ export const ResourceVideoTile: React.FC<{
           alt=""
           className={classNames(
             "pointer-events-none object-cover",
-            disabled ? "" : "group-hover:opacity-75"
+            disabled ? "" : "group-hover:opacity-75",
           )}
         />
         <Link
@@ -36,7 +36,7 @@ export const ResourceVideoTile: React.FC<{
           state={{ from: location }}
           className={classNames(
             "absolute inset-0 focus:outline-hidden",
-            disabled ? "pointer-events-none" : ""
+            disabled ? "pointer-events-none" : "",
           )}
         >
           <span className="sr-only">View details for {video.title}</span>

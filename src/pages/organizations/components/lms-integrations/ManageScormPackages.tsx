@@ -72,7 +72,7 @@ const TrainingItemDisplay: React.FC<{
     <div
       className={classNames(
         "rounded-md overflow-hidden flex ring-1 ring-inset ring-gray-200",
-        grayscale ? "grayscale opacity-50" : ""
+        grayscale ? "grayscale opacity-50" : "",
       )}
     >
       <div className="flex overflow-hidden relative pt-24 pr-40">
@@ -116,7 +116,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
 
   const expired = useMemo(
     () => !!lmsToken.expiresOn && dayjs(lmsToken.expiresOn).isBefore(dayjs()),
-    [lmsToken]
+    [lmsToken],
   );
 
   const { register, handleSubmit: handleExpirationSubmit } = useForm({
@@ -131,7 +131,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
       setOrganizationLmsTokenExpirations(
         lmsToken.value.organizationId,
         { key: lmsToken.key },
-        date && date.toDate()
+        date && date.toDate(),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -188,7 +188,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
         : "training";
       simulateDownload(
         new Blob([data]),
-        `threatzero_${trainingTitle}_scorm.zip`
+        `threatzero_${trainingTitle}_scorm.zip`,
       );
       setTimeout(() => clearAlert(infoAlertId), 2000);
     },
@@ -297,11 +297,11 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
               "text-white ring-transparent",
               expired
                 ? "bg-green-500 hover:bg-green-600"
-                : "bg-red-500 hover:bg-red-600"
+                : "bg-red-500 hover:bg-red-600",
             )}
             onClick={() =>
               handleConfirmExpiration(
-                expired ? DEFAULT_EXPIRATION_DATE : DEFAULT_EXPIRED_DATE
+                expired ? DEFAULT_EXPIRATION_DATE : DEFAULT_EXPIRED_DATE,
               )
             }
           />
@@ -384,7 +384,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
 }) => {
   const [showOrgLmsSettings, setShowOrgLmsSettings] = useLocalStorage(
     "threatzero.organizations.show-lms-settings",
-    true
+    true,
   );
 
   const { data: allItems } = useQuery({
@@ -401,8 +401,8 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
               }
               return arr;
             }, new Map<TrainingItem["id"], TrainingItem>())
-            .values() ?? []
-        )
+            .values() ?? [],
+        ),
       ),
     enabled: !!courseId && !!lmsTokens,
   });
@@ -410,9 +410,9 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
   const availableItems = useMemo(
     () =>
       allItems?.filter(
-        (i) => !lmsTokens.some((t) => t.value.trainingItemId === i.id)
+        (i) => !lmsTokens.some((t) => t.value.trainingItemId === i.id),
       ),
-    [allItems, lmsTokens]
+    [allItems, lmsTokens],
   );
 
   const queryClient = useQueryClient();
@@ -427,7 +427,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
               organizationId,
               enrollmentId,
             },
-            DEFAULT_EXPIRATION_DATE.toDate()
+            DEFAULT_EXPIRATION_DATE.toDate(),
           )
         : Promise.reject("No organization ID."),
     onSuccess: () => {
@@ -462,7 +462,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
       updateOrganizationMutation.mutate({
         id: organizationId,
         trainingAccessSettings: data,
-      })
+      }),
     )();
   }, [
     organizationId,
@@ -474,7 +474,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
 
   const debounceUpdateOrganizationAccessSettings = useDebounceCallback(
     handleUpdateOrganization,
-    1000
+    1000,
   );
 
   useEffect(() => {
@@ -498,7 +498,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
           queryClient.invalidateQueries({
             queryKey: ["organization", "id", organizationId],
           }),
-        300
+        300,
       );
     }
   };
@@ -540,7 +540,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
             <div
               className={classNames(
                 "flex flex-col gap-3 transition-all duration-500 ease-in-out max-h-32 overflow-hidden mt-3",
-                "data-closed:max-h-0 data-closed:mt-0 data-closed:opacity-0"
+                "data-closed:max-h-0 data-closed:mt-0 data-closed:opacity-0",
               )}
             >
               <div className="flex flex-col gap-1">

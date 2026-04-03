@@ -36,7 +36,7 @@ const Modal: React.FC<ModalProps> = ({
             transition
             className={cn(
               "relative transform rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg sm:data-closed:translate-y-0 sm:data-closed:scale-95",
-              classNames?.dialogPanel
+              classNames?.dialogPanel,
             )}
           >
             {children}

@@ -4,8 +4,7 @@ import SlideOverFormActionButtons, {
 } from "./SlideOverFormActionButtons";
 
 interface SlideOverFormProps
-  extends PropsWithChildren,
-    SlideOverFormActionButtonsProps {
+  extends PropsWithChildren, SlideOverFormActionButtonsProps {
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }
 

@@ -34,23 +34,23 @@ const MyOrganizationUnits: React.FC = () => {
   const organizationAdminGroupName = useMemo(
     () =>
       isUnitContext ? UNIT_ADMIN_GROUP_NAME : ORGANIZATION_ADMIN_GROUP_NAME,
-    [isUnitContext]
+    [isUnitContext],
   );
 
   const organizationAdminGroupId = useMemo(
     () => roleGroups?.find((g) => g.name === organizationAdminGroupName)?.id,
-    [roleGroups, organizationAdminGroupName]
+    [roleGroups, organizationAdminGroupName],
   );
 
   const organizationAdminGroupNotFound = useMemo(
     () => !roleGroupsLoading && !organizationAdminGroupId,
-    [roleGroupsLoading, organizationAdminGroupId]
+    [roleGroupsLoading, organizationAdminGroupId],
   );
 
   const idpRoleGroups = useMemo(() => getIdpRoleGroups(), [getIdpRoleGroups]);
   const usingSyncedAdminGroup = useMemo(
     () => idpRoleGroups.includes(organizationAdminGroupName),
-    [idpRoleGroups, organizationAdminGroupName]
+    [idpRoleGroups, organizationAdminGroupName],
   );
 
   return (
@@ -131,7 +131,7 @@ const MyOrganizationUnits: React.FC = () => {
                     className={classNames(
                       organizationAdminGroupNotFound
                         ? "grayscale pointer-events-none opacity-60"
-                        : ""
+                        : "",
                     )}
                   >
                     <GroupMembersTable

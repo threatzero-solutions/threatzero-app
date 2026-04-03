@@ -13,10 +13,10 @@ export const useNav = () => {
 
       return hasPermissions(
         item.permissionOptions.permissions,
-        item.permissionOptions.type
+        item.permissionOptions.type,
       );
     },
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const filterByPermissions = useCallback(
@@ -29,7 +29,7 @@ export const useNav = () => {
         children: item.children.filter(canNavigate).map(filterByPermissions),
       };
     },
-    [canNavigate]
+    [canNavigate],
   );
 
   return {

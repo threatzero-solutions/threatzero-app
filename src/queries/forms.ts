@@ -36,7 +36,7 @@ export const newDraftForm = async ({
     ? axios
         .post<Form>(
           `${API_BASE_URL}/forms/${formId}/new-draft?languageId=${languageId}`,
-          {}
+          {},
         )
         .then((res) => res.data)
     : Promise.reject(new Error("Form ID must not be empty."));

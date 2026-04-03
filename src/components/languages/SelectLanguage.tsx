@@ -21,7 +21,7 @@ const SelectLanguage: React.FC<SelectLanguageProps> = ({
   language,
 }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
-    language ?? null
+    language ?? null,
   );
   const [languagesQuery, setLanguagesQuery] = useState<string>("");
 

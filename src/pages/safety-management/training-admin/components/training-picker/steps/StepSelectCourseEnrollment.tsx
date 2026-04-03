@@ -118,7 +118,7 @@ function EnrollmentList({
 
   const isTrainingAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN, WRITE.COURSES]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const [expanded, setExpanded] = useState(courseEnrollments.length > 0);

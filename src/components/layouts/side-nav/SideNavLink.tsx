@@ -17,7 +17,7 @@ const SideNavLink: React.FC<SideNavLinkProps> = ({ item }) => {
         <Disclosure
           as="div"
           defaultOpen={item.children.some((c) =>
-            location.pathname.startsWith(c.to ?? "#")
+            location.pathname.startsWith(c.to ?? "#"),
           )}
         >
           {({ open }) => (
@@ -27,7 +27,7 @@ const SideNavLink: React.FC<SideNavLinkProps> = ({ item }) => {
                 <ChevronRightIcon
                   className={classNames(
                     open ? "rotate-90 text-gray-500" : "text-gray-400",
-                    "ml-auto h-5 w-5 shrink-0"
+                    "ml-auto h-5 w-5 shrink-0",
                   )}
                   aria-hidden="true"
                 />
@@ -42,7 +42,7 @@ const SideNavLink: React.FC<SideNavLinkProps> = ({ item }) => {
                           isActive
                             ? "bg-gray-50 text-primary-400 hover:text-primary-500 transition-colors"
                             : "text-gray-700 hover:text-primary-400 hover:bg-gray-50 transition-colors",
-                          "block rounded-md p-2 text-sm leading-6 text-gray-700"
+                          "block rounded-md p-2 text-sm leading-6 text-gray-700",
                         )
                       }
                     >
@@ -62,7 +62,7 @@ const SideNavLink: React.FC<SideNavLinkProps> = ({ item }) => {
               isActive
                 ? "bg-gray-50 text-primary-400 hover:text-primary-500 transition-colors"
                 : "text-gray-700 hover:text-primary-400 hover:bg-gray-50 transition-colors",
-              "block rounded-md  p-2 text-sm leading-6 font-semibold"
+              "block rounded-md  p-2 text-sm leading-6 font-semibold",
             )
           }
         >

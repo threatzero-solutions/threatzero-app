@@ -50,7 +50,7 @@ const PageNavBar: React.FC<PageNavBarProps> = ({ navigation }) => {
                             isActive
                               ? "bg-gray-900 text-white"
                               : "text-gray-300 hover:bg-gray-700 hover:text-white",
-                            "rounded-md px-3 py-2 text-sm font-medium"
+                            "rounded-md px-3 py-2 text-sm font-medium",
                           )
                         }
                       >
@@ -79,7 +79,7 @@ const PageNavBar: React.FC<PageNavBarProps> = ({ navigation }) => {
                         props.isActive
                           ? "bg-gray-900 text-white"
                           : "text-gray-300 hover:bg-gray-700 hover:text-white",
-                        "block rounded-md px-3 py-2 text-base font-medium"
+                        "block rounded-md px-3 py-2 text-base font-medium",
                       )) as NavLinkProps["className"]
                   }
                 >

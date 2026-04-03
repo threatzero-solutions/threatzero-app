@@ -115,7 +115,7 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
         </div>
       );
     },
-    trainingLibraryPermissionsOptions
+    trainingLibraryPermissionsOptions,
   );
 
 export default ViewTrainingCourse;

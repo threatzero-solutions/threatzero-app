@@ -55,7 +55,7 @@ const Action: React.FC<{ action: DropdownAction }> = ({ action }) => {
             focus && !action.disabled
               ? "bg-gray-100 text-gray-900"
               : "text-gray-700",
-            "block w-full px-4 py-2 text-left text-sm"
+            "block w-full px-4 py-2 text-left text-sm",
           )}
         >
           {action.value}
@@ -112,7 +112,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         className={classNames(
           iconOnly
             ? "block p-1 text-gray-500 hover:text-gray-900 my-auto"
-            : "inline-flex h-full w-full justify-center items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            : "inline-flex h-full w-full justify-center items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
         )}
         disabled={disabled}
       >
@@ -123,7 +123,7 @@ const Dropdown: React.FC<DropdownProps> = ({
           <ChevronDownIcon
             className={classNames(
               "-mr-1 h-5 w-5 text-gray-400",
-              value ? "" : "-ml-1"
+              value ? "" : "-ml-1",
             )}
             aria-hidden="true"
           />
@@ -145,7 +145,7 @@ const Dropdown: React.FC<DropdownProps> = ({
           className={classNames(
             "z-20 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden",
             "max-h-[45vh] overflow-y-auto",
-            showDividers ? "divide-y divide-gray-100" : ""
+            showDividers ? "divide-y divide-gray-100" : "",
           )}
           static={true}
         >

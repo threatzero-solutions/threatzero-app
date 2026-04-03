@@ -67,9 +67,9 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
   const users = useMemo(
     () =>
       (userResults?.results ?? []).filter(
-        (u) => selectedUsers.findIndex((su) => su.id === u.id) === -1
+        (u) => selectedUsers.findIndex((su) => su.id === u.id) === -1,
       ),
-    [userResults, selectedUsers]
+    [userResults, selectedUsers],
   );
 
   useEffect(() => {
@@ -158,7 +158,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({
           onClick={() => onAddUsers(selectedUsers, close)}
           className={classNames(
             "inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto",
-            isPending ? "animate-pulse" : ""
+            isPending ? "animate-pulse" : "",
           )}
           disabled={selectedUsers.length === 0 || isPending}
         >

@@ -26,8 +26,7 @@ import { DeepPartial } from "../types/core";
 
 // General
 
-export interface SafetyManagementResourceFilterOptions
-  extends ItemFilterQueryParams {
+export interface SafetyManagementResourceFilterOptions extends ItemFilterQueryParams {
   unitSlug?: string;
   status?: string;
 }
@@ -39,7 +38,7 @@ export const getResourceForm =
       version?: string;
       id?: string;
       language_code?: string;
-    } = {}
+    } = {},
   ) =>
     axios
       .get<Form>(`${API_BASE_URL}/${resourceName}/form/`, {
@@ -77,15 +76,15 @@ export const getPOCFiles = (query: ItemFilterQueryParams = {}) =>
 // Threat Assessments
 
 export const getThreatAssessments = (
-  query: SafetyManagementResourceFilterOptions = {}
+  query: SafetyManagementResourceFilterOptions = {},
 ) => findMany<ThreatAssessment>("/assessments/submissions/", query);
 
 export const getThreatAssessmentStats = (
-  query: SafetyManagementResourceFilterOptions = {}
+  query: SafetyManagementResourceFilterOptions = {},
 ) =>
   findManyRaw<SafetyManagementResourceStats<AssessmentStatus>>(
     "/assessments/stats/",
-    query
+    query,
   );
 
 export const getThreatAssessment = (id?: string) =>
@@ -95,7 +94,7 @@ export const getThreatAssessmentForm = getResourceForm("assessments");
 
 export const getAssessmentNotes = (
   id?: string,
-  query: ItemFilterQueryParams = {}
+  query: ItemFilterQueryParams = {},
 ) => findMany<Note>(`/assessments/submissions/${id}/notes/`, query);
 
 export const assessmentToPdf = getResourceAsPDF("assessments");
@@ -103,11 +102,11 @@ export const assessmentToPdf = getResourceAsPDF("assessments");
 // Safety concerns
 
 export const getTipSubmissions = (
-  query: SafetyManagementResourceFilterOptions = {}
+  query: SafetyManagementResourceFilterOptions = {},
 ) => findMany<Tip>("/tips/submissions/", query);
 
 export const getTipSubmissionStats = (
-  query: SafetyManagementResourceFilterOptions = {}
+  query: SafetyManagementResourceFilterOptions = {},
 ) =>
   findManyRaw<SafetyManagementResourceStats<TipStatus>>("/tips/stats/", query);
 
@@ -126,57 +125,57 @@ export const tipToPdf = getResourceAsPDF("tips");
 // Violent Incident Log
 
 export const getViolentIncidentReports = (
-  query: SafetyManagementResourceFilterOptions = {}
+  query: SafetyManagementResourceFilterOptions = {},
 ) =>
   findMany<ViolentIncidentReport>(
     "/violent-incident-reports/submissions/",
-    query
+    query,
   );
 
 export const getViolentIncidentReportSubmissionStats = (
-  query: SafetyManagementResourceFilterOptions = {}
+  query: SafetyManagementResourceFilterOptions = {},
 ) =>
   findManyRaw<SafetyManagementResourceStats<ViolentIncidentReportStatus>>(
     "/violent-incident-reports/stats/",
-    query
+    query,
   );
 
 export const getViolentIncidentReportSubmission = (id?: string) =>
   findOneById<ViolentIncidentReport>(
     "/violent-incident-reports/submissions/",
-    id
+    id,
   );
 
 export const getViolentIncidentReportForm = getResourceForm(
-  "violent-incident-reports"
+  "violent-incident-reports",
 );
 
 export const getViolentIncidentReportNotes = (
   id?: string,
-  query: ItemFilterQueryParams = {}
+  query: ItemFilterQueryParams = {},
 ) =>
   findMany<Note>(`/violent-incident-reports/submissions/${id}/notes/`, query);
 
 export const violentIncidentReportToPdf = getResourceAsPDF(
-  "violent-incident-reports"
+  "violent-incident-reports",
 );
 
 // ------- MUTATIONS ---------
 
 // Threat Assessments
 export const saveThreatAssessment = async (
-  assessment: DeepPartial<ThreatAssessment>
+  assessment: DeepPartial<ThreatAssessment>,
 ) => save<ThreatAssessment>(`/assessments/submissions/`, assessment);
 
 export const addAssessmentNote = async (
   assessmentId: string | undefined,
-  note: AddNotePayload
+  note: AddNotePayload,
 ) =>
   assessmentId
     ? axios
         .post<Note>(
           buildUrl(`/assessments/submissions/${assessmentId}/notes`),
-          note
+          note,
         )
         .then((res) => res.data)
     : Promise.reject(new Error("Threat assessment ID must not be empty."));
@@ -213,19 +212,19 @@ export const addTipNote = (tipId: string | undefined, note: AddNotePayload) =>
 
 // Violent Incident Log
 export const saveViolentIncidentReport = async (
-  report: DeepPartial<ViolentIncidentReport>
+  report: DeepPartial<ViolentIncidentReport>,
 ) =>
   save<ViolentIncidentReport>(`/violent-incident-reports/submissions/`, report);
 
 export const addViolentIncidentReportNote = async (
   reportId: string | undefined,
-  note: AddNotePayload
+  note: AddNotePayload,
 ) =>
   reportId
     ? axios
         .post<Note>(
           buildUrl(`/violent-incident-reports/submissions/${reportId}/notes`),
-          note
+          note,
         )
         .then((res) => res.data)
     : Promise.reject(new Error("Violent Incident Log ID must not be empty."));

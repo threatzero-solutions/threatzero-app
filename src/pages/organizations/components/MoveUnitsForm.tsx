@@ -30,7 +30,7 @@ const MoveUnitsForm: React.FC<MoveUnitsFormProps> = ({
 
   const previousUnit = useMemo(
     () => allUnits?.find((u) => u.slug === user.attributes.unit?.[0]),
-    [allUnits, user]
+    [allUnits, user],
   );
 
   useEffect(() => {

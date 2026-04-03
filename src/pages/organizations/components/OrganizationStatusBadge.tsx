@@ -14,10 +14,10 @@ export const OrganizationStatusBadge = ({
         status === OrganizationStatus.ACTIVE
           ? "green"
           : status === OrganizationStatus.PENDING
-          ? "yellow"
-          : status === OrganizationStatus.INACTIVE
-          ? "red"
-          : "gray"
+            ? "yellow"
+            : status === OrganizationStatus.INACTIVE
+              ? "red"
+              : "gray"
       }
     />
   );

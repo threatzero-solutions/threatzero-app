@@ -27,11 +27,11 @@ const InlineNotice: React.FC<InlineNoticeProps> = ({
         level === "error"
           ? "bg-red-50"
           : level === "warning"
-          ? "bg-yellow-50"
-          : level === "success"
-          ? "bg-green-50"
-          : "bg-blue-50",
-        className
+            ? "bg-yellow-50"
+            : level === "success"
+              ? "bg-green-50"
+              : "bg-blue-50",
+        className,
       )}
     >
       <div className="flex">
@@ -62,10 +62,10 @@ const InlineNotice: React.FC<InlineNoticeProps> = ({
               level === "error"
                 ? "text-red-800"
                 : level === "warning"
-                ? "text-yellow-800"
-                : level === "success"
-                ? "text-green-800"
-                : "text-blue-800"
+                  ? "text-yellow-800"
+                  : level === "success"
+                    ? "text-green-800"
+                    : "text-blue-800",
             )}
           >
             {heading}
@@ -76,10 +76,10 @@ const InlineNotice: React.FC<InlineNoticeProps> = ({
               level === "error"
                 ? "text-red-700"
                 : level === "warning"
-                ? "text-yellow-700"
-                : level === "success"
-                ? "text-green-700"
-                : "text-blue-700"
+                  ? "text-yellow-700"
+                  : level === "success"
+                    ? "text-green-700"
+                    : "text-blue-700",
             )}
           >
             {typeof body === "string" ? <p>{body}</p> : body}

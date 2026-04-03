@@ -154,7 +154,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
                       ? index === depth && !canExpand
                         ? "bg-gray-300"
                         : parentUnitsColorMap.get(slug)
-                      : "transparent"
+                      : "transparent",
                   )}
                   disabled={index < depth || !canExpand}
                   onClick={() => {
@@ -195,7 +195,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
         enableSorting: false,
       }),
     ],
-    [parentUnitsColorMap, setUnitsPath, thisUnit]
+    [parentUnitsColorMap, setUnitsPath, thisUnit],
   );
 
   const unitsTable = useReactTable({
@@ -232,7 +232,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
                 type="button"
                 className={classNames(
                   "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
-                  "inline-flex items-center gap-x-1"
+                  "inline-flex items-center gap-x-1",
                 )}
                 onClick={() => setAddBaseOrganizationOpen(true)}
               >
@@ -270,7 +270,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
             onSaveSuccess={() => onAddSubunitSuccess?.()}
           />
         </SlideOver>
-      </>
+      </>,
     )
   ) : (
     <></>

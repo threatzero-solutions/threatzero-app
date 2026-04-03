@@ -9,7 +9,7 @@ const Block: React.FC<PropsWithChildren<{ className?: string }>> = ({
     <div
       className={classNames(
         "shadow-xs rounded-md ring-1 ring-inset ring-gray-200 py-4 px-6",
-        className
+        className,
       )}
     >
       {children}

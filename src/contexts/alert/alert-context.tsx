@@ -22,19 +22,19 @@ export interface TSetAlertReturn {
 export interface AlertContextType {
   setAlert: (
     message: string | string[],
-    options?: SetAlertOptions
+    options?: SetAlertOptions,
   ) => TSetAlertReturn;
   setSuccess: (
     message: string | string[],
-    options?: Omit<SetAlertOptions, "variant">
+    options?: Omit<SetAlertOptions, "variant">,
   ) => TSetAlertReturn;
   setError: (
     message: string | string[],
-    options?: Omit<SetAlertOptions, "variant">
+    options?: Omit<SetAlertOptions, "variant">,
   ) => TSetAlertReturn;
   setInfo: (
     message: string | string[],
-    options?: Omit<SetAlertOptions, "variant">
+    options?: Omit<SetAlertOptions, "variant">,
   ) => TSetAlertReturn;
   clearAlert: (id: number | string | null | undefined) => void;
   clearAllAlerts: () => void;
@@ -107,7 +107,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const timeouts = useRef<Map<number | string, number>>(
-    new Map<number | string, number>()
+    new Map<number | string, number>(),
   );
   const [alerts, setAlerts] = useImmer<AlertOptions[]>([]);
   const atomicCounter = useRef(0);
@@ -128,7 +128,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
     (idx: number) => {
       setAlerts(handleRemoveAlertByIdx(idx));
     },
-    [setAlerts]
+    [setAlerts],
   );
 
   const clearAlert = useCallback(
@@ -139,7 +139,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
         handleRemoveAlertByIdx(idx)(draft);
       });
     },
-    [setAlerts]
+    [setAlerts],
   );
 
   const setAlert = useCallback(
@@ -167,7 +167,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
           alert.id,
           window.setTimeout(() => {
             clearAlert(alert.id);
-          }, options.timeout)
+          }, options.timeout),
         );
       }
 
@@ -176,12 +176,12 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
         close: () => clearAlert(alert.id),
       };
     },
-    [setAlerts, clearAlert]
+    [setAlerts, clearAlert],
   );
 
   const setSuccess = (
     message: string | string[],
-    options: Omit<SetAlertOptions, "variant"> = {}
+    options: Omit<SetAlertOptions, "variant"> = {},
   ) => {
     return setAlert(message, {
       ...options,
@@ -191,7 +191,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
 
   const setError = (
     message: string | string[],
-    options: Omit<SetAlertOptions, "variant"> = {}
+    options: Omit<SetAlertOptions, "variant"> = {},
   ) => {
     return setAlert(message, {
       ...options,
@@ -201,7 +201,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
 
   const setInfo = (
     message: string | string[],
-    options: Omit<SetAlertOptions, "variant"> = {}
+    options: Omit<SetAlertOptions, "variant"> = {},
   ) => {
     return setAlert(message, {
       ...options,

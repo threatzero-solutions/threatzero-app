@@ -35,7 +35,7 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
       updatedValue.map((v) => ({
         ...v,
         id: v.id?.startsWith("TEMP-ID-") ? undefined : v.id,
-      }))
+      })),
     );
   };
 
@@ -45,17 +45,17 @@ const PolicyProcedureInput: React.FC<PolicyProcedureInputProps> = ({
         ...v,
         id: v.id ?? "TEMP-ID-" + Math.random(),
       })),
-    [value]
+    [value],
   );
 
   const handleRemoveOrganizationPolicyFile = (
-    organizationPolicyFile: Partial<OrganizationPolicyFile>
+    organizationPolicyFile: Partial<OrganizationPolicyFile>,
   ) => {
     handleChange(localValue.filter((v) => v.id !== organizationPolicyFile.id));
   };
 
   const handleSaveOrganizationPolicyFile = (
-    organizationPolicyFile: Partial<OrganizationPolicyFile>
+    organizationPolicyFile: Partial<OrganizationPolicyFile>,
   ) => {
     editPolicyProcedure.close();
 

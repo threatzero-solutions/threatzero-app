@@ -14,7 +14,7 @@ const POCFilesButtonCompact: React.FC<{
         pocFiles.length
           ? "bg-secondary-600 hover:bg-secondary-700 focus-visible:outline-secondary-700"
           : "bg-gray-400 hover:bg-gray-500 focus-visible:outline-gray-500",
-        className
+        className,
       )}
       title="Manage Person of Concern (PoC) Files"
     >

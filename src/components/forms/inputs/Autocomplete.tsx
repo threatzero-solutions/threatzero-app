@@ -90,7 +90,7 @@ const Autocomplete = <V extends { id: string }>({
                   className={({ focus }) =>
                     classNames(
                       "relative cursor-default select-none py-2 pl-3 pr-9",
-                      focus ? "bg-secondary-600 text-white" : "text-gray-900"
+                      focus ? "bg-secondary-600 text-white" : "text-gray-900",
                     )
                   }
                 >

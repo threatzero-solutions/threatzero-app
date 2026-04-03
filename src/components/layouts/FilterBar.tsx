@@ -26,7 +26,7 @@ export interface FilterBarFilter {
   isLoading?: boolean;
   onSetFilter?: (
     value: string | string[] | undefined,
-    setFilter: (key: string, value?: string | string[]) => void
+    setFilter: (key: string, value?: string | string[]) => void,
   ) => void;
   loadMore?: () => void;
   hasMore?: boolean;
@@ -49,20 +49,23 @@ const buildFilterValue = (filter: FilterBarFilter) => {
     ? Array.isArray(filter.defaultValue)
       ? filter.defaultValue
       : filter.defaultValue
-      ? [filter.defaultValue]
-      : []
-    : filter.defaultValue ?? undefined;
+        ? [filter.defaultValue]
+        : []
+    : (filter.defaultValue ?? undefined);
 };
 
 const buildFilterValues = (filters: FilterBarFilter[]) =>
-  filters.reduce((acc, f) => {
-    acc[f.key] = buildFilterValue(f);
-    return acc;
-  }, {} as Record<string, string | string[] | undefined>);
+  filters.reduce(
+    (acc, f) => {
+      acc[f.key] = buildFilterValue(f);
+      return acc;
+    },
+    {} as Record<string, string | string[] | undefined>,
+  );
 
 const mergeOptions = <T extends FilterBarFilterOption>(
   options1: T[],
-  options2: T[]
+  options2: T[],
 ) =>
   [
     ...options1.filter((o) => !options2.find((o2) => o.value === o2.value)),
@@ -71,13 +74,13 @@ const mergeOptions = <T extends FilterBarFilterOption>(
 
 const compareValues = (
   v1: undefined | string,
-  v2: undefined | string | string[]
+  v2: undefined | string | string[],
 ) => (v1 && Array.isArray(v2) ? v2.includes(v1) : v1 === v2);
 
 const getNewValue = (
   f: FilterBarFilter,
   prevValue: string | string[] | undefined,
-  value: string | undefined
+  value: string | undefined,
 ) => {
   let newValue: string | string[] | undefined;
 
@@ -112,7 +115,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
    * the logic of handling multiple select filters and single select filters.
    */
   const [filterValues, setFilterValues] = useImmer(
-    buildFilterValues(filterOptions?.filters ?? [])
+    buildFilterValues(filterOptions?.filters ?? []),
   );
 
   const getIsFilterActive = useCallback(
@@ -121,7 +124,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         ? !!filterValues[filterKey]?.length
         : filterValues[filterKey] !== undefined;
     },
-    [filterValues]
+    [filterValues],
   );
 
   const activeFilterCount = useMemo(() => {
@@ -145,14 +148,14 @@ const FilterBar: React.FC<FilterBarProps> = ({
     setStoredOptions((opts) =>
       (filterOptions?.filters ?? []).reduce((acc, f) => {
         const newOpts = Object.fromEntries(
-          f.options.map((o) => [o.value, o.label])
+          f.options.map((o) => [o.value, o.label]),
         );
         acc[f.key] = [
           ...(opts[f.key] ?? []).filter((o) => o.value && !newOpts[o.value]),
           ...f.options,
         ];
         return acc;
-      }, opts)
+      }, opts),
     );
   }, [filterOptions?.filters, setFilterValues, setStoredOptions]);
 
@@ -166,7 +169,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
       | {
           f: FilterBarFilter;
           value: string | undefined;
-        }[]
+        }[],
   ) => {
     e.preventDefault();
 
@@ -211,9 +214,9 @@ const FilterBar: React.FC<FilterBarProps> = ({
         f.options.map((o) => ({
           ...o,
           selected: compareValues(o.value, filterValues[f.key]),
-        }))
+        })),
       ),
-    [storedOptions, filterValues]
+    [storedOptions, filterValues],
   );
 
   return (
@@ -243,7 +246,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                       (filterOptions.filters ?? []).map((f) => ({
                         f,
                         value: undefined,
-                      }))
+                      })),
                     );
                   }}
                 >
@@ -295,7 +298,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                           action: (e) =>
                             handleSetFilter(e, { f, value: o.value }),
                           hidden: f.isLoading,
-                        } as DropdownAction)
+                        }) as DropdownAction,
                     ),
                   {
                     id: "loading",
@@ -347,7 +350,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                           "pl-1 text-xs font-semibol",
                           getIsFilterActive(f.key)
                             ? "text-secondary-600"
-                            : "text-gray-400"
+                            : "text-gray-400",
                         )}
                       >
                         clear

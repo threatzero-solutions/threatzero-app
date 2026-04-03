@@ -38,7 +38,7 @@ export interface GetPresignedUploadUrlsResult {
 
 export const prepareFileUploads = (
   getPresignedUploadUrlsUrl: string,
-  files: File[]
+  files: File[],
 ) =>
   axios
     .post<GetPresignedUploadUrlsResult[]>(getPresignedUploadUrlsUrl, {
@@ -56,9 +56,9 @@ export const prepareFileUploads = (
             [
               result,
               files.find((f) => `${f.name}_${f.size}` === result.fileId),
-            ] as const
+            ] as const,
         )
-        .filter((v): v is [GetPresignedUploadUrlsResult, File] => !!v[1])
+        .filter((v): v is [GetPresignedUploadUrlsResult, File] => !!v[1]),
     );
 
 export const uploadFile = (url: string, file: File) =>
@@ -70,7 +70,7 @@ export const uploadFile = (url: string, file: File) =>
 
 export const filePreload = async (
   getPresignedUploadUrlsUrl: string,
-  files: File[]
+  files: File[],
 ): Promise<FilePreloadResult[]> =>
   prepareFileUploads(getPresignedUploadUrlsUrl, files).then((data) =>
     Promise.all(
@@ -80,8 +80,8 @@ export const filePreload = async (
           filename: result.filename,
           url: result.getUrl,
         }));
-      })
-    )
+      }),
+    ),
   );
 
 // MUTATIONS

@@ -11,8 +11,8 @@ const ViewPercentWatched: React.FC<{ percentWatched?: string | number }> = ({
         value > 85
           ? "bg-green-500"
           : value > 50
-          ? "bg-yellow-500"
-          : "bg-red-500"
+            ? "bg-yellow-500"
+            : "bg-red-500",
       )}
     >
       {value.toFixed(0)}%

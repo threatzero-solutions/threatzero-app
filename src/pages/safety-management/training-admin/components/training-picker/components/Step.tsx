@@ -29,7 +29,7 @@ export default function Step({
     <div
       className={cn(
         "w-full max-w-xl flex flex-col items-stretch justify-center gap-4",
-        className
+        className,
       )}
     >
       <div>

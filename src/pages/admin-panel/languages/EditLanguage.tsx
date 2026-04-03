@@ -74,7 +74,7 @@ const EditLanguage: React.FC<EditLanguageProps> = ({
   }, [languageProp]);
 
   const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const value = event.target.value;
 

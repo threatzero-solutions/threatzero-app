@@ -20,7 +20,7 @@ const RadioOptions = ({
           "flex flex-col",
           orientation === "horizontal"
             ? "gap-y-4 sm:flex-row sm:items-center sm:gap-x-10 sm:flex-wrap"
-            : "gap-y-4"
+            : "gap-y-4",
         )}
       >
         {Object.entries(options).map(([value, label]) => (

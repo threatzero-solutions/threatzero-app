@@ -59,14 +59,14 @@ const Alert = <T extends React.ElementType = "div">({
       className={classNames(
         "w-[24rem] max-w-full",
         // "transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in sm:data-closed:translate-y-0 sm:data-closed:scale-95"
-        className
+        className,
       )}
     >
       <div
         className={classNames(
           "p-4",
           "pointer-events-auto w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5",
-          "flex items-start"
+          "flex items-start",
         )}
       >
         <div className="shrink-0">

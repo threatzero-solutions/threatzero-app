@@ -23,12 +23,12 @@ const MultilineTextInput = <K extends string | number | symbol = string>({
 }: MultilineTextInputProps<K>) => {
   const lines = useMemo(
     () => (value.length ? value : required ? [""] : []),
-    [value, required]
+    [value, required],
   );
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    idx: number
+    idx: number,
   ) => {
     const { value } = e.target;
     const newLines = lines.map((l, i) => (i === idx ? value : l));

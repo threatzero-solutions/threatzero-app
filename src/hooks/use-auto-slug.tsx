@@ -15,7 +15,7 @@ type BaseType<F extends string> = Record<F, string> & { slug: string };
 
 interface UseAutoSlugProps<
   F extends string = "name",
-  T extends Partial<BaseType<F>> = BaseType<F>
+  T extends Partial<BaseType<F>> = BaseType<F>,
 > {
   fromFieldName?: F;
   watch: UseFormWatch<T>;
@@ -26,7 +26,7 @@ interface UseAutoSlugProps<
 
 export const useAutoSlug = <
   F extends string = "name",
-  T extends Partial<BaseType<F>> = BaseType<F>
+  T extends Partial<BaseType<F>> = BaseType<F>,
 >({
   fromFieldName = "name" as F,
   watch,
@@ -57,7 +57,7 @@ export const useAutoSlug = <
         }
       }
     },
-    [setValue]
+    [setValue],
   );
 
   // Auto update slug from name as long as auto slug is not disabled.
@@ -79,7 +79,7 @@ export const useAutoSlug = <
     (options?: RegisterOptions<T, Path<T>>) => {
       const { onChange, onBlur, ...rest } = register(
         "slug" as Path<T>,
-        options
+        options,
       );
       // Intercept onChange to slugify user input and onBlur to disable auto
       // slug once the user interacts with the input.
@@ -97,7 +97,7 @@ export const useAutoSlug = <
         },
       } as UseFormRegisterReturn<Path<T>>;
     },
-    [register]
+    [register],
   );
 
   const resetSlug = useCallback(() => {
@@ -106,7 +106,7 @@ export const useAutoSlug = <
     setValue(
       "slug" as Path<T>,
       slugify(name as string) as PathValue<T, Path<T>>,
-      { shouldDirty: true }
+      { shouldDirty: true },
     );
   }, [name, setValue]);
 

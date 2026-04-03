@@ -24,7 +24,7 @@ export const findOneOrFail = <T>(path: string, options?: AxiosRequestConfig) =>
 export const findOneByIdOrFail = <T>(
   path: string,
   id?: string,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig,
 ) =>
   id
     ? axios
@@ -40,12 +40,12 @@ export const findOne = <T>(path: string, options?: AxiosRequestConfig) =>
 export const findOneById = <T>(
   path: string,
   id?: string,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig,
 ) => findOneByIdOrFail<T>(path, id, options).catch(nullFrom404);
 
 export const findManyRaw = <T>(
   path: string,
-  query: ItemFilterQueryParams = {}
+  query: ItemFilterQueryParams = {},
 ) =>
   axios
     .get<T>(buildUrl(`${path}/`), {
@@ -61,19 +61,19 @@ export const findMany = <T>(path: string, query: ItemFilterQueryParams = {}) =>
 export const insertOne = <T, R = T>(
   path: string,
   entity: DeepPartial<T>,
-  options: AxiosRequestConfig = {}
+  options: AxiosRequestConfig = {},
 ) => axios.post<R>(buildUrl(path), entity, options).then((res) => res.data);
 
 export const putOne = <T>(
   path: string,
   entity: DeepPartial<T>,
-  options: AxiosRequestConfig = {}
+  options: AxiosRequestConfig = {},
 ) => axios.put<T>(buildUrl(path), entity, options).then((res) => res.data);
 
 export const updateOne = <T extends { id: string }>(
   path: string,
   entity: DeepPartial<T>,
-  options: AxiosRequestConfig = {}
+  options: AxiosRequestConfig = {},
 ) =>
   axios
     .patch<T>(buildUrl(`${path}/${entity.id ?? ""}`), entity, options)
@@ -82,7 +82,7 @@ export const updateOne = <T extends { id: string }>(
 export const save = async <T extends { id: string }>(
   path: string,
   entity: DeepPartial<T>,
-  options: AxiosRequestConfig = {}
+  options: AxiosRequestConfig = {},
 ) =>
   entity.id
     ? updateOne(path, entity, options)
@@ -96,7 +96,7 @@ export const deleteOne = (path: string, id?: string) =>
 export const download = (
   path: string,
   query?: Record<string, unknown>,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig,
 ) =>
   axios
     .get(buildUrl(path), {

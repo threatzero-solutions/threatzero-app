@@ -12,7 +12,7 @@ export interface ConfirmationContextType {
   setConfirmationOptions: Updater<TConfirmationOptions>;
   openConfirmDiscard: (
     onConfirm: TConfirmationOptions["onConfirm"],
-    options?: Omit<TConfirmationOptions, "onConfirm">
+    options?: Omit<TConfirmationOptions, "onConfirm">,
   ) => void;
 }
 
@@ -41,7 +41,7 @@ export const ConfirmationContextProvider: React.FC<PropsWithChildren> = ({
 
   const openConfirmDiscard = (
     onConfirm: TConfirmationOptions["onConfirm"],
-    options?: Omit<TConfirmationOptions, "onConfirm">
+    options?: Omit<TConfirmationOptions, "onConfirm">,
   ) => {
     handleOpen({
       title: "Discard changes?",

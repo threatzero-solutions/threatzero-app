@@ -41,17 +41,17 @@ const MyOrganizationSafety: React.FC = () => {
 
   const tatGroupName = useMemo(
     () => (isUnitContext ? UNIT_TAT_GROUP_NAME : ORGANIZATION_TAT_GROUP_NAME),
-    [isUnitContext]
+    [isUnitContext],
   );
 
   const tatGroupId = useMemo(
     () => roleGroups?.find((g) => g.name === tatGroupName)?.id,
-    [roleGroups, tatGroupName]
+    [roleGroups, tatGroupName],
   );
 
   const tatGroupNotFound = useMemo(
     () => !roleGroupsLoading && !tatGroupId,
-    [roleGroupsLoading, tatGroupId]
+    [roleGroupsLoading, tatGroupId],
   );
 
   const { mutate: saveOrganizationMutate, isPending: organizationIsSaving } =
@@ -93,7 +93,7 @@ const MyOrganizationSafety: React.FC = () => {
       currentOrganization?.id,
       saveCurrentUnit,
       saveOrganizationMutate,
-    ]
+    ],
   );
 
   return (
@@ -138,7 +138,7 @@ const MyOrganizationSafety: React.FC = () => {
                 isUnitContext
                   ? getGenerateUnitPolicyUploadUrlsUrl(currentUnit?.id ?? "")
                   : getGenerateOrganizationPolicyUploadUrlsUrl(
-                      currentOrganization.id
+                      currentOrganization.id,
                     )
               }
               onValueChange={(data) =>
@@ -171,7 +171,7 @@ const MyOrganizationSafety: React.FC = () => {
                     className={classNames(
                       tatGroupNotFound
                         ? "grayscale pointer-events-none opacity-60"
-                        : ""
+                        : "",
                     )}
                   >
                     <GroupMembersTable

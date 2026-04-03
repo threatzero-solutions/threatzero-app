@@ -29,7 +29,7 @@ const asLargestDuration = (duration: duration.Duration) => {
 
 const asDuration = (
   startDate: string | Date | undefined | null,
-  endDate: string | Date | undefined | null
+  endDate: string | Date | undefined | null,
 ) =>
   endDate && dayjs(endDate).isValid()
     ? asLargestDuration(dayjs.duration(dayjs(endDate).diff(dayjs(startDate))))
@@ -37,7 +37,7 @@ const asDuration = (
 
 const asDate = (
   startDate: string | Date | undefined | null,
-  duration: DurationObject
+  duration: DurationObject,
 ) => dayjs(startDate).add(dayjs.duration(duration));
 
 interface EditCourseEnrollmentProps {
@@ -52,7 +52,7 @@ const DEFAULT_FORMAT = "YYYY-MM-DD";
 const DAYJS_DEFAULT_START_DATE = dayjs().startOf("month").add(1, "month");
 const DEFAULT_START_DATE = DAYJS_DEFAULT_START_DATE.format(DEFAULT_FORMAT);
 const DEFAULT_END_DATE = DAYJS_DEFAULT_START_DATE.add(1, "year").format(
-  DEFAULT_FORMAT
+  DEFAULT_FORMAT,
 );
 
 const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
@@ -132,7 +132,7 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
       fromDuration &&
         setValue(
           "endDate",
-          asDate(startDate, fromDuration).format(DEFAULT_FORMAT)
+          asDate(startDate, fromDuration).format(DEFAULT_FORMAT),
         );
     }
   };
@@ -178,14 +178,14 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
                     setValue(
                       "endDate",
                       asDate(e.target.value, existingDuration).format(
-                        DEFAULT_FORMAT
-                      )
+                        DEFAULT_FORMAT,
+                      ),
                     );
                 } else if (dayjs(e.target.value).isAfter(dayjs(endDate))) {
                   // If not using durations, just make sure end date is always after start date.
                   setValue(
                     "endDate",
-                    dayjs(e.target.value).add(1, "year").format(DEFAULT_FORMAT)
+                    dayjs(e.target.value).add(1, "year").format(DEFAULT_FORMAT),
                   );
                 }
               },
@@ -218,7 +218,7 @@ const EditCourseEnrollment: React.FC<EditCourseEnrollmentProps> = ({
                         value={asDuration(startDate, field.value)}
                         onChange={(duration) =>
                           field.onChange(
-                            asDate(startDate, duration).format(DEFAULT_FORMAT)
+                            asDate(startDate, duration).format(DEFAULT_FORMAT),
                           )
                         }
                         allowedUnits={["years", "months", "days"]}

@@ -43,7 +43,7 @@ const MyOrganizationUsers: React.FC = () => {
             {!isUnitContext &&
               hasPermissions(
                 [WRITE.ORGANIZATIONS, WRITE.ORGANIZATION_IDPS],
-                "all"
+                "all",
               ) && (
                 <LargeFormSection
                   heading="SSO (Identity Providers)"

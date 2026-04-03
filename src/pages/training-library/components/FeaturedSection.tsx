@@ -26,12 +26,12 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
 
   const enrollment = useMemo(
     () => enrollmentProp ?? state.activeEnrollment,
-    [enrollmentProp, state.activeEnrollment]
+    [enrollmentProp, state.activeEnrollment],
   );
 
   const sections = useMemo(
     () => sectionsProp ?? state.activeCourse?.sections ?? [],
-    [sectionsProp, state.activeCourse]
+    [sectionsProp, state.activeCourse],
   );
 
   const { section: featuredSection, window } = useMemo(() => {
@@ -40,7 +40,7 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
 
   const loading = useMemo(
     () => loadingProp ?? courseLoading,
-    [loadingProp, courseLoading]
+    [loadingProp, courseLoading],
   );
 
   return !loading && featuredSection ? (

@@ -16,7 +16,7 @@ export const ViewLanguages: React.FC = () => {
   >();
 
   const [languagesQuery, setLanguagesQuery] = useImmer<ItemFilterQueryParams>(
-    {}
+    {},
   );
   const [debouncedLanguagesQuery] = useDebounceValue(languagesQuery, 500);
 

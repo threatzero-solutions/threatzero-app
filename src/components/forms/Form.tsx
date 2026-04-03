@@ -42,7 +42,7 @@ export interface FormAction {
   value: ReactNode;
   className?: string;
   action?: (
-    event?: React.MouseEvent<HTMLButtonElement>
+    event?: React.MouseEvent<HTMLButtonElement>,
   ) => Promise<void> | void;
   order?: number;
   autoExecute?: boolean;
@@ -56,7 +56,7 @@ interface FormProps {
   form?: Partial<FormEntity>;
   onSubmit?: (
     event: React.FormEvent<HTMLFormElement>,
-    submission: DeepPartial<FormSubmission>
+    submission: DeepPartial<FormSubmission>,
   ) => Promise<void> | void;
   actions?: FormAction[];
   submission?: FormSubmission;
@@ -96,7 +96,7 @@ const Form: React.FC<FormProps> = ({
   const [form, setForm] = useState<Partial<FormEntity>>({});
   const fieldGroups = useMemo(
     () => noMutateSort(form?.groups, orderSort),
-    [form]
+    [form],
   );
   const [fieldResponses, setFieldResponses] = useState<{
     [key: string]: FieldResponse;
@@ -109,7 +109,7 @@ const Form: React.FC<FormProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const currentGroupIdx = useMemo(
     () => +(searchParams.get("step") ?? "1") - 1,
-    [searchParams]
+    [searchParams],
   );
   const setCurrentGroupIdx = useCallback(
     (step: number) =>
@@ -118,9 +118,9 @@ const Form: React.FC<FormProps> = ({
           p.set("step", (step + 1).toString());
           return p;
         },
-        { replace: true }
+        { replace: true },
       ),
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const { dispatch: formsDispatch } = useContext(FormsContext);
@@ -130,7 +130,7 @@ const Form: React.FC<FormProps> = ({
 
   const isBuilding = useMemo(
     () => !isPreviewing && isBuildingProp,
-    [isBuildingProp, isPreviewing]
+    [isBuildingProp, isPreviewing],
   );
 
   const formActions = useMemo(() => {
@@ -157,7 +157,7 @@ const Form: React.FC<FormProps> = ({
 
   const autoExecuteAction = useMemo(
     () => formActions?.find((a) => a.autoExecute),
-    [formActions]
+    [formActions],
   );
   const [autoExecuteLoading, setAutoExecuteLoading] = useState(false);
 
@@ -183,7 +183,7 @@ const Form: React.FC<FormProps> = ({
       setForm(
         produce((f) => {
           Object.assign(f, formData);
-        })
+        }),
       );
     }
   }, [formData]);
@@ -194,15 +194,18 @@ const Form: React.FC<FormProps> = ({
     }
 
     setFieldResponses(
-      (submission?.fieldResponses ?? []).reduce((acc, response) => {
-        acc[response.field.id] = {
-          ...response,
-          field: {
-            id: response.field.id,
-          } as Field,
-        };
-        return acc;
-      }, {} as Record<string, FieldResponse>)
+      (submission?.fieldResponses ?? []).reduce(
+        (acc, response) => {
+          acc[response.field.id] = {
+            ...response,
+            field: {
+              id: response.field.id,
+            } as Field,
+          };
+          return acc;
+        },
+        {} as Record<string, FieldResponse>,
+      ),
     );
 
     setFieldResponsesLoaded(!!submission);
@@ -222,18 +225,18 @@ const Form: React.FC<FormProps> = ({
         if (action.autoExecuteLoading === undefined) {
           setTimeout(
             () => setAutoExecuteLoading(false),
-            AUTO_EXECUTE_LOADING_MS
+            AUTO_EXECUTE_LOADING_MS,
           );
         }
       }
     },
-    [setError, setAutoExecuteLoading]
+    [setError, setAutoExecuteLoading],
   );
 
   const debouncedAutoExecute = useDebounceCallback(
     handleAutoExecute,
     autoExecuteAction?.autoExecuteDebounceTime ??
-      DEFAULT_AUTO_EXECUTE_DEBOUNCE_TIME
+      DEFAULT_AUTO_EXECUTE_DEBOUNCE_TIME,
   );
 
   const handleChange = (event: Partial<ChangeEvent<HTMLInputElement>>) => {
@@ -264,7 +267,7 @@ const Form: React.FC<FormProps> = ({
           field: { id, type } as Field,
           value: newValue,
         };
-      })
+      }),
     );
 
     if (autoExecuteAction) {
@@ -306,7 +309,7 @@ const Form: React.FC<FormProps> = ({
           queryClient.invalidateQueries({
             queryKey: ["form", form.slug],
           }),
-        100
+        100,
       );
     },
   });
@@ -385,7 +388,7 @@ const Form: React.FC<FormProps> = ({
             <div
               className={classNames(
                 "sticky top-0 border-b border-gray-200 py-5 flex gap-3 flex-col sm:flex-row sm:items-center sm:justify-between",
-                background
+                background,
               )}
             >
               <div className="flex gap-3">
@@ -681,7 +684,7 @@ const Form: React.FC<FormProps> = ({
                   className={classNames(
                     idx !== fieldGroups.length + 1
                       ? "border-b border-gray-900/10"
-                      : ""
+                      : "",
                   )}
                   mediaUploadUrl={mediaUploadUrl}
                 />
@@ -718,7 +721,7 @@ const Form: React.FC<FormProps> = ({
             <div
               className={classNames(
                 "sticky z-20 bottom-0 border-t border-gray-900/10 py-5 mt-6 flex items-center justify-end gap-x-6",
-                background
+                background,
               )}
             >
               {noMutateSort(formActions, orderSort)?.map((action) => (
@@ -733,11 +736,11 @@ const Form: React.FC<FormProps> = ({
                     action.autoExecute ? "opacity-80 pointer-events-none" : "",
                     action.autoExecute && autoExecuteLoading
                       ? "animate-pulse"
-                      : ""
+                      : "",
                   )}
                 >
                   {action.autoExecute && autoExecuteLoading
-                    ? action.autoExecuteProgressText ?? "Auto-saving..."
+                    ? (action.autoExecuteProgressText ?? "Auto-saving...")
                     : action.value}
                 </button>
               ))}

@@ -66,7 +66,7 @@ const SOSLocationsTable: React.FC<SOSLocationsTableProps> = ({ unitId }) => {
     onSuccess: ({ locationId, data }, location: Location) => {
       simulateDownload(
         data,
-        `sos-qr-code_${slugify(location.name)}_${locationId}.png`
+        `sos-qr-code_${slugify(location.name)}_${locationId}.png`,
       );
 
       setTimeout(() => clearAlert(infoAlertId), 2000);
@@ -81,7 +81,7 @@ const SOSLocationsTable: React.FC<SOSLocationsTableProps> = ({ unitId }) => {
       setInfo("Downloading QR code...", { id: infoAlertId });
       downloadQrCode(location);
     },
-    [setInfo, downloadQrCode, infoAlertId]
+    [setInfo, downloadQrCode, infoAlertId],
   );
 
   const locationColumns = useMemo(
@@ -127,7 +127,7 @@ const SOSLocationsTable: React.FC<SOSLocationsTableProps> = ({ unitId }) => {
         enableSorting: false,
       }),
     ],
-    [handleDownloadQRCode]
+    [handleDownloadQRCode],
   );
 
   return (
@@ -138,7 +138,7 @@ const SOSLocationsTable: React.FC<SOSLocationsTableProps> = ({ unitId }) => {
             type="button"
             className={classNames(
               "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
-              "inline-flex items-center gap-x-1"
+              "inline-flex items-center gap-x-1",
             )}
             onClick={() => handleNewLocation()}
           >

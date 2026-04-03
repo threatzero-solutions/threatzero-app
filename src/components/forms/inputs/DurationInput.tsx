@@ -19,7 +19,7 @@ const DurationInput: React.FC<DurationInputProps> = ({
   const duration = useMemo(() => Object.values(value ?? {})[0] ?? 1, [value]);
   const unit = useMemo(
     () => (Object.keys(value ?? {})[0] ?? "days") as DurationKey,
-    [value]
+    [value],
   );
 
   return (
@@ -36,7 +36,7 @@ const DurationInput: React.FC<DurationInputProps> = ({
       />
       <Select
         options={DurationUnits.filter(
-          (k) => !allowedUnits || allowedUnits.includes(k)
+          (k) => !allowedUnits || allowedUnits.includes(k),
         ).map((u) => ({ key: u, label: u }))}
         value={unit}
         onChange={(e) =>

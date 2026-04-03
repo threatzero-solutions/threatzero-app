@@ -87,18 +87,18 @@ const MyDashboard: React.FC = () => {
                     />
                   ))
               : myPoliciesAndProcedures.length
-              ? myPoliciesAndProcedures.map((organizationPolicyFile) => (
-                  <a
-                    key={organizationPolicyFile.id}
-                    href={organizationPolicyFile.pdfUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-secondary-600 hover:text-secondary-500 transition-colors"
-                  >
-                    {organizationPolicyFile.name} (.pdf) &rarr;
-                  </a>
-                ))
-              : "Your organization currently has posted no policies or procedures."}
+                ? myPoliciesAndProcedures.map((organizationPolicyFile) => (
+                    <a
+                      key={organizationPolicyFile.id}
+                      href={organizationPolicyFile.pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-secondary-600 hover:text-secondary-500 transition-colors"
+                    >
+                      {organizationPolicyFile.name} (.pdf) &rarr;
+                    </a>
+                  ))
+                : "Your organization currently has posted no policies or procedures."}
           </p>
         </div>
       </div>

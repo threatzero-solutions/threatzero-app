@@ -84,7 +84,7 @@ const EditFieldGroup: React.FC = () => {
 
   const isNew = useMemo(
     () => formsState.activeFieldGroup?.id === undefined,
-    [formsState.activeFieldGroup]
+    [formsState.activeFieldGroup],
   );
 
   useEffect(() => {
@@ -109,13 +109,13 @@ const EditFieldGroup: React.FC = () => {
         }
 
         groupDataLoaded.current = true;
-      })
+      }),
     );
   }, [formsState.activeFieldGroup]);
 
   const handleChange = (
     input: { name: string },
-    event: FieldOnChangeEventType
+    event: FieldOnChangeEventType,
   ) => {
     const newValue = typeof event === "string" ? event : event.target.value;
 

@@ -155,7 +155,7 @@ const CourseBuilder = withRequirePermissions(() => {
 
   const debouncedSetCourseSaveSuccessful = useDebounceCallback(
     setCourseSaveSuccessful,
-    5000
+    5000,
   );
 
   const queryClient = useQueryClient();

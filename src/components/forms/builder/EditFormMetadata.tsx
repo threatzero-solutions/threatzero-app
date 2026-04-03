@@ -66,13 +66,13 @@ const EditFormMetadata: React.FC = () => {
         if (formsState.activeForm) {
           Object.assign(f, formsState.activeForm);
         }
-      })
+      }),
     );
   }, [formsState.activeForm]);
 
   const handleChange = (
     input: { name: string },
-    event: FieldOnChangeEventType
+    event: FieldOnChangeEventType,
   ) => {
     const newValue = typeof event === "string" ? event : event.target.value;
 

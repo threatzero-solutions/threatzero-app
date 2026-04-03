@@ -41,17 +41,17 @@ const TipSubmission: React.FC = () => {
 
   const canAlterForm = useMemo(
     () => hasPermissions([LEVEL.ADMIN, WRITE.FORMS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const canReadTip = useMemo(
     () => hasPermissions([READ.TIPS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const canAlterTip = useMemo(
     () => hasPermissions([WRITE.TIPS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const queryClient = useQueryClient();
@@ -115,7 +115,7 @@ const TipSubmission: React.FC = () => {
         status,
       });
     },
-    [saveTipMutation.mutate, params.tipId]
+    [saveTipMutation.mutate, params.tipId],
   );
 
   const tipActions: DropdownAction[] = useMemo(
@@ -139,12 +139,12 @@ const TipSubmission: React.FC = () => {
         hidden: tip?.status === TipStatus.RESOLVED,
       },
     ],
-    [changeStatus, tip?.status]
+    [changeStatus, tip?.status],
   );
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
-    submission: DeepPartial<FormSubmission>
+    submission: DeepPartial<FormSubmission>,
   ) => {
     event.preventDefault();
 

@@ -26,8 +26,10 @@ export interface DataTableOrderOptions {
   setOrder?: (key: string, value: OrderOptions) => void;
 }
 
-export interface DataTablePaginatorOptions
-  extends Omit<PaginatorProps, "setOffset"> {
+export interface DataTablePaginatorOptions extends Omit<
+  PaginatorProps,
+  "setOffset"
+> {
   setOffset?: (offset: number) => void;
 }
 
@@ -59,7 +61,7 @@ interface DataTableProps {
   orderOptions?: DataTableOrderOptions;
   itemFilterQuery?: ItemFilterQueryParams;
   setItemFilterQuery?: (
-    query: ItemFilterQueryParams | DraftFunction<ItemFilterQueryParams>
+    query: ItemFilterQueryParams | DraftFunction<ItemFilterQueryParams>,
   ) => void;
 }
 
@@ -90,14 +92,14 @@ const DataTable: React.FC<DataTableProps> = ({
 
   const currentOrder = useMemo(
     () => orderOptions?.order ?? itemFilterQuery?.order ?? {},
-    [orderOptions, itemFilterQuery]
+    [orderOptions, itemFilterQuery],
   );
 
   const orderEnabled = useMemo(
     () =>
       !orderOptions?.hidden &&
       (!!orderOptions?.setOrder || !!setItemFilterQuery),
-    [orderOptions, setItemFilterQuery]
+    [orderOptions, setItemFilterQuery],
   );
 
   const doUpdateSort = useCallback(
@@ -121,7 +123,7 @@ const DataTable: React.FC<DataTableProps> = ({
         options.offset = 0;
       });
     },
-    [setItemFilterQuery, orderOptions]
+    [setItemFilterQuery, orderOptions],
   );
 
   const handleUpdateSort = (key: string, noSort?: boolean) => {
@@ -201,13 +203,13 @@ const DataTable: React.FC<DataTableProps> = ({
                                 ? "pl-2.5 pr-1.5 sm:pl-0"
                                 : "pl-4 pr-3 sm:pl-0"
                               : idx === data.headers.length - 1
-                              ? dense
-                                ? "pl-1.5 pr-2.5 sm:pl-0"
-                                : "pl-3 pr-4 sm:pl-0"
-                              : dense
-                              ? "px-1.5"
-                              : "px-2",
-                            `text-${align ?? "left"}`
+                                ? dense
+                                  ? "pl-1.5 pr-2.5 sm:pl-0"
+                                  : "pl-3 pr-4 sm:pl-0"
+                                : dense
+                                  ? "px-1.5"
+                                  : "px-2",
+                            `text-${align ?? "left"}`,
                           )}
                         >
                           <div
@@ -215,7 +217,7 @@ const DataTable: React.FC<DataTableProps> = ({
                               "whitespace-nowrap group inline-flex",
                               !noSort && orderOptions?.setOrder
                                 ? "cursor-pointer"
-                                : ""
+                                : "",
                             )}
                             onClick={() =>
                               handleUpdateSort(sortKey ?? key, noSort)
@@ -232,27 +234,27 @@ const DataTable: React.FC<DataTableProps> = ({
                                   "ml-2 flex-none inline-flex items-center gap-0.5 rounded-sm transition-colors",
                                   currentOrder[sortKey ?? key]
                                     ? "bg-gray-200 text-gray-900 group-hover:bg-gray-300"
-                                    : "text-gray-300 group-hover:text-gray-600"
+                                    : "text-gray-300 group-hover:text-gray-600",
                                 )}
                               >
                                 {currentOrder[sortKey ?? key] === "DESC" ? (
                                   <ChevronDownIcon
                                     className={classNames(
-                                      dense ? "h-4 w-4" : "h-5 w-5"
+                                      dense ? "h-4 w-4" : "h-5 w-5",
                                     )}
                                     aria-hidden="true"
                                   />
                                 ) : currentOrder[sortKey ?? key] === "ASC" ? (
                                   <ChevronUpIcon
                                     className={classNames(
-                                      dense ? "h-4 w-4" : "h-5 w-5"
+                                      dense ? "h-4 w-4" : "h-5 w-5",
                                     )}
                                     aria-hidden="true"
                                   />
                                 ) : (
                                   <ChevronUpDownIcon
                                     className={classNames(
-                                      dense ? "h-4 w-4" : "h-5 w-5"
+                                      dense ? "h-4 w-4" : "h-5 w-5",
                                     )}
                                     aria-hidden="true"
                                   />
@@ -291,13 +293,13 @@ const DataTable: React.FC<DataTableProps> = ({
                                     ? "pl-2.5 pr-1.5 sm:pl-0"
                                     : "pl-4 pr-3 sm:pl-0"
                                   : idx_col === data.headers.length - 1
-                                  ? dense
-                                    ? "pl-1.5 pr-2.5 sm:pl-0"
-                                    : "pl-3 pr-4 sm:pl-0"
-                                  : dense
-                                  ? "px-1.5"
-                                  : "px-2",
-                                `text-${align ?? "left"}`
+                                    ? dense
+                                      ? "pl-1.5 pr-2.5 sm:pl-0"
+                                      : "pl-3 pr-4 sm:pl-0"
+                                    : dense
+                                      ? "px-1.5"
+                                      : "px-2",
+                                `text-${align ?? "left"}`,
                               )}
                             >
                               {row[key]}
@@ -323,7 +325,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 <p
                   className={classNames(
                     dense ? "text-xs py-2" : "text-sm py-4",
-                    "text-gray-500 text-center border-t border-gray-300"
+                    "text-gray-500 text-center border-t border-gray-300",
                   )}
                 >
                   {notFoundDetail ?? "No details."}

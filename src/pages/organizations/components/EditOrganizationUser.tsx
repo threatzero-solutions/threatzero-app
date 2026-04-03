@@ -113,20 +113,20 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
   const allowedAudiences = useMemo(
     () =>
       allAudiences?.results.filter((a) =>
-        organization?.allowedAudiences.includes(a.slug)
+        organization?.allowedAudiences.includes(a.slug),
       ) ?? [],
-    [organization, allAudiences]
+    [organization, allAudiences],
   );
 
   const mapAudiences = useCallback(
     (audiences: string[]) => {
       return (
         allowedAudiences.filter((audience) =>
-          audiences.includes(audience.slug)
+          audiences.includes(audience.slug),
         ) ?? []
       );
     },
-    [allowedAudiences]
+    [allowedAudiences],
   );
 
   const formDefaultValues = useMemo(() => {
@@ -155,15 +155,15 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
 
   const matchingIdp = useMemo(
     () => (email ? getMatchingIdp(email) : null),
-    [email, getMatchingIdp]
+    [email, getMatchingIdp],
   );
   const idpAttributes = useMemo(
     () => getIdpAttributes(matchingIdp),
-    [getIdpAttributes, matchingIdp]
+    [getIdpAttributes, matchingIdp],
   );
   const idpRoleGroups = useMemo(
     () => getIdpRoleGroups(matchingIdp),
-    [getIdpRoleGroups, matchingIdp]
+    [getIdpRoleGroups, matchingIdp],
   );
   const displayIdpAttributes = useMemo(() => {
     const autoAttributes = idpAttributes
@@ -278,7 +278,7 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
                     field.onChange(
                       a.target?.value
                         ? (a.target.value as unknown as Unit).slug
-                        : ""
+                        : "",
                     )
                   }
                   queryFilter={{ ["organization.id"]: organization.id }}
@@ -370,7 +370,7 @@ const toOrgUser = (user: TForm): Partial<OrganizationUser> => ({
 
 const toTransientUser = (
   orgUser: OrganizationUser,
-  unitSlug?: string
+  unitSlug?: string,
 ): TForm => ({
   id: orgUser.id,
   firstName: orgUser.firstName,

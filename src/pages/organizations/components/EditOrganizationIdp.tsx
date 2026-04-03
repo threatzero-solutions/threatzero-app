@@ -181,7 +181,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
       debouncedSlug === idpProp?.slug ||
       !slugUniqueResponse ||
       slugUniqueResponse.isUnique,
-    [debouncedSlug, idpProp?.slug, slugUniqueResponse]
+    [debouncedSlug, idpProp?.slug, slugUniqueResponse],
   );
 
   const [showCopyableConfig, setShowCopyableConfig] = useState(isNew);
@@ -298,7 +298,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
               <div
                 className={classNames(
                   "flex flex-col gap-3 transition-all duration-500 ease-in-out max-h-32 overflow-hidden mt-3",
-                  "data-closed:max-h-0 data-closed:mt-0 data-closed:opacity-0"
+                  "data-closed:max-h-0 data-closed:mt-0 data-closed:opacity-0",
                 )}
               >
                 <IdpConfigValue
@@ -344,7 +344,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                   <CheckCircleIcon
                     className={classNames(
                       "size-5 text-green-500",
-                      !slug ? "grayscale" : ""
+                      !slug ? "grayscale" : "",
                     )}
                     aria-hidden="true"
                   />
@@ -363,7 +363,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                     ? !isUniqueSlug
                       ? "ring-red-300 text-red-900 focus:ring-red-500!"
                       : "ring-green-300 text-green-900 focus:ring-green-500!"
-                    : ""
+                    : "",
                 )}
                 autoComplete="off"
               />
@@ -477,7 +477,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                           selectedAttributeMatcherTab === tab
                             ? "bg-secondary-100 text-secondary-700"
                             : "text-gray-500 hover:text-gray-700",
-                          "rounded-md px-3 py-2 text-sm font-medium"
+                          "rounded-md px-3 py-2 text-sm font-medium",
                         )}
                         onClick={() => setSelectedAttributeMatcherTab(tab)}
                       >
@@ -537,7 +537,7 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                             (audience) => ({
                               key: audience,
                               label: audience,
-                            })
+                            }),
                           )}
                         />
                       )}
@@ -572,7 +572,8 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
                   options={(allowedRoleGroups ?? [])
                     .filter(
                       (rg) =>
-                        isGlobalAdmin || !DISABLED_ROLE_GROUPS.includes(rg.name)
+                        isGlobalAdmin ||
+                        !DISABLED_ROLE_GROUPS.includes(rg.name),
                     )
                     .map((rg) => ({
                       key: rg.name,

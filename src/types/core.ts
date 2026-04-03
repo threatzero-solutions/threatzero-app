@@ -26,19 +26,19 @@ export type DeepPartial<T> =
   | (T extends Array<infer U>
       ? DeepPartial<U>[]
       : T extends Map<infer K, infer V>
-      ? Map<DeepPartial<K>, DeepPartial<V>>
-      : T extends Set<infer M>
-      ? Set<DeepPartial<M>>
-      : T extends object
-      ? {
-          [K in keyof T]?: DeepPartial<T[K]>;
-        }
-      : T);
+        ? Map<DeepPartial<K>, DeepPartial<V>>
+        : T extends Set<infer M>
+          ? Set<DeepPartial<M>>
+          : T extends object
+            ? {
+                [K in keyof T]?: DeepPartial<T[K]>;
+              }
+            : T);
 
 export type FieldPath<T, Prefix extends string = ""> = {
   [K in keyof T]: T[K] extends object
     ? // If the property is an object, recursively call FieldPath with dot notation
-      | `${Prefix extends "" ? "" : `${Prefix}.`}${K & string}`
+        | `${Prefix extends "" ? "" : `${Prefix}.`}${K & string}`
         | FieldPath<
             T[K],
             `${Prefix extends "" ? "" : `${Prefix}.`}${K & string}`

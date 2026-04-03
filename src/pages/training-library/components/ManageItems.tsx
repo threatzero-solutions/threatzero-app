@@ -36,14 +36,14 @@ const ManageItems: React.FC<ManageItemsProps> = ({
   const [editItemSliderOpen, setEditItemSliderOpen] = useState(false);
   const [itemEditing, setItemEditing] = useState<Partial<TrainingItem>>();
   const [selection, setSelection] = useState<Partial<TrainingItem>[]>(
-    excludeSelected ? [] : existingItemSelection ?? []
+    excludeSelected ? [] : (existingItemSelection ?? []),
   );
 
   const { hasPermissions } = useAuth();
 
   const canManageItems = useMemo(
     () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const selectedIds = useMemo(() => selection.map((i) => i.id), [selection]);
@@ -56,7 +56,7 @@ const ManageItems: React.FC<ManageItemsProps> = ({
       }
       setOpenSlider(open);
     },
-    [setOpenSlider, isSelecting, isManagingItems]
+    [setOpenSlider, isSelecting, isManagingItems],
   );
 
   const [itemFilterOptions, setItemFilterOptions] =
@@ -72,10 +72,10 @@ const ManageItems: React.FC<ManageItemsProps> = ({
     () =>
       isSelecting && excludeSelected
         ? itemsData?.results.filter(
-            (i) => !existingItemSelection?.find((_i) => _i.id === i.id)
+            (i) => !existingItemSelection?.find((_i) => _i.id === i.id),
           )
         : itemsData?.results,
-    [itemsData, existingItemSelection, isSelecting, excludeSelected]
+    [itemsData, existingItemSelection, isSelecting, excludeSelected],
   );
 
   useEffect(() => {

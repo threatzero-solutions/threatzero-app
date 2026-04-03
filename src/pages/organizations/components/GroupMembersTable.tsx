@@ -71,7 +71,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
 
   const thisUnit = useMemo(
     () => units?.results?.find((u) => u.slug === unitSlug),
-    [units, unitSlug]
+    [units, unitSlug],
   );
 
   const queryClient = useQueryClient();
@@ -89,7 +89,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
           Array.isArray(queryKey[2]["groups.ids"]) &&
           queryKey[2]["groups.ids"].includes(groupId),
       }),
-    [queryClient, unitSlug, groupId]
+    [queryClient, unitSlug, groupId],
   );
 
   const { mutate: admitUsers, isPending: isAdmittingUsers } = useMutation({
@@ -98,8 +98,8 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
         users.map((u) =>
           assignOrganizationUserToRoleGroup(organizationId, u.id, {
             groupId,
-          })
-        )
+          }),
+        ),
       ),
     onSuccess: (_data, { close }) => {
       close();
@@ -119,7 +119,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
 
   const handleAddUsersToGroup = (
     users: OrganizationUser[],
-    close: () => void
+    close: () => void,
   ) => {
     admitUsers({
       users,
@@ -131,7 +131,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
     (user: OrganizationUser) => {
       revokeUser(user);
     },
-    [revokeUser]
+    [revokeUser],
   );
 
   const columns = useMemo(
@@ -155,7 +155,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
             <IconButton
               className={classNames(
                 "bg-red-500 ring-transparent text-white enabled:hover:bg-red-600",
-                isRevokingUser ? "animate-pulse" : ""
+                isRevokingUser ? "animate-pulse" : "",
               )}
               icon={ArrowRightStartOnRectangleIcon}
               text={leaveText}
@@ -167,7 +167,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
         enableSorting: false,
       }),
     ],
-    [leaveText, handleRevokeUserFromGroup, isRevokingUser]
+    [leaveText, handleRevokeUserFromGroup, isRevokingUser],
   );
   return (
     <>
@@ -187,7 +187,7 @@ const GroupMembersTable: React.FC<GroupMembersTableProps> = ({
                 type="button"
                 className={classNames(
                   "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
-                  "inline-flex items-center gap-x-1"
+                  "inline-flex items-center gap-x-1",
                 )}
               >
                 <ArrowRightEndOnRectangleIcon className="size-4 inline" />

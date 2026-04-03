@@ -135,7 +135,7 @@ export const Steps2: React.FC<StepsProps> = ({ children }) => {
           }}
         >
           {stepsArray.map(
-            (child, index) => cloneElement(child, { stepIndex: index }) // Inject stepIndex into each Step
+            (child, index) => cloneElement(child, { stepIndex: index }), // Inject stepIndex into each Step
           )}
         </StepsContext.Provider>
       </ol>
@@ -183,14 +183,14 @@ export const Step: React.FC<StepProps> = ({
     <li
       className={classNames(
         stepIndex !== stepsCount - 1 ? "pb-10" : "",
-        "relative"
+        "relative",
       )}
     >
       {stepIndex !== stepsCount - 1 && (
         <div
           className={cn(
             "absolute left-4 top-4 -ml-px mt-0.5 h-full w-0.5",
-            isPastStep ? "bg-secondary-600" : "bg-gray-300"
+            isPastStep ? "bg-secondary-600" : "bg-gray-300",
           )}
           aria-hidden="true"
         />
@@ -209,8 +209,8 @@ export const Step: React.FC<StepProps> = ({
               isPastStep
                 ? "bg-secondary-600 group-hover:group-enabled:bg-secondary-800"
                 : isCurrentStep
-                ? "border-2 border-secondary-600 bg-white"
-                : "border-2 border-gray-300 bg-white group-hover:group-enabled:border-gray-400"
+                  ? "border-2 border-secondary-600 bg-white"
+                  : "border-2 border-gray-300 bg-white group-hover:group-enabled:border-gray-400",
             )}
           >
             <span
@@ -219,8 +219,8 @@ export const Step: React.FC<StepProps> = ({
                 isPastStep
                   ? "bg-white group-hover:group-enabled:bg-gray-300"
                   : isCurrentStep
-                  ? "bg-secondary-600"
-                  : " bg-transparent group-hover:group-enabled:bg-gray-300"
+                    ? "bg-secondary-600"
+                    : " bg-transparent group-hover:group-enabled:bg-gray-300",
               )}
             />
           </span>
@@ -232,8 +232,8 @@ export const Step: React.FC<StepProps> = ({
               isPastStep
                 ? ""
                 : isCurrentStep
-                ? "text-secondary-600"
-                : "text-gray-500"
+                  ? "text-secondary-600"
+                  : "text-gray-500",
             )}
           >
             {name}

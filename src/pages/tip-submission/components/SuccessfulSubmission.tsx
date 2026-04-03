@@ -1,4 +1,4 @@
-import { CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
 const SuccessfulSubmission: React.FC = () => {
   return (

@@ -21,11 +21,10 @@ import {
 } from "react";
 import { classNames, cn } from "../../../utils/core";
 
-interface SelectProps
-  extends DetailedHTMLProps<
-    SelectHTMLAttributes<HTMLSelectElement>,
-    HTMLSelectElement
-  > {
+interface SelectProps extends DetailedHTMLProps<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  HTMLSelectElement
+> {
   options: {
     key: string;
     label: ReactNode;
@@ -51,6 +50,7 @@ const Select: React.FC<SelectProps> = ({
     setSelected(value as string);
   }, [value]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSelect = (v: any) => {
     if (readOnly || disabled) {
       return;
@@ -75,7 +75,7 @@ const Select: React.FC<SelectProps> = ({
         "w-full flex",
         clearButtonPosition === "bottom"
           ? "flex-col items-stretch gap-1"
-          : "flex-row items-center"
+          : "flex-row items-center",
       )}
     >
       <Listbox
@@ -92,7 +92,7 @@ const Select: React.FC<SelectProps> = ({
                 <span
                   className={classNames(
                     "block truncate",
-                    disabled ? "opacity-50 cursor-not-allowed" : ""
+                    disabled ? "opacity-50 cursor-not-allowed" : "",
                   )}
                 >
                   {selected
@@ -123,7 +123,7 @@ const Select: React.FC<SelectProps> = ({
                           focus && !readOnly
                             ? "bg-secondary-600 text-white"
                             : "text-gray-900",
-                          "relative cursor-default select-none py-2 pl-3 pr-9"
+                          "relative cursor-default select-none py-2 pl-3 pr-9",
                         )
                       }
                       value={key}
@@ -132,8 +132,8 @@ const Select: React.FC<SelectProps> = ({
                         disabled
                           ? disabledText
                           : typeof label === "string"
-                          ? label
-                          : ""
+                            ? label
+                            : ""
                       }
                     >
                       {({ selected, focus }) => (
@@ -141,7 +141,7 @@ const Select: React.FC<SelectProps> = ({
                           <span
                             className={classNames(
                               selected ? "font-semibold" : "font-normal",
-                              "block truncate"
+                              "block truncate",
                             )}
                           >
                             {label}
@@ -151,7 +151,7 @@ const Select: React.FC<SelectProps> = ({
                             <span
                               className={classNames(
                                 focus ? "text-white" : "text-secondary-600",
-                                "absolute inset-y-0 right-0 flex items-center pr-4"
+                                "absolute inset-y-0 right-0 flex items-center pr-4",
                               )}
                             >
                               <CheckIcon
@@ -174,7 +174,7 @@ const Select: React.FC<SelectProps> = ({
         <button
           type="button"
           className={classNames(
-            "cursor-pointer pl-1 text-xs font-semibol text-secondary-600 disabled:text-gray-400 disabled:opacity-60 shrink text-start"
+            "cursor-pointer pl-1 text-xs font-semibol text-secondary-600 disabled:text-gray-400 disabled:opacity-60 shrink text-start",
           )}
           disabled={!value}
           onClick={() => handleSelect(undefined)}

@@ -204,8 +204,8 @@ const CurrentStep = ({
                 direction === "forward"
                   ? "100%"
                   : direction === "backward"
-                  ? "-100%"
-                  : "0%",
+                    ? "-100%"
+                    : "0%",
             }),
             slideOut: (direction: typeof stepDirection) => ({
               opacity: 0,

@@ -22,7 +22,7 @@ const FormBuilder: React.FC = withRequirePermissions(() => {
 
   const selectedLanguageCode = useMemo(
     () => searchParams.get("language") ?? "en",
-    [searchParams]
+    [searchParams],
   );
   const selectedVersion = useMemo(() => searchParams.get("v"), [searchParams]);
 
@@ -31,7 +31,7 @@ const FormBuilder: React.FC = withRequirePermissions(() => {
 
     if (allForms.results.length) {
       const formsForLanguage = allForms.results.filter(
-        (_f) => selectedLanguageCode === _f.language?.code
+        (_f) => selectedLanguageCode === _f.language?.code,
       );
       formsForLanguage.sort((a, b) => b.version - a.version);
       const f =
@@ -56,7 +56,7 @@ const FormBuilder: React.FC = withRequirePermissions(() => {
         ? getForm(queryKey[2])
         : getLanguages({ code: "en" })
             .then((languages) =>
-              saveForm({ slug: queryKey[1], language: languages.results[0] })
+              saveForm({ slug: queryKey[1], language: languages.results[0] }),
             )
             .then((f) => {
               setSearchParams((p) => {
@@ -101,7 +101,7 @@ const FormBuilder: React.FC = withRequirePermissions(() => {
                     }
                     return langsMap;
                   }, new Map<string, Language>())
-                  .values()
+                  .values(),
               )
             : undefined
         }

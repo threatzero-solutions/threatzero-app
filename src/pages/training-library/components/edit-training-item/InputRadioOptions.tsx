@@ -64,7 +64,7 @@ const InputRadioOptions: React.FC<{
                       "text-gray-500 mt-2 grid grid-cols-1",
                       idx !== idxSelected
                         ? "opacity-50 pointer-events-none"
-                        : ""
+                        : "",
                     )}
                   >
                     {typeof mediaOption.children === "function"

@@ -18,7 +18,7 @@ const ViewEnrollments: React.FC = () => {
 
   const isTrainingAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN, WRITE.COURSES]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const setOpen = (open: boolean) =>

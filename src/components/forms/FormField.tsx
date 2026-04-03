@@ -35,7 +35,7 @@ const FormField = forwardRef(
       action,
       ...fieldAttrs
     }: FormFieldProps,
-    ref
+    ref,
   ) => {
     return (
       <div
@@ -80,7 +80,7 @@ const FormField = forwardRef(
         )}
       </div>
     );
-  }
+  },
 );
 
 export default FormField;

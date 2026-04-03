@@ -34,13 +34,16 @@ export interface OrganizationsContextType {
   invalidateAllUnitsQuery: () => void;
   unitsPath?: string | null;
   setUnitsPath: (
-    unitsPath: string | null | ((prevUnitsPath: string | null) => string | null)
+    unitsPath:
+      | string
+      | null
+      | ((prevUnitsPath: string | null) => string | null),
   ) => void;
   isUnitContext: boolean;
   roleGroups?: KeycloakGroupDto[] | null;
   roleGroupsLoading: boolean;
   invalidateOrganizationUsersQuery: (
-    unitsSlugs?: (string | undefined)[]
+    unitsSlugs?: (string | undefined)[],
   ) => void;
   navigateAfterDelete: () => void;
 }
@@ -81,11 +84,11 @@ export const OrganizationsContextProvider: React.FC<
 
   const organizationId = useMemo(
     () => currentOrganizationIdProp ?? myOrganizationSlug,
-    [currentOrganizationIdProp, myOrganizationSlug]
+    [currentOrganizationIdProp, myOrganizationSlug],
   );
   const organizationIdType = useMemo(
     () => (currentOrganizationIdProp ? "id" : "slug"),
-    [currentOrganizationIdProp]
+    [currentOrganizationIdProp],
   );
 
   const { data: currentOrganization, isLoading: currentOrganizationLoading } =
@@ -100,7 +103,7 @@ export const OrganizationsContextProvider: React.FC<
 
   const currentOrganizationId = useMemo(
     () => currentOrganizationIdProp ?? currentOrganization?.id,
-    [currentOrganizationIdProp, currentOrganization]
+    [currentOrganizationIdProp, currentOrganization],
   );
 
   const queryClient = useQueryClient();
@@ -127,7 +130,7 @@ export const OrganizationsContextProvider: React.FC<
 
   const unitsPath = useMemo(
     () => searchParams.get("unitsPath"),
-    [searchParams]
+    [searchParams],
   );
 
   const setUnitsPath = useCallback(
@@ -135,7 +138,7 @@ export const OrganizationsContextProvider: React.FC<
       unitsPath:
         | string
         | null
-        | ((prevUnitsPath: string | null) => string | null)
+        | ((prevUnitsPath: string | null) => string | null),
     ) => {
       setSearchParams((prevSearchParams) => {
         const newUnitsPath =
@@ -150,12 +153,12 @@ export const OrganizationsContextProvider: React.FC<
         return prevSearchParams;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const currentUnitSlug = useMemo(
     () => unitsPath?.split("/").pop(),
-    [unitsPath]
+    [unitsPath],
   );
 
   const { data: currentUnit, isLoading: currentUnitLoading } = useQuery({
@@ -206,9 +209,9 @@ export const OrganizationsContextProvider: React.FC<
         {
           organizationIdps: [] as (OrganizationIdpDto | null)[],
           organizationIdpsLoading: false,
-        }
+        },
       ),
-    [organizationIdpQueryResults]
+    [organizationIdpQueryResults],
   );
 
   const getMatchingIdp = useCallback(
@@ -219,7 +222,7 @@ export const OrganizationsContextProvider: React.FC<
         null
       );
     },
-    [organizationIdps]
+    [organizationIdps],
   );
 
   const getIdpAttributes = (idp?: OrganizationIdpDto | null): string[] => {
@@ -321,7 +324,7 @@ export const OrganizationsContextProvider: React.FC<
             typeof q !== "object" ||
             !("unit" in q) ||
             !(unitsSlugs ?? [currentUnitSlug]).includes(
-              q.unit as string | undefined
+              q.unit as string | undefined,
             )
           )
             return false;
@@ -330,7 +333,7 @@ export const OrganizationsContextProvider: React.FC<
         },
       });
     },
-    [queryClient, currentOrganization?.id, currentUnitSlug]
+    [queryClient, currentOrganization?.id, currentUnitSlug],
   );
 
   const { data: roleGroups, isLoading: roleGroupsLoading } = useQuery({

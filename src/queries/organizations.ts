@@ -60,68 +60,68 @@ export const isIdpSlugUnique = (slug: string) =>
 
 export const getCourseEnrollments = (
   id: Organization["id"],
-  query?: ItemFilterQueryParams
+  query?: ItemFilterQueryParams,
 ) =>
   findMany<CourseEnrollment>(
     `/organizations/organizations/${id}/enrollments/`,
-    query
+    query,
   );
 
 export const getLatestCourseEnrollments = (
   id: Organization["id"],
-  query?: ItemFilterQueryParams
+  query?: ItemFilterQueryParams,
 ) =>
   findManyRaw<{ id: string; isOnlyEnrollment: boolean }[]>(
     `/organizations/organizations/${id}/enrollments/latest`,
-    query
+    query,
   );
 
 export const getRelativeEnrollment = (
   id: Organization["id"],
-  enrollmentId: CourseEnrollment["id"]
+  enrollmentId: CourseEnrollment["id"],
 ) =>
   findOne<RelativeEnrollmentDto>(
-    `/organizations/organizations/${id}/enrollments/${enrollmentId}/relative`
+    `/organizations/organizations/${id}/enrollments/${enrollmentId}/relative`,
   );
 
 export const getPreviousEnrollment = (
   id: Organization["id"],
-  enrollmentId: CourseEnrollment["id"]
+  enrollmentId: CourseEnrollment["id"],
 ) =>
   findOne<RelativeEnrollmentDto>(
-    `/organizations/organizations/${id}/enrollments/${enrollmentId}/previous`
+    `/organizations/organizations/${id}/enrollments/${enrollmentId}/previous`,
   );
 
 export const getNextEnrollment = (
   id: Organization["id"],
-  enrollmentId: CourseEnrollment["id"]
+  enrollmentId: CourseEnrollment["id"],
 ) =>
   findOne<RelativeEnrollmentDto>(
-    `/organizations/organizations/${id}/enrollments/${enrollmentId}/next`
+    `/organizations/organizations/${id}/enrollments/${enrollmentId}/next`,
   );
 
 export const getCourseEnrollment = (
   id: Organization["id"],
-  enrollmentId?: CourseEnrollment["id"]
+  enrollmentId?: CourseEnrollment["id"],
 ) =>
   findOneByIdOrFail<CourseEnrollment>(
     `/organizations/organizations/${id}/enrollments/`,
-    enrollmentId
+    enrollmentId,
   );
 
 export const getOrganizationLmsTokens = (
   id: Organization["id"],
-  query?: ItemFilterQueryParams
+  query?: ItemFilterQueryParams,
 ) =>
   findMany<LmsTrainingToken>(
     `/organizations/organizations/${id}/lms-tokens/`,
-    query
+    query,
   );
 
 export const getLmsScormPackage = (
   id: Organization["id"],
   key: string,
-  version?: ScormVersion
+  version?: ScormVersion,
 ) =>
   download(`/organizations/organizations/${id}/lms-tokens/scorm`, {
     key,
@@ -130,22 +130,22 @@ export const getLmsScormPackage = (
 
 export const getOrganizationUsers = (
   id: Organization["id"] | undefined,
-  query?: ItemFilterQueryParams
+  query?: ItemFilterQueryParams,
 ) =>
   findMany<OrganizationUser>(
     `/organizations/organizations/${id}/users/`,
-    query
+    query,
   );
 
 export const getOrganizationIdp = (id: Organization["id"], slug: string) =>
   findOneByIdOrFail<OrganizationIdpDto>(
     `/organizations/organizations/${id}/idps/`,
-    slug
+    slug,
   );
 
 export const getRoleGroupsForOrganization = (id: Organization["id"]) =>
   findManyRaw<KeycloakGroupDto[]>(
-    `/organizations/organizations/${id}/role-groups/`
+    `/organizations/organizations/${id}/role-groups/`,
   );
 
 export const getUnits = (query?: ItemFilterQueryParams) =>
@@ -181,7 +181,7 @@ export const generateQrCode = async (locationId: string) => {
 };
 
 export const getGenerateOrganizationPolicyUploadUrlsUrl = (
-  organizationId: string
+  organizationId: string,
 ) =>
   `${API_BASE_URL}/organizations/organizations/${organizationId}/generate-policy-upload-urls/`;
 
@@ -198,33 +198,33 @@ export const deleteOrganization = (id: string | undefined) =>
 
 export const saveCourseEnrollment = (
   id: Organization["id"],
-  enrollment: DeepPartial<CourseEnrollment>
+  enrollment: DeepPartial<CourseEnrollment>,
 ) =>
   save<CourseEnrollment>(
     `/organizations/organizations/${id}/enrollments/`,
-    enrollment
+    enrollment,
   );
 
 export const deleteCourseEnrollment = (
   id: Organization["id"],
-  enrollmentId: CourseEnrollment["id"]
+  enrollmentId: CourseEnrollment["id"],
 ) => deleteOne(`/organizations/organizations/${id}/enrollments/`, enrollmentId);
 
 export const createOrganizationLmsToken = (
   id: Organization["id"],
   createLmsTokenValue: DeepPartial<LmsTrainingTokenValue>,
-  expiresOn?: Date
+  expiresOn?: Date,
 ) =>
   insertOne(
     `/organizations/organizations/${id}/lms-tokens/`,
     createLmsTokenValue,
-    { params: { expiresOn } }
+    { params: { expiresOn } },
   );
 
 export const setOrganizationLmsTokenExpirations = (
   id: Organization["id"],
   query: ItemFilterQueryParams,
-  expiration: Date | null
+  expiration: Date | null,
 ) =>
   updateOne<{ id: never; expiration: Date | null }>(
     `/organizations/organizations/${id}/lms-tokens/expiration`,
@@ -233,7 +233,7 @@ export const setOrganizationLmsTokenExpirations = (
     },
     {
       params: query,
-    }
+    },
   );
 
 export type ImportOrganizationIdpMetadataPayload =
@@ -243,41 +243,41 @@ export type ImportOrganizationIdpMetadataPayload =
   | FormData;
 
 export const importOrganizationIdpMetadata = <
-  T = ImportOrganizationIdpMetadataPayload
+  T = ImportOrganizationIdpMetadataPayload,
 >(
   id: string,
   protocol: string,
-  payload: T
+  payload: T,
 ) =>
   insertOne<T, Record<string, string>>(
     `/organizations/organizations/${id}/idps/load-imported-config/${protocol}/`,
-    payload
+    payload,
   );
 
 export const saveOrganizationUser = (
   id: Organization["id"],
-  user: DeepPartial<OrganizationUser>
+  user: DeepPartial<OrganizationUser>,
 ) => save<OrganizationUser>(`/organizations/organizations/${id}/users/`, user);
 
 export const deleteOrganizationUser = (
   id: Organization["id"],
-  userId: string
+  userId: string,
 ) => deleteOne(`/organizations/organizations/${id}/users/`, userId);
 
 export const activateOrganizationUser = (
   id: Organization["id"],
-  userId: string
+  userId: string,
 ) =>
   axios.post(
-    buildUrl(`/organizations/organizations/${id}/users/${userId}/activate/`)
+    buildUrl(`/organizations/organizations/${id}/users/${userId}/activate/`),
   );
 
 export const deactivateOrganizationUser = (
   id: Organization["id"],
-  userId: string
+  userId: string,
 ) =>
   axios.post(
-    buildUrl(`/organizations/organizations/${id}/users/${userId}/deactivate/`)
+    buildUrl(`/organizations/organizations/${id}/users/${userId}/deactivate/`),
   );
 
 export const assignOrganizationUserToRoleGroup = (
@@ -286,16 +286,16 @@ export const assignOrganizationUserToRoleGroup = (
   groupOptions: {
     groupId?: string;
     groupPath?: string;
-  }
+  },
 ) =>
   axios.post(
     buildUrl(
-      `/organizations/organizations/${id}/users/${userId}/assign-role-group/`
+      `/organizations/organizations/${id}/users/${userId}/assign-role-group/`,
     ),
     null,
     {
       params: groupOptions,
-    }
+    },
   );
 
 export const revokeOrganizationUserToRoleGroup = (
@@ -304,35 +304,35 @@ export const revokeOrganizationUserToRoleGroup = (
   groupOptions: {
     groupId?: string;
     groupPath?: string;
-  }
+  },
 ) =>
   axios.post(
     buildUrl(
-      `/organizations/organizations/${id}/users/${userId}/revoke-role-group/`
+      `/organizations/organizations/${id}/users/${userId}/revoke-role-group/`,
     ),
     null,
     {
       params: groupOptions,
-    }
+    },
   );
 
 export const createOrganizationIdp = (
   id: Organization["id"],
-  createOrganizationIdpDto: OrganizationIdpDto
+  createOrganizationIdpDto: OrganizationIdpDto,
 ) =>
   insertOne(
     `/organizations/organizations/${id}/idps/`,
-    createOrganizationIdpDto
+    createOrganizationIdpDto,
   );
 
 export const updateOrganizationIdp = (
   id: string,
   slug: string,
-  updateOrganizationIdpDto: OrganizationIdpDto
+  updateOrganizationIdpDto: OrganizationIdpDto,
 ) =>
   putOne(
     `/organizations/organizations/${id}/idps/${slug}/`,
-    updateOrganizationIdpDto
+    updateOrganizationIdpDto,
   );
 
 export const deleteOrganizationIdp = (id: Organization["id"], slug: string) =>

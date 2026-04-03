@@ -17,7 +17,7 @@ const BackButtonLink: React.FC<BackButtonLinkProps> = ({
       to={to}
       className={classNames(
         "block text-sm text-gray-900 hover:text-gray-600 mb-4 w-max",
-        className ?? ""
+        className ?? "",
       )}
     >
       &larr; {value ?? "Back"}

@@ -90,7 +90,7 @@ const PillBadge = <V,>({
       className={classNames(
         "inline-flex items-center gap-x-0.5 rounded-md px-2 py-1 text-xs font-medium",
         colorStyles[color].badge,
-        className
+        className,
       )}
     >
       {displayValue}
@@ -100,7 +100,7 @@ const PillBadge = <V,>({
           onClick={() => onRemove?.(value)}
           className={classNames(
             "group relative -mr-1 h-3.5 w-3.5 rounded-xs",
-            colorStyles[color].button
+            colorStyles[color].button,
           )}
           disabled={disabled}
         >
@@ -109,7 +109,7 @@ const PillBadge = <V,>({
             viewBox="0 0 14 14"
             className={classNames(
               "h-3.5 w-3.5 stroke-gray-700/50 group-hover:group-enabled:stroke-gray-700/75",
-              colorStyles[color].icon
+              colorStyles[color].icon,
             )}
           >
             <title>Remove</title>

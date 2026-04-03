@@ -76,7 +76,7 @@ export const TrainingContext = createContext<TrainingContextType>({
 
 const trainingReducer = (
   state: TrainingState,
-  action: TrainingAction
+  action: TrainingAction,
 ): TrainingState => {
   switch (action.type) {
     case "SET_ACTIVE_COURSE":
@@ -239,7 +239,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
     // Use debounced setActiveEnrollmentId to prevent race conditions between multiple tabs.
     const debouncedSetActiveEnrollmentId = useDebounceCallback(
       setActiveEnrollmentId,
-      1000
+      1000,
     );
     // Automatically select enrollment.
     useEffect(() => {
@@ -256,7 +256,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
 
       if (activeEnrollmentId) {
         const foundEnrollment = enrollments.find(
-          (enrollment) => enrollment.id === activeEnrollmentId
+          (enrollment) => enrollment.id === activeEnrollmentId,
         );
 
         if (foundEnrollment) {

@@ -12,7 +12,7 @@ const TrainingLibrary: React.FC = withRequirePermissions(() => {
 
   const isTrainingAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN, WRITE.COURSES]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   return (

@@ -37,7 +37,7 @@ export default function AdvancedIndex() {
 
   useEffect(() => {
     setSelectedEmail(
-      accessTokenClaims?.email ? String(accessTokenClaims.email) : null
+      accessTokenClaims?.email ? String(accessTokenClaims.email) : null,
     );
   }, [accessTokenClaims?.email]);
 
@@ -73,7 +73,7 @@ export default function AdvancedIndex() {
           enrollmentId: trainingData.enrollmentId,
           itemId: trainingData.itemId,
           organizationId: selectedOrganization?.id,
-        }
+        },
       );
       return response.data;
     },
@@ -273,7 +273,7 @@ function AdvancedJobQueues() {
       jobId: string;
     }) => {
       return axios.post(
-        buildUrl(`/notifications/job-queues/${queueName}/retry-job/${jobId}`)
+        buildUrl(`/notifications/job-queues/${queueName}/retry-job/${jobId}`),
       );
     },
     onSuccess: (_data, { jobId }) => {
@@ -297,7 +297,7 @@ function AdvancedJobQueues() {
       jobId: string;
     }) => {
       return axios.post(
-        buildUrl(`/notifications/job-queues/${queueName}/remove-job/${jobId}`)
+        buildUrl(`/notifications/job-queues/${queueName}/remove-job/${jobId}`),
       );
     },
     onSuccess: (_data, { jobId, queueName }) => {
@@ -329,7 +329,7 @@ function AdvancedJobQueues() {
         },
       },
     ],
-    []
+    [],
   );
 
   const failedJobColumns = useMemo(
@@ -411,17 +411,17 @@ function AdvancedJobQueues() {
       retryJobVariables,
       isRemoveJobPending,
       removeJobVariables,
-    ]
+    ],
   );
 
   const waitingJobColumns = useMemo(
     (): ColumnDef<Job<unknown>>[] => [...commonJobColumns],
-    [commonJobColumns]
+    [commonJobColumns],
   );
 
   const activeJobColumns = useMemo(
     (): ColumnDef<Job<unknown>>[] => [...commonJobColumns],
-    [commonJobColumns]
+    [commonJobColumns],
   );
 
   return (

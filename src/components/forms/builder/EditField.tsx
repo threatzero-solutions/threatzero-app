@@ -78,10 +78,13 @@ const INPUT_DATA: EditFieldFieldType[] = [
     helpText: "",
     type: FieldType.SELECT,
     typeParams: {
-      options: Object.values(FieldType).reduce((acc, value) => {
-        acc[value] = value;
-        return acc;
-      }, {} as Record<string, string>),
+      options: Object.values(FieldType).reduce(
+        (acc, value) => {
+          acc[value] = value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      ),
     },
     required: true,
     order: 4,
@@ -176,7 +179,7 @@ const EditField: React.FC = () => {
 
   const isNew = useMemo(
     () => formsState.activeField?.id === undefined,
-    [formsState.activeField]
+    [formsState.activeField],
   );
 
   /** Flat maps all form fields, including those in groups. */
@@ -237,9 +240,9 @@ const EditField: React.FC = () => {
   const parentOptions = useMemo(
     () =>
       Object.fromEntries(
-        Object.entries(parents).map(([k, v]) => [k, v.stringRepresentation])
+        Object.entries(parents).map(([k, v]) => [k, v.stringRepresentation]),
       ),
-    [parents]
+    [parents],
   );
 
   useEffect(() => {
@@ -264,9 +267,9 @@ const EditField: React.FC = () => {
         }
 
         setFieldDataLoaded(true);
-      })
+      }),
     );
-  }, [formsState.activeField, fieldDataLoaded]);
+  }, [formsState.activeField, fieldDataLoaded, setField]);
 
   const handleChange = useCallback(
     (input: EditFieldFieldType, event: FieldOnChangeEventType) => {
@@ -276,11 +279,11 @@ const EditField: React.FC = () => {
         typeof event === "string"
           ? event
           : event.target.type === "checkbox"
-          ? (event.target as HTMLInputElement).checked
-          : event.target.value;
+            ? (event.target as HTMLInputElement).checked
+            : event.target.value;
 
       setField((f) => {
-        // @ts-ignore
+        // @ts-expect-error dynamic field assignment by name
         f[input.name] = newValue;
 
         // Automatically set name field based on label.
@@ -289,7 +292,7 @@ const EditField: React.FC = () => {
         }
       });
     },
-    [allFields]
+    [allFields, setField],
   );
 
   const handleJsonFieldChange = (name: keyof Field, value: string) => {
@@ -424,7 +427,7 @@ const EditField: React.FC = () => {
                     formsState.activeField?.[input.name as keyof Field] ??
                       undefined,
                     null,
-                    2
+                    2,
                   ) ?? "{}"
                 }
                 onChange={(v: string) =>

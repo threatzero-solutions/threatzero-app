@@ -88,7 +88,7 @@ export class MultipartUploader {
     this.chunkSize = options.chunkSize || DEFAULT_CHUNK_SIZE;
     this.concurrentUploads = Math.min(
       options.concurrentUploads || 5,
-      MAXIMUM_CONCURRENT_UPLOADS
+      MAXIMUM_CONCURRENT_UPLOADS,
     );
     this.file = options.file;
     this.fileName = options.fileName;
@@ -274,7 +274,7 @@ export class MultipartUploader {
           fileId: this.fileId,
           fileKey: this.fileKey,
           parts: this.uploadedParts,
-        }
+        },
       );
 
       this.onCompleteFn({
@@ -305,7 +305,7 @@ export class MultipartUploader {
   // calculating the current progress of the multipart upload request
   private handleProgress(
     partNumber: number,
-    event: ProgressEvent<XMLHttpRequestEventTarget>
+    event: ProgressEvent<XMLHttpRequestEventTarget>,
   ) {
     if (this.file) {
       if (
@@ -352,7 +352,7 @@ export class MultipartUploader {
 
         const progressListener = this.handleProgress.bind(
           this,
-          part.PartNumber - 1
+          part.PartNumber - 1,
         );
 
         xhr.upload.addEventListener("progress", progressListener);
@@ -383,8 +383,8 @@ export class MultipartUploader {
             } else {
               reject(
                 new Error(
-                  "Part upload did not have ETag header. Does the CORS policy expose the ETag header?"
-                )
+                  "Part upload did not have ETag header. Does the CORS policy expose the ETag header?",
+                ),
               );
               delete this.activeConnections[part.PartNumber - 1];
             }

@@ -12,7 +12,7 @@ import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 
 export const sendTrainingLinks = (
   body: SendTrainingLinksDto,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig,
 ) =>
   axios
     .post(`${API_BASE_URL}/training-admin/invites/`, body, {
@@ -22,7 +22,7 @@ export const sendTrainingLinks = (
 
 export const resendTrainingLinks = (
   body: ResendTrainingLinksDto,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig,
 ) =>
   axios
     .post(`${API_BASE_URL}/training-admin/invites/resend/`, body, {
@@ -46,7 +46,7 @@ export const getTrainingInvites = (query?: ItemFilterQueryParams) =>
 export const getTrainingInvitesCsv = (
   trainingUrlTemplate: string,
   query?: ItemFilterQueryParams,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig,
 ) =>
   download(
     "/training-admin/invites/csv/",
@@ -54,5 +54,5 @@ export const getTrainingInvitesCsv = (
       ...query,
       trainingUrlTemplate,
     },
-    options
+    options,
   );

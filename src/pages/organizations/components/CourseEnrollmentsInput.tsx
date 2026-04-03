@@ -141,7 +141,7 @@ const CourseEnrollmentsInput: React.FC<CourseEnrollmentsInputProps> = ({
                         "text-white",
                         enrollment.visibility === TrainingVisibility.VISIBLE
                           ? "bg-secondary-500 hover:bg-secondary-600"
-                          : "bg-purple-500 hover:bg-purple-600"
+                          : "bg-purple-500 hover:bg-purple-600",
                       )}
                       text={
                         enrollment.visibility === TrainingVisibility.VISIBLE

@@ -58,30 +58,34 @@ const Paginator2: React.FC<Paginator2Props> = ({
         ? [defaultBreakerPosition]
         : [2, c - 1];
 
-    return totalPages.reduce((acc, p) => {
-      let showPage = true;
-      if (breakerPositions[0] === defaultBreakerPosition) {
-        showPage =
-          p < defaultBreakerPosition || p > c - defaultBreakerPosition + 1;
-      } else {
-        showPage = (p >= pageIndex && p <= pageIndex + 2) || p === 1 || p === c;
-      }
-      if (condenseButtons && !showPage) {
-        if (breakerPositions.includes(p)) {
-          acc.push(null);
+    return totalPages.reduce(
+      (acc, p) => {
+        let showPage = true;
+        if (breakerPositions[0] === defaultBreakerPosition) {
+          showPage =
+            p < defaultBreakerPosition || p > c - defaultBreakerPosition + 1;
+        } else {
+          showPage =
+            (p >= pageIndex && p <= pageIndex + 2) || p === 1 || p === c;
         }
+        if (condenseButtons && !showPage) {
+          if (breakerPositions.includes(p)) {
+            acc.push(null);
+          }
+          return acc;
+        }
+        acc.push(p);
         return acc;
-      }
-      acc.push(p);
-      return acc;
-    }, [] as (number | null)[]);
+      },
+      [] as (number | null)[],
+    );
   }, [totalPages, pageIndex]);
 
   return (
     <div
       className={classNames(
         "flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6",
-        className
+        className,
       )}
     >
       <div className="flex flex-1 justify-between sm:hidden">
@@ -158,12 +162,12 @@ const Paginator2: React.FC<Paginator2Props> = ({
                     "relative hidden items-center px-4 py-2 text-sm font-semibold focus:z-20 md:inline-flex",
                     p - 1 === pageIndex
                       ? "z-10 bg-secondary-600 text-white focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-                      : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
+                      : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0",
                   )}
                 >
                   {p}
                 </button>
-              )
+              ),
             )}
             <button
               type="button"

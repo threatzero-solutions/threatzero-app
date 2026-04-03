@@ -77,6 +77,7 @@ POST /violent-incident-reports/submissions/presigned-upload-urls
 ## What the frontend sends (exact shapes)
 
 **File upload request** (existing, unchanged):
+
 ```json
 POST /tips/submissions/presigned-upload-urls
 {
@@ -87,6 +88,7 @@ POST /tips/submissions/presigned-upload-urls
 ```
 
 **Note creation** (updated):
+
 ```json
 POST /tips/submissions/{tipId}/notes
 {

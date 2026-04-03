@@ -34,8 +34,8 @@ const CourseAvailabilityDates: React.FC<CourseAvailabilityDates> = ({
         (status === "ongoing"
           ? "Started"
           : status === "ended"
-          ? "Ended"
-          : "Starting") +
+            ? "Ended"
+            : "Starting") +
         " " +
         (status === "ended"
           ? endDate?.format("MMMM D, YYYY")
@@ -43,7 +43,7 @@ const CourseAvailabilityDates: React.FC<CourseAvailabilityDates> = ({
       );
     } else if (format === "dates") {
       return `${startDate?.format("MMM D, YYYY")} - ${endDate?.format(
-        "MMM D, YYYY"
+        "MMM D, YYYY",
       )}`;
     }
   }, [status, format, startDate, endDate, showOnBlank]);
@@ -55,9 +55,9 @@ const CourseAvailabilityDates: React.FC<CourseAvailabilityDates> = ({
         status === "upcoming"
           ? "bg-secondary-400"
           : status === "ongoing"
-          ? "bg-green-400"
-          : "bg-gray-500",
-        className
+            ? "bg-green-400"
+            : "bg-gray-500",
+        className,
       )}
     >
       {text}

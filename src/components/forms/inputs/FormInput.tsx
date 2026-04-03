@@ -80,7 +80,7 @@ const FormInput = forwardRef(
       control,
       ...inputAttrs
     }: FormInputProps<A>,
-    ref: ForwardedRef<unknown>
+    ref: ForwardedRef<unknown>,
   ) => {
     const attrs: FormInputAttributes = useMemo(
       () => ({
@@ -95,7 +95,7 @@ const FormInput = forwardRef(
         ...field.elementProperties,
         ref: ref,
       }),
-      [inputAttrs, extraAttributes, field, ref]
+      [inputAttrs, extraAttributes, field, ref],
     );
 
     if (field.required) {
@@ -140,7 +140,7 @@ const FormInput = forwardRef(
           return (
             <Select
               options={Object.entries(selectParams?.options ?? {}).map(
-                ([key, label]) => ({ key, label })
+                ([key, label]) => ({ key, label }),
               )}
               {...attrs}
             />
@@ -210,7 +210,7 @@ const FormInput = forwardRef(
     }, [attrs, field.typeParams, loadedValue, mediaUploadUrl, control]);
 
     return <>{input}</>;
-  }
+  },
 );
 
 export default FormInput;

@@ -50,7 +50,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <div
             className={classNames(
               "mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10",
-              destructive ? "bg-red-100" : "bg-secondary-100"
+              destructive ? "bg-red-100" : "bg-secondary-100",
             )}
           >
             {destructive ? (
@@ -106,7 +106,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             destructive
               ? "bg-red-600 enabled:hover:bg-red-500"
               : "bg-secondary-600 enabled:hover:bg-secondary-500",
-            isPending ? "animate-pulse" : ""
+            isPending ? "animate-pulse" : "",
           )}
         >
           {confirmText}

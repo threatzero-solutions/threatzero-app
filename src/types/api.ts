@@ -1,5 +1,5 @@
 export interface SafetyManagementResourceStats<
-  Status extends Record<number, string>
+  Status extends Record<number, string>,
 > {
   total: number;
   subtotals: {

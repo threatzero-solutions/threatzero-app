@@ -36,7 +36,7 @@ const FormsDashboard: React.FC = () => {
                 <p
                   className={classNames(
                     states[form.state],
-                    "rounded-md whitespace-nowrap mt-0.5 px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset"
+                    "rounded-md whitespace-nowrap mt-0.5 px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset",
                   )}
                 >
                   {fromStatus(form.state)}

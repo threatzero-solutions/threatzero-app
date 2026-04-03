@@ -22,7 +22,7 @@ export default function StepSelectTrainingSection({
   selectedEnrollment: CourseEnrollment;
   trainingSections: TrainingSection[];
   onSelectTrainingSectionAndWindow: (
-    sectionAndWindow: SectionAndWindow
+    sectionAndWindow: SectionAndWindow,
   ) => void;
   onStepBackward: () => void;
 }) {
@@ -31,9 +31,10 @@ export default function StepSelectTrainingSection({
       selectedEnrollment
         ? getSectionFeaturedWindows(selectedEnrollment, trainingSections)
         : trainingSections.map(
-            (section) => ({ section, window: null } as SectionAndNullableWindow)
+            (section) =>
+              ({ section, window: null }) as SectionAndNullableWindow,
           ),
-    [selectedEnrollment, trainingSections]
+    [selectedEnrollment, trainingSections],
   );
 
   return (

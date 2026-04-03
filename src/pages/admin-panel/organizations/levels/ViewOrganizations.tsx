@@ -57,7 +57,7 @@ export const ViewOrganizations: React.FC = () => {
     useImmer<ItemFilterQueryParams>({ order: { name: "ASC" } });
   const [debouncedOrganizationsQuery] = useDebounceValue(
     organizationsQuery,
-    300
+    300,
   );
 
   const [editBasicInfoOpen, setEditBasicInfoOpen] = useState(false);

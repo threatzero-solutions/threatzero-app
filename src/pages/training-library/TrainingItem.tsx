@@ -64,7 +64,7 @@ const TrainingItem: React.FC = () => {
 
     if (state.activeCourse) {
       return state.activeCourse.sections.find((s) =>
-        s.items?.some((i) => i.item.id === itemId)
+        s.items?.some((i) => i.item.id === itemId),
       )?.id;
     }
   }, [searchParams, state.activeCourse, itemId]);
@@ -101,7 +101,7 @@ const TrainingItem: React.FC = () => {
           progress: input.progress,
           completed: input.completed,
         },
-        watchId
+        watchId,
       ),
   });
 
@@ -115,7 +115,7 @@ const TrainingItem: React.FC = () => {
     {
       maxWait: 2000,
       trailing: true,
-    }
+    },
   );
 
   const handleVideoError = useCallback(
@@ -123,7 +123,7 @@ const TrainingItem: React.FC = () => {
     (error: unknown, data?: unknown) => {
       console.error("Error loading video", error, data);
     },
-    []
+    [],
   );
 
   const handleVideoProgress = (data: ProgressEventData) => {
@@ -139,7 +139,7 @@ const TrainingItem: React.FC = () => {
     if (data.progressPercent < 1) {
       saveVideoProgress(
         data.progressPercent,
-        data.progressPercent >= ACTUAL_COMPLETION_THRESHOLD
+        data.progressPercent >= ACTUAL_COMPLETION_THRESHOLD,
       );
     }
   };

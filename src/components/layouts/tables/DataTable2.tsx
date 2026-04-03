@@ -21,8 +21,7 @@ import BaseTable, { BaseTableProps } from "./BaseTable";
 import TableHeader, { TableHeaderProps } from "./TableHeader";
 
 interface DataTable2Props<T extends object>
-  extends Omit<BaseTableProps<T>, "table">,
-    TableHeaderProps {
+  extends Omit<BaseTableProps<T>, "table">, TableHeaderProps {
   data: T[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<T, any>[];

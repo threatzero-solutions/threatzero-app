@@ -21,7 +21,7 @@ type ConditionalUnit<M> = M extends true
 
 interface UnitSelectProps<
   M extends boolean | undefined,
-  TUnit extends ConditionalUnit<M>
+  TUnit extends ConditionalUnit<M>,
 > {
   value: TUnit;
   onChange?: (event: SimpleChangeEvent<TUnit>) => void;
@@ -36,7 +36,7 @@ interface UnitSelectProps<
 
 const UnitSelect = <
   M extends boolean | undefined,
-  TUnit extends ConditionalUnit<M>
+  TUnit extends ConditionalUnit<M>,
 >({
   value,
   onChange,
@@ -53,8 +53,8 @@ const UnitSelect = <
   const selectedUnitsLength = Array.isArray(value)
     ? value.length
     : value
-    ? 1
-    : 0;
+      ? 1
+      : 0;
   const { data: unitData } = useQuery({
     queryKey: [
       "units",
@@ -83,7 +83,7 @@ const UnitSelect = <
       ?.filter((unit) => {
         if (Array.isArray(value)) {
           return !value.some((u) =>
-            typeof u === "string" ? u === unit.slug : u.id === unit.id
+            typeof u === "string" ? u === unit.slug : u.id === unit.id,
           );
         }
         if (value) {
@@ -151,8 +151,8 @@ const UnitSelect = <
               many
                 ? ""
                 : typeof unit === "string"
-                ? selectedUnit?.name ?? ""
-                : unit?.name
+                  ? (selectedUnit?.name ?? "")
+                  : unit?.name
             }
             placeholder="Search for a unit..."
             type="search"
@@ -186,7 +186,7 @@ const UnitSelect = <
                   className={({ focus }) =>
                     classNames(
                       "relative cursor-default select-none py-2 pl-3 pr-9",
-                      focus ? "bg-secondary-600 text-white" : "text-gray-900"
+                      focus ? "bg-secondary-600 text-white" : "text-gray-900",
                     )
                   }
                 >

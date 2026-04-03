@@ -70,7 +70,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
           onClick={() => setIsEditing(true)}
           className={classNames(
             "flex items-center gap-2 group text-left hover:opacity-80 transition-opacity",
-            readOnly ? "" : "cursor-pointer"
+            readOnly ? "" : "cursor-pointer",
           )}
           title={readOnly ? "" : "Click to edit"}
         >
@@ -81,8 +81,8 @@ const EditableCell: React.FC<EditableCellProps> = ({
               readOnly
                 ? "opacity-0"
                 : alwaysShowEdit
-                ? "opacity-80"
-                : "opacity-0 group-hover:opacity-80"
+                  ? "opacity-80"
+                  : "opacity-0 group-hover:opacity-80",
             )}
             aria-hidden="true"
           />

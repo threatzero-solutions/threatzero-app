@@ -41,14 +41,14 @@ export const useOrganizationFilters = ({
       (Array.isArray(query[organizationKey])
         ? (query[organizationKey] as unknown[]).length > 0
         : !!query[organizationKey]),
-    [query, organizationKey]
+    [query, organizationKey],
   );
 
   const [organizationsQuery, setOrganizationsQuery] =
     useImmer<ItemFilterQueryParams>({ limit: 5 });
   const [debouncedOrganizationsQuery] = useDebounceValue(
     organizationsQuery,
-    300
+    300,
   );
 
   const { data: organizations, isLoading: organizationsLoading } = useQuery({
@@ -63,7 +63,7 @@ export const useOrganizationFilters = ({
       (Array.isArray(query[unitKey])
         ? (query[unitKey] as unknown[]).length > 0
         : !!query[unitKey]),
-    [query, unitKey]
+    [query, unitKey],
   );
 
   const [unitsQuery, setUnitsQuery] = useImmer<ItemFilterQueryParams>({

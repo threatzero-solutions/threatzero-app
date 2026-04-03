@@ -92,7 +92,7 @@ const EditOrganizationPolicyFile: React.FC<EditOrganizationPolicyFileProps> = ({
         onSuccess: () => {
           doSave();
         },
-      }
+      },
     );
   };
   return (

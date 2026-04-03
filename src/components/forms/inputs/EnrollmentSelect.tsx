@@ -61,7 +61,7 @@ const EnrollmentSelect: React.FC<EnrollmentSelectProps> = ({
     queryFn: ({ queryKey }) =>
       queryKey[1]
         ? getCourseEnrollments(queryKey[1], { limit: 1000 }).then(
-            (r) => r.results
+            (r) => r.results,
           )
         : getMyCourseEnrollments(),
   });
@@ -74,7 +74,7 @@ const EnrollmentSelect: React.FC<EnrollmentSelectProps> = ({
     return allCourseEnrollments?.filter((enrollment) =>
       enrollment.course?.metadata?.title
         ?.toLowerCase()
-        .includes(query.toLowerCase())
+        .includes(query.toLowerCase()),
     );
   }, [query, allCourseEnrollments]);
 
@@ -82,7 +82,7 @@ const EnrollmentSelect: React.FC<EnrollmentSelectProps> = ({
 
   const isAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const handleChange = (course: EnrollmentInput) => {

@@ -25,7 +25,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       className={classNames(
         "relative w-full",
         fullWidth ? "" : "max-w-80",
-        className
+        className,
       )}
     >
       <Input
@@ -41,7 +41,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           inputRef.current?.value.length
             ? "opacity-100"
             : "pointer-events-none opacity-0",
-          "cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 hover:opacity-75 transition-opacity"
+          "cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 hover:opacity-75 transition-opacity",
         )}
         onClick={() => {
           if (!searchQuery && inputRef.current) {

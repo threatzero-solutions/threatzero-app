@@ -54,18 +54,18 @@ const ThreatAssessmentForm: React.FC = () => {
           else p.delete("edit");
           return p;
         },
-        { replace: true }
+        { replace: true },
       ),
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const canAlterForm = useMemo(
     () => hasPermissions([LEVEL.ADMIN, WRITE.FORMS]),
-    [hasPermissions]
+    [hasPermissions],
   );
   const canAlterAssessment = useMemo(
     () => hasPermissions([WRITE.THREAT_ASSESSMENTS]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const queryClient = useQueryClient();
@@ -116,7 +116,7 @@ const ThreatAssessmentForm: React.FC = () => {
         status,
       });
     },
-    [assessmentMutation.mutate, params.assessmentId]
+    [assessmentMutation.mutate, params.assessmentId],
   );
 
   const downloadAssessmentAsPdfMutation = useMutation({
@@ -164,12 +164,12 @@ const ThreatAssessmentForm: React.FC = () => {
       downloadAssessmentAsPdfMutation,
       setInfo,
       infoAlertId,
-    ]
+    ],
   );
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
-    submission: DeepPartial<FormSubmission>
+    submission: DeepPartial<FormSubmission>,
   ) => {
     event.preventDefault();
 

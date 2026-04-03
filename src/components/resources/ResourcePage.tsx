@@ -12,7 +12,7 @@ const ResourcePage: React.FC = withRequirePermissions(() => {
   const params = useParams();
   const title = params.category
     ? `${params.category.replace(/(^|\s)[a-z]/g, (c) =>
-        c.toUpperCase()
+        c.toUpperCase(),
       )} Resources`
     : "Resources";
   return (
@@ -33,7 +33,7 @@ const ResourcePage: React.FC = withRequirePermissions(() => {
                       isActive
                         ? "border-secondary-500 text-secondary-600"
                         : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                      "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
+                      "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium",
                     )
                   }
                 >

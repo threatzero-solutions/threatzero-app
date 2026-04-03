@@ -18,13 +18,14 @@ export interface SectionAndWindow {
   section: TrainingSection;
 }
 
-export type SectionAndNullableWindow =
-  | Exclude<SectionAndWindow, { window: null }> & {
-      window: null;
-    };
+export type SectionAndNullableWindow = Exclude<
+  SectionAndWindow,
+  { window: null }
+> & {
+  window: null;
+};
 
-export interface SectionAndWindowWithRelativeAvailability
-  extends SectionAndWindow {
+export interface SectionAndWindowWithRelativeAvailability extends SectionAndWindow {
   relativeAvailability: TrainingAvailability;
 }
 

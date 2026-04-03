@@ -45,8 +45,8 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
   const selectedOrganizationsLength = Array.isArray(value)
     ? value.length
     : value
-    ? 1
-    : 0;
+      ? 1
+      : 0;
   const { data: organizationData } = useQuery({
     queryKey: [
       "organizations",
@@ -73,7 +73,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
       ?.filter((org) => {
         if (Array.isArray(value)) {
           return !value.some((o) =>
-            typeof o === "string" ? o === org.slug : o.id === org.id
+            typeof o === "string" ? o === org.slug : o.id === org.id,
           );
         }
         if (value) {
@@ -114,8 +114,8 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
     }
     handleChange(
       value.filter(
-        (o) => o.id !== organization.id
-      ) as ConditionalOrganization<M>
+        (o) => o.id !== organization.id,
+      ) as ConditionalOrganization<M>,
     );
   };
 
@@ -145,8 +145,8 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
               many
                 ? ""
                 : typeof organization === "string"
-                ? selectedOrganization?.name ?? ""
-                : organization?.name
+                  ? (selectedOrganization?.name ?? "")
+                  : organization?.name
             }
             placeholder="Search for an organization..."
             type="search"
@@ -179,7 +179,7 @@ const OrganizationSelect = <M extends boolean | undefined = false>({
                   className={({ focus }) =>
                     classNames(
                       "relative cursor-default select-none py-2 pl-3 pr-9",
-                      focus ? "bg-secondary-600 text-white" : "text-gray-900"
+                      focus ? "bg-secondary-600 text-white" : "text-gray-900",
                     )
                   }
                 >

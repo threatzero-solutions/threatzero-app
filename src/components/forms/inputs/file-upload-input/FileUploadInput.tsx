@@ -15,11 +15,10 @@ import { filePreload } from "../../../../queries/media";
 import { classNames } from "../../../../utils/core";
 import UploadedFileTile, { UploadedFile } from "./UploadedFileTile";
 
-interface FileUploadProps
-  extends DetailedHTMLProps<
-    InputHTMLAttributes<HTMLInputElement>,
-    HTMLInputElement
-  > {
+interface FileUploadProps extends DetailedHTMLProps<
+  InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+> {
   params: {
     mediaUploadUrl: string;
   };
@@ -28,8 +27,6 @@ interface FileUploadProps
 
 const FileUploadInput: React.FC<FileUploadProps> = ({
   onChange,
-  type,
-  value,
   params,
   loadedValue,
   readOnly,
@@ -46,7 +43,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
         fileInputRef.current.setCustomValidity("");
       } else {
         fileInputRef.current.setCustomValidity(
-          "File upload is still in progress."
+          "File upload is still in progress.",
         );
       }
     }
@@ -65,7 +62,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
             keyTokenPair !== null &&
             typeof keyTokenPair === "object" &&
             Object.hasOwn(keyTokenPair, "key") &&
-            Object.hasOwn(keyTokenPair, "url")
+            Object.hasOwn(keyTokenPair, "url"),
         )
         .map((keyTokenPair: { key: string; url: string }) => {
           return {
@@ -73,7 +70,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
             uploadStatus: "uploaded",
             url: keyTokenPair.url,
           } as UploadedFile;
-        })
+        }),
     );
   }, [loadedValue, setFiles]);
 
@@ -107,7 +104,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
         if (fileInputRef.current) {
           const existingKeys = files
             .filter(
-              (u) => u.uploadStatus === "uploaded" && u.key && u.key !== key
+              (u) => u.uploadStatus === "uploaded" && u.key && u.key !== key,
             )
             .map((u) => u.key);
           onChange?.({
@@ -121,6 +118,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
               getAttribute: (n: string) =>
                 fileInputRef.current?.getAttribute(n),
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any);
         }
       })
@@ -194,7 +192,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
       className={classNames(
         "mt-2 rounded-lg border bg-white transition-all overflow-hidden",
         isDragging ? "border-secondary-600" : "border-gray-900/25",
-        files.length || isDragging ? "border-solid" : "border-dashed"
+        files.length || isDragging ? "border-solid" : "border-dashed",
       )}
       style={{
         transform: "translateZ(0)",
@@ -211,7 +209,7 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
           "fixed inset-0 bg-white grid grid-cols-1 place-items-center transition-opacity z-10",
           isDragging && !readOnly
             ? "opacity-90"
-            : "pointer-events-none opacity-0"
+            : "pointer-events-none opacity-0",
         )}
       >
         Drop here

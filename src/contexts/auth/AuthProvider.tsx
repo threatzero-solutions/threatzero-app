@@ -69,7 +69,7 @@ export interface AuthContextType {
   authenticated: boolean;
   addEventListener: (
     event: string,
-    cb: (kc: Keycloak, ...args: unknown[]) => void
+    cb: (kc: Keycloak, ...args: unknown[]) => void,
   ) => void;
   /**
    * Checks if the user has the required permissions.
@@ -79,7 +79,7 @@ export interface AuthContextType {
    */
   hasPermissions: (
     requiredPermissions: string[],
-    type?: "any" | "all"
+    type?: "any" | "all",
   ) => boolean;
   accessTokenClaims?: { [key: string]: unknown } | null;
   interceptorReady: boolean;
@@ -120,7 +120,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const addEventListener = (
     event: string,
-    cb: (kc: Keycloak, ...args: unknown[]) => void
+    cb: (kc: Keycloak, ...args: unknown[]) => void,
   ) => {
     if (!eventCallbacks.has(event)) {
       eventCallbacks.set(event, new Set<() => void>());
@@ -174,7 +174,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     _keycloak.onAuthSuccess = handleEvent("onAuthSuccess", _keycloak);
     _keycloak.onAuthRefreshSuccess = handleEvent(
       "onAuthRefreshSuccess",
-      _keycloak
+      _keycloak,
     );
     _keycloak.onAuthLogout = handleEvent("onAuthLogout", _keycloak);
     _keycloak.onTokenExpired = handleEvent("onTokenExpired", _keycloak);
@@ -223,7 +223,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       },
       (error) => {
         return Promise.reject(error);
-      }
+      },
     );
 
     axios.interceptors.response.use(
@@ -237,7 +237,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
           }
         }
         return Promise.reject(error);
-      }
+      },
     );
     setInterceptorReady(true);
   }, [accessToken, keycloak]);
@@ -259,19 +259,19 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
           return requiredPermissions.some(predicate);
       }
     },
-    [keycloak]
+    [keycloak],
   );
 
   const accessTokenClaims = useMemo(() => keycloak?.tokenParsed, [keycloak]);
 
   const myOrganizationSlug = useMemo(
     () => accessTokenClaims?.organization,
-    [accessTokenClaims]
+    [accessTokenClaims],
   );
 
   const myUnitSlug = useMemo(
     () => accessTokenClaims?.unit,
-    [accessTokenClaims]
+    [accessTokenClaims],
   );
 
   const [hasMultipleUnitAccess, setHasMultipleUnitAccess] = useState(false);
@@ -280,13 +280,13 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       return;
     }
     getUnits({ limit: 1 }).then((units) =>
-      setHasMultipleUnitAccess(units.count > 1)
+      setHasMultipleUnitAccess(units.count > 1),
     );
   }, [interceptorReady]);
 
   const isGlobalAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   return (

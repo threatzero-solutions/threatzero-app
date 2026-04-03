@@ -21,7 +21,7 @@ const BackButton: React.FC<BackButtonProps> = ({
       to={state?.from ?? defaultTo}
       className={classNames(
         "block text-sm text-gray-900 hover:text-gray-600 mb-4 w-max",
-        className ?? ""
+        className ?? "",
       )}
     >
       &larr;{" "}

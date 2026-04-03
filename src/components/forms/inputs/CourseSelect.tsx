@@ -61,7 +61,7 @@ const CourseSelect: React.FC<CourseSelectProps> = ({
 
   const isAdmin = useMemo(
     () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions]
+    [hasPermissions],
   );
 
   const handleCourseChange = (course: CourseInput) => {

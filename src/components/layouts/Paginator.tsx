@@ -38,7 +38,7 @@ const Paginator: React.FC<PaginatorProps> = ({
   const count = useMemo(() => total ?? 0, [total]);
   const currentLimit = useMemo(
     () => pageCount ?? DEFAULT_PAGE_SIZE,
-    [pageCount]
+    [pageCount],
   );
 
   const activePage = useMemo(() => offset / nextLimit + 1, [offset, nextLimit]);
@@ -46,7 +46,7 @@ const Paginator: React.FC<PaginatorProps> = ({
   const totalPages = useMemo(() => {
     return Array.from(
       { length: Math.ceil(count / nextLimit) },
-      (_, i) => i + 1
+      (_, i) => i + 1,
     );
   }, [count, nextLimit]);
 
@@ -61,24 +61,27 @@ const Paginator: React.FC<PaginatorProps> = ({
         ? [defaultBreakerPosition]
         : [2, c - 1];
 
-    return totalPages.reduce((acc, p) => {
-      let showPage = true;
-      if (breakerPositions[0] === defaultBreakerPosition) {
-        showPage =
-          p < defaultBreakerPosition || p > c - defaultBreakerPosition + 1;
-      } else {
-        showPage =
-          (p >= activePage - 1 && p <= activePage + 1) || p === 1 || p === c;
-      }
-      if (condenseButtons && !showPage) {
-        if (breakerPositions.includes(p)) {
-          acc.push(null);
+    return totalPages.reduce(
+      (acc, p) => {
+        let showPage = true;
+        if (breakerPositions[0] === defaultBreakerPosition) {
+          showPage =
+            p < defaultBreakerPosition || p > c - defaultBreakerPosition + 1;
+        } else {
+          showPage =
+            (p >= activePage - 1 && p <= activePage + 1) || p === 1 || p === c;
         }
+        if (condenseButtons && !showPage) {
+          if (breakerPositions.includes(p)) {
+            acc.push(null);
+          }
+          return acc;
+        }
+        acc.push(p);
         return acc;
-      }
-      acc.push(p);
-      return acc;
-    }, [] as (number | null)[]);
+      },
+      [] as (number | null)[],
+    );
   }, [totalPages, activePage]);
 
   const handleChangePage = (newPage: number) => {
@@ -161,12 +164,12 @@ const Paginator: React.FC<PaginatorProps> = ({
                     "relative hidden items-center px-4 py-2 text-sm font-semibold focus:z-20 md:inline-flex",
                     p === activePage
                       ? "z-10 bg-secondary-600 text-white focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
-                      : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
+                      : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0",
                   )}
                 >
                   {p}
                 </button>
-              )
+              ),
             )}
             <button
               type="button"

@@ -1,6 +1,6 @@
-import PillBadge from '../../../components/PillBadge';
-import { TipStatus } from '../../../types/entities';
-import { fromStatus } from '../../../utils/core';
+import PillBadge from "../../../components/PillBadge";
+import { TipStatus } from "../../../types/entities";
+import { fromStatus } from "../../../utils/core";
 
 interface StatusPillProps {
   status: TipStatus;
@@ -9,13 +9,13 @@ interface StatusPillProps {
 const getColorFromStatus = (status: TipStatus) => {
   switch (status) {
     case TipStatus.NEW:
-      return 'yellow';
+      return "yellow";
     case TipStatus.REVIEWED:
-      return 'blue';
+      return "blue";
     case TipStatus.RESOLVED:
-      return 'green';
+      return "green";
     default:
-      return 'gray';
+      return "gray";
   }
 };
 

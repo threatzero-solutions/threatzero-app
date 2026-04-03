@@ -81,7 +81,7 @@ const VimeoPlayer: React.FC<VimeoPlayerProps> = ({
           if (!hasSeeked.current) {
             maxProgressSeconds.current = Math.max(
               maxProgressSeconds.current,
-              data.seconds
+              data.seconds,
             );
           }
 
@@ -95,7 +95,7 @@ const VimeoPlayer: React.FC<VimeoPlayerProps> = ({
             totalDuration: data.duration,
             hasSeeked: hasSeeked.current,
           });
-        }, 250)
+        }, 250),
       );
 
       player.on("seeking", () => {
@@ -121,7 +121,7 @@ const VimeoPlayer: React.FC<VimeoPlayerProps> = ({
       onPlay,
       onPause,
       onError,
-    ]
+    ],
   );
 
   useEffect(() => {

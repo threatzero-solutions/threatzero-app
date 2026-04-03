@@ -34,7 +34,7 @@ export interface CoreContextType {
   // OTHER
   /** @deprecated use `ConfirmationContext` instead. */
   setConfirmationOpen: (
-    confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">
+    confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">,
   ) => void;
   /** @deprecated use `ConfirmationContext` instead. */
   setConfirmationClose: () => void;
@@ -65,7 +65,7 @@ export const CoreContextProvider: React.FC<PropsWithChildren> =
     const [confirmationOpen, setConfirmationOpen] = useState(false);
 
     const handleSetConfirmationOpen = (
-      confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">
+      confirmationOptions: Omit<ConfirmationModalProps, "open" | "setOpen">,
     ) => {
       setConfirmationOpen(true);
       dispatch({

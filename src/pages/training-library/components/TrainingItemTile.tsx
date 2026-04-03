@@ -55,7 +55,7 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
       }`,
       {
         state: { from: location },
-      }
+      },
     );
   }, [navigate, item?.id, navigateDisabled, params.sectionId, location]);
 
@@ -78,7 +78,7 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
     <div
       className={classNames(
         "relative",
-        !navigateDisabled ? "cursor-pointer" : ""
+        !navigateDisabled ? "cursor-pointer" : "",
       )}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
@@ -90,13 +90,13 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
           "col-span-1 grid rounded-md overflow-hidden grid-cols-video-card h-full",
           dense ? "grid-rows-video-card-dense" : "grid-rows-video-card",
           selected ? "ring-secondary-600 ring-2" : "",
-          className
+          className,
         )}
       >
         <div
           className={classNames(
             dense ? "pt-32" : "pt-64",
-            "flex overflow-hidden relative"
+            "flex overflow-hidden relative",
           )}
         >
           <img
@@ -104,7 +104,7 @@ const TrainingItemTile: React.FC<TrainingItemTileProps> = ({
               isHover && !navigateDisabled
                 ? "w-[105%] h-[105%]"
                 : "w-full h-full",
-              "absolute object-cover transition-all duration-300 ease-out inset-0"
+              "absolute object-cover transition-all duration-300 ease-out inset-0",
             )}
             src={item?.thumbnailUrl ?? DEFAULT_THUMBNAIL_URL}
             alt={item?.metadata?.title}

@@ -23,7 +23,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
   const [selected, setSelected] = useImmer<string[]>([]);
   const allSelected = useMemo(
     () => options.every((o) => o.disabled || selected.includes(o.key)),
-    [selected, options]
+    [selected, options],
   );
 
   const handleSelectAll = () => {
@@ -97,7 +97,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
             className={classNames(
               "flex items-center items gap-3",
               idx === 0 ? "pt-3" : idx === options.length - 1 ? "pb-3" : "",
-              option.disabled ? "opacity-50" : "cursor-pointer"
+              option.disabled ? "opacity-50" : "cursor-pointer",
             )}
             aria-disabled={option.disabled}
             title={option.disabled ? option.disabledText : ""}

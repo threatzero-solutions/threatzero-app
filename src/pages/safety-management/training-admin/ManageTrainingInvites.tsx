@@ -208,14 +208,14 @@ const ManageTrainingInvites: React.FC = () => {
     {
       queryKey: ["training-invites", itemFilterOptions] as const,
       queryFn: ({ queryKey }) => getTrainingInvites(queryKey[1]),
-    }
+    },
   );
 
   const [trainingItemFilterQuery, setTrainingItemFilterQuery] =
     useImmer<ItemFilterQueryParams>({ limit: 10 });
   const [debouncedTrainingItemFilterQuery] = useDebounceValue(
     trainingItemFilterQuery,
-    300
+    300,
   );
   const { data: trainingItems, isLoading: trainingItemsLoading } = useQuery({
     queryKey: ["training-items", debouncedTrainingItemFilterQuery] as const,
@@ -236,8 +236,8 @@ const ManageTrainingInvites: React.FC = () => {
               arr.set(i.id, i);
               return arr;
             }, new Map<TrainingItem["id"], TrainingItem>())
-            .values() ?? []
-        )
+            .values() ?? [],
+        ),
       ),
     enabled: !!selectedEnrollment?.course?.id,
   });
@@ -269,7 +269,7 @@ const ManageTrainingInvites: React.FC = () => {
 
       return fuse.search(search)[0]?.item ?? null;
     },
-    [availableUnits]
+    [availableUnits],
   );
 
   const organizationFilters = useOrganizationFilters({
@@ -290,7 +290,7 @@ const ManageTrainingInvites: React.FC = () => {
     return allTrainingItems.filter(
       (i) =>
         !itemSearchQuery ||
-        i.metadata.title?.toLowerCase().includes(itemSearchQuery.toLowerCase())
+        i.metadata.title?.toLowerCase().includes(itemSearchQuery.toLowerCase()),
     );
   }, [allTrainingItems, itemSearchQuery]);
 
@@ -307,7 +307,7 @@ const ManageTrainingInvites: React.FC = () => {
           transformHeader: normalizeHeader,
           skipEmptyLines: true,
           complete: (results) => resolve(results),
-        })
+        }),
     );
 
     let organizationSlugFromCsv: string | undefined = undefined;
@@ -351,12 +351,12 @@ const ManageTrainingInvites: React.FC = () => {
 
       if (enrollmentIdFromCsv) {
         results.enrollment = results.organization.enrollments?.find(
-          (e) => e.id === enrollmentIdFromCsv
+          (e) => e.id === enrollmentIdFromCsv,
         );
 
         if (trainingItemIdFromCsv) {
           const course = await getTrainingCourse(
-            results.enrollment?.course?.id
+            results.enrollment?.course?.id,
           );
           results.item = course?.sections
             .flatMap((s) => s.items?.map((i) => i.item) ?? [])
@@ -383,7 +383,7 @@ const ManageTrainingInvites: React.FC = () => {
   const handleUpdateInvite = (
     idx: number,
     key: keyof Omit<TrainingParticipantRepresentation, "audiences">,
-    e: SimpleChangeEvent<string>
+    e: SimpleChangeEvent<string>,
   ) => {
     setTokenValues((draft) => {
       let value = e.target?.value;
@@ -543,7 +543,7 @@ const ManageTrainingInvites: React.FC = () => {
                   value={selectedOrganization}
                   onChange={(e) =>
                     setSelectedOrganization(
-                      e.target?.value as Organization | undefined
+                      e.target?.value as Organization | undefined,
                     )
                   }
                   required
@@ -647,7 +647,7 @@ const ManageTrainingInvites: React.FC = () => {
                       handleUpdateInvite(
                         idx,
                         "unitSlug",
-                        e as SimpleChangeEvent<string>
+                        e as SimpleChangeEvent<string>,
                       )
                     }
                     required={true}

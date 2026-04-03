@@ -43,7 +43,7 @@ interface TrainingSectionTileProps {
   dense?: boolean;
   onNavigate?: (
     e: MouseEvent | KeyboardEvent,
-    section: Partial<TrainingSection>
+    section: Partial<TrainingSection>,
   ) => void;
   classNames?: {
     container?: string;
@@ -70,7 +70,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
   const firstItem = useMemo(() => section.items?.[0]?.item, [section.items]);
   const singleItem = useMemo(
     () => section.items?.length === 1,
-    [section.items]
+    [section.items],
   );
   const [isHover, setIsHover] = useState(false);
 
@@ -78,7 +78,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
 
   const navigateDisabled = useMemo(
     () => navigateDisabledProp || !!onEditSection,
-    [navigateDisabledProp, onEditSection]
+    [navigateDisabledProp, onEditSection],
   );
 
   const availability = useMemo(() => {
@@ -102,16 +102,16 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
       const yearSuffix = `, ${featuredUntil.format("YYYY")}`;
       if (featuredOn.isSame(featuredUntil, "month")) {
         return `${featuredOn.format("MMM D")} - ${featuredUntil.format(
-          "D"
+          "D",
         )}${yearSuffix}`;
       }
       return `${featuredOn.format("MMM D")} - ${featuredUntil.format(
-        "MMM D"
+        "MMM D",
       )}${yearSuffix}`;
     }
 
     return `${featuredOn.format(defaultFormat)} - ${featuredUntil.format(
-      defaultFormat
+      defaultFormat,
     )}`;
   }, [featuredWindow]);
 
@@ -130,7 +130,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
 
           return acc;
         },
-        { duration: 0, currentTime: 0 }
+        { duration: 0, currentTime: 0 },
       )
     );
   }, [state.itemCompletionsMap, section.items]);
@@ -173,7 +173,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
         state: { from: location },
       });
     },
-    [location, navigate, navigateDisabled, onNavigate, section]
+    [location, navigate, navigateDisabled, onNavigate, section],
   );
 
   return (
@@ -181,7 +181,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
       className={cn(
         "relative",
         !navigateDisabled ? "cursor-pointer" : "",
-        classNames?.container
+        classNames?.container,
       )}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
@@ -193,19 +193,19 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
           "col-span-1 grid grid-cols-video-card rounded-md overflow-hidden h-full",
           dense ? "grid-rows-video-card-dense" : "grid-rows-video-card",
           className,
-          classNames?.card
+          classNames?.card,
         )}
       >
         <div
           className={cn(
             "flex overflow-hidden relative",
-            dense ? "pt-32" : "pt-64"
+            dense ? "pt-32" : "pt-64",
           )}
         >
           <img
             className={cn(
               isHover && !navigateDisabled ? "scale-105" : "scale-100",
-              "absolute object-cover transition-all duration-300 ease-out inset-0 h-full w-full"
+              "absolute object-cover transition-all duration-300 ease-out inset-0 h-full w-full",
             )}
             src={firstItem?.thumbnailUrl ?? DEFAULT_THUMBNAIL_URL}
             alt={firstItem?.metadata?.title ?? "Training Material"}
@@ -216,7 +216,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
             <p className="text-gray-500 text-xs">{availability}</p>
             <h2
               className={cn(
-                dense ? "mt-1 text-base line-clamp-2" : "my-1 text-lg"
+                dense ? "mt-1 text-base line-clamp-2" : "my-1 text-lg",
               )}
               // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
               dangerouslySetInnerHTML={{
@@ -229,7 +229,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
             <p
               className={cn(
                 "text-gray-500",
-                dense ? "text-sm line-clamp-3" : "text-base line-clamp-5"
+                dense ? "text-sm line-clamp-3" : "text-base line-clamp-5",
               )}
               // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
               dangerouslySetInnerHTML={{
@@ -290,7 +290,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
                       <span
                         className={cn(
                           "inline-flex items-center",
-                          !previousSection ? "opacity-50" : ""
+                          !previousSection ? "opacity-50" : "",
                         )}
                       >
                         <ArrowLeftCircleIcon className="h-5 w-5 mr-1 text-secondary-600" />
@@ -313,7 +313,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
                       <span
                         className={cn(
                           "inline-flex items-center",
-                          !nextSection ? "opacity-50" : ""
+                          !nextSection ? "opacity-50" : "",
                         )}
                       >
                         <ArrowRightCircleIcon className="h-5 w-5 mr-1 text-secondary-600" />

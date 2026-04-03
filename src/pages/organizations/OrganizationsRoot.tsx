@@ -61,7 +61,7 @@ const OrganizationsRootInner: React.FC = () => {
         acc.set(unit.slug, unit);
         return acc;
       }, new Map<string, Unit>()),
-    [allUnits]
+    [allUnits],
   );
 
   const tabs = useMemo(
@@ -100,7 +100,7 @@ const OrganizationsRootInner: React.FC = () => {
           },
         ] as (NavigationItem & { icon: typeof HomeIcon; hidden?: boolean })[]
       ).filter(canNavigate),
-    [isUnitContext, isGlobalAdmin, canNavigate]
+    [isUnitContext, isGlobalAdmin, canNavigate],
   );
 
   return (
@@ -186,7 +186,7 @@ const OrganizationsRootInner: React.FC = () => {
                           isActive
                             ? "border-secondary-500 text-secondary-600"
                             : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                          "group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium"
+                          "group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium",
                         )
                       }
                     >
@@ -198,7 +198,7 @@ const OrganizationsRootInner: React.FC = () => {
                               isActive
                                 ? "text-secondary-500"
                                 : "text-gray-400 group-hover:text-gray-500",
-                              "-ml-0.5 mr-2 size-5"
+                              "-ml-0.5 mr-2 size-5",
                             )}
                           />
                           <span>{tab.name}</span>
@@ -215,7 +215,7 @@ const OrganizationsRootInner: React.FC = () => {
             "mb-2 rounded-md text-white font-semibold text-xs py-2 px-3 bg-linear-to-r",
             isUnitContext
               ? "from-secondary-600 to-secondary-500"
-              : "from-primary-600 to-primary-500"
+              : "from-primary-600 to-primary-500",
           )}
         >
           {isUnitContext ? "Unit" : "Organization"}
@@ -256,7 +256,7 @@ const OrganizationsRoot: React.FC<{
       </OrganizationsContextProvider>
     );
   },
-  myOrganizationPermissionOptions
+  myOrganizationPermissionOptions,
 );
 
 export default OrganizationsRoot;

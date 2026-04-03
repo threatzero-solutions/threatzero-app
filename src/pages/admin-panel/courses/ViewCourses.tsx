@@ -21,7 +21,7 @@ const ViewCourses: React.FC = () => {
     useImmer<ItemFilterQueryParams>({ order: { createdOn: "DESC" } });
   const [debouncedCourseFilterOptions] = useDebounceValue(
     courseFilterOptions,
-    300
+    300,
   );
   const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ["training-courses", debouncedCourseFilterOptions] as const,

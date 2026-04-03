@@ -164,7 +164,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
   const debouncedSaveItem = useDebounceCallback(saveItemMutate, 500);
 
   const handleSetItem = (
-    itemUpdate: SettableItem | DraftFunction<SettableItem>
+    itemUpdate: SettableItem | DraftFunction<SettableItem>,
   ) => {
     setItem(itemUpdate);
     debouncedSaveItem();
@@ -172,7 +172,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
 
   const handleMetadataChange = (
     input: MetadataFieldType,
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const newValue = typeof event === "string" ? event : event.target.value;
 
@@ -182,7 +182,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
   };
 
   const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     handleSetItem((i) => {
       i[event.target.name] = event.target.value;
@@ -190,7 +190,7 @@ const EditTrainingItem: React.FC<EditTrainingItemProps> = ({
   };
 
   const getEstCompletionTimeInput = (
-    input: Partial<Field> & { name: keyof Video }
+    input: Partial<Field> & { name: keyof Video },
   ) => (
     <div className="flex rounded-md">
       <FormInput

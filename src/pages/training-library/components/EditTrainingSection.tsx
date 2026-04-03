@@ -99,7 +99,7 @@ const EditTrainingSection: React.FC<EditTrainingSectionProps> = ({
       },
       items: (items ?? []) as TrainingSectionItem[],
     }),
-    [title, description, items]
+    [title, description, items],
   );
 
   const queryClient = useQueryClient();

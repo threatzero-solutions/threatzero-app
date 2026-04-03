@@ -136,7 +136,7 @@ const EditResource: React.FC<EditResourceProps> = ({
             ...r,
             [event.target.name]: event.target.value,
           }
-        : r
+        : r,
     );
   };
 
@@ -192,7 +192,7 @@ const EditResource: React.FC<EditResourceProps> = ({
               (i.name === "vimeoUrl" &&
                 resourceItem.type === ResourceType.VIDEO) ||
               (i.name === "fileKey" &&
-                resourceItem.type === ResourceType.DOCUMENT)
+                resourceItem.type === ResourceType.DOCUMENT),
           )
           .map((input) => (
             <SlideOverField

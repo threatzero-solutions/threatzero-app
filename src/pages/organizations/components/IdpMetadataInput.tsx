@@ -94,7 +94,7 @@ const IdpMetadataInput = <K extends string | number | symbol = string>({
   };
   const debouncedHandleSetMetadataURL = useDebounceCallback(
     handleSetMetadataURL,
-    400
+    400,
   );
 
   return (
@@ -166,7 +166,7 @@ const IdpMetadataInput = <K extends string | number | symbol = string>({
                     "w-full",
                     selected && urlErrorMsg
                       ? "ring-red-300 text-red-900 focus:ring-red-500!"
-                      : ""
+                      : "",
                   )}
                 />
                 {selected && urlErrorMsg && (

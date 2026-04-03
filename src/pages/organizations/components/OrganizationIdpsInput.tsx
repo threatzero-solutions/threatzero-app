@@ -66,7 +66,7 @@ const IdpRow: React.FC<{
             <span
               className={classNames(
                 "rounded-sm font-bold text-white px-2 py-1 uppercase text-xs",
-                idp.protocol === "saml" ? "bg-green-400" : "bg-secondary-400"
+                idp.protocol === "saml" ? "bg-green-400" : "bg-secondary-400",
               )}
             >
               {idp.protocol}
@@ -146,7 +146,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
           close();
           setSlugToLink("");
         },
-      }
+      },
     );
   };
 
@@ -167,7 +167,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
               });
               setConfirmationClose();
             },
-          }
+          },
         );
       },
       destructive: true,
@@ -181,7 +181,7 @@ const OrganizationIdpsInput: React.FC<OrganizationIdpsInputProps> = ({
         if (idp) acc.set(idp.slug, idp);
         return acc;
       }, new Map<string, OrganizationIdpDto>()),
-    [idps]
+    [idps],
   );
 
   return (

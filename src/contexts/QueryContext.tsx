@@ -25,7 +25,7 @@ const QueryContext: React.FC<PropsWithChildren> = ({ children }) => {
 
       setError("Oops! Something went wrong.", { id: defaultErrorAlertId });
     },
-    [defaultErrorAlertId, setError]
+    [defaultErrorAlertId, setError],
   );
 
   const [queryClient] = useState(() => {

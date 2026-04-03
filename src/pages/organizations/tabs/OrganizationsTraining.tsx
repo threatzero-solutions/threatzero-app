@@ -30,23 +30,23 @@ const MyOrganizationTraining: React.FC = () => {
       isUnitContext
         ? UNIT_TRAINING_ADMIN_GROUP_NAME
         : ORGANIZATION_TRAINING_ADMIN_GROUP_NAME,
-    [isUnitContext]
+    [isUnitContext],
   );
 
   const trainingAdminGroupId = useMemo(
     () => roleGroups?.find((g) => g.name === trainingAdminGroupName)?.id,
-    [roleGroups, trainingAdminGroupName]
+    [roleGroups, trainingAdminGroupName],
   );
 
   const trainingAdminGroupNotFound = useMemo(
     () => !roleGroupsLoading && !trainingAdminGroupId,
-    [roleGroupsLoading, trainingAdminGroupId]
+    [roleGroupsLoading, trainingAdminGroupId],
   );
 
   const idpRoleGroups = useMemo(() => getIdpRoleGroups(), [getIdpRoleGroups]);
   const usingSyncedAdminGroup = useMemo(
     () => idpRoleGroups.includes(trainingAdminGroupName),
-    [idpRoleGroups, trainingAdminGroupName]
+    [idpRoleGroups, trainingAdminGroupName],
   );
 
   return (
@@ -58,19 +58,24 @@ const MyOrganizationTraining: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {!isUnitContext && (hasPermissions([READ.COURSE_ENROLLMENTS, WRITE.COURSE_ENROLLMENTS], "all") || isGlobalAdmin) && (
-            <LargeFormSection
-              heading="Course Enrollments"
-              subheading="Enrollments provide access to training content for given windows of time."
-              defaultOpen
-            >
-              <CourseEnrollmentsInput
-                name="enrollments"
-                organizationId={currentOrganization.id}
-                accessSettings={currentOrganization.trainingAccessSettings}
-              />
-            </LargeFormSection>
-          )}
+          {!isUnitContext &&
+            (hasPermissions(
+              [READ.COURSE_ENROLLMENTS, WRITE.COURSE_ENROLLMENTS],
+              "all",
+            ) ||
+              isGlobalAdmin) && (
+              <LargeFormSection
+                heading="Course Enrollments"
+                subheading="Enrollments provide access to training content for given windows of time."
+                defaultOpen
+              >
+                <CourseEnrollmentsInput
+                  name="enrollments"
+                  organizationId={currentOrganization.id}
+                  accessSettings={currentOrganization.trainingAccessSettings}
+                />
+              </LargeFormSection>
+            )}
           {((!trainingAdminGroupNotFound &&
             hasPermissions([READ.ORGANIZATION_USERS])) ||
             isGlobalAdmin) && (
@@ -109,7 +114,7 @@ const MyOrganizationTraining: React.FC = () => {
                     className={classNames(
                       trainingAdminGroupNotFound
                         ? "grayscale pointer-events-none opacity-60"
-                        : ""
+                        : "",
                     )}
                   >
                     <GroupMembersTable

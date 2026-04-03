@@ -113,7 +113,7 @@ const useBulkUserUploadContext = () => {
   const context = useContext(BulkUserUploadContext);
   if (!context) {
     throw new Error(
-      "useBulkUserUploadContext must be used within a BulkUserUploadContextProvider"
+      "useBulkUserUploadContext must be used within a BulkUserUploadContextProvider",
     );
   }
   return context;
@@ -143,8 +143,8 @@ function BulkUserUploadContextProvider({
     queryFn: () =>
       getTrainingAudiences({ limit: 100 }).then((r) =>
         r.results.filter(
-          (a) => !!currentOrganization?.allowedAudiences.includes(a.slug)
-        )
+          (a) => !!currentOrganization?.allowedAudiences.includes(a.slug),
+        ),
       ),
   });
 
@@ -165,14 +165,14 @@ function BulkUserUploadContextProvider({
             threshold: 0.2,
           })
         : null,
-    [allUnits]
+    [allUnits],
   );
   const findUnit = useCallback(
     (search: string) => {
       if (!unitsFuse) return null;
       return unitsFuse.search(search).at(0)?.item ?? null;
     },
-    [unitsFuse]
+    [unitsFuse],
   );
 
   const audiencesFuse = useMemo(
@@ -183,14 +183,14 @@ function BulkUserUploadContextProvider({
             threshold: 0.2,
           })
         : null,
-    [allAudiences]
+    [allAudiences],
   );
   const findAudience = useCallback(
     (search: string) => {
       if (!audiencesFuse) return null;
       return audiencesFuse.search(search).at(0)?.item ?? null;
     },
-    [audiencesFuse]
+    [audiencesFuse],
   );
 
   const [file, setFile] = useState<File | null>(null);
@@ -199,7 +199,7 @@ function BulkUserUploadContextProvider({
     useMap<string, keyof UserCsvRow>();
   const reversedHeaderMappings = useMemo(
     () => new Map(Array.from(headerMappings.entries()).map(([k, v]) => [v, k])),
-    [headerMappings]
+    [headerMappings],
   );
 
   const [usersToUpload, setUsersToUpload] = useImmer<PreparedUserRow[]>([]);
@@ -250,7 +250,7 @@ function BulkUserUploadContextProvider({
       finished:
         statuses.length === usersToUpload.length &&
         statuses.every((p) =>
-          ["success", "error", "cancelled"].includes(p.status)
+          ["success", "error", "cancelled"].includes(p.status),
         ),
       hasErrors:
         statuses.length > 0 && statuses.some((p) => p.status === "error"),
@@ -259,7 +259,7 @@ function BulkUserUploadContextProvider({
       errors: statuses
         .filter(
           (p): p is UserUploadProgress & { error: string } =>
-            p.status === "error" && !!p.error
+            p.status === "error" && !!p.error,
         )
         .map((p) => p.error),
     } satisfies UploadState;
@@ -345,8 +345,8 @@ function BulkUserUploadForm() {
         <SlideOverHeading
           title={`Add users to ${
             isUnitContext
-              ? currentUnit?.name ?? "unit"
-              : currentOrganization?.name ?? "organization"
+              ? (currentUnit?.name ?? "unit")
+              : (currentOrganization?.name ?? "organization")
           }`}
           description={`Use this tool to add users from a CSV file to ${
             isUnitContext ? "this unit" : "this organization"
@@ -381,7 +381,7 @@ function Step1UploadCsvFile(props: Partial<ComponentProps<typeof Step>>) {
           rawHeaders
             .map(normalizeHeader)
             .map((h) => [h, CSV_HEADERS_MAPPER.get(h)])
-            .filter((v): v is [string, keyof UserCsvRow] => !!v[1])
+            .filter((v): v is [string, keyof UserCsvRow] => !!v[1]),
         );
       },
     });
@@ -438,7 +438,7 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
 
   const userFields = useMemo(
     () => USER_FIELDS.filter((f) => !isUnitContext || f.name !== "unit"),
-    [isUnitContext]
+    [isUnitContext],
   );
 
   const allFieldsSatisfied = useMemo(
@@ -447,9 +447,9 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
         (f) =>
           !f.required ||
           !!reversedHeaderMappings.get(f.name) ||
-          (f.name === "unit" && !!defaultUnit)
+          (f.name === "unit" && !!defaultUnit),
       ),
-    [reversedHeaderMappings, userFields, defaultUnit]
+    [reversedHeaderMappings, userFields, defaultUnit],
   );
 
   useEffect(() => {
@@ -460,7 +460,7 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
         transformHeader: (h) => headerMappings.get(normalizeHeader(h)) ?? h,
         transform: (v, h) => {
           if (h === "unit") {
-            return isUnitContext ? defaultUnit : findUnit(v) ?? defaultUnit;
+            return isUnitContext ? defaultUnit : (findUnit(v) ?? defaultUnit);
           }
           if (h === "trainingGroup") {
             return findAudience(v) ?? defaultAudience;
@@ -482,7 +482,7 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
               }
 
               return row;
-            })
+            }),
           );
         },
       });
@@ -558,7 +558,8 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
                       value={defaultUnit?.id}
                       onChange={(e) =>
                         setDefaultUnit(
-                          allUnits?.find((u) => u.id === e.target.value) ?? null
+                          allUnits?.find((u) => u.id === e.target.value) ??
+                            null,
                         )
                       }
                       options={(allUnits ?? []).map((u) => ({
@@ -574,7 +575,7 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
                       onChange={(e) =>
                         setDefaultAudience(
                           allAudiences?.find((a) => a.id === e.target.value) ??
-                            null
+                            null,
                         )
                       }
                       options={(allAudiences ?? []).map((s) => ({
@@ -607,7 +608,7 @@ function Step2MatchColumnNames(props: Partial<ComponentProps<typeof Step>>) {
                 </div>
               </div>
             );
-          }
+          },
         )}
       </div>
       <div className="flex gap-4 mt-10">
@@ -699,7 +700,7 @@ function Step3ReviewAndUpload(props: Partial<ComponentProps<typeof Step>>) {
               error: errorMsg,
             });
           }
-        })
+        }),
       );
     }
 
@@ -893,7 +894,7 @@ function Step3ReviewAndUpload(props: Partial<ComponentProps<typeof Step>>) {
           type="button"
           className={cn(
             "inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400",
-            uploadState.inProgress && "animate-pulse"
+            uploadState.inProgress && "animate-pulse",
           )}
           disabled={userDataErrors.length > 0 || !uploadState.allWaiting}
           onClick={handleUserUpload}
@@ -901,10 +902,10 @@ function Step3ReviewAndUpload(props: Partial<ComponentProps<typeof Step>>) {
           {uploadState.inProgress
             ? "Processing..."
             : uploadState.finished
-            ? uploadState.hasCancelled
-              ? "Process cancelled"
-              : "Users Added"
-            : "Add Users"}
+              ? uploadState.hasCancelled
+                ? "Process cancelled"
+                : "Users Added"
+              : "Add Users"}
         </button>
         {uploadState.finished &&
           (uploadState.hasCancelled || uploadState.hasErrors) && (
@@ -938,7 +939,7 @@ function EditUserForm() {
   const user = useMemo(
     () =>
       editUser.data !== null ? usersToUpload.at(editUser.data) : undefined,
-    [usersToUpload, editUser.data]
+    [usersToUpload, editUser.data],
   );
 
   const formMethods = useForm<PreparedUserRow>({
@@ -1016,7 +1017,7 @@ function EditUserForm() {
                 value={field.value?.id}
                 onChange={(a) =>
                   field.onChange(
-                    allAudiences?.find((u) => u.id === a.target.value)
+                    allAudiences?.find((u) => u.id === a.target.value),
                   )
                 }
                 options={(allAudiences ?? []).map((u) => ({

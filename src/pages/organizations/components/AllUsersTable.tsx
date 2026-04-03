@@ -91,7 +91,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
 
   const thisUnit = useMemo(
     () => units?.results?.find((u) => u.slug === unitSlug),
-    [units, unitSlug]
+    [units, unitSlug],
   );
 
   const { mutate: updateUserActivation, isPending: isUpdatingUserActivation } =
@@ -132,7 +132,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
         confirmText: isDeactivate ? "Deactivate" : "Activate",
       });
     },
-    [setConfirmationOpen, updateUserActivation]
+    [setConfirmationOpen, updateUserActivation],
   );
 
   const columns = useMemo(
@@ -144,7 +144,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
           <div>
             <span
               className={cn(
-                !row.original.enabled && "text-gray-400 line-through"
+                !row.original.enabled && "text-gray-400 line-through",
               )}
             >
               {row.original.email}{" "}
@@ -238,7 +238,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                       <span
                         className={cn(
                           "inline-flex items-center gap-1",
-                          enabled ? "text-red-500" : "text-green-500"
+                          enabled ? "text-red-500" : "text-green-500",
                         )}
                       >
                         <Icon className="size-4 inline" />{" "}
@@ -249,7 +249,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
                   action: () =>
                     handleUpdateUserActivation(
                       row.original,
-                      row.original.enabled
+                      row.original.enabled,
                     ),
                 },
               ]}
@@ -267,7 +267,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
       moveUser,
       editUser,
       handleUpdateUserActivation,
-    ]
+    ],
   );
 
   return (
@@ -279,7 +279,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
               type="button"
               className={classNames(
                 "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
-                "inline-flex items-center gap-x-1"
+                "inline-flex items-center gap-x-1",
               )}
               title={
                 !unitSlug
@@ -295,7 +295,7 @@ const AllUsersTable: React.FC<AllUsersTableProps> = ({
               type="button"
               className={classNames(
                 "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-70",
-                "inline-flex items-center gap-x-1"
+                "inline-flex items-center gap-x-1",
               )}
               onClick={() => setIsBulkUserUploadOpen(true)}
             >

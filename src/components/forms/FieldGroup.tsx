@@ -11,6 +11,7 @@ import AddNew from "./builder/AddNew";
 interface FormGroupProps {
   group: FieldGroupEntity;
   isBuilding?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFieldChange?: (event: Partial<ChangeEvent<any>>) => void;
   fieldResponses: {
     [key: string]: FieldResponse;
@@ -38,7 +39,7 @@ const FieldGroup: React.FC<FormGroupProps> = ({
   const { handleEditFieldGroup, handleEditField } = useContext(FormsContext);
   const subgroups = useMemo(
     () => noMutateSort(group.childGroups, orderSort),
-    [group]
+    [group],
   );
 
   return (
@@ -48,7 +49,7 @@ const FieldGroup: React.FC<FormGroupProps> = ({
           "grid grid-cols-1 gap-x-8 gap-y-4 pb-12 auto-rows-min",
           orientation === "vertical" ? "" : "md:grid-cols-3",
           isSubgroup ? "col-span-full" : "",
-          className
+          className,
         )}
       >
         <div>
@@ -58,7 +59,7 @@ const FieldGroup: React.FC<FormGroupProps> = ({
                 "font-semibold",
                 isSubgroup
                   ? "text-base text-gray-800 leading-6"
-                  : "text-xl text-gray-900 leading-7"
+                  : "text-xl text-gray-900 leading-7",
               )}
               dangerouslySetInnerHTML={{ __html: group.title ?? "" }}
             ></h2>
@@ -139,7 +140,7 @@ const FieldGroup: React.FC<FormGroupProps> = ({
               className={classNames(
                 idx !== subgroups.length + 1
                   ? "border-b border-gray-900/10"
-                  : ""
+                  : "",
               )}
               mediaUploadUrl={mediaUploadUrl}
             />

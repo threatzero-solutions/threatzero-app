@@ -23,26 +23,26 @@ const TrainingSections: React.FC<TrainingSectionsProps> = ({
 
   const enrollment = useMemo(
     () => enrollmentProp ?? state.activeEnrollment,
-    [enrollmentProp, state.activeEnrollment]
+    [enrollmentProp, state.activeEnrollment],
   );
 
   const sectionsAndWindows = useMemo(
     () =>
       getSectionFeaturedWindows(
         enrollment,
-        sectionsProp ?? state.activeCourse?.sections ?? []
+        sectionsProp ?? state.activeCourse?.sections ?? [],
       ),
-    [enrollment, sectionsProp, state.activeCourse]
+    [enrollment, sectionsProp, state.activeCourse],
   );
 
   const sections = useMemo(
     () => sectionsAndWindows.map(({ section }) => section),
-    [sectionsAndWindows]
+    [sectionsAndWindows],
   );
 
   const loading = useMemo(
     () => loadingProp ?? courseLoading,
-    [loadingProp, courseLoading]
+    [loadingProp, courseLoading],
   );
 
   return !loading ? (
