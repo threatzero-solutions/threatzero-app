@@ -162,33 +162,33 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
               trailing
               text="View"
             />
-            <Dropdown
-              iconOnly
-              value="Actions"
-              valueIcon={<EllipsisVerticalIcon className="size-4" />}
-              actions={[
-                {
-                  id: "edit",
-                  value: (
-                    <span className="inline-flex items-center gap-1">
-                      <PencilIcon className="size-4 inline" /> Edit
-                    </span>
-                  ),
-                  action: () => openEditUnit(row.original),
-                  hidden: !hasPermissions([WRITE.UNITS]),
-                },
-                {
-                  id: "move",
-                  value: (
-                    <span className="inline-flex items-center gap-1">
-                      <ArrowUturnRightIcon className="size-4 inline" /> Move
-                    </span>
-                  ),
-                  action: () => openMoveUnit(row.original),
-                  hidden: !hasPermissions([WRITE.UNITS]),
-                },
-              ]}
-            />
+            {hasPermissions([WRITE.UNITS]) && (
+              <Dropdown
+                iconOnly
+                value="Actions"
+                valueIcon={<EllipsisVerticalIcon className="size-4" />}
+                actions={[
+                  {
+                    id: "edit",
+                    value: (
+                      <span className="inline-flex items-center gap-1">
+                        <PencilIcon className="size-4 inline" /> Edit
+                      </span>
+                    ),
+                    action: () => openEditUnit(row.original),
+                  },
+                  {
+                    id: "move",
+                    value: (
+                      <span className="inline-flex items-center gap-1">
+                        <ArrowUturnRightIcon className="size-4 inline" /> Move
+                      </span>
+                    ),
+                    action: () => openMoveUnit(row.original),
+                  },
+                ]}
+              />
+            )}
           </ButtonGroup>
         ),
         enableSorting: false,
