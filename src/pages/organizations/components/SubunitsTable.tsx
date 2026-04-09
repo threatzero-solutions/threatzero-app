@@ -1,4 +1,11 @@
-import { ArrowRightIcon, MinusIcon, PlusIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowRightIcon,
+  ArrowUturnRightIcon,
+  ChevronRightIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  PlusIcon,
+} from "@heroicons/react/20/solid";
 import {
   ExpandedState,
   createColumnHelper,
@@ -13,35 +20,18 @@ import { ReactNode, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
+import Dropdown from "../../../components/layouts/Dropdown";
 import FilterBar from "../../../components/layouts/FilterBar";
+import Modal from "../../../components/layouts/modal/Modal";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import BaseTable from "../../../components/layouts/tables/BaseTable";
 import { WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
+import { useOpenData } from "../../../hooks/use-open-data";
 import { Unit } from "../../../types/entities";
 import { classNames } from "../../../utils/core";
 import EditOrganizationBasic from "./EditOrganizationBasic";
-
-const DEPTH_COLORS = [
-  "bg-red-500",
-  "bg-yellow-500",
-  "bg-blue-500",
-  "bg-green-500",
-  "bg-purple-500",
-  "bg-pink-500",
-  "bg-indigo-500",
-  "bg-gray-500",
-  "bg-teal-500",
-  "bg-cyan-500",
-  "bg-orange-500",
-  "bg-lime-500",
-  "bg-amber-500",
-  "bg-fuchsia-500",
-  "bg-violet-500",
-  "bg-stone-500",
-  "bg-rose-500",
-  "bg-indigo-500",
-];
+import MoveUnitForm from "./MoveUnitForm";
 
 const unitsColumnHelper = createColumnHelper<Unit>();
 
@@ -52,7 +42,7 @@ interface SubunitsTableProps {
   unitId?: string;
   unitIdType?: "id" | "slug";
   setUnitsPath: (unitsPath: string) => void;
-  showOnEmtpy?: boolean;
+  showOnEmpty?: boolean;
   render?: (children: ReactNode) => ReactNode;
   unitsLabelSingular?: string;
   unitsLabelPlural?: string;
@@ -66,7 +56,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
   unitId,
   unitIdType = "slug",
   setUnitsPath,
-  showOnEmtpy = true,
+  showOnEmpty = true,
   render = (children) => children,
   unitsLabelSingular = "Unit",
   unitsLabelPlural = "Units",
@@ -74,8 +64,14 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
 }) => {
   const { hasPermissions } = useAuth();
   const [addBaseOrganizationOpen, setAddBaseOrganizationOpen] = useState(false);
+  const moveUnit = useOpenData<Unit>();
+  const { openData: openMoveUnit } = moveUnit;
+  const editUnit = useOpenData<Unit>();
+  const { openData: openEditUnit } = editUnit;
 
-  const [unitsExpanded, setUnitsExpanded] = useImmer<ExpandedState>(true);
+  const [unitsExpanded, setUnitsExpanded] = useImmer<ExpandedState>(
+    false as ExpandedState,
+  );
   const [unitsSearch, setUnitsSearch] = useImmer<string>("");
 
   const thisUnit = useMemo(() => {
@@ -96,88 +92,64 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
         return !u.parentUnit || !allUnitSlugs.has(u.parentUnit.slug);
       });
 
-      const assignChildren = (unit: Unit): Unit => {
-        unit.subUnits = units
+      const assignChildren = (unit: Unit): Unit => ({
+        ...unit,
+        subUnits: units
           .filter((u) => u.parentUnit?.slug === unit.slug)
-          .map(assignChildren);
-        return unit;
-      };
+          .map(assignChildren),
+      });
 
       return roots.map(assignChildren);
     }
     return [];
   }, [units, unitId, unitIdType]);
 
-  const parentSlugs = useMemo(() => {
-    if (units) {
-      return units
-        .map((u) => u.parentUnit)
-        .filter(Boolean)
-        .reduce((acc, parent) => {
-          if (acc.has(parent!.slug)) return acc;
-          acc.set(parent!.slug, parent!);
-          return acc;
-        }, new Map<string, Unit>());
-    }
-    return new Map<string, Unit>();
-  }, [units]);
-
-  const parentUnitsColorMap = useMemo(() => {
-    return [...parentSlugs.keys()].sort().reduce((map, slug, index) => {
-      if (map.has(slug)) return map;
-      map.set(slug, DEPTH_COLORS[index % DEPTH_COLORS.length]);
-      return map;
-    }, new Map<string, string>());
-  }, [parentSlugs]);
-
   const unitColumns = useMemo(
     () => [
-      unitsColumnHelper.display({
-        id: "depth-indicator",
-        header: "Hierarchy",
+      unitsColumnHelper.accessor("name", {
+        header: "Name",
         cell: ({ row }) => {
-          let path = row.original.path ?? "";
-          if (thisUnit) {
-            path = path.replace(thisUnit.path ?? "", "");
-          }
-          const paths = (path.split("/") ?? []).filter(Boolean);
           const depth = row.depth;
           const canExpand = row.getCanExpand();
+          const isExpanded = row.getIsExpanded();
+
           return (
-            <div className="flex items-stretch h-10 -my-5 overflow-hidden w-min gap-1">
-              {paths.map((slug, index) => (
+            <div
+              className="flex items-center"
+              style={{ paddingLeft: `${depth * 24}px` }}
+            >
+              {canExpand ? (
                 <button
-                  key={index}
-                  className={classNames(
-                    "w-4 rounded-xs",
-                    depth - index < 2
-                      ? index === depth && !canExpand
-                        ? "bg-gray-300"
-                        : parentUnitsColorMap.get(slug)
-                      : "transparent",
-                  )}
-                  disabled={index < depth || !canExpand}
-                  onClick={() => {
-                    row.toggleExpanded();
-                  }}
+                  onClick={() => row.toggleExpanded()}
+                  className="mr-2 rounded bg-primary-50 p-1 text-primary-500 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 cursor-pointer"
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${row.original.name}`}
+                  aria-expanded={isExpanded}
                 >
-                  {index === depth && canExpand && (
-                    <span className="text-white">
-                      {row.getIsExpanded() ? (
-                        <MinusIcon className="size-4" />
-                      ) : (
-                        <PlusIcon className="size-4" />
-                      )}
-                    </span>
-                  )}
+                  <ChevronRightIcon
+                    className={classNames(
+                      "size-5 transition-transform duration-200",
+                      isExpanded ? "rotate-90" : "",
+                    )}
+                  />
                 </button>
-              ))}
+              ) : (
+                <span className="mr-2 w-5 p-1" />
+              )}
+              <span
+                className={
+                  canExpand ? "font-semibold text-gray-900" : "text-gray-700"
+                }
+              >
+                {row.original.name}
+              </span>
+              {canExpand && (
+                <span className="ml-2 inline-flex items-center rounded-full bg-secondary-100 px-2 py-0.5 text-xs font-medium text-secondary-700">
+                  {row.subRows.length}
+                </span>
+              )}
             </div>
           );
         },
-      }),
-      unitsColumnHelper.accessor("name", {
-        header: "Name",
       }),
       unitsColumnHelper.display({
         id: "actions",
@@ -190,12 +162,39 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
               trailing
               text="View"
             />
+            {hasPermissions([WRITE.UNITS]) && (
+              <Dropdown
+                iconOnly
+                value="Actions"
+                valueIcon={<EllipsisVerticalIcon className="size-4" />}
+                actions={[
+                  {
+                    id: "edit",
+                    value: (
+                      <span className="inline-flex items-center gap-1">
+                        <PencilIcon className="size-4 inline" /> Edit
+                      </span>
+                    ),
+                    action: () => openEditUnit(row.original),
+                  },
+                  {
+                    id: "move",
+                    value: (
+                      <span className="inline-flex items-center gap-1">
+                        <ArrowUturnRightIcon className="size-4 inline" /> Move
+                      </span>
+                    ),
+                    action: () => openMoveUnit(row.original),
+                  },
+                ]}
+              />
+            )}
           </ButtonGroup>
         ),
         enableSorting: false,
       }),
     ],
-    [parentUnitsColorMap, setUnitsPath, thisUnit],
+    [setUnitsPath, openEditUnit, openMoveUnit, hasPermissions],
   );
 
   const unitsTable = useReactTable({
@@ -203,13 +202,11 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
     columns: unitColumns,
     initialState: {
       pagination: { pageSize: 10 },
+      sorting: [{ id: "name", desc: false }],
     },
     state: {
       expanded: unitsExpanded,
       globalFilter: unitsSearch,
-      columnVisibility: {
-        ["depth-indicator"]: parentSlugs.size > 0,
-      },
     },
     onExpandedChange: setUnitsExpanded,
     onGlobalFilterChange: setUnitsSearch,
@@ -220,9 +217,10 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     filterFromLeafRows: true,
+    paginateExpandedRows: false,
   });
 
-  return nestedUnits.length > 0 || showOnEmtpy ? (
+  return nestedUnits.length > 0 || showOnEmpty ? (
     render(
       <>
         <div className="space-y-2">
@@ -270,6 +268,27 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
             onSaveSuccess={() => onAddSubunitSuccess?.()}
           />
         </SlideOver>
+        <SlideOver open={editUnit.open} setOpen={editUnit.setOpen}>
+          {editUnit.data && (
+            <EditOrganizationBasic
+              setOpen={editUnit.setOpen}
+              create={false}
+              organizationId={organizationId}
+              unitId={editUnit.data.id}
+              level="unit"
+              onSaveSuccess={() => onAddSubunitSuccess?.()}
+            />
+          )}
+        </SlideOver>
+        <Modal open={moveUnit.open} setOpen={moveUnit.setOpen}>
+          {moveUnit.data && (
+            <MoveUnitForm
+              organizationId={organizationId}
+              unit={moveUnit.data}
+              setOpen={moveUnit.setOpen}
+            />
+          )}
+        </Modal>
       </>,
     )
   ) : (

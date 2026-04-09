@@ -46,6 +46,7 @@ const UnitSelect = <
   required,
   disabled = false,
   queryFilter,
+  filter,
 }: UnitSelectProps<M, TUnit>) => {
   const [unitQuery, setUnitQuery] = useState<string>("");
   const [debouncedUnitQuery] = useDebounceValue(unitQuery, 350);
@@ -93,8 +94,9 @@ const UnitSelect = <
         }
         return true;
       })
+      ?.filter((u) => !filter || filter(u))
       ?.slice(0, 5);
-  }, [unitData, value]);
+  }, [unitData, value, filter]);
 
   const handleChange = (units: TUnit) => {
     if (many && !Array.isArray(units) && units) {

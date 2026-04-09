@@ -1,6 +1,8 @@
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import {
   BookOpenIcon,
   BuildingOffice2Icon,
+  ChevronDownIcon,
   ChevronRightIcon,
   Cog6ToothIcon,
   HomeIcon,
@@ -63,6 +65,21 @@ const OrganizationsRootInner: React.FC = () => {
       }, new Map<string, Unit>()),
     [allUnits],
   );
+
+  const topLevelUnits = useMemo(
+    () =>
+      allUnits?.filter((unit) => !unit.parentUnitId && !unit.isDefault) ?? [],
+    [allUnits],
+  );
+
+  const currentLevelChildren = useMemo(() => {
+    if (!allUnits) return [];
+    if (!isUnitContext) {
+      return topLevelUnits;
+    }
+    const currentSlug = paths[paths.length - 1];
+    return allUnits.filter((u) => u.parentUnit?.slug === currentSlug);
+  }, [allUnits, isUnitContext, topLevelUnits, paths]);
 
   const tabs = useMemo(
     () =>
@@ -140,6 +157,53 @@ const OrganizationsRootInner: React.FC = () => {
                 </div>
               </li>
             ))}
+            {currentLevelChildren.length > 0 && (
+              <li>
+                <div className="flex items-center">
+                  <ChevronRightIcon
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-gray-400"
+                  />
+                  <Menu as="div" className="relative ml-4">
+                    <MenuButton className="inline-flex items-center gap-x-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                      {isUnitContext ? "All Subunits" : "All Units"}
+                      <ChevronDownIcon
+                        aria-hidden="true"
+                        className="size-4 text-gray-400"
+                      />
+                    </MenuButton>
+                    <MenuItems
+                      anchor={{
+                        to: "bottom start",
+                        gap: 2,
+                      }}
+                      className="z-20 w-56 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden max-h-[45vh] overflow-y-auto"
+                    >
+                      {currentLevelChildren.map((unit) => (
+                        <MenuItem key={unit.id}>
+                          {({ focus }) => (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnitsPath(unit.path ?? unit.slug)
+                              }
+                              className={classNames(
+                                focus
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "block w-full px-4 py-2 text-left text-sm",
+                              )}
+                            >
+                              {unit.name}
+                            </button>
+                          )}
+                        </MenuItem>
+                      ))}
+                    </MenuItems>
+                  </Menu>
+                </div>
+              </li>
+            )}
           </ol>
         </nav>
         <div>

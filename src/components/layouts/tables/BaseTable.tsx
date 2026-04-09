@@ -20,6 +20,7 @@ export interface BaseTableProps<T> {
   isLoading?: boolean;
   noRowsMessage?: string;
   showFooter?: boolean;
+  rowClassName?: (row: Row<T>) => string;
 }
 
 const BaseTable = <T extends object>({
@@ -28,6 +29,7 @@ const BaseTable = <T extends object>({
   isLoading = false,
   noRowsMessage = "No results.",
   showFooter = true,
+  rowClassName,
 }: BaseTableProps<T>) => {
   return (
     <>
@@ -47,7 +49,7 @@ const BaseTable = <T extends object>({
           noRowsMessage={noRowsMessage}
         >
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
+            <tr key={row.id} className={rowClassName?.(row)}>
               {row.getVisibleCells().map((cell, idx) => (
                 <BaseTableCell
                   key={cell.id}
