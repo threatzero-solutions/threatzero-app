@@ -73,6 +73,11 @@ const MyOrganizationSettings: React.FC = () => {
       },
     });
 
+  // TODO(residency): these checks disable delete when the user is deleting
+  // their own home org/unit. Currently read from the JWT
+  // (`organization_unit_path`, `organization` claims); post-cutover they
+  // should read `me.residence.{organizationId,unitId}` once that field is
+  // added to /api/me. See `_docs/authorization-model.md §4`.
   const deleteDisabled = useMemo(() => {
     if (
       isUnitContext &&

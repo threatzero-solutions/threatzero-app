@@ -272,6 +272,9 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
+                  // TODO(residency): replace JWT `organization` claim with
+                  // `me.residence.organizationId` once /api/me ships the
+                  // residence field. See `_docs/authorization-model.md §4`.
                   disabled={
                     accessTokenClaims?.organization === organizationData?.slug
                   }
