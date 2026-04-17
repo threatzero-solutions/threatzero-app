@@ -1,9 +1,9 @@
 import { useCallback } from "react";
-import { useAuth } from "../contexts/auth/useAuth";
+import { useMe } from "../contexts/me/MeProvider";
 import { NavigationItem } from "../types/core";
 
 export const useNav = () => {
-  const { hasPermissions } = useAuth();
+  const { can } = useMe();
 
   const canNavigate = useCallback(
     (item: NavigationItem) => {
@@ -11,12 +11,13 @@ export const useNav = () => {
         return true;
       }
 
-      return hasPermissions(
-        item.permissionOptions.permissions,
-        item.permissionOptions.type,
-      );
+      const { permissions, type = "any" } = item.permissionOptions;
+      const predicate = (cap: string) => can(cap);
+      return type === "all"
+        ? permissions.every(predicate)
+        : permissions.some(predicate);
     },
-    [hasPermissions],
+    [can],
   );
 
   const filterByPermissions = useCallback(

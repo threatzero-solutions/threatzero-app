@@ -54,6 +54,12 @@ const TipSubmission: React.FC = () => {
     [hasPermissions],
   );
 
+  // TODO(residency): when `/me` begins returning a `residence` field
+  // ({ organizationId, unitId } | null), default the "submit as me" routing
+  // to the submitter's residence org/unit instead of the JWT-derived unit
+  // slug. Spec: `_docs/authorization-model.md` §4 (residency) and
+  // `threatzero-api/docs/db-authorization-cutover-plan.md §3.1`.
+
   const queryClient = useQueryClient();
 
   const { data: tip, isLoading: tipLoading } = useQuery({
