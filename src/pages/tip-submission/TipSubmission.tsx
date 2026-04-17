@@ -54,11 +54,14 @@ const TipSubmission: React.FC = () => {
     [hasPermissions],
   );
 
-  // TODO(residency): when `/me` begins returning a `residence` field
-  // ({ organizationId, unitId } | null), default the "submit as me" routing
-  // to the submitter's residence org/unit instead of the JWT-derived unit
-  // slug. Spec: `_docs/authorization-model.md` §4 (residency) and
-  // `threatzero-api/docs/db-authorization-cutover-plan.md §3.1`.
+  // Routing note: the submitter's residence (`me.residence.{organizationId,
+  // unitId}`) is the canonical "submit as me" target for safety-concern
+  // routing. The backend derives this server-side from the authenticated
+  // user, so the frontend does not need to thread it into the submission
+  // payload — `POST /tips/submit` only takes the submission and an optional
+  // `locationId`. If future UX exposes a "submit on behalf of..." override,
+  // default it from `useMe().me?.residence` (null → no prefill). See
+  // `_docs/authorization-model.md` §4.
 
   const queryClient = useQueryClient();
 

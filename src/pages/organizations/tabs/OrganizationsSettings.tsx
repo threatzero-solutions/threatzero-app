@@ -10,6 +10,7 @@ import InlineNotice from "../../../components/layouts/InlineNotice";
 import { DISABLED_ROLE_GROUPS } from "../../../constants/organizations";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
+import { useMe } from "../../../contexts/me/MeProvider";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import {
   deleteOrganization,
@@ -17,7 +18,7 @@ import {
   getRoleGroupsForOrganization,
   saveOrganization,
 } from "../../../queries/organizations";
-import { classNames, Path } from "../../../utils/core";
+import { classNames } from "../../../utils/core";
 
 const MyOrganizationSettings: React.FC = () => {
   const {
@@ -27,10 +28,11 @@ const MyOrganizationSettings: React.FC = () => {
     invalidateAllUnitsQuery,
     currentUnit,
     isUnitContext,
-    unitsPath,
+    allUnits,
     navigateAfterDelete,
   } = useContext(OrganizationsContext);
-  const { accessTokenClaims, isGlobalAdmin } = useAuth();
+  const { isGlobalAdmin } = useAuth();
+  const { me } = useMe();
   const {
     setOpen: setConfirmationOpen,
     setClose: setConfirmationClose,
@@ -73,39 +75,37 @@ const MyOrganizationSettings: React.FC = () => {
       },
     });
 
-  // TODO(residency): these checks disable delete when the user is deleting
-  // their own home org/unit. Currently read from the JWT
-  // (`organization_unit_path`, `organization` claims); post-cutover they
-  // should read `me.residence.{organizationId,unitId}` once that field is
-  // added to /api/me. See `_docs/authorization-model.md §4`.
+  // Disable delete when the user is deleting their own home org/unit. Home is
+  // sourced from `/me.residence` (see `_docs/authorization-model.md §4`). A
+  // null residence — e.g. system admins, unenrolled users — yields no disable,
+  // preserving the prior "fall through on missing data" semantics.
   const deleteDisabled = useMemo(() => {
-    if (
-      isUnitContext &&
-      unitsPath &&
-      accessTokenClaims?.organization_unit_path &&
-      typeof accessTokenClaims.organization_unit_path === "string"
-    ) {
-      const userPath = new Path(accessTokenClaims.organization_unit_path);
-      const thisPath = new Path(unitsPath);
+    const residence = me?.residence;
+    if (!residence) return false;
 
-      // User org unit path should be absolute, meaning it includes the organization in the path.
-      // To avoid naming collisions b/w org and unit, behead the user path to remove the org name.
-      // Then check if the user path includes the node (or final unit) of the current units path.
-      if (userPath.isAbsolute && userPath.behead().includes(thisPath.node)) {
-        return true;
+    if (isUnitContext) {
+      const residenceUnitId = residence.unitId;
+      if (!residenceUnitId || !currentUnit?.id) return false;
+
+      // Walk up from the residence unit: if the current unit matches the
+      // residence unit or any of its ancestors, deletion would orphan the
+      // user's home. Block it.
+      const unitsById = new Map((allUnits ?? []).map((u) => [u.id, u]));
+      const visited = new Set<string>();
+      let cursor: string | null = residenceUnitId;
+      while (cursor && !visited.has(cursor)) {
+        visited.add(cursor);
+        if (cursor === currentUnit.id) return true;
+        cursor = unitsById.get(cursor)?.parentUnitId ?? null;
       }
+      return false;
     }
 
-    if (
-      !isUnitContext &&
-      accessTokenClaims?.organization &&
-      accessTokenClaims.organization === currentOrganization?.slug
-    ) {
-      return true;
-    }
-
-    return false;
-  }, [isUnitContext, accessTokenClaims, currentOrganization, unitsPath]);
+    return (
+      !!currentOrganization?.id &&
+      residence.organizationId === currentOrganization.id
+    );
+  }, [isUnitContext, me, currentOrganization, currentUnit, allUnits]);
 
   const deleteTitle = useMemo(
     () =>

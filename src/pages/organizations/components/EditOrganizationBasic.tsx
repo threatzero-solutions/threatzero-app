@@ -17,6 +17,7 @@ import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverF
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
+import { useMe } from "../../../contexts/me/MeProvider";
 import { useAutoSlug } from "../../../hooks/use-auto-slug";
 import {
   getOrganization,
@@ -72,7 +73,8 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   parentUnitId,
   onSaveSuccess,
 }) => {
-  const { accessTokenClaims, isGlobalAdmin } = useAuth();
+  const { isGlobalAdmin } = useAuth();
+  const { me } = useMe();
   const { openConfirmDiscard } = useContext(ConfirmationContext);
 
   const { data: organizationData } = useQuery({
@@ -272,11 +274,13 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
-                  // TODO(residency): replace JWT `organization` claim with
-                  // `me.residence.organizationId` once /api/me ships the
-                  // residence field. See `_docs/authorization-model.md §4`.
+                  // Forbid editing status on the user's own home org. See
+                  // `_docs/authorization-model.md §4`. Null residence (system
+                  // admins, unenrolled users) falls through to enabled.
                   disabled={
-                    accessTokenClaims?.organization === organizationData?.slug
+                    !!me?.residence?.organizationId &&
+                    !!organizationData?.id &&
+                    me.residence.organizationId === organizationData.id
                   }
                 />
               )}

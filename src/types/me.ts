@@ -56,6 +56,18 @@ export interface MeTat {
   units: string[];
 }
 
+/**
+ * Where the user belongs — used for routing (e.g., safety-concern assignment)
+ * and attribution (e.g., training-stats rollup). Independent of grants; a
+ * user can have capabilities in units they don't reside in.
+ *
+ * `null` when the user has no residence (system admins, unenrolled users).
+ */
+export interface MeResidence {
+  organizationId: string | null;
+  unitId: string | null;
+}
+
 export interface MeResponse {
   identity: MeIdentity;
   scope: MeScope;
@@ -63,4 +75,5 @@ export interface MeResponse {
   units: MeUnit[];
   capabilities: MeCapabilities;
   tat: MeTat;
+  residence: MeResidence | null;
 }
