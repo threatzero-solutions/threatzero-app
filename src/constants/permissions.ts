@@ -51,8 +51,23 @@ export const LEVEL = {
    * `useMe().isGlobalAdmin` — is the canonical "system admin only" gate.
    */
   ADMIN: CAP.MANAGE_SYSTEM,
-  /** Legacy "any org-level user" marker. Prefer `useMe().me?.organization`. */
+  /**
+   * @deprecated Legacy "any org-level user" marker. The underlying intent is
+   * *scope*, not *capability* — it originally meant "this user is scoped to
+   * an organization," not "this user can manage units." No call sites use
+   * this standalone today (audit, 2026-04). The compat mapping to
+   * `CAP.MANAGE_UNITS` exists only so any future stray reference keeps
+   * compiling; it is deliberately strict. At new call sites, check
+   * `useMe().me?.scope.kind === 'tenant'` — see
+   * `db-authorization-frontend-plan.md §C.2`.
+   */
   ORGANIZATION: CAP.MANAGE_UNITS,
-  /** Legacy "any unit-level user" marker. Prefer `useMe().me?.units`. */
+  /**
+   * @deprecated Legacy "any unit-level user" marker. Same story as
+   * `LEVEL.ORGANIZATION`: the compat mapping to `CAP.MANAGE_UNITS` is strict
+   * and there are no standalone call sites today. If you need "user has
+   * access to at least one unit," check `useMe().me?.units.length > 0`. If
+   * you need "user is scoped to a tenant," use `scope.kind === 'tenant'`.
+   */
   UNIT: CAP.MANAGE_UNITS,
 } as const;
