@@ -8,6 +8,8 @@ import {
   HomeIcon,
   LifebuoyIcon,
   PencilIcon,
+  ShieldCheckIcon,
+  UserGroupIcon,
   UsersIcon,
 } from "@heroicons/react/20/solid";
 import { useContext, useMemo, useState } from "react";
@@ -95,6 +97,18 @@ const OrganizationsRootInner: React.FC = () => {
             to: "users",
             icon: UsersIcon,
             permissionOptions: organizationUserPermissionOptions,
+          },
+          {
+            name: "Access",
+            to: "access",
+            icon: ShieldCheckIcon,
+            permissionOptions: organizationUserPermissionOptions,
+          },
+          {
+            name: "TAT",
+            to: "tat",
+            icon: UserGroupIcon,
+            permissionOptions: organizationSafetyManagementPermissionOptions,
           },
           {
             name: "Training",

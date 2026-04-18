@@ -30,3 +30,35 @@ dist-ssr
 coverage
 playwright-report
 test-results
+
+# Multi-agent-tool scaffolding produced by `skills add`. The canonical
+# skill source lives in .agents/skills/ and skills-lock.json pins
+# versions; the per-tool symlink directories are regenerable noise.
+.adal/
+.augment/
+.bob/
+.codebuddy/
+.commandcode/
+.continue/
+.cortex/
+.crush/
+.factory/
+.goose/
+.iflow/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.vibe/
+.windsurf/
+.zencoder/

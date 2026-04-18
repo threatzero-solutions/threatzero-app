@@ -29,6 +29,8 @@ import OrganizationsRoot from "./pages/organizations/OrganizationsRoot";
 import OrganizationsSafety from "./pages/organizations/tabs/OrganizationsSafety";
 import OrganizationsSettings from "./pages/organizations/tabs/OrganizationsSettings";
 import OrganizationsTraining from "./pages/organizations/tabs/OrganizationsTraining";
+import OrganizationsAccess from "./pages/organizations/tabs/OrganizationsAccess";
+import OrganizationsTat from "./pages/organizations/tabs/OrganizationsTat";
 import OrganizationsUnits from "./pages/organizations/tabs/OrganizationsUnits";
 import OrganizationsUsers from "./pages/organizations/tabs/OrganizationsUsers";
 import Page404 from "./pages/Page404";
@@ -58,6 +60,16 @@ const organizationsChildren: RouteObject[] = [
     path: "users",
     handle: { title: "Users" },
     element: <OrganizationsUsers />,
+  },
+  {
+    path: "access",
+    handle: { title: "Access" },
+    element: <OrganizationsAccess />,
+  },
+  {
+    path: "tat",
+    handle: { title: "TAT" },
+    element: <OrganizationsTat />,
   },
   {
     path: "training",
