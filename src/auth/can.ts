@@ -104,3 +104,35 @@ export const makeCan = (me: MeResponse | null | undefined) => {
 };
 
 export type CanFn = ReturnType<typeof makeCan>;
+
+/**
+ * `canAny(cap)` — "is this capability granted anywhere in the user's scope?"
+ *
+ * Passes when the cap is granted organization-wide OR at any unit the user
+ * has a grant at (directly; no ancestor walk — the /me payload already
+ * collapses via max-scope). Intended for UX affordances like navigation
+ * visibility, where the question is "can the user do this *somewhere*?"
+ * rather than "can the user do this at a specific org/unit?" — `can()`
+ * remains the right call for the latter.
+ *
+ * System users pass unconditionally; personal-scope users fail.
+ */
+export const makeCanAny = (me: MeResponse | null | undefined) => {
+  if (!me) return () => false;
+
+  const { scope, capabilities } = me;
+
+  return (capability: string): boolean => {
+    if (scope.kind === "system") return true;
+    if (scope.kind === "personal") return false;
+
+    if (capabilities.organization.includes(capability)) return true;
+
+    for (const unitCaps of Object.values(capabilities.units)) {
+      if (unitCaps.includes(capability)) return true;
+    }
+    return false;
+  };
+};
+
+export type CanAnyFn = ReturnType<typeof makeCanAny>;

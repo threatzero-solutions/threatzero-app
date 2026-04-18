@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeCan, UnitTreeNode } from "./can";
+import { makeCan, makeCanAny, UnitTreeNode } from "./can";
 import { MeResponse } from "../types/me";
 
 const baseIdentity = {
@@ -246,5 +246,75 @@ describe("makeCan", () => {
         }),
       ).toBe(true);
     });
+  });
+});
+
+describe("makeCanAny", () => {
+  it("returns false for null/undefined /me", () => {
+    expect(makeCanAny(null)("view-forms")).toBe(false);
+    expect(makeCanAny(undefined)("view-forms")).toBe(false);
+  });
+
+  it("passes when capability is granted organization-wide", () => {
+    const me = makeMe({
+      capabilities: { organization: ["view-forms"], units: {} },
+    });
+    expect(makeCanAny(me)("view-forms")).toBe(true);
+  });
+
+  it("passes when capability is granted at any unit (no org-wide)", () => {
+    const me = makeMe({
+      capabilities: {
+        organization: [],
+        units: { "unit-a": ["view-training"] },
+      },
+    });
+    expect(makeCanAny(me)("view-training")).toBe(true);
+  });
+
+  it("passes when capability is granted at one of several units", () => {
+    const me = makeMe({
+      capabilities: {
+        organization: [],
+        units: {
+          "unit-a": ["unrelated-cap"],
+          "unit-b": ["view-training"],
+          "unit-c": ["also-unrelated"],
+        },
+      },
+    });
+    expect(makeCanAny(me)("view-training")).toBe(true);
+  });
+
+  it("fails when the capability appears nowhere", () => {
+    const me = makeMe({
+      capabilities: {
+        organization: ["view-forms"],
+        units: { "unit-a": ["view-training"] },
+      },
+    });
+    expect(makeCanAny(me)("manage-system")).toBe(false);
+  });
+
+  it("scope=system passes every capability check unconditionally", () => {
+    const me = makeMe({
+      scope: { kind: "system", organizationId: null },
+      organization: null,
+      capabilities: { organization: [], units: {} },
+    });
+    expect(makeCanAny(me)("anything")).toBe(true);
+  });
+
+  it("scope=personal rejects every capability check unconditionally", () => {
+    const me = makeMe({
+      scope: { kind: "personal", organizationId: null },
+      organization: null,
+      capabilities: {
+        organization: ["view-forms"],
+        units: { "unit-a": ["view-training"] },
+      },
+    });
+    expect(makeCanAny(me)("view-forms")).toBe(false);
+    expect(makeCanAny(me)("view-training")).toBe(false);
   });
 });

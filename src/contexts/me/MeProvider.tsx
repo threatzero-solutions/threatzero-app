@@ -7,7 +7,13 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { CanFn, makeCan, UnitTreeNode } from "../../auth/can";
+import {
+  CanAnyFn,
+  CanFn,
+  makeCan,
+  makeCanAny,
+  UnitTreeNode,
+} from "../../auth/can";
 import { getMe, ME_QUERY_KEY } from "../../queries/me";
 import { getUnits } from "../../queries/organizations";
 import { MeResponse } from "../../types/me";
@@ -23,6 +29,14 @@ export interface MeContextType {
   error: unknown;
   refetch: () => Promise<unknown>;
   can: CanFn;
+  /**
+   * `canAny(cap)` — does the user hold `cap` anywhere (org-wide OR at any
+   * granted unit)? Use for UX affordances like nav visibility where the
+   * question is "can the user do this somewhere?" rather than "at a specific
+   * unit?". Prefer `can()` with explicit `{ unitId }` for gating within a
+   * specific context.
+   */
+  canAny: CanAnyFn;
   /** True while `me` has never loaded — callers should block permission gates. */
   isInitialLoading: boolean;
   // Derived convenience views — all consult `/me`, never the JWT.
@@ -50,6 +64,7 @@ const defaultContext: MeContextType = {
   error: null,
   refetch: async () => undefined,
   can: () => false,
+  canAny: () => false,
   isInitialLoading: false,
   isGlobalAdmin: false,
   hasMultipleUnitAccess: false,
@@ -112,6 +127,8 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
       baseCan(capability, { ...opts, unitTree: opts?.unitTree ?? unitTree });
   }, [me, unitTree]);
 
+  const canAny = useMemo<CanAnyFn>(() => makeCanAny(me ?? null), [me]);
+
   const refetchCallback = useCallback(() => refetch(), [refetch]);
 
   // Re-fetch `/me` on auth gain (e.g. after first login) so the first render
@@ -136,12 +153,15 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   // Single org per /me response (decision §0.3). System admins see all.
   const hasMultipleOrganizationAccess = isGlobalAdmin;
 
+  // hasPermissions is the legacy JWT-flat-roles shim. Pre-cutover roles were
+  // granted at the user level (no unit scoping), so the faithful compat answer
+  // is "does the user hold this anywhere?" — delegate to canAny.
   const hasPermissions = useCallback(
     (caps: string[], type: "any" | "all" = "any") => {
-      const predicate = (c: string) => can(c);
+      const predicate = (c: string) => canAny(c);
       return type === "all" ? caps.every(predicate) : caps.some(predicate);
     },
-    [can],
+    [canAny],
   );
 
   const value = useMemo<MeContextType>(
@@ -151,6 +171,7 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
       error,
       refetch: refetchCallback,
       can,
+      canAny,
       isInitialLoading: enabled && isPending,
       isGlobalAdmin,
       myOrganizationSlug,
@@ -166,6 +187,7 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
       error,
       refetchCallback,
       can,
+      canAny,
       enabled,
       isGlobalAdmin,
       myOrganizationSlug,
