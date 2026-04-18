@@ -66,14 +66,12 @@ const OrganizationsAccess: React.FC = () => {
   }, [users, query]);
 
   if (currentOrganizationLoading || !currentOrganization) {
-    return (
-      <div className="animate-pulse rounded-sm bg-slate-200 w-full h-96" />
-    );
+    return <div className="animate-pulse rounded-sm bg-gray-100 w-full h-96" />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Access</h2>
           <p className="text-sm text-gray-500">
@@ -81,16 +79,22 @@ const OrganizationsAccess: React.FC = () => {
             effect immediately.
           </p>
         </div>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by email"
-          className="w-64 rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
-        />
+        <div>
+          <label htmlFor="access-search" className="sr-only">
+            Search users by email
+          </label>
+          <input
+            id="access-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by email"
+            className="w-full sm:w-64 rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
+          />
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -117,6 +121,8 @@ const OrganizationsAccess: React.FC = () => {
                 <td
                   colSpan={3}
                   className="px-6 py-10 text-center text-sm text-gray-500"
+                  role="status"
+                  aria-live="polite"
                 >
                   Loading…
                 </td>
@@ -126,10 +132,12 @@ const OrganizationsAccess: React.FC = () => {
                 <td
                   colSpan={3}
                   className="px-6 py-10 text-center text-sm text-gray-500"
+                  role="status"
+                  aria-live="polite"
                 >
                   {query
                     ? "No users match that search."
-                    : "No users have grants yet. Add one to get started."}
+                    : "No users in this organization yet."}
                 </td>
               </tr>
             ) : (
@@ -148,8 +156,7 @@ const OrganizationsAccess: React.FC = () => {
                 return (
                   <tr
                     key={user.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => setEditing(user)}
+                    className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
@@ -186,11 +193,9 @@ const OrganizationsAccess: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <button
                         type="button"
-                        className="text-primary-600 hover:text-primary-500 font-medium"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditing(user);
-                        }}
+                        aria-label={`Edit roles for ${user.email ?? "user"}`}
+                        className="inline-flex items-center rounded-md px-3 py-2 text-primary-600 hover:text-primary-500 hover:bg-primary-50 font-medium focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                        onClick={() => setEditing(user)}
                       >
                         Edit
                       </button>

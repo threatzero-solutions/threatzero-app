@@ -14,7 +14,7 @@
  * performs a replace-with-set PATCH over the user's ORG-level grants
  * (unit grants are preserved — the PATCH carries them back unchanged).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
@@ -69,8 +69,7 @@ export default function RoleAssignmentEditor({
   }, [user]);
 
   const [selected, setSelected] = useState<Set<string>>(initialOrgRoles);
-  // Re-seed when the target user changes.
-  useMemo(() => setSelected(initialOrgRoles), [initialOrgRoles]);
+  useEffect(() => setSelected(initialOrgRoles), [initialOrgRoles]);
 
   const toggle = (slug: string) =>
     setSelected((prev) => {
@@ -161,9 +160,12 @@ export default function RoleAssignmentEditor({
             </ul>
 
             {mutation.isError && (
-              <p className="mt-4 text-sm text-red-600">
+              <div
+                role="alert"
+                className="mt-4 rounded-md bg-orange-50 px-3 py-2 text-sm text-orange-800 ring-1 ring-orange-200"
+              >
                 Couldn&apos;t save changes. Please try again.
-              </p>
+              </div>
             )}
           </div>
         </SlideOverFormBody>

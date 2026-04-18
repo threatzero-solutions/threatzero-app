@@ -17,7 +17,10 @@ const MemberCard: React.FC<{ member: TatMember }> = ({ member }) => {
   const initial = member.email?.charAt(0).toUpperCase() ?? "?";
   return (
     <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
-      <div className="h-9 w-9 shrink-0 rounded-full bg-primary-100 text-primary-700 font-medium flex items-center justify-center">
+      <div
+        aria-hidden="true"
+        className="h-9 w-9 shrink-0 rounded-full bg-primary-100 text-primary-700 font-medium flex items-center justify-center"
+      >
         {initial}
       </div>
       <div className="min-w-0 flex-1">
@@ -39,9 +42,7 @@ const OrganizationsTat: React.FC = () => {
   const { data: roster, isLoading } = useTatRoster(orgId);
 
   if (currentOrganizationLoading || !currentOrganization) {
-    return (
-      <div className="animate-pulse rounded-sm bg-slate-200 w-full h-96" />
-    );
+    return <div className="animate-pulse rounded-sm bg-gray-100 w-full h-96" />;
   }
 
   const unitEntries = Object.entries(roster?.units ?? {});
@@ -63,7 +64,7 @@ const OrganizationsTat: React.FC = () => {
           Organization-wide
         </h3>
         {isLoading ? (
-          <div className="animate-pulse rounded-sm bg-slate-200 w-full h-24" />
+          <div className="animate-pulse rounded-sm bg-gray-100 w-full h-24" />
         ) : !roster || roster.organization.length === 0 ? (
           <div className="rounded-lg border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500">
             No organization-level TAT members yet.
