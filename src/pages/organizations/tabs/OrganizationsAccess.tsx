@@ -22,7 +22,7 @@ const ROLE_DISPLAY_ORDER = [
   "organization-admin",
   "training-admin",
   "tat-member",
-  "member",
+  "training-participant",
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -30,7 +30,7 @@ const ROLE_LABELS: Record<string, string> = {
   "organization-admin": "Org Admin",
   "training-admin": "Training Admin",
   "tat-member": "TAT",
-  member: "Member",
+  "training-participant": "Training Participant",
 };
 
 /**
@@ -46,7 +46,7 @@ const ROLE_CHIP_CLASS: Record<string, string> = {
   "training-admin":
     "bg-secondary-100 text-secondary-800 ring-1 ring-secondary-200",
   "tat-member": "bg-gray-100 text-gray-700 ring-1 ring-gray-200",
-  member: "bg-gray-100 text-gray-700 ring-1 ring-gray-200",
+  "training-participant": "bg-gray-100 text-gray-700 ring-1 ring-gray-200",
 };
 
 const OrganizationsAccess: React.FC = () => {
