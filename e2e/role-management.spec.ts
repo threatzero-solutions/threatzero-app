@@ -86,6 +86,70 @@ test.describe("Role management (integration)", () => {
     }
   });
 
+  test("role editor exposes the Unit-specific roles section with Add control", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    try {
+      await loginAsRole(page, "organization-admin");
+      await page.goto("/my-organization/access");
+
+      await expect(
+        page.getByRole("heading", { name: "Access", exact: true }),
+      ).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator("table tbody tr").first()).toBeVisible();
+
+      await page.getByRole("button", { name: "Edit" }).first().click();
+
+      const dialog = page.getByRole("dialog");
+      await expect(
+        dialog.getByRole("heading", { name: "Edit roles" }),
+      ).toBeVisible({ timeout: 10_000 });
+
+      // New section + affordance for fine-grained unit-scoped grants.
+      await expect(
+        dialog.getByRole("heading", {
+          name: "Unit-specific roles",
+          exact: true,
+        }),
+      ).toBeVisible();
+
+      // "+ Add unit role" only renders when the org actually has units to
+      // assign to. The prod-copy branch should have units; if the test
+      // organization happens to have none, we accept the empty-state copy.
+      const addButton = dialog.getByRole("button", { name: /add unit role/i });
+      const emptyState = dialog.getByText(/organization has no units yet/i);
+      await expect(addButton.or(emptyState).first()).toBeVisible();
+
+      // When the Add control is available, clicking it reveals role + unit
+      // selects. This smoke-tests the dynamic row wiring without writing.
+      if (await addButton.isVisible()) {
+        await addButton.click();
+
+        // Role select has both unit-scope options and a blank placeholder.
+        const roleSelect = dialog.locator('select[id^="unit-role-"]').first();
+        await expect(roleSelect).toBeVisible();
+        await expect(
+          roleSelect.getByRole("option", { name: "TAT (Unit-level)" }),
+        ).toHaveCount(1);
+        await expect(
+          roleSelect.getByRole("option", {
+            name: "Training Admin (Unit-level)",
+          }),
+        ).toHaveCount(1);
+
+        // Unit select exists alongside it.
+        await expect(
+          dialog.locator('select[id^="unit-unit-"]').first(),
+        ).toBeVisible();
+      }
+    } finally {
+      await context.close();
+    }
+  });
+
   test("org-admin opens the TAT tab and sees the roster sections", async ({
     browser,
   }) => {
