@@ -125,18 +125,19 @@ test.describe("Role management (integration)", () => {
 
       // When the Add control is available, clicking it reveals role + unit
       // selects. This smoke-tests the dynamic row wiring without writing.
+      // Native <select> options don't respond to getByRole('option') reliably
+      // across browsers, so we use direct locator scoping instead.
       if (await addButton.isVisible()) {
         await addButton.click();
 
-        // Role select has both unit-scope options and a blank placeholder.
         const roleSelect = dialog.locator('select[id^="unit-role-"]').first();
         await expect(roleSelect).toBeVisible();
         await expect(
-          roleSelect.getByRole("option", { name: "TAT (Unit-level)" }),
+          roleSelect.locator("option", { hasText: "TAT (Unit-level)" }),
         ).toHaveCount(1);
         await expect(
-          roleSelect.getByRole("option", {
-            name: "Training Admin (Unit-level)",
+          roleSelect.locator("option", {
+            hasText: "Training Admin (Unit-level)",
           }),
         ).toHaveCount(1);
 

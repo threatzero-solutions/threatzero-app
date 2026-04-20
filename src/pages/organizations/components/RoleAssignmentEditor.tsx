@@ -24,7 +24,6 @@ import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHe
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { UserWithGrants } from "../../../queries/grants";
 import { usePatchUserGrants } from "../../../queries/use-grants";
-import { roleLabel } from "./roleDisplay";
 
 /** Roles an org-admin can assign at organization scope. */
 const ORG_SCOPE_ROLES: Array<{
@@ -122,8 +121,17 @@ export default function RoleAssignmentEditor({
   const [selected, setSelected] = useState<Set<string>>(initialOrgRoles);
   const [unitRows, setUnitRows] = useState<UnitGrantRow[]>(initialUnitRows);
 
-  useEffect(() => setSelected(initialOrgRoles), [initialOrgRoles]);
-  useEffect(() => setUnitRows(initialUnitRows), [initialUnitRows]);
+  // Reset editor state only when the target user changes identity, not on
+  // every user-object reference change. A TanStack Query refetch can hand
+  // us a new `user` reference with identical content — if we reset on that,
+  // any in-progress edits (e.g., a half-filled unit row the admin just
+  // added) get wiped mid-interaction.
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    setSelected(initialOrgRoles);
+    setUnitRows(initialUnitRows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const toggle = (slug: string) =>
     setSelected((prev) => {
@@ -312,7 +320,7 @@ export default function RoleAssignmentEditor({
                             <option value="">Select role…</option>
                             {UNIT_SCOPE_ROLES.map((r) => (
                               <option key={r.slug} value={r.slug}>
-                                {roleLabel(r.slug)}
+                                {r.name}
                               </option>
                             ))}
                           </select>
