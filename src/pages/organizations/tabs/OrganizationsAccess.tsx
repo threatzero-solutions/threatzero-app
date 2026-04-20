@@ -2,68 +2,44 @@
  * Role assignment surface for an organization. Replaces scattered
  * role-group controls (KC-backed) with a single DB-native editor.
  *
- * Table of users with their current org-level grants as chips; click a
- * row to open the slide-over editor. Mirrors the "warm professionalism"
- * direction set in .impeccable.md — no destructive red for routine
- * actions, generous row padding, plain language copy.
+ * Sub-tabs:
+ *   - Assignments: the live table of users with editable org-level grants.
+ *   - History: paginated audit feed of grant/revoke events.
+ *
+ * Sub-tab state is persisted in `?view=assignments|history` so deep links
+ * and browser back/forward behave predictably.
  */
-import { useContext, useMemo, useState } from "react";
+import { useContext } from "react";
+import { useSearchParams } from "react-router";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { UserWithGrants } from "../../../queries/grants";
-import { useUsersWithGrants } from "../../../queries/use-grants";
-import RoleAssignmentEditor from "../components/RoleAssignmentEditor";
+import { classNames } from "../../../utils/core";
+import OrganizationsAccessAssignments from "../components/OrganizationsAccessAssignments";
+import OrganizationsAccessHistory from "../components/OrganizationsAccessHistory";
 
-/**
- * Order matters here — chips render in this order. "Highest privilege"
- * first so the most relevant badge reads left to right.
- */
-const ROLE_DISPLAY_ORDER = [
-  "system-admin",
-  "organization-admin",
-  "training-admin",
-  "tat-member",
-  "training-participant",
-];
+type AccessView = "assignments" | "history";
 
-const ROLE_LABELS: Record<string, string> = {
-  "system-admin": "System Admin",
-  "organization-admin": "Org Admin",
-  "training-admin": "Training Admin",
-  "tat-member": "TAT",
-  "training-participant": "Training Participant",
-};
+const VIEW_KEY = "view";
 
-/**
- * Role chip color. Orange (primary) signals broad authority; secondary
- * blue for functional roles; neutral for TAT/member (not authority, just
- * participation). Avoid red — the app's brand intentionally steers clear
- * of urgency/alarm theater (see .impeccable.md).
- */
-const ROLE_CHIP_CLASS: Record<string, string> = {
-  "system-admin": "bg-primary-100 text-primary-800 ring-1 ring-primary-200",
-  "organization-admin":
-    "bg-primary-100 text-primary-800 ring-1 ring-primary-200",
-  "training-admin":
-    "bg-secondary-100 text-secondary-800 ring-1 ring-secondary-200",
-  "tat-member": "bg-gray-100 text-gray-700 ring-1 ring-gray-200",
-  "training-participant": "bg-gray-100 text-gray-700 ring-1 ring-gray-200",
-};
+const isAccessView = (v: string | null): v is AccessView =>
+  v === "assignments" || v === "history";
 
 const OrganizationsAccess: React.FC = () => {
   const { currentOrganization, currentOrganizationLoading } =
     useContext(OrganizationsContext);
-  const orgId = currentOrganization?.id;
 
-  const { data: users, isLoading } = useUsersWithGrants(orgId);
-  const [editing, setEditing] = useState<UserWithGrants | null>(null);
-  const [query, setQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const raw = searchParams.get(VIEW_KEY);
+  const view: AccessView = isAccessView(raw) ? raw : "assignments";
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!users) return [];
-    if (!q) return users;
-    return users.filter((u) => u.email?.toLowerCase().includes(q));
-  }, [users, query]);
+  const setView = (next: AccessView) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "assignments") {
+      params.delete(VIEW_KEY);
+    } else {
+      params.set(VIEW_KEY, next);
+    }
+    setSearchParams(params, { replace: true });
+  };
 
   if (currentOrganizationLoading || !currentOrganization) {
     return <div className="animate-pulse rounded-sm bg-gray-100 w-full h-96" />;
@@ -71,153 +47,59 @@ const OrganizationsAccess: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Access</h2>
-          <p className="text-sm text-gray-500">
-            Assign roles to users in {currentOrganization.name}. Changes take
-            effect immediately.
-          </p>
-        </div>
-        <div>
-          <label htmlFor="access-search" className="sr-only">
-            Search users by email
-          </label>
-          <input
-            id="access-search"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by email"
-            className="w-full sm:w-64 rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
-          />
-        </div>
+      <div
+        role="tablist"
+        aria-label="Access views"
+        className="flex gap-1 rounded-lg bg-gray-100 p-1 w-max"
+      >
+        <SubTabButton
+          active={view === "assignments"}
+          onClick={() => setView("assignments")}
+        >
+          Assignments
+        </SubTabButton>
+        <SubTabButton
+          active={view === "history"}
+          onClick={() => setView("history")}
+        >
+          History
+        </SubTabButton>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-              >
-                User
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-              >
-                Roles
-              </th>
-              <th scope="col" className="relative px-6 py-3">
-                <span className="sr-only">Edit</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {isLoading ? (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="px-6 py-10 text-center text-sm text-gray-500"
-                  role="status"
-                  aria-live="polite"
-                >
-                  Loading…
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="px-6 py-10 text-center text-sm text-gray-500"
-                  role="status"
-                  aria-live="polite"
-                >
-                  {query
-                    ? "No users match that search."
-                    : "No users in this organization yet."}
-                </td>
-              </tr>
-            ) : (
-              filtered.map((user) => {
-                const orgSlugs = user.grants
-                  .filter((g) => g.unitId == null)
-                  .map((g) => g.roleSlug);
-                const unitCount = user.grants.filter(
-                  (g) => g.unitId != null,
-                ).length;
-                const sortedSlugs = [...orgSlugs].sort(
-                  (a, b) =>
-                    ROLE_DISPLAY_ORDER.indexOf(a) -
-                    ROLE_DISPLAY_ORDER.indexOf(b),
-                );
-                return (
-                  <tr
-                    key={user.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.email ?? "—"}
-                      </div>
-                      {unitCount > 0 && (
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          + {unitCount} unit-scoped{" "}
-                          {unitCount === 1 ? "grant" : "grants"}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-wrap gap-1.5">
-                        {sortedSlugs.length === 0 ? (
-                          <span className="text-xs italic text-gray-400">
-                            No organization-wide roles
-                          </span>
-                        ) : (
-                          sortedSlugs.map((slug) => (
-                            <span
-                              key={slug}
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                ROLE_CHIP_CLASS[slug] ??
-                                "bg-gray-100 text-gray-700 ring-1 ring-gray-200"
-                              }`}
-                            >
-                              {ROLE_LABELS[slug] ?? slug}
-                            </span>
-                          ))
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <button
-                        type="button"
-                        aria-label={`Edit roles for ${user.email ?? "user"}`}
-                        className="inline-flex items-center rounded-md px-3 py-2 text-primary-600 hover:text-primary-500 hover:bg-primary-50 font-medium focus:outline-hidden focus:ring-2 focus:ring-primary-500"
-                        onClick={() => setEditing(user)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {orgId && (
-        <RoleAssignmentEditor
-          orgId={orgId}
-          user={editing}
-          open={!!editing}
-          onClose={() => setEditing(null)}
+      {view === "assignments" ? (
+        <OrganizationsAccessAssignments
+          orgId={currentOrganization.id}
+          orgName={currentOrganization.name}
+        />
+      ) : (
+        <OrganizationsAccessHistory
+          orgId={currentOrganization.id}
+          orgName={currentOrganization.name}
         />
       )}
     </div>
   );
 };
+
+const SubTabButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ active, onClick, children }) => (
+  <button
+    type="button"
+    role="tab"
+    aria-selected={active}
+    onClick={onClick}
+    className={classNames(
+      "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500",
+      active
+        ? "bg-white text-gray-900 shadow-sm"
+        : "text-gray-600 hover:text-gray-900",
+    )}
+  >
+    {children}
+  </button>
+);
 
 export default OrganizationsAccess;
