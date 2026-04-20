@@ -1,5 +1,6 @@
 import {
   ArrowPathIcon,
+  CloudArrowDownIcon,
   EyeIcon,
   FireIcon,
   PaperAirplaneIcon,
@@ -171,6 +172,12 @@ export default function AdvancedIndex() {
         </div>
         <div>
           <h4 className="text-sm font-semibold leading-6 text-gray-900">
+            Authorization migration
+          </h4>
+          <SyncAuthorizationButton />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold leading-6 text-gray-900">
             Job queues
           </h4>
           <AdvancedJobQueues />
@@ -247,6 +254,36 @@ function PhonyWebsiteBrokenOverlay({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SyncAuthorizationButton() {
+  const { setSuccess } = useContext(AlertContext);
+
+  const { mutate: syncAuthorization, isPending } = useMutation({
+    mutationFn: async () => {
+      const response = await axios.post(buildUrl("/admin/sync-authorization"));
+      return response.data;
+    },
+    onSuccess: () => {
+      setSuccess("Authorization synced from Keycloak.", { timeout: 5000 });
+    },
+  });
+
+  return (
+    <div className="mt-2 flex flex-col gap-2">
+      <p className="text-xs text-gray-600">
+        Pull roles and grants from Keycloak into the database.
+      </p>
+      <IconButton
+        icon={CloudArrowDownIcon}
+        text="Sync authorization"
+        loading={isPending}
+        disabled={isPending}
+        className="rounded-md bg-secondary-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed w-max"
+        onClick={() => syncAuthorization()}
+      />
     </div>
   );
 }
