@@ -22,7 +22,7 @@ import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm"
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { UserWithGrants } from "../../../queries/grants";
+import { UserWithAccess } from "../../../queries/grants";
 import { usePatchUserGrants } from "../../../queries/use-grants";
 
 /** Roles an org-admin can assign at organization scope. */
@@ -70,7 +70,7 @@ interface UnitGrantRow {
 
 export interface RoleAssignmentEditorProps {
   orgId: string;
-  user: UserWithGrants | null;
+  user: UserWithAccess | null;
   open: boolean;
   onClose: () => void;
 }
@@ -126,12 +126,14 @@ export default function RoleAssignmentEditor({
   // us a new `user` reference with identical content — if we reset on that,
   // any in-progress edits (e.g., a half-filled unit row the admin just
   // added) get wiped mid-interaction.
-  const userId = user?.id ?? null;
+  // Use idpId for the effect key — it's stable for a given person even
+  // when the backend creates a fresh `userRep` row after first login.
+  const userKey = user?.idpId ?? null;
   useEffect(() => {
     setSelected(initialOrgRoles);
     setUnitRows(initialUnitRows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userKey]);
 
   const toggle = (slug: string) =>
     setSelected((prev) => {
@@ -205,9 +207,16 @@ export default function RoleAssignmentEditor({
 
     const orgGrants = [...selected].map((slug) => ({ roleSlug: slug }));
 
+    // `userId` is the DB `UserRepresentation.id`. Null means the user
+    // exists in KC but has never logged in — caller should prevent the
+    // editor from opening in that state, but defend here too.
+    if (!user.userId) {
+      return;
+    }
+
     mutation.mutate(
       {
-        userId: user.id,
+        userId: user.userId,
         grants: [...orgGrants, ...editableUnitGrants, ...preservedUnitGrants],
       },
       { onSuccess: () => onClose() },

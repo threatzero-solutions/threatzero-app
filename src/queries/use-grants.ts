@@ -8,19 +8,30 @@ import {
   DesiredGrantInput,
   getGrantAudit,
   getTatRoster,
-  getUsersWithGrants,
+  getUsersWithAccess,
   grantAuditKey,
   patchUserGrants,
   tatRosterKey,
+  UsersWithAccessQuery,
   usersWithGrantsKey,
 } from "./grants";
 
 const FIVE_MINUTES = 5 * 60_000;
 
-export const useUsersWithGrants = (orgId: string | undefined) =>
+/**
+ * Merged Users+Access page. Query params flow through to the backend
+ * and are embedded in the cache key so each filter combination caches
+ * independently.
+ */
+export const useUsersWithAccess = (
+  orgId: string | undefined,
+  query: UsersWithAccessQuery = {},
+) =>
   useQuery({
-    queryKey: orgId ? usersWithGrantsKey(orgId) : ["access", "users", "none"],
-    queryFn: () => getUsersWithGrants(orgId!),
+    queryKey: orgId
+      ? [...usersWithGrantsKey(orgId), query]
+      : ["access", "users", "none"],
+    queryFn: () => getUsersWithAccess(orgId!, query),
     enabled: !!orgId,
     staleTime: FIVE_MINUTES,
   });

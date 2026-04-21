@@ -8,7 +8,6 @@ import {
   HomeIcon,
   LifebuoyIcon,
   PencilIcon,
-  ShieldCheckIcon,
   UserGroupIcon,
   UsersIcon,
 } from "@heroicons/react/20/solid";
@@ -99,15 +98,12 @@ const OrganizationsRootInner: React.FC = () => {
             icon: BuildingOffice2Icon,
           },
           {
+            // Users + Access merged under one tab. Sub-tabs
+            // (Assignments / History) live inside the page. See
+            // `_docs/users-access-merge-plan.md`.
             name: "Users",
             to: "users",
             icon: UsersIcon,
-            permissionOptions: organizationUserPermissionOptions,
-          },
-          {
-            name: "Access",
-            to: "access",
-            icon: ShieldCheckIcon,
             permissionOptions: organizationUserPermissionOptions,
           },
           {

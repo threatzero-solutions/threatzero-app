@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Paginator from "../../../components/layouts/Paginator";
 import { GrantAuditEntry } from "../../../queries/grants";
-import { useGrantAudit, useUsersWithGrants } from "../../../queries/use-grants";
+import { useGrantAudit, useUsersWithAccess } from "../../../queries/use-grants";
 import Select from "../../../components/forms/inputs/Select";
 import { roleChipClass, roleLabel } from "./roleDisplay";
 
@@ -34,7 +34,11 @@ const OrganizationsAccessHistory: React.FC<Props> = ({ orgId, orgName }) => {
   const [limit, setLimit] = useState(PAGE_SIZE_DEFAULT);
   const [userId, setUserId] = useState<string | undefined>(undefined);
 
-  const { data: users } = useUsersWithGrants(orgId);
+  // Load a large-ish first page purely to populate the user filter
+  // dropdown. Paginating the dropdown is out of scope — real filtering
+  // should come from search-as-you-type later. 500 covers any org we
+  // have today without blowing up the request.
+  const { data: usersPage } = useUsersWithAccess(orgId, { limit: 500 });
   const { data, isLoading, isFetching } = useGrantAudit(orgId, {
     userId,
     limit,
@@ -45,12 +49,12 @@ const OrganizationsAccessHistory: React.FC<Props> = ({ orgId, orgName }) => {
     const opts: Array<{ key: string; label: string }> = [
       { key: ALL_USERS_KEY, label: "All users" },
     ];
-    for (const u of users ?? []) {
-      if (!u.email) continue;
-      opts.push({ key: u.id, label: u.email });
+    for (const u of usersPage?.results ?? []) {
+      if (!u.email || !u.userId) continue;
+      opts.push({ key: u.userId, label: u.email });
     }
     return opts;
-  }, [users]);
+  }, [usersPage]);
 
   const entries: GrantAuditEntry[] = data?.results ?? [];
 
