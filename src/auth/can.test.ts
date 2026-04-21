@@ -12,7 +12,12 @@ const baseIdentity = {
   picture: null,
 };
 
-const baseOrg = { id: "org-1", slug: "acme", name: "Acme" };
+const baseOrg = {
+  id: "org-1",
+  slug: "acme",
+  name: "Acme",
+  labelPreset: "default" as const,
+};
 
 const makeMe = (overrides: Partial<MeResponse> = {}): MeResponse => ({
   identity: baseIdentity,

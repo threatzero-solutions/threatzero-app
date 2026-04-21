@@ -20,10 +20,19 @@ export interface MeIdentity {
   picture: string | null;
 }
 
+/**
+ * Vocabulary preset an organization picks at setup time — drives the
+ * "unit" / "team" label bundle the UI renders. Keep the literal union in
+ * lock-step with `OrganizationLabelPreset` on the backend and with
+ * `labelsForPreset()` in `utils/labels.ts`.
+ */
+export type MeOrganizationLabelPreset = "default" | "school" | "business";
+
 export interface MeOrganization {
   id: string;
   slug: string;
   name: string;
+  labelPreset: MeOrganizationLabelPreset;
 }
 
 export interface MeUnit {

@@ -17,6 +17,11 @@ import {
 import { getMe, ME_QUERY_KEY } from "../../queries/me";
 import { getUnits } from "../../queries/organizations";
 import { MeResponse } from "../../types/me";
+import {
+  DEFAULT_LABEL_BUNDLE,
+  labelsForPreset,
+  OrganizationLabelBundle,
+} from "../../utils/labels";
 import { useAuth } from "../auth/useAuth";
 import { install403Interceptor } from "./install403Interceptor";
 
@@ -56,6 +61,13 @@ export interface MeContextType {
    * Prefer `can()` at new call sites.
    */
   hasPermissions: (capabilities: string[], type?: "any" | "all") => boolean;
+  /**
+   * Vocabulary bundle for the current organization (`unit*` and `team*`
+   * labels). Always returns a bundle — falls back to the default
+   * "Unit" / "Team" language when no organization is in scope (system
+   * admin, personal scope, unauthenticated).
+   */
+  labels: OrganizationLabelBundle;
 }
 
 const defaultContext: MeContextType = {
@@ -70,6 +82,7 @@ const defaultContext: MeContextType = {
   hasMultipleUnitAccess: false,
   hasMultipleOrganizationAccess: false,
   hasPermissions: () => false,
+  labels: DEFAULT_LABEL_BUNDLE,
 };
 
 export const MeContext = createContext<MeContextType>(defaultContext);
@@ -152,6 +165,10 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const hasMultipleUnitAccess = (me?.units.length ?? 0) > 1;
   // Single org per /me response (decision §0.3). System admins see all.
   const hasMultipleOrganizationAccess = isGlobalAdmin;
+  const labels = useMemo(
+    () => labelsForPreset(me?.organization?.labelPreset),
+    [me?.organization?.labelPreset],
+  );
 
   // hasPermissions is the legacy JWT-flat-roles shim. Pre-cutover roles were
   // granted at the user level (no unit scoping), so the faithful compat answer
@@ -179,6 +196,7 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
       hasMultipleUnitAccess,
       hasMultipleOrganizationAccess,
       hasPermissions,
+      labels,
     }),
     [
       me,
@@ -195,6 +213,7 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
       hasMultipleUnitAccess,
       hasMultipleOrganizationAccess,
       hasPermissions,
+      labels,
     ],
   );
 
