@@ -74,7 +74,6 @@ export interface Organization extends OrganizationBase {
   resources?: ResourceItem[];
   idpSlugs: string[] | null;
   allowedAudiences: string[];
-  allowedRoleGroups: string[] | null;
   trainingAccessSettings: OrganizationTrainingAccessSettings | null;
   notificationSettings: OrganizationNotificationSettings | null;
 }

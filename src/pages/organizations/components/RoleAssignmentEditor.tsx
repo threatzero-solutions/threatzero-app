@@ -3,13 +3,14 @@
  * DB-native access-management API (no Keycloak groups).
  *
  * Two sections:
- *  1. Organization-wide roles — a checkbox list. Org-admin / Training-admin
- *     / TAT (org-level) land here; system-admin is intentionally omitted
- *     (server enforces assertAssignerCanGrant anyway).
- *  2. Unit-specific roles — a dynamic list of (role, unit) rows. Supports
- *     fine-grained grants like "TAT member for Unit X" or "Training admin
- *     for Unit Y". Only roles where unit-scoping is meaningful are offered
- *     — see UNIT_SCOPE_ROLES below.
+ *  1. Organization-wide roles — a checkbox list of every role whose
+ *     `allowedScopes` includes "organization".
+ *  2. Unit-specific roles — a dynamic list of (role, unit) rows. Role
+ *     choices are every role whose `allowedScopes` includes "unit".
+ *
+ * Both lists come from `GET /access/roles` so the FE never hardcodes
+ * which roles are grantable at which scope — the backend's `role.scope`
+ * enum is the only source of truth.
  *
  * Save performs a replace-with-set PATCH carrying the full desired set.
  * Authority enforcement is server-side; the UI only hides roles the actor
@@ -22,44 +23,11 @@ import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm"
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { UserWithAccess } from "../../../queries/grants";
-import { usePatchUserGrants } from "../../../queries/use-grants";
-
-/** Roles an org-admin can assign at organization scope. */
-const ORG_SCOPE_ROLES: Array<{
-  slug: string;
-  name: string;
-  description: string;
-}> = [
-  {
-    slug: "organization-admin",
-    name: "Organization Admin",
-    description: "Full access within the organization.",
-  },
-  {
-    slug: "training-admin",
-    name: "Training Admin",
-    description: "Manage training content and assignments.",
-  },
-  {
-    slug: "tat-member",
-    name: "TAT (Org-level)",
-    description: "Member of the organization-wide threat assessment team.",
-  },
-];
-
-/**
- * Roles that can be granted at unit scope. Keep this set narrow —
- * organization-admin at unit level is meaningless (org admin is org-wide
- * by definition), and training-participant is intentionally org-scoped
- * post-1775500000008 (residency is a separate axis). TAT and training-admin
- * are the two legitimate fine-grained cases: a person can be on a specific
- * unit's TAT, or admin over one unit's training, without broader access.
- */
-const UNIT_SCOPE_ROLES: Array<{ slug: string; name: string }> = [
-  { slug: "tat-member", name: "TAT (Unit-level)" },
-  { slug: "training-admin", name: "Training Admin (Unit-level)" },
-];
+import { AssignableRole, UserWithAccess } from "../../../queries/grants";
+import {
+  useAssignableRoles,
+  usePatchUserGrants,
+} from "../../../queries/use-grants";
 
 interface UnitGrantRow {
   /** Stable key for React list reconciliation across renders. */
@@ -83,6 +51,20 @@ export default function RoleAssignmentEditor({
 }: RoleAssignmentEditorProps) {
   const mutation = usePatchUserGrants(orgId);
   const { allUnits } = useContext(OrganizationsContext);
+  const { data: roles, isLoading: rolesLoading } = useAssignableRoles(orgId);
+
+  const orgScopeRoles = useMemo<AssignableRole[]>(
+    () => (roles ?? []).filter((r) => r.allowedScopes.includes("organization")),
+    [roles],
+  );
+  const unitScopeRoles = useMemo<AssignableRole[]>(
+    () => (roles ?? []).filter((r) => r.allowedScopes.includes("unit")),
+    [roles],
+  );
+  const unitRoleSlugs = useMemo(
+    () => new Set(unitScopeRoles.map((r) => r.slug)),
+    [unitScopeRoles],
+  );
 
   // Non-default, non-root units in the current org. The "default" unit is a
   // synthetic org-level bucket the API uses internally; exposing it in the
@@ -104,19 +86,19 @@ export default function RoleAssignmentEditor({
   }, [user]);
 
   // Initial unit-scoped grants as editable rows. A grant whose role isn't in
-  // UNIT_SCOPE_ROLES is still preserved on save (we just don't render it as
+  // unitRoleSlugs is still preserved on save (we just don't render it as
   // editable); see onSubmit below.
   const initialUnitRows = useMemo<UnitGrantRow[]>(() => {
     if (!user) return [];
     return user.grants
       .filter((g) => g.unitId != null)
-      .filter((g) => UNIT_SCOPE_ROLES.some((r) => r.slug === g.roleSlug))
+      .filter((g) => unitRoleSlugs.has(g.roleSlug))
       .map((g, i) => ({
         key: `initial-${i}`,
         roleSlug: g.roleSlug,
         unitId: g.unitId!,
       }));
-  }, [user]);
+  }, [user, unitRoleSlugs]);
 
   const [selected, setSelected] = useState<Set<string>>(initialOrgRoles);
   const [unitRows, setUnitRows] = useState<UnitGrantRow[]>(initialUnitRows);
@@ -192,12 +174,12 @@ export default function RoleAssignmentEditor({
     e.preventDefault();
     if (!user) return;
 
-    // Preserve any unit grants for roles outside UNIT_SCOPE_ROLES (the UI
+    // Preserve any unit grants for roles outside the unit-scope list (the UI
     // doesn't render them, but the server's replace-with-set semantics
     // would revoke them if we didn't carry them back).
     const preservedUnitGrants = user.grants
       .filter((g) => g.unitId != null)
-      .filter((g) => !UNIT_SCOPE_ROLES.some((r) => r.slug === g.roleSlug))
+      .filter((g) => !unitRoleSlugs.has(g.roleSlug))
       .map((g) => ({ roleSlug: g.roleSlug, unitId: g.unitId! }));
 
     const editableUnitGrants = unitRows.map((r) => ({
@@ -230,7 +212,9 @@ export default function RoleAssignmentEditor({
         onClose={onClose}
         hideDelete
         submitText="Save roles"
-        submitDisabled={!dirty || !unitRowsValid || mutation.isPending}
+        submitDisabled={
+          !dirty || !unitRowsValid || mutation.isPending || rolesLoading
+        }
         isSaving={mutation.isPending}
       >
         <SlideOverHeading
@@ -250,36 +234,42 @@ export default function RoleAssignmentEditor({
                 Apply across the whole organization.
               </p>
 
-              <ul className="mt-4 space-y-3">
-                {ORG_SCOPE_ROLES.map((r) => {
-                  const checked = selected.has(r.slug);
-                  return (
-                    <li
-                      key={r.slug}
-                      className="flex items-start gap-3 rounded-lg border border-gray-200 p-4 hover:border-gray-300"
-                    >
-                      <input
-                        id={`role-${r.slug}`}
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggle(r.slug)}
-                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
-                      />
-                      <label
-                        htmlFor={`role-${r.slug}`}
-                        className="flex-1 cursor-pointer"
+              {rolesLoading ? (
+                <div className="mt-4 h-20 animate-pulse rounded-lg bg-gray-100" />
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {orgScopeRoles.map((r) => {
+                    const checked = selected.has(r.slug);
+                    return (
+                      <li
+                        key={r.slug}
+                        className="flex items-start gap-3 rounded-lg border border-gray-200 p-4 hover:border-gray-300"
                       >
-                        <span className="block text-sm font-medium text-gray-900">
-                          {r.name}
-                        </span>
-                        <span className="block text-sm text-gray-500">
-                          {r.description}
-                        </span>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
+                        <input
+                          id={`role-${r.slug}`}
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggle(r.slug)}
+                          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+                        />
+                        <label
+                          htmlFor={`role-${r.slug}`}
+                          className="flex-1 cursor-pointer"
+                        >
+                          <span className="block text-sm font-medium text-gray-900">
+                            {r.name}
+                          </span>
+                          {r.description && (
+                            <span className="block text-sm text-gray-500">
+                              {r.description}
+                            </span>
+                          )}
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </section>
 
             {/* Unit-specific roles */}
@@ -289,8 +279,8 @@ export default function RoleAssignmentEditor({
               </h3>
               <p className="mt-1 text-sm text-gray-500">
                 Grant a role scoped to a single unit. Useful for fine-grained
-                responsibilities — e.g., TAT for one school, or training admin
-                over a specific program.
+                responsibilities — e.g., a TAT member for one school, or a
+                training coordinator over a specific program.
               </p>
 
               {assignableUnits.length === 0 ? (
@@ -327,7 +317,7 @@ export default function RoleAssignmentEditor({
                             className="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
                           >
                             <option value="">Select role…</option>
-                            {UNIT_SCOPE_ROLES.map((r) => (
+                            {unitScopeRoles.map((r) => (
                               <option key={r.slug} value={r.slug}>
                                 {r.name}
                               </option>
@@ -374,7 +364,8 @@ export default function RoleAssignmentEditor({
                   <button
                     type="button"
                     onClick={addUnitRow}
-                    className="mt-3 inline-flex items-center rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
+                    disabled={unitScopeRoles.length === 0}
+                    className="mt-3 inline-flex items-center rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     + Add unit role
                   </button>

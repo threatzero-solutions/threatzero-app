@@ -77,6 +77,19 @@ export interface MeResidence {
   unitId: string | null;
 }
 
+/**
+ * Raw attribution claims from the Keycloak JWT — what the IdP says about
+ * this user. Orthogonal to `residence` (DB-resolved with IDs) and to
+ * grants. Useful when slug-level context is needed before DB sync (e.g.,
+ * first-login window) or for display ("you are in Unit X" copy).
+ */
+export interface MeIdpClaims {
+  organizationSlug: string | null;
+  unitSlug: string | null;
+  organizationUnitPath: string | null;
+  peerUnits: string[];
+}
+
 export interface MeResponse {
   identity: MeIdentity;
   scope: MeScope;
@@ -85,4 +98,5 @@ export interface MeResponse {
   capabilities: MeCapabilities;
   tat: MeTat;
   residence: MeResidence | null;
+  idpClaims: MeIdpClaims;
 }

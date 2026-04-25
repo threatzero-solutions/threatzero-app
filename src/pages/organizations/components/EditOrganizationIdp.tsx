@@ -14,31 +14,25 @@ import { useDebounceValue } from "usehooks-ts";
 import { isURL } from "validator";
 import Input from "../../../components/forms/inputs/Input";
 import MultilineTextInput from "../../../components/forms/inputs/MultilineTextInput";
-import MultipleSelect from "../../../components/forms/inputs/MultipleSelect";
 import Select from "../../../components/forms/inputs/Select";
-import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import SlideOverField from "../../../components/layouts/slide-over/SlideOverField";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
-import { DISABLED_ROLE_GROUPS } from "../../../constants/organizations";
 import { AlertContext } from "../../../contexts/alert/alert-context";
-import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { useAutoSlug } from "../../../hooks/use-auto-slug";
 import {
   createOrganizationIdp,
   deleteOrganizationIdp,
-  getRoleGroupsForOrganization,
   isIdpSlugUnique,
   updateOrganizationIdp,
 } from "../../../queries/organizations";
 import { OrganizationIdpDto } from "../../../types/api";
-import { Organization, Unit } from "../../../types/entities";
+import { Organization } from "../../../types/entities";
 import { classNames } from "../../../utils/core";
+import ForwardedClaimsInput from "./ForwardedClaimsInput";
 import IdpMetadataInput from "./IdpMetadataInput";
-import MultiAttributeMatchersInput from "./MultiAttributeMatchersInput";
-import RoleGroupMatchersInput from "./RoleGroupMatchersInput";
 import SyncAttributesInput from "./SyncAttributesInput";
 
 const SERVICE_PROVIDER_ENTITY_ID =
@@ -57,9 +51,8 @@ const INITIAL_IDP: OrganizationIdpDto = {
   slug: "",
   protocol: "saml",
   domains: [],
-  roleGroupMatchers: [],
-  defaultRoleGroups: [],
-  defaultAudience: undefined,
+  syncAttributes: [],
+  forwardedClaims: [],
   importedConfig: {},
 };
 
@@ -94,8 +87,6 @@ const IdpConfigValue: React.FC<{ value: string; label: string }> = ({
   );
 };
 
-const ATTRIBUTE_MATCHER_TYPES = ["Units", "Audiences", "Role Groups"];
-
 const checkDirty = (dirtyFields: unknown): boolean => {
   if (dirtyFields === true) {
     return true;
@@ -125,8 +116,6 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
   idp: idpProp,
   setOpen,
 }) => {
-  const { isGlobalAdmin } = useAuth();
-
   const isNew = !idpProp;
   const originalSlug = idpProp?.slug;
 
@@ -186,19 +175,11 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
 
   const [showCopyableConfig, setShowCopyableConfig] = useState(isNew);
 
-  const [selectedAttributeMatcherTab, setSelectedAttributeMatcherTab] =
-    useState(ATTRIBUTE_MATCHER_TYPES[0]);
-
   const {
     setOpen: setConfirmationOpen,
     setClose: setConfirmationClose,
     openConfirmDiscard,
   } = useContext(ConfirmationContext);
-
-  const { data: allowedRoleGroups } = useQuery({
-    queryKey: ["organization-role-groups", organization.id] as const,
-    queryFn: ({ queryKey }) => getRoleGroupsForOrganization(queryKey[1]),
-  });
 
   const queryClient = useQueryClient();
   const createIdpMutation = useMutation({
@@ -433,181 +414,18 @@ const EditOrganizationIdp: React.FC<EditOrganizationIdpProps> = ({
             />
           </SlideOverField>
           <SlideOverField
-            label="Sync Attributes"
-            helpText="Sync attributes from the identity provider to ThreatZero users."
+            label="Profile Sync"
+            helpText="Map IDP claims onto fields on the user's profile (name, email, picture, etc.)."
             discreetHelpText
           >
             <SyncAttributesInput />
           </SlideOverField>
           <SlideOverField
-            label="Attribute Matchers"
-            helpText="Match attributes from the identity provider to specific properties on the ThreatZero user."
+            label="Forwarded Claims"
+            helpText="Claims this provider should forward so Access Rules can read them. Anything listed here becomes a rule trigger. Role assignment, unit residency, and audience membership are authored on the Access Rules tab — not here."
             discreetHelpText
           >
-            <div>
-              <div className="mb-2">
-                <div className="sm:hidden">
-                  <label htmlFor="tabs" className="sr-only">
-                    Select a tab
-                  </label>
-                  {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
-                  <select
-                    id="tabs"
-                    name="tabs"
-                    defaultValue={ATTRIBUTE_MATCHER_TYPES[0]}
-                    className="block w-full rounded-md border-gray-300 focus:border-secondary-500 focus:ring-secondary-500"
-                  >
-                    {ATTRIBUTE_MATCHER_TYPES.map((tab) => (
-                      <option key={tab}>{tab}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="hidden sm:block">
-                  <nav aria-label="Tabs" className="flex space-x-4">
-                    {ATTRIBUTE_MATCHER_TYPES.map((tab) => (
-                      <button
-                        key={tab}
-                        type="button"
-                        aria-current={
-                          selectedAttributeMatcherTab === tab
-                            ? "page"
-                            : undefined
-                        }
-                        className={classNames(
-                          selectedAttributeMatcherTab === tab
-                            ? "bg-secondary-100 text-secondary-700"
-                            : "text-gray-500 hover:text-gray-700",
-                          "rounded-md px-3 py-2 text-sm font-medium",
-                        )}
-                        onClick={() => setSelectedAttributeMatcherTab(tab)}
-                      >
-                        {tab}
-                      </button>
-                    ))}
-                  </nav>
-                </div>
-              </div>
-              {selectedAttributeMatcherTab === "Units" ? (
-                <MultiAttributeMatchersInput
-                  key="units"
-                  name="unitMatchers"
-                  valueLabel="Unit"
-                  renderValueInput={({
-                    control: valueControl,
-                    name: valueName,
-                  }) => (
-                    <Controller
-                      control={valueControl}
-                      name={valueName}
-                      render={({ field: unitField }) => (
-                        <UnitSelect
-                          value={unitField.value}
-                          onChange={(e) => {
-                            let newValue = e.target?.value;
-                            if (newValue && typeof newValue !== "string") {
-                              newValue = (newValue as Unit).slug;
-                            }
-                            unitField.onChange(newValue);
-                          }}
-                          queryFilter={{ ["organization.id"]: organization.id }}
-                        />
-                      )}
-                    />
-                  )}
-                />
-              ) : selectedAttributeMatcherTab === "Audiences" ? (
-                <MultiAttributeMatchersInput
-                  key="audiences"
-                  name="audienceMatchers"
-                  valueLabel="Audience"
-                  renderValueInput={({
-                    control: valueControl,
-                    name: valueName,
-                  }) => (
-                    <Controller
-                      name={valueName}
-                      control={valueControl}
-                      render={({ field: audienceField }) => (
-                        <Select
-                          value={audienceField.value ?? ""}
-                          onChange={(e) =>
-                            audienceField.onChange(e.target.value)
-                          }
-                          options={organization.allowedAudiences.map(
-                            (audience) => ({
-                              key: audience,
-                              label: audience,
-                            }),
-                          )}
-                        />
-                      )}
-                    />
-                  )}
-                />
-              ) : selectedAttributeMatcherTab === "Role Groups" ? (
-                <RoleGroupMatchersInput
-                  key="roleGroups"
-                  allowedRoleGroups={allowedRoleGroups ?? []}
-                  checkDisabled={(rg) =>
-                    DISABLED_ROLE_GROUPS.includes(rg.roleGroup)
-                  }
-                />
-              ) : (
-                <></>
-              )}
-            </div>
-          </SlideOverField>
-          <SlideOverField
-            label="Default Role Groups"
-            helpText="Role groups that will be assigned to all users."
-            discreetHelpText
-          >
-            <Controller
-              name="defaultRoleGroups"
-              control={control}
-              render={({ field }) => (
-                <MultipleSelect
-                  prefix="organization_default_role_groups"
-                  value={field.value}
-                  options={(allowedRoleGroups ?? [])
-                    .filter(
-                      (rg) =>
-                        isGlobalAdmin ||
-                        !DISABLED_ROLE_GROUPS.includes(rg.name),
-                    )
-                    .map((rg) => ({
-                      key: rg.name,
-                      label: rg.name,
-                      disabled: DISABLED_ROLE_GROUPS.includes(rg.name),
-                      disabledText:
-                        "This role group can only be managed by identity admins.",
-                    }))}
-                  onChange={(ids) => field.onChange(ids)}
-                />
-              )}
-            />
-          </SlideOverField>
-          <SlideOverField
-            label="Default Audience"
-            helpText="The audience that will be assigned to all users."
-            discreetHelpText
-          >
-            <Controller
-              name="defaultAudience"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  prefix="organization_default_audience"
-                  value={field.value ?? ""}
-                  options={organization.allowedAudiences.map((audience) => ({
-                    key: audience,
-                    label: audience,
-                  }))}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  showClear
-                />
-              )}
-            />
+            <ForwardedClaimsInput />
           </SlideOverField>
           <SlideOverField
             label="Import Metadata"

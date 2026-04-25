@@ -6,14 +6,11 @@ import {
   ChevronRightIcon,
   Cog6ToothIcon,
   HomeIcon,
-  LifebuoyIcon,
-  PencilIcon,
   UserGroupIcon,
   UsersIcon,
 } from "@heroicons/react/20/solid";
-import { useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { NavLink, Outlet, To, useLocation } from "react-router";
-import SlideOver from "../../components/layouts/slide-over/SlideOver";
 import {
   myOrganizationPermissionOptions,
   organizationSafetyManagementPermissionOptions,
@@ -21,7 +18,6 @@ import {
   organizationTrainingManagementPermissionOptions,
   organizationUserPermissionOptions,
 } from "../../constants/permission-options";
-import { WRITE } from "../../constants/permissions";
 import { useAuth } from "../../contexts/auth/useAuth";
 import {
   OrganizationsContext,
@@ -33,13 +29,10 @@ import { Organization, Unit } from "../../types/entities";
 import { classNames, humanizeSlug } from "../../utils/core";
 import { labelsForPreset } from "../../utils/labels";
 import { useNav } from "../../utils/navigation";
-import EditOrganizationBasic from "./components/EditOrganizationBasic";
 import { OrganizationStatusBadge } from "./components/OrganizationStatusBadge";
 
 const OrganizationsRootInner: React.FC = () => {
-  const [editBasicInfoOpen, setEditBasicInfoOpen] = useState(false);
-
-  const { isGlobalAdmin, hasPermissions } = useAuth();
+  const { isGlobalAdmin } = useAuth();
 
   const {
     currentOrganization,
@@ -50,8 +43,6 @@ const OrganizationsRootInner: React.FC = () => {
     unitsPath,
     setUnitsPath,
     isUnitContext,
-    invalidateCurrentUnitQuery,
-    invalidateOrganizationQuery,
   } = useContext(OrganizationsContext);
 
   const paths = useMemo(() => unitsPath?.split("/") ?? [], [unitsPath]);
@@ -74,11 +65,24 @@ const OrganizationsRootInner: React.FC = () => {
     [allUnits],
   );
 
-  const currentLevelChildren = useMemo(() => {
+  // Every path crumb is a sibling switcher. `siblingsAt(idx)` returns the
+  // switchable set for the crumb at position `idx` — top-level units when
+  // idx=0, otherwise children of the crumb one level up.
+  const siblingsAt = useCallback(
+    (idx: number) => {
+      if (!allUnits) return [];
+      if (idx === 0) return topLevelUnits;
+      const parentSlug = paths[idx - 1];
+      return allUnits.filter((u) => u.parentUnit?.slug === parentSlug);
+    },
+    [allUnits, topLevelUnits, paths],
+  );
+
+  // Children of the deepest crumb — populate the trailing "All {unitPlural}"
+  // drilldown dropdown. At the root, these are the top-level units.
+  const deepestChildren = useMemo(() => {
     if (!allUnits) return [];
-    if (!isUnitContext) {
-      return topLevelUnits;
-    }
+    if (!isUnitContext) return topLevelUnits;
     const currentSlug = paths[paths.length - 1];
     return allUnits.filter((u) => u.parentUnit?.slug === currentSlug);
   }, [allUnits, isUnitContext, topLevelUnits, paths]);
@@ -93,11 +97,6 @@ const OrganizationsRootInner: React.FC = () => {
       (
         [
           {
-            name: labels.unitPlural,
-            to: "units",
-            icon: BuildingOffice2Icon,
-          },
-          {
             // Users + Access merged under one tab. Sub-tabs
             // (Assignments / History) live inside the page. See
             // `_docs/users-access-merge-plan.md`.
@@ -105,6 +104,11 @@ const OrganizationsRootInner: React.FC = () => {
             to: "users",
             icon: UsersIcon,
             permissionOptions: organizationUserPermissionOptions,
+          },
+          {
+            name: labels.unitPlural,
+            to: "units",
+            icon: BuildingOffice2Icon,
           },
           {
             name: "TAT",
@@ -116,19 +120,13 @@ const OrganizationsRootInner: React.FC = () => {
             name: "Training",
             to: "training",
             icon: BookOpenIcon,
+            hidden: !isGlobalAdmin || isUnitContext,
             permissionOptions: organizationTrainingManagementPermissionOptions,
-          },
-          {
-            name: "Safety",
-            to: "safety",
-            icon: LifebuoyIcon,
-            permissionOptions: organizationSafetyManagementPermissionOptions,
           },
           {
             name: "Settings",
             to: "settings",
             icon: Cog6ToothIcon,
-            hidden: !isUnitContext && !isGlobalAdmin,
             permissionOptions: organizationSettingsPermissionOptions,
           },
         ] as (NavigationItem & { icon: typeof HomeIcon; hidden?: boolean })[]
@@ -155,25 +153,81 @@ const OrganizationsRootInner: React.FC = () => {
                 </button>
               </div>
             </li>
-            {paths.map((path, idx) => (
-              <li key={path}>
-                <div className="flex items-center">
-                  <ChevronRightIcon
-                    aria-hidden="true"
-                    className="size-5 shrink-0 text-gray-400"
-                  />
-                  <button
-                    onClick={() =>
-                      setUnitsPath(paths.slice(0, idx + 1).join("/"))
-                    }
-                    className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700"
-                  >
-                    {unitSlugMap?.get(path)?.name || humanizeSlug(path)}
-                  </button>
-                </div>
-              </li>
-            ))}
-            {currentLevelChildren.length > 0 && (
+            {paths.map((path, idx) => {
+              const siblings = siblingsAt(idx);
+              const label = unitSlugMap?.get(path)?.name || humanizeSlug(path);
+              // "All units" at position idx jumps back to the parent level —
+              // idx=0 returns to org root (null), otherwise keep the prefix
+              // up to but not including this crumb.
+              const parentPath =
+                idx === 0 ? null : paths.slice(0, idx).join("/");
+              return (
+                <li key={path}>
+                  <div className="flex items-center">
+                    <ChevronRightIcon
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-gray-400"
+                    />
+                    <Menu as="div" className="relative ml-4">
+                      <MenuButton className="inline-flex items-center gap-x-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                        {label}
+                        <ChevronDownIcon
+                          aria-hidden="true"
+                          className="size-4 text-gray-400"
+                        />
+                      </MenuButton>
+                      <MenuItems
+                        anchor={{ to: "bottom start", gap: 2 }}
+                        className="z-20 w-56 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden max-h-[45vh] overflow-y-auto"
+                      >
+                        <MenuItem>
+                          {({ focus }) => (
+                            <button
+                              type="button"
+                              onClick={() => setUnitsPath(parentPath)}
+                              className={classNames(
+                                focus
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-500",
+                                "block w-full border-b border-gray-100 px-4 py-2 text-left text-sm",
+                              )}
+                            >
+                              All {labels.unitPlural.toLowerCase()}
+                            </button>
+                          )}
+                        </MenuItem>
+                        {siblings.map((unit) => {
+                          const isCurrent = unit.slug === path;
+                          return (
+                            <MenuItem key={unit.id}>
+                              {({ focus }) => (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setUnitsPath(unit.path ?? unit.slug)
+                                  }
+                                  className={classNames(
+                                    focus
+                                      ? "bg-gray-100 text-gray-900"
+                                      : isCurrent
+                                        ? "bg-gray-50 text-gray-900 font-medium"
+                                        : "text-gray-700",
+                                    "block w-full px-4 py-2 text-left text-sm",
+                                  )}
+                                >
+                                  {unit.name}
+                                </button>
+                              )}
+                            </MenuItem>
+                          );
+                        })}
+                      </MenuItems>
+                    </Menu>
+                  </div>
+                </li>
+              );
+            })}
+            {deepestChildren.length > 0 && (
               <li>
                 <div className="flex items-center">
                   <ChevronRightIcon
@@ -182,22 +236,17 @@ const OrganizationsRootInner: React.FC = () => {
                   />
                   <Menu as="div" className="relative ml-4">
                     <MenuButton className="inline-flex items-center gap-x-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                      {isUnitContext
-                        ? `All Sub-${labels.unitPlural.toLowerCase()}`
-                        : `All ${labels.unitPlural}`}
+                      All {labels.unitPlural}
                       <ChevronDownIcon
                         aria-hidden="true"
                         className="size-4 text-gray-400"
                       />
                     </MenuButton>
                     <MenuItems
-                      anchor={{
-                        to: "bottom start",
-                        gap: 2,
-                      }}
+                      anchor={{ to: "bottom start", gap: 2 }}
                       className="z-20 w-56 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden max-h-[45vh] overflow-y-auto"
                     >
-                      {currentLevelChildren.map((unit) => (
+                      {deepestChildren.map((unit) => (
                         <MenuItem key={unit.id}>
                           {({ focus }) => (
                             <button
@@ -237,18 +286,15 @@ const OrganizationsRootInner: React.FC = () => {
                     status={currentOrganization.status}
                   />
                 )}
-                {hasPermissions([WRITE.ORGANIZATIONS]) && (
-                  <PencilIcon
-                    onClick={() => setEditBasicInfoOpen(true)}
-                    className="size-5 cursor-pointer text-gray-400 hover:text-gray-500"
-                  />
-                )}
               </h1>
-              <p className="text-sm pt-2">
-                {(isUnitContext
+              {(() => {
+                const address = isUnitContext
                   ? currentUnit?.address
-                  : currentOrganization?.address) || <span>&mdash;</span>}
-              </p>
+                  : currentOrganization?.address;
+                return address ? (
+                  <p className="text-sm pt-2">{address}</p>
+                ) : null;
+              })()}
             </>
           )}
         </div>
@@ -304,22 +350,6 @@ const OrganizationsRootInner: React.FC = () => {
         </div>
         <Outlet />
       </div>
-      {currentOrganization?.id && (
-        <SlideOver open={editBasicInfoOpen} setOpen={setEditBasicInfoOpen}>
-          <EditOrganizationBasic
-            setOpen={setEditBasicInfoOpen}
-            create={false}
-            organizationId={currentOrganization.id}
-            unitId={currentUnit?.id}
-            level={isUnitContext ? "unit" : "organization"}
-            onSaveSuccess={() =>
-              isUnitContext
-                ? invalidateCurrentUnitQuery()
-                : invalidateOrganizationQuery()
-            }
-          />
-        </SlideOver>
-      )}
     </>
   );
 };

@@ -1,102 +1,73 @@
 /**
- * Audit History sub-tab regression suite. Exercises the History view
- * nested under /my-organization/access (OrganizationsAccess shell +
- * OrganizationsAccessHistory component).
+ * Change Log (audit history) regression suite. The history view is a
+ * slide-over launched from the Users tab's "More actions" menu; it's
+ * deep-linkable via `?view=history`. Exercises the launch, combobox user
+ * filter, and row list (replaces the earlier wide table).
  *
- * Prereqs same as role-management.spec.ts: live KC + API + Vite, role
- * test users provisioned (run the API integration suite first).
- *
- * Notes on data dependence:
- *   - Audit rows are written when access_grant writes happen via the
- *     access-management controller. The branch this test targets is a
- *     prod-copy, so pre-existing rows may or may not be present.
- *   - Tests avoid asserting specific row counts / content. They verify
- *     structure: sub-tab switching, filter wiring, pagination presence
- *     when data exists, empty state when no matches.
+ * Prereqs: live KC + API + Vite, role test users provisioned (run the
+ * API integration suite first). The branch this targets is a prod-copy,
+ * so tests avoid row-count assertions — they verify structure.
  */
 import { test, expect, Page } from "@playwright/test";
 import { loginAsRole } from "./helpers/login";
 
-async function gotoAccess(page: Page) {
-  await page.goto("/my-organization/access");
+async function gotoUsersTab(page: Page) {
+  await page.goto("/my-organization/users");
+  // The Users tab nav link carries aria-current when active.
   await expect(
-    page.getByRole("heading", { name: "Access", exact: true }),
-  ).toBeVisible({ timeout: 15_000 });
+    page.getByRole("link", { name: "Users", exact: true }),
+  ).toHaveAttribute("aria-current", "page", { timeout: 15_000 });
 }
 
-async function switchToHistory(page: Page) {
-  await page.getByRole("tab", { name: "History" }).click();
+async function openChangeLog(page: Page) {
+  await page.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: /change log/i }).click();
   await expect(
-    page.getByRole("heading", { name: "History", exact: true }),
+    page.getByRole("heading", { name: "Change log", exact: true }),
   ).toBeVisible({ timeout: 10_000 });
 }
 
-test.describe("Access history (integration)", () => {
-  test("org-admin sees both sub-tabs and defaults to Assignments", async ({
-    browser,
-  }) => {
+test.describe("Change log (integration)", () => {
+  test("opens from the Users tab more-actions menu", async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
     try {
       await loginAsRole(page, "organization-admin");
-      await gotoAccess(page);
+      await gotoUsersTab(page);
+      await openChangeLog(page);
 
-      const assignments = page.getByRole("tab", { name: "Assignments" });
-      const history = page.getByRole("tab", { name: "History" });
-      await expect(assignments).toBeVisible();
-      await expect(history).toBeVisible();
-
-      // Default = Assignments. aria-selected should reflect that, and the
-      // Assignments heading should be the one rendered.
-      await expect(assignments).toHaveAttribute("aria-selected", "true");
-      await expect(history).toHaveAttribute("aria-selected", "false");
+      // Slide-over carries its own subheading referencing the org.
+      await expect(
+        page.getByText(/Grant and revoke events for/i),
+      ).toBeVisible();
     } finally {
       await context.close();
     }
   });
 
-  test("clicking History switches the view and updates the URL", async ({
-    browser,
-  }) => {
+  test("closes the slide-over and drops the URL param", async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
     try {
       await loginAsRole(page, "organization-admin");
-      await gotoAccess(page);
-      await switchToHistory(page);
+      await gotoUsersTab(page);
+      await openChangeLog(page);
 
-      // URL carries the ?view=history param so the state is deep-linkable.
       await expect(page).toHaveURL(/[?&]view=history/);
 
-      // History table headers render.
-      for (const header of [
-        "When",
-        "Actor",
-        "Target",
-        "Action",
-        "Role",
-        "Scope",
-        "Reason",
-      ]) {
-        await expect(
-          page.getByRole("columnheader", { name: header, exact: true }),
-        ).toBeVisible();
-      }
-
-      // Switching back clears the param.
-      await page.getByRole("tab", { name: "Assignments" }).click();
+      await page.getByRole("button", { name: "Close change log" }).click();
       await expect(
-        page.getByRole("heading", { name: "Access", exact: true }),
-      ).toBeVisible({ timeout: 10_000 });
+        page.getByRole("heading", { name: "Change log", exact: true }),
+      ).toBeHidden();
       await expect(page).not.toHaveURL(/[?&]view=history/);
     } finally {
       await context.close();
     }
   });
 
-  test("deep link to ?view=history lands directly on the History view", async ({
+  test("deep link to ?view=history opens the slide-over directly", async ({
     browser,
   }) => {
     const context = await browser.newContext();
@@ -104,52 +75,40 @@ test.describe("Access history (integration)", () => {
 
     try {
       await loginAsRole(page, "organization-admin");
-      await page.goto("/my-organization/access?view=history");
+      await page.goto("/my-organization/users?view=history");
 
       await expect(
-        page.getByRole("heading", { name: "History", exact: true }),
+        page.getByRole("heading", { name: "Change log", exact: true }),
       ).toBeVisible({ timeout: 15_000 });
-      await expect(page.getByRole("tab", { name: "History" })).toHaveAttribute(
-        "aria-selected",
-        "true",
-      );
     } finally {
       await context.close();
     }
   });
 
-  test("filter-by-user dropdown exists and changing it reloads the feed", async ({
-    browser,
-  }) => {
+  test("user filter combobox is wired and searchable", async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
     try {
       await loginAsRole(page, "organization-admin");
-      await page.goto("/my-organization/access?view=history");
+      await page.goto("/my-organization/users?view=history");
 
-      // The filter is a Listbox (headless UI) with an accessible label via
-      // the preceding <label>. Click to open, verify "All users" is
-      // present, then pick another option if one is available.
-      const filterBtn = page.getByRole("button", { name: /all users/i });
-      await expect(filterBtn).toBeVisible({ timeout: 10_000 });
-      await filterBtn.click();
+      const filter = page.getByRole("combobox", { name: /filter by user/i });
+      await expect(filter).toBeVisible({ timeout: 10_000 });
 
-      // Options render; "All users" is always first.
-      await expect(
-        page.getByRole("option", { name: "All users" }),
-      ).toBeVisible();
-
-      // Close the dropdown without changing — we're just asserting the
-      // filter is wired. The visible option count depends on data in the
-      // branch; we don't assert specific emails.
-      await page.keyboard.press("Escape");
+      // Typing into the combobox should show matching options; we type a
+      // character likely to match *something* in a prod-copy org without
+      // asserting a specific email.
+      await filter.fill("a");
+      await expect(page.getByRole("option").first()).toBeVisible({
+        timeout: 5_000,
+      });
     } finally {
       await context.close();
     }
   });
 
-  test("history table either shows rows or the empty state", async ({
+  test("event list renders entries or a calm empty state", async ({
     browser,
   }) => {
     const context = await browser.newContext();
@@ -157,30 +116,21 @@ test.describe("Access history (integration)", () => {
 
     try {
       await loginAsRole(page, "organization-admin");
-      await page.goto("/my-organization/access?view=history");
+      await page.goto("/my-organization/users?view=history");
 
       await expect(
-        page.getByRole("heading", { name: "History", exact: true }),
+        page.getByRole("heading", { name: "Change log", exact: true }),
       ).toBeVisible({ timeout: 15_000 });
 
-      // Wait briefly for the request to settle so the loading row is
-      // replaced by either data or empty-state text.
       await page.waitForLoadState("networkidle", { timeout: 15_000 });
 
-      const rows = page.locator("table tbody tr");
-      const rowCount = await rows.count();
-      expect(rowCount).toBeGreaterThan(0);
-
-      // If any real entry rows render they must contain an Action badge
-      // reading "granted" or "revoked". Empty state is a single row with
-      // "No events recorded..." — accept either.
-      const firstRowText = (await rows.first().innerText()).toLowerCase();
-      const isEmptyState =
-        firstRowText.includes("no events recorded") ||
-        firstRowText.includes("loading");
-      const hasActionBadge =
-        firstRowText.includes("granted") || firstRowText.includes("revoked");
-      expect(isEmptyState || hasActionBadge).toBe(true);
+      // Either the list contains action words (granted/revoked) or a
+      // "No events recorded" empty-state row.
+      const list = page.getByTestId("change-log-list");
+      const text = (await list.innerText()).toLowerCase();
+      const hasActions = text.includes("granted") || text.includes("revoked");
+      const isEmpty = text.includes("no events recorded");
+      expect(hasActions || isEmpty).toBe(true);
     } finally {
       await context.close();
     }

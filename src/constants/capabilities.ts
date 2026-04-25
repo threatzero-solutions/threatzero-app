@@ -16,6 +16,7 @@ export const CAP = {
 
   MANAGE_ORGANIZATIONS: "manage-organizations",
   MANAGE_UNITS: "manage-units",
+  MANAGE_ORG_RULES: "manage-org-rules",
   MANAGE_ORG_USERS: "manage-org-users",
   VIEW_ORG_USERS: "view-org-users",
   MANAGE_ENROLLMENTS: "manage-enrollments",

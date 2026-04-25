@@ -29,6 +29,8 @@
   --color-secondary-900: #274881;
   --color-secondary-950: #1c2e4f;
 
+  --font-welcome: "EB Garamond", ui-serif, Georgia, Cambria, serif;
+
   --grid-template-columns-video-card: repeat(auto-fit, minmax(250px, 1fr));
 
   --grid-template-rows-video-card: minmax(16rem, min-content) 1fr;

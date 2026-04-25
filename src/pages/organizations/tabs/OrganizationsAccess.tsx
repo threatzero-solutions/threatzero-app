@@ -1,42 +1,36 @@
 /**
- * Role assignment surface for an organization. Replaces scattered
- * role-group controls (KC-backed) with a single DB-native editor.
+ * Role assignment surface for an organization. The users table is the
+ * primary content; the change log lives behind a "Change log" button
+ * that opens a slide-over panel without unmounting the table (no lost
+ * scroll / search / sort state).
  *
- * Sub-tabs:
- *   - Assignments: the live table of users with editable org-level grants.
- *   - History: paginated audit feed of grant/revoke events.
- *
- * Sub-tab state is persisted in `?view=assignments|history` so deep links
- * and browser back/forward behave predictably.
+ * The slide-over's open state is bound to `?view=history` so deep links
+ * and browser back/forward still work — closing the panel drops the
+ * query param.
  */
 import { useContext } from "react";
 import { useSearchParams } from "react-router";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { classNames } from "../../../utils/core";
 import OrganizationsAccessAssignments from "../components/OrganizationsAccessAssignments";
 import OrganizationsAccessHistory from "../components/OrganizationsAccessHistory";
 
-type AccessView = "assignments" | "history";
-
 const VIEW_KEY = "view";
-
-const isAccessView = (v: string | null): v is AccessView =>
-  v === "assignments" || v === "history";
+const HISTORY_VIEW = "history";
 
 const OrganizationsAccess: React.FC = () => {
   const { currentOrganization, currentOrganizationLoading } =
     useContext(OrganizationsContext);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const raw = searchParams.get(VIEW_KEY);
-  const view: AccessView = isAccessView(raw) ? raw : "assignments";
+  const historyOpen = searchParams.get(VIEW_KEY) === HISTORY_VIEW;
 
-  const setView = (next: AccessView) => {
+  const setHistoryOpen = (open: boolean) => {
     const params = new URLSearchParams(searchParams);
-    if (next === "assignments") {
-      params.delete(VIEW_KEY);
+    if (open) {
+      params.set(VIEW_KEY, HISTORY_VIEW);
     } else {
-      params.set(VIEW_KEY, next);
+      params.delete(VIEW_KEY);
     }
     setSearchParams(params, { replace: true });
   };
@@ -46,60 +40,41 @@ const OrganizationsAccess: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div
-        role="tablist"
-        aria-label="Access views"
-        className="flex gap-1 rounded-lg bg-gray-100 p-1 w-max"
-      >
-        <SubTabButton
-          active={view === "assignments"}
-          onClick={() => setView("assignments")}
-        >
-          Assignments
-        </SubTabButton>
-        <SubTabButton
-          active={view === "history"}
-          onClick={() => setView("history")}
-        >
-          History
-        </SubTabButton>
-      </div>
+    <>
+      <OrganizationsAccessAssignments
+        orgId={currentOrganization.id}
+        onOpenHistory={() => setHistoryOpen(true)}
+      />
 
-      {view === "assignments" ? (
-        <OrganizationsAccessAssignments
-          orgId={currentOrganization.id}
-          orgName={currentOrganization.name}
-        />
-      ) : (
-        <OrganizationsAccessHistory
-          orgId={currentOrganization.id}
-          orgName={currentOrganization.name}
-        />
-      )}
-    </div>
+      <SlideOver open={historyOpen} setOpen={setHistoryOpen}>
+        <div className="flex h-full flex-col">
+          <div className="flex items-start justify-between border-b border-gray-200 px-6 py-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Change log
+              </h2>
+              <p className="text-sm text-gray-500">
+                Grant and revoke events for {currentOrganization.name}.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500"
+              onClick={() => setHistoryOpen(false)}
+              aria-label="Close change log"
+            >
+              <span aria-hidden className="text-xl leading-none">
+                ×
+              </span>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <OrganizationsAccessHistory orgId={currentOrganization.id} />
+          </div>
+        </div>
+      </SlideOver>
+    </>
   );
 };
-
-const SubTabButton: React.FC<{
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}> = ({ active, onClick, children }) => (
-  <button
-    type="button"
-    role="tab"
-    aria-selected={active}
-    onClick={onClick}
-    className={classNames(
-      "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500",
-      active
-        ? "bg-white text-gray-900 shadow-sm"
-        : "text-gray-600 hover:text-gray-900",
-    )}
-  >
-    {children}
-  </button>
-);
 
 export default OrganizationsAccess;

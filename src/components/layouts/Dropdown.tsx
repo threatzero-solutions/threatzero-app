@@ -38,6 +38,8 @@ interface DropdownProps extends UseFloatingOptions {
   actions?: DropdownAction[];
   actionGroups?: DropdownActionGroup[];
   className?: string;
+  /** Override the trigger button's class list (e.g. to use brand colors). */
+  buttonClassName?: string;
   placement?: Placement;
   showDividers?: boolean;
   disabled?: boolean;
@@ -89,6 +91,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   actions,
   actionGroups,
   className,
+  buttonClassName,
   placement = "bottom-end",
   showDividers,
   disabled,
@@ -109,11 +112,14 @@ const Dropdown: React.FC<DropdownProps> = ({
       <MenuButton
         ref={refs.setReference}
         type="button"
-        className={classNames(
-          iconOnly
-            ? "block p-1 text-gray-500 hover:text-gray-900 my-auto"
-            : "inline-flex h-full w-full justify-center items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
-        )}
+        className={
+          buttonClassName ??
+          classNames(
+            iconOnly
+              ? "block p-1 text-gray-500 hover:text-gray-900 my-auto"
+              : "inline-flex h-full w-full justify-center items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
+          )
+        }
         disabled={disabled}
       >
         {iconOnly ? <span className="sr-only">{value}</span> : value}

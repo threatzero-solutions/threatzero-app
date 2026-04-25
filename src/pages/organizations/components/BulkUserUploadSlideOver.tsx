@@ -650,7 +650,6 @@ function Step3ReviewAndUpload(props: Partial<ComponentProps<typeof Step>>) {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        canAccessTraining: !!user.trainingGroup,
         attributes: {
           audience: user.trainingGroup ? [user.trainingGroup.slug] : [],
           ...(user.unit ? { unit: [user.unit.slug] } : {}),
