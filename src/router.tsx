@@ -29,8 +29,9 @@ import OrganizationsRoot from "./pages/organizations/OrganizationsRoot";
 import OrganizationsSafety from "./pages/organizations/tabs/OrganizationsSafety";
 import OrganizationsSettings from "./pages/organizations/tabs/OrganizationsSettings";
 import OrganizationsTraining from "./pages/organizations/tabs/OrganizationsTraining";
+import OrganizationsAccess from "./pages/organizations/tabs/OrganizationsAccess";
+import OrganizationsTat from "./pages/organizations/tabs/OrganizationsTat";
 import OrganizationsUnits from "./pages/organizations/tabs/OrganizationsUnits";
-import OrganizationsUsers from "./pages/organizations/tabs/OrganizationsUsers";
 import Page404 from "./pages/Page404";
 import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
 import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
@@ -55,9 +56,24 @@ const organizationsChildren: RouteObject[] = [
     element: <OrganizationsUnits />,
   },
   {
+    // Merged Users + Access surface. The page's Assignments / History
+    // sub-tabs persist their selection in `?view=`, so deep links from
+    // the prior `/access?view=history` URL shape still resolve.
     path: "users",
     handle: { title: "Users" },
-    element: <OrganizationsUsers />,
+    element: <OrganizationsAccess />,
+  },
+  {
+    // `/access` → `/users` — keep old bookmarks working until we're
+    // confident nobody's linking it.
+    path: "access",
+    handle: { title: "Users" },
+    element: <OrganizationsAccess />,
+  },
+  {
+    path: "tat",
+    handle: { title: "TAT" },
+    element: <OrganizationsTat />,
   },
   {
     path: "training",

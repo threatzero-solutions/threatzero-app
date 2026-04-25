@@ -8,6 +8,7 @@ import {
   HomeIcon,
   LifebuoyIcon,
   PencilIcon,
+  UserGroupIcon,
   UsersIcon,
 } from "@heroicons/react/20/solid";
 import { useContext, useMemo, useState } from "react";
@@ -30,6 +31,7 @@ import { withRequirePermissions } from "../../guards/with-require-permissions";
 import { NavigationItem } from "../../types/core";
 import { Organization, Unit } from "../../types/entities";
 import { classNames, humanizeSlug } from "../../utils/core";
+import { labelsForPreset } from "../../utils/labels";
 import { useNav } from "../../utils/navigation";
 import EditOrganizationBasic from "./components/EditOrganizationBasic";
 import { OrganizationStatusBadge } from "./components/OrganizationStatusBadge";
@@ -81,20 +83,34 @@ const OrganizationsRootInner: React.FC = () => {
     return allUnits.filter((u) => u.parentUnit?.slug === currentSlug);
   }, [allUnits, isUnitContext, topLevelUnits, paths]);
 
+  const labels = useMemo(
+    () => labelsForPreset(currentOrganization?.labelPreset),
+    [currentOrganization?.labelPreset],
+  );
+
   const tabs = useMemo(
     () =>
       (
         [
           {
-            name: "Units",
+            name: labels.unitPlural,
             to: "units",
             icon: BuildingOffice2Icon,
           },
           {
+            // Users + Access merged under one tab. Sub-tabs
+            // (Assignments / History) live inside the page. See
+            // `_docs/users-access-merge-plan.md`.
             name: "Users",
             to: "users",
             icon: UsersIcon,
             permissionOptions: organizationUserPermissionOptions,
+          },
+          {
+            name: "TAT",
+            to: "tat",
+            icon: UserGroupIcon,
+            permissionOptions: organizationSafetyManagementPermissionOptions,
           },
           {
             name: "Training",
@@ -117,7 +133,7 @@ const OrganizationsRootInner: React.FC = () => {
           },
         ] as (NavigationItem & { icon: typeof HomeIcon; hidden?: boolean })[]
       ).filter(canNavigate),
-    [isUnitContext, isGlobalAdmin, canNavigate],
+    [isUnitContext, isGlobalAdmin, canNavigate, labels.unitPlural],
   );
 
   return (
@@ -166,7 +182,9 @@ const OrganizationsRootInner: React.FC = () => {
                   />
                   <Menu as="div" className="relative ml-4">
                     <MenuButton className="inline-flex items-center gap-x-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                      {isUnitContext ? "All Subunits" : "All Units"}
+                      {isUnitContext
+                        ? `All Sub-${labels.unitPlural.toLowerCase()}`
+                        : `All ${labels.unitPlural}`}
                       <ChevronDownIcon
                         aria-hidden="true"
                         className="size-4 text-gray-400"

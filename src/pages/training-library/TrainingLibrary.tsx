@@ -1,18 +1,18 @@
 import { useContext, useMemo } from "react";
-import { withRequirePermissions } from "../../guards/with-require-permissions";
-import { LEVEL, WRITE } from "../../constants/permissions";
-import { TrainingContext } from "../../contexts/training/training-context";
-import { useAuth } from "../../contexts/auth/useAuth";
+import { CAP } from "../../constants/capabilities";
 import { trainingLibraryPermissionsOptions } from "../../constants/permission-options";
+import { useMe } from "../../contexts/me/MeProvider";
+import { TrainingContext } from "../../contexts/training/training-context";
+import { withRequirePermissions } from "../../guards/with-require-permissions";
 import ViewTrainingCourse from "./components/ViewTrainingCourse";
 
 const TrainingLibrary: React.FC = withRequirePermissions(() => {
   const { state, dispatch, courseLoading } = useContext(TrainingContext);
-  const { hasPermissions } = useAuth();
+  const { can } = useMe();
 
   const isTrainingAdmin = useMemo(
-    () => hasPermissions([LEVEL.ADMIN, WRITE.COURSES]),
-    [hasPermissions],
+    () => can(CAP.MANAGE_TRAINING_CONTENT),
+    [can],
   );
 
   return (

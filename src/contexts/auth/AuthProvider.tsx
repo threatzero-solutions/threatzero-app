@@ -1,7 +1,6 @@
 import {
   PropsWithChildren,
   createContext,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -13,8 +12,6 @@ import ErrorPage from "../../pages/ErrorPage";
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
 import axios, { InternalAxiosRequestConfig } from "axios";
 import SplashScreen from "../../components/layouts/SplashScreen";
-import { LEVEL } from "../../constants/permissions";
-import { getUnits } from "../../queries/organizations";
 
 const TOKEN_MIN_VALIDATY_SECONDS = 2;
 
@@ -62,6 +59,17 @@ const AuthCheck: React.FC<
   );
 };
 
+/**
+ * AuthContext scope is narrowed after the DB-authorization cutover:
+ *  - keycloak / accessToken / authenticated: token lifecycle (still JWT-backed).
+ *  - accessTokenClaims: identity fields only (email, name, picture, etc.).
+ *  - interceptorReady: axios auth interceptor is ready to sign requests.
+ *
+ * Authorization state (permissions, roles, scope, my-org/unit) moved to
+ * `MeContext` / `useMe()` and is sourced from `GET /api/me`. See
+ * `threatzero-api/docs/db-authorization-cutover-plan.md §3.1` for the
+ * frozen response shape and `_docs/authorization-model.md` for the model.
+ */
 export interface AuthContextType {
   keycloak: Keycloak | null;
   authError: unknown;
@@ -72,22 +80,11 @@ export interface AuthContextType {
     cb: (kc: Keycloak, ...args: unknown[]) => void,
   ) => void;
   /**
-   * Checks if the user has the required permissions.
-   * @param requiredPermissions An array of permissions to check for
-   * @param type The type of permissions to check for ("any" or "all"). Defaults to "any"
-   * @returns `true` if the user has the required permissions, `false` otherwise
+   * Identity claims from the JWT — name, email, picture, given/family name.
+   * NOT used for permissions, roles, org slug, or unit slug anymore.
    */
-  hasPermissions: (
-    requiredPermissions: string[],
-    type?: "any" | "all",
-  ) => boolean;
   accessTokenClaims?: { [key: string]: unknown } | null;
   interceptorReady: boolean;
-  hasMultipleUnitAccess: boolean;
-  hasMultipleOrganizationAccess: boolean;
-  myOrganizationSlug?: string;
-  myUnitSlug?: string;
-  isGlobalAdmin: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -96,11 +93,7 @@ export const AuthContext = createContext<AuthContextType>({
   accessToken: null,
   authenticated: false,
   addEventListener: () => {},
-  hasPermissions: () => false,
   interceptorReady: false,
-  hasMultipleUnitAccess: false,
-  hasMultipleOrganizationAccess: false,
-  isGlobalAdmin: false,
 });
 
 const _keycloak = new Keycloak(configJson.keycloak.config as KeycloakConfig);
@@ -242,52 +235,7 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     setInterceptorReady(true);
   }, [accessToken, keycloak]);
 
-  const hasPermissions = useCallback(
-    (requiredPermissions: string[], type?: "any" | "all"): boolean => {
-      const permissions =
-        keycloak?.tokenParsed?.resource_access?.["threatzero-api"]?.roles;
-      if (!permissions || !Array.isArray(permissions)) {
-        return false;
-      }
-
-      const predicate = (p: string) => permissions.includes(p);
-      switch (type) {
-        case "all":
-          return requiredPermissions.every(predicate);
-        case "any":
-        default:
-          return requiredPermissions.some(predicate);
-      }
-    },
-    [keycloak],
-  );
-
   const accessTokenClaims = useMemo(() => keycloak?.tokenParsed, [keycloak]);
-
-  const myOrganizationSlug = useMemo(
-    () => accessTokenClaims?.organization,
-    [accessTokenClaims],
-  );
-
-  const myUnitSlug = useMemo(
-    () => accessTokenClaims?.unit,
-    [accessTokenClaims],
-  );
-
-  const [hasMultipleUnitAccess, setHasMultipleUnitAccess] = useState(false);
-  useEffect(() => {
-    if (!interceptorReady) {
-      return;
-    }
-    getUnits({ limit: 1 }).then((units) =>
-      setHasMultipleUnitAccess(units.count > 1),
-    );
-  }, [interceptorReady]);
-
-  const isGlobalAdmin = useMemo(
-    () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions],
-  );
 
   return (
     <AuthContext.Provider
@@ -297,14 +245,8 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         accessToken,
         authenticated,
         addEventListener,
-        hasPermissions,
         accessTokenClaims,
         interceptorReady,
-        hasMultipleUnitAccess,
-        hasMultipleOrganizationAccess: isGlobalAdmin,
-        myOrganizationSlug,
-        myUnitSlug,
-        isGlobalAdmin,
       }}
     >
       {keycloak ? (

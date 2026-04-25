@@ -10,6 +10,7 @@ import { READ } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { classNames } from "../../../utils/core";
+import { labelsForPreset } from "../../../utils/labels";
 import GroupMembersTable from "../components/GroupMembersTable";
 import SOSLocationsTable from "../components/SOSLocationsTable";
 import SubunitsTable from "../components/SubunitsTable";
@@ -53,6 +54,19 @@ const MyOrganizationUnits: React.FC = () => {
     [idpRoleGroups, organizationAdminGroupName],
   );
 
+  // Use the *viewed* org's preset, not the signed-in user's. In admin
+  // panel, a system admin may be looking at an org whose preset differs
+  // from their own.
+  const labels = useMemo(
+    () => labelsForPreset(currentOrganization?.labelPreset),
+    [currentOrganization?.labelPreset],
+  );
+  // "Subunit" copy is a best-effort fallback — for non-default presets we
+  // render e.g. "Sub-schools". Real hierarchy may deserve a dedicated
+  // second-level preset later, but that's deferred.
+  const subunitSingular = `Sub-${labels.unitSingular.toLowerCase()}`;
+  const subunitPlural = `Sub-${labels.unitPlural.toLowerCase()}`;
+
   return (
     <div>
       {currentOrganizationLoading || !currentOrganization ? (
@@ -69,12 +83,14 @@ const MyOrganizationUnits: React.FC = () => {
             unitId={currentUnitSlug}
             unitIdType="slug"
             setUnitsPath={setUnitsPath}
-            unitsLabelSingular={isUnitContext ? "Subunit" : "Unit"}
-            unitsLabelPlural={isUnitContext ? "Subunits" : "Units"}
+            unitsLabelSingular={
+              isUnitContext ? subunitSingular : labels.unitSingular
+            }
+            unitsLabelPlural={isUnitContext ? subunitPlural : labels.unitPlural}
             render={(children) => (
               <LargeFormSection
-                heading={isUnitContext ? "Subunits" : "Units"}
-                subheading="View all organizational units."
+                heading={isUnitContext ? subunitPlural : labels.unitPlural}
+                subheading={`View all ${labels.unitPlural.toLowerCase()} in this organization.`}
                 defaultOpen
               >
                 {children}
@@ -95,9 +111,15 @@ const MyOrganizationUnits: React.FC = () => {
             hasPermissions([READ.ORGANIZATION_USERS])) ||
             isGlobalAdmin) && (
             <LargeFormSection
-              heading={isUnitContext ? "Unit Admins" : "Organization Admins"}
+              heading={
+                isUnitContext
+                  ? `${labels.unitSingular} Admins`
+                  : "Organization Admins"
+              }
               subheading={`Grant access to manage this ${
-                isUnitContext ? "unit and subunits" : "organization and units"
+                isUnitContext
+                  ? `${labels.unitSingular.toLowerCase()} and ${subunitPlural.toLowerCase()}`
+                  : `organization and ${labels.unitPlural.toLowerCase()}`
               }.`}
               defaultOpen
             >
@@ -109,7 +131,7 @@ const MyOrganizationUnits: React.FC = () => {
                     <InlineNotice
                       level="warning"
                       heading={`${
-                        isUnitContext ? "Unit" : "Organization"
+                        isUnitContext ? labels.unitSingular : "Organization"
                       } Admin Role Group Unavailable`}
                       body={`No role group exists with name "${organizationAdminGroupName}". Please make sure an appropriate role group exists with this name.`}
                     />
@@ -139,7 +161,7 @@ const MyOrganizationUnits: React.FC = () => {
                       unitSlug={currentUnitSlug}
                       joinText={
                         isUnitContext
-                          ? "Add Unit Admin"
+                          ? `Add ${labels.unitSingular} Admin`
                           : "Add Organization Admin"
                       }
                       leaveText="Revoke Access"
