@@ -12,6 +12,7 @@ import ResourceVideos from "./components/resources/ResourceVideos";
 import AuthProvider from "./contexts/auth/AuthProvider";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
 import AdvancedIndex from "./pages/admin-panel/advanced/AdvancedIndex";
+import SystemAdmins from "./pages/admin-panel/system-admins/SystemAdmins";
 import CourseBuilder from "./pages/admin-panel/courses/CourseBuilder";
 import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
 import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
@@ -26,7 +27,6 @@ import HelpCenter from "./pages/HelpCenter";
 import Login from "./pages/Login";
 import MyDashboard from "./pages/my-dashboard/MyDashboard";
 import OrganizationsRoot from "./pages/organizations/OrganizationsRoot";
-import OrganizationsSafety from "./pages/organizations/tabs/OrganizationsSafety";
 import OrganizationsSettings from "./pages/organizations/tabs/OrganizationsSettings";
 import OrganizationsTraining from "./pages/organizations/tabs/OrganizationsTraining";
 import OrganizationsAccess from "./pages/organizations/tabs/OrganizationsAccess";
@@ -51,24 +51,19 @@ import { ResourceItemCategories, ResourceItemCategory } from "./types/entities";
 
 const organizationsChildren: RouteObject[] = [
   {
-    path: "units",
-    handle: { title: "Units" },
-    element: <OrganizationsUnits />,
-  },
-  {
-    // Merged Users + Access surface. The page's Assignments / History
-    // sub-tabs persist their selection in `?view=`, so deep links from
-    // the prior `/access?view=history` URL shape still resolve.
     path: "users",
     handle: { title: "Users" },
     element: <OrganizationsAccess />,
   },
   {
-    // `/access` → `/users` — keep old bookmarks working until we're
-    // confident nobody's linking it.
     path: "access",
     handle: { title: "Users" },
     element: <OrganizationsAccess />,
+  },
+  {
+    path: "units",
+    handle: { title: "Units" },
+    element: <OrganizationsUnits />,
   },
   {
     path: "tat",
@@ -81,9 +76,10 @@ const organizationsChildren: RouteObject[] = [
     element: <OrganizationsTraining />,
   },
   {
+    // Safety configuration moved under Settings > General. Keep this
+    // route as a redirect so old bookmarks land in the right place.
     path: "safety",
-    handle: { title: "Safety" },
-    element: <OrganizationsSafety />,
+    loader: () => redirect("../settings?section=general"),
   },
   {
     path: "settings",
@@ -92,7 +88,7 @@ const organizationsChildren: RouteObject[] = [
   },
   {
     path: "*?",
-    loader: () => redirect("units"),
+    loader: () => redirect("users"),
   },
 ];
 
@@ -355,6 +351,11 @@ export const router = createBrowserRouter(
                       path: "languages",
                       handle: { title: "Languages" },
                       element: <ViewLanguages />,
+                    },
+                    {
+                      path: "system-admins",
+                      handle: { title: "System Admins" },
+                      element: <SystemAdmins />,
                     },
                     {
                       path: "advanced",

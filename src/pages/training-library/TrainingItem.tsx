@@ -21,6 +21,8 @@ import {
   DISPLAY_COMPLETION_THRESHOLD,
 } from "../../constants/core";
 import { useAuth } from "../../contexts/auth/useAuth";
+import { useMe } from "../../contexts/me/MeProvider";
+import { useResidencePicker } from "../../contexts/me/ResidencePickerProvider";
 import { TrainingContext } from "../../contexts/training/training-context";
 import {
   getMyItemCompletion,
@@ -55,6 +57,49 @@ const TrainingItem: React.FC = () => {
   >();
 
   const { authenticated } = useAuth();
+  const { me } = useMe();
+  const { requireResidenceUnit } = useResidencePicker();
+
+  // Residence gate (`_docs/residence-and-tenant-model.md` §6 + §2.3):
+  // when the user is authenticated to a tenant org but has no residence
+  // unit set there, block the watch page and open the picker. Browse and
+  // library views are NOT gated — only the watch page that can write
+  // progress.
+  //
+  // Public/watch-token viewers (`!authenticated`) don't go through this
+  // gate; their token already carries org+unit and the backend's defense-
+  // in-depth check will throw `RESIDENCE_UNIT_REQUIRED` if they somehow
+  // hit a write without one.
+  const tenantOrgId = me?.scope.kind === "tenant" ? me.organization?.id : null;
+  const myResidenceForTenant = useMemo(
+    () =>
+      tenantOrgId
+        ? me?.residences.find((r) => r.organizationId === tenantOrgId)
+        : undefined,
+    [me, tenantOrgId],
+  );
+  const residenceGateOpen =
+    authenticated &&
+    !!tenantOrgId &&
+    (myResidenceForTenant === undefined ||
+      myResidenceForTenant.unitId === null);
+
+  // Open the picker exactly once per gate-open transition. Promise-based:
+  // resolves when the user picks (and `/me` invalidates → gate closes) or
+  // cancels (gate stays open, but the user is shown the gate copy below).
+  const gatePromptedRef = useRef(false);
+  useEffect(() => {
+    if (!residenceGateOpen || !tenantOrgId) {
+      gatePromptedRef.current = false;
+      return;
+    }
+    if (gatePromptedRef.current) return;
+    gatePromptedRef.current = true;
+    void requireResidenceUnit({
+      organizationId: tenantOrgId,
+      dismissible: false,
+    });
+  }, [residenceGateOpen, tenantOrgId, requireResidenceUnit]);
 
   const sectionId = useMemo(() => {
     const sId = searchParams.get("sectionId");
@@ -179,6 +224,20 @@ const TrainingItem: React.FC = () => {
       });
     };
   }, [queryClient, state.activeEnrollment?.id]);
+
+  if (residenceGateOpen) {
+    return (
+      <div>
+        {authenticated && <BackButton defaultTo={"/training/library"} />}
+        <div className="mt-8 mx-auto max-w-md text-center text-sm text-gray-600">
+          <p>
+            Pick the unit you belong to before starting training. Your progress
+            is attributed to that unit.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

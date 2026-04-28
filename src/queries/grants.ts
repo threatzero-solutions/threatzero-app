@@ -8,6 +8,7 @@
  */
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
+import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
 import { findOneOrFail } from "./utils";
 
 /**
@@ -36,22 +37,27 @@ export interface UserWithAccess {
     unitId: string | null;
     unitSlug: string | null;
   }>;
+  /**
+   * True when the user holds the system-admin role. Read-only in the org
+   * module — system-admin is granted/revoked from the dedicated Admin
+   * Panel page so org-admin sessions can't accidentally fan privilege
+   * out across tenants.
+   */
+  isSystemAdmin: boolean;
 }
 
-export interface UsersWithAccessQuery {
-  limit?: number;
-  offset?: number;
-  search?: string;
+/**
+ * Extends the shared `ItemFilterQueryParams` so `DataTable2` can drive the
+ * Users tab directly (sort + paginate via `query`/`setQuery`). The backend
+ * only validates `firstName | lastName | email | unit` as sort keys
+ * (see `OrganizationUserQueryOrderDto`), but we keep the type permissive
+ * to match the shared contract.
+ */
+export interface UsersWithAccessQuery extends ItemFilterQueryParams {
   /** Filter KC users by unit slug (matches the KC `unit` attribute). */
   unit?: string | string[];
   audience?: string | string[];
   enabled?: boolean;
-  order?: {
-    firstName?: "ASC" | "DESC";
-    lastName?: "ASC" | "DESC";
-    email?: "ASC" | "DESC";
-    unit?: "ASC" | "DESC";
-  };
 }
 
 export interface PaginatedUsersWithAccess {
@@ -66,6 +72,9 @@ export interface TatMember {
   id: string;
   idpId: string | null;
   email: string | null;
+  name: string | null;
+  givenName: string | null;
+  familyName: string | null;
   unitId: string | null;
   unitSlug: string | null;
 }
@@ -96,6 +105,21 @@ export interface GrantAuditEntry {
   actor?: { id: string; email: string | null } | null;
   role?: { id: string; slug: string; name: string };
   unit?: { id: string; slug: string; name: string } | null;
+}
+
+/**
+ * Role metadata the admin role editor consumes (mirrors `AssignableRole`
+ * on the API). `allowedScopes` drives which roles land in the org-wide
+ * checkbox list vs. the unit picker — replaces the old hardcoded
+ * `ORG_SCOPE_ROLES` / `UNIT_SCOPE_ROLES` arrays that used to drift from
+ * the backend's scope enforcement.
+ */
+export interface AssignableRole {
+  slug: string;
+  name: string;
+  description: string;
+  allowedScopes: Array<"organization" | "unit">;
+  capabilities: string[];
 }
 
 export interface PaginatedGrantAudit {
@@ -146,6 +170,9 @@ export const getUsersWithAccess = (
 export const getTatRoster = (orgId: string) =>
   findOneOrFail<TatRoster>(accessPath(orgId, "/tat"));
 
+export const getAssignableRoles = (orgId: string) =>
+  findOneOrFail<AssignableRole[]>(accessPath(orgId, "/roles"));
+
 export const getGrantAudit = (
   orgId: string,
   opts?: { userId?: string; limit?: number; offset?: number },
@@ -158,6 +185,16 @@ export const getGrantAudit = (
   return findOneOrFail<PaginatedGrantAudit>(
     accessPath(orgId, "/audit") + (qs ? `?${qs}` : ""),
   );
+};
+
+export const deleteTatMember = async (
+  orgId: string,
+  userId: string,
+  unitId: string | null,
+): Promise<void> => {
+  const qs = unitId ? `?unitId=${encodeURIComponent(unitId)}` : "";
+  const url = `${API_BASE_URL}/${accessPath(orgId, `/tat/users/${userId}`)}${qs}`;
+  await axios.delete(url);
 };
 
 export const patchUserGrants = async (
@@ -190,6 +227,8 @@ export const usersWithGrantsKey = (orgId: string) =>
   ["access", "users", orgId] as const;
 export const tatRosterKey = (orgId: string) =>
   ["access", "tat", orgId] as const;
+export const assignableRolesKey = (orgId: string) =>
+  ["access", "roles", orgId] as const;
 export const grantAuditKey = (
   orgId: string,
   opts?: { userId?: string; limit?: number; offset?: number },

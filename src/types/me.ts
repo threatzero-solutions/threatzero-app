@@ -66,15 +66,23 @@ export interface MeTat {
 }
 
 /**
- * Where the user belongs — used for routing (e.g., safety-concern assignment)
- * and attribution (e.g., training-stats rollup). Independent of grants; a
- * user can have capabilities in units they don't reside in.
+ * One per-(user, org) residence — where the user belongs inside that org.
+ * Used for routing (e.g., safety-concern assignment) and attribution
+ * (e.g., training-stats rollup). Independent of grants; a user can have
+ * capabilities in units they don't reside in.
  *
- * `null` when the user has no residence (system admins, unenrolled users).
+ * `unitId` is null when the user belongs to the org but hasn't picked a
+ * unit yet — their next qualifying action triggers the residence picker.
+ *
+ * See `_docs/residence-and-tenant-model.md` §3 for the model.
  */
 export interface MeResidence {
-  organizationId: string | null;
+  organizationId: string;
+  organizationSlug: string;
+  organizationName: string;
   unitId: string | null;
+  unitSlug: string | null;
+  unitName: string | null;
 }
 
 export interface MeResponse {
@@ -84,5 +92,21 @@ export interface MeResponse {
   units: MeUnit[];
   capabilities: MeCapabilities;
   tat: MeTat;
-  residence: MeResidence | null;
+  /**
+   * Every org the user has a residence row in. Empty when they have no
+   * residence anywhere (pure system admins, unenrolled users).
+   *
+   * For the common single-residence case the array has exactly one entry.
+   * Multi-residence is the multi-org future surface — admin-invite-only
+   * for now.
+   */
+  residences: MeResidence[];
+  /**
+   * True when the user holds any system-scope grant. Authority is
+   * orthogonal to `scope.kind` — a system admin acting inside a tenant
+   * org has `scope.kind === 'tenant'` (per the backend's "system + ≥1
+   * tenant grant → tenant" default) but still sees system-only UI. Gate
+   * sysadmin surfaces on this, not on `scope.kind === 'system'`.
+   */
+  isSystemAdmin: boolean;
 }

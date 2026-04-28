@@ -87,7 +87,17 @@ export const organizationSafetyManagementPermissionOptions = {
   type: "all" as const,
 };
 
+// Settings surfaces sub-tabs for several capabilities (general/notifications/
+// advanced need unit-or-org edit rights, access-rules needs manage-org-rules,
+// SSO needs view-idps). Show the tab if the user has any of them; the Settings
+// page itself filters sub-tabs per-capability.
 export const organizationSettingsPermissionOptions = {
-  permissions: [CAP.MANAGE_UNITS],
-  type: "all" as const,
+  permissions: [
+    CAP.MANAGE_UNITS,
+    CAP.MANAGE_ORGANIZATIONS,
+    CAP.MANAGE_ORG_RULES,
+    CAP.VIEW_IDPS,
+    CAP.MANAGE_IDPS,
+  ],
+  type: "any" as const,
 };

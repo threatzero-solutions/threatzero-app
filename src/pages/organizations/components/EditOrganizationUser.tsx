@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Fragment, useCallback, useContext, useMemo } from "react";
 import { Controller, Resolver, useForm } from "react-hook-form";
 import { z } from "zod";
-import Checkbox from "../../../components/forms/inputs/Checkbox";
 import Input from "../../../components/forms/inputs/Input";
 import UnitSelect from "../../../components/forms/inputs/UnitSelect";
 import InlineNotice from "../../../components/layouts/InlineNotice";
@@ -13,10 +12,6 @@ import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm"
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import PillBadge from "../../../components/PillBadge";
-import {
-  TRAINING_PARTICIPANT_GROUP_NAME,
-  TRAINING_PARTICIPANT_ROLE_GROUP_PATH,
-} from "../../../constants/organizations";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import {
   getOrganizationUsers,
@@ -39,7 +34,6 @@ const createUserSchema = z.object({
   lastName: z.string().nonempty(),
   email: z.string().email(),
   unitSlug: z.string().nonempty("Unit is required"),
-  canAccessTraining: z.boolean().optional(),
   audienceSlugs: z.array(z.string()),
 });
 
@@ -79,7 +73,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     currentUnitSlug: unitSlug,
     getMatchingIdp,
     getIdpAttributes,
-    getIdpRoleGroups,
     invalidateOrganizationUsersQuery,
   } = useContext(OrganizationsContext);
 
@@ -151,7 +144,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
   const { isDirty } = formState;
 
   const email = watch("email");
-  const canAccessTraining = watch("canAccessTraining");
 
   const matchingIdp = useMemo(
     () => (email ? getMatchingIdp(email) : null),
@@ -161,21 +153,13 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     () => getIdpAttributes(matchingIdp),
     [getIdpAttributes, matchingIdp],
   );
-  const idpRoleGroups = useMemo(
-    () => getIdpRoleGroups(matchingIdp),
-    [getIdpRoleGroups, matchingIdp],
+  const displayIdpAttributes = useMemo(
+    () =>
+      idpAttributes
+        .filter((a) => RELEVANT_USER_ATTRIBUTES.includes(a))
+        .map(humanizeAttributeName),
+    [idpAttributes],
   );
-  const displayIdpAttributes = useMemo(() => {
-    const autoAttributes = idpAttributes
-      .filter((a) => RELEVANT_USER_ATTRIBUTES.includes(a))
-      .map(humanizeAttributeName);
-
-    if (idpRoleGroups.includes(TRAINING_PARTICIPANT_GROUP_NAME)) {
-      autoAttributes.push("training access");
-    }
-
-    return autoAttributes;
-  }, [idpAttributes, idpRoleGroups]);
 
   const { mutate: save, isPending } = useMutation({
     mutationFn: (user: TForm) =>
@@ -291,31 +275,11 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {idpAttributes.includes("unit") && <SSOField />}
           </SlideOverField>
         )}
-        {(!userData || canAccessTraining !== undefined) && (
-          <SlideOverField
-            name="trainingParticipant"
-            label="Can Access Training"
-          >
-            <Controller
-              name="canAccessTraining"
-              control={formMethods.control}
-              render={({ field }) => (
-                <Checkbox
-                  checked={field.value ?? false}
-                  onChange={(checked) => field.onChange(checked)}
-                />
-              )}
-            />
-            {idpRoleGroups.includes(TRAINING_PARTICIPANT_GROUP_NAME) && (
-              <SSOField />
-            )}
-          </SlideOverField>
-        )}
         <SlideOverField
           name="audienceSlugs"
           label="Training Groups"
           helpText={
-            "Training groups determine which training courses this user will have access to."
+            "Training groups determine which training courses this user will have access to. To grant the training-participant role, use Manage Roles after creating the user."
           }
           discreetHelpText
         >
@@ -328,7 +292,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
                 onChange={(e) =>
                   field.onChange(e.target?.value?.map((a) => a.slug))
                 }
-                disabled={!canAccessTraining}
                 propertyNameSingular="training group"
                 propertyNamePlural="training groups"
                 allowedAudiences={allowedAudiences}
@@ -365,7 +328,6 @@ const toOrgUser = (user: TForm): Partial<OrganizationUser> => ({
     audience: user.audienceSlugs,
     ...(user.unitSlug ? { unit: [user.unitSlug] } : {}),
   },
-  canAccessTraining: user.canAccessTraining,
 });
 
 const toTransientUser = (
@@ -378,7 +340,4 @@ const toTransientUser = (
   email: orgUser.email,
   unitSlug: orgUser.attributes.unit?.at(0) ?? unitSlug ?? "",
   audienceSlugs: orgUser.attributes.audience ?? [],
-  canAccessTraining:
-    orgUser.canAccessTraining ??
-    orgUser.groups?.includes(TRAINING_PARTICIPANT_ROLE_GROUP_PATH),
 });

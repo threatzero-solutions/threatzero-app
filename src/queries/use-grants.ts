@@ -5,7 +5,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ME_QUERY_KEY } from "./me";
 import {
+  assignableRolesKey,
   DesiredGrantInput,
+  getAssignableRoles,
   getGrantAudit,
   getTatRoster,
   getUsersWithAccess,
@@ -16,7 +18,10 @@ import {
   usersWithGrantsKey,
 } from "./grants";
 
-const FIVE_MINUTES = 5 * 60_000;
+// Short enough that a tab refocus after a KC-side edit (webhook-synced)
+// picks up the change within a normal break-and-return cycle; long enough
+// that rapidly switching tabs doesn't thrash the endpoint.
+const THIRTY_SECONDS = 30_000;
 
 /**
  * Merged Users+Access page. Query params flow through to the backend
@@ -33,7 +38,7 @@ export const useUsersWithAccess = (
       : ["access", "users", "none"],
     queryFn: () => getUsersWithAccess(orgId!, query),
     enabled: !!orgId,
-    staleTime: FIVE_MINUTES,
+    staleTime: THIRTY_SECONDS,
   });
 
 export const useTatRoster = (orgId: string | undefined) =>
@@ -41,7 +46,19 @@ export const useTatRoster = (orgId: string | undefined) =>
     queryKey: orgId ? tatRosterKey(orgId) : ["access", "tat", "none"],
     queryFn: () => getTatRoster(orgId!),
     enabled: !!orgId,
-    staleTime: FIVE_MINUTES,
+    staleTime: THIRTY_SECONDS,
+  });
+
+/**
+ * Role catalog for the admin role editor. Cached longer than other access
+ * data — role definitions change with migrations, not day-to-day.
+ */
+export const useAssignableRoles = (orgId: string | undefined) =>
+  useQuery({
+    queryKey: orgId ? assignableRolesKey(orgId) : ["access", "roles", "none"],
+    queryFn: () => getAssignableRoles(orgId!),
+    enabled: !!orgId,
+    staleTime: 30 * 60_000,
   });
 
 export const useGrantAudit = (

@@ -5,233 +5,480 @@
  * `_docs/users-access-merge-plan.md` for the architecture and the
  * planned swap to DB-only reads once the KC webhook mirror lands.
  */
-import { useContext, useMemo, useState } from "react";
+import {
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  DocumentArrowUpIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  ShieldCheckIcon,
+  UserPlusIcon,
+  XCircleIcon,
+} from "@heroicons/react/20/solid";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
+import Checkbox from "../../../components/forms/inputs/Checkbox";
+import SearchInput from "../../../components/forms/inputs/SearchInput";
+import Dropdown from "../../../components/layouts/Dropdown";
+import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
+import SlideOver from "../../../components/layouts/slide-over/SlideOver";
+import DataTable2 from "../../../components/layouts/tables/DataTable2";
+import { WRITE } from "../../../constants/permissions";
+import { useAuth } from "../../../contexts/auth/useAuth";
+import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { UserWithAccess } from "../../../queries/grants";
-import { useUsersWithAccess } from "../../../queries/use-grants";
+import { ItemFilterQueryParams } from "../../../hooks/use-item-filter-query";
+import { useOpenData } from "../../../hooks/use-open-data";
+import {
+  UserWithAccess,
+  UsersWithAccessQuery,
+  usersWithGrantsKey,
+} from "../../../queries/grants";
+import {
+  activateOrganizationUser,
+  deactivateOrganizationUser,
+} from "../../../queries/organizations";
+import {
+  useAssignableRoles,
+  useUsersWithAccess,
+} from "../../../queries/use-grants";
+import { cn } from "../../../utils/core";
 import { labelsForPreset } from "../../../utils/labels";
+import { getUnitAndDescendantSlugs } from "../../../utils/units";
+import BulkUserUploadSlideOver from "./BulkUserUploadSlideOver";
+import EditOrganizationUser from "./EditOrganizationUser";
 import RoleAssignmentEditor from "./RoleAssignmentEditor";
-import { roleChipClass, roleLabel, sortRoleSlugs } from "./roleDisplay";
+import { roleChipClass, sortRoleSlugs } from "./roleDisplay";
 
 interface Props {
   orgId: string;
-  orgName: string;
+  onOpenHistory: () => void;
 }
 
-const PAGE_SIZE = 25;
+const columnHelper = createColumnHelper<UserWithAccess>();
 
 const OrganizationsAccessAssignments: React.FC<Props> = ({
   orgId,
-  orgName,
+  onOpenHistory,
 }) => {
-  const { currentOrganization } = useContext(OrganizationsContext);
+  const { currentOrganization, allUnits, currentUnitSlug } =
+    useContext(OrganizationsContext);
+  const { hasPermissions, isGlobalAdmin } = useAuth();
+  const queryClient = useQueryClient();
+  const {
+    setOpen: setConfirmationOpen,
+    setConfirmationOptions,
+    setClose: setConfirmationClose,
+  } = useContext(ConfirmationContext);
+
   const labels = useMemo(
     () => labelsForPreset(currentOrganization?.labelPreset),
     [currentOrganization?.labelPreset],
   );
 
-  const [offset, setOffset] = useState(0);
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch] = useDebounceValue(searchInput.trim(), 250);
-  const [editing, setEditing] = useState<UserWithAccess | null>(null);
-
-  const query = useMemo(
-    () => ({
-      limit: PAGE_SIZE,
-      offset,
-      search: debouncedSearch || undefined,
-    }),
-    [offset, debouncedSearch],
+  const { data: assignableRoles } = useAssignableRoles(orgId);
+  const roleLabelBySlug = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of assignableRoles ?? []) map.set(r.slug, r.name);
+    return map;
+  }, [assignableRoles]);
+  const roleLabel = useCallback(
+    (slug: string) => roleLabelBySlug.get(slug) ?? slug,
+    [roleLabelBySlug],
   );
 
-  const { data, isLoading, isFetching } = useUsersWithAccess(orgId, query);
+  // Map unit slug → display name so the Unit column shows the human-readable
+  // name rather than the slug. Falls back to the slug itself when the unit
+  // isn't in the loaded list (e.g., peer-unit references from KC).
+  const unitNameBySlug = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of allUnits ?? []) {
+      map.set(u.slug, u.name);
+    }
+    return map;
+  }, [allUnits]);
 
-  const users = data?.results ?? [];
-  const count = data?.count ?? 0;
-  const totalPages = count ? Math.max(1, Math.ceil(count / PAGE_SIZE)) : 1;
-  const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
+  const [query, setQuery] = useImmer<ItemFilterQueryParams>({
+    limit: 25,
+    offset: 0,
+    order: { firstName: "ASC" },
+    enabled: true,
+  });
+
+  // When a unit is active in the breadcrumb, narrow the list to users homed
+  // in that unit — or any of its descendant units. Picking a parent unit
+  // should show everything underneath it, not an empty list when users are
+  // only homed in sub-units. Resetting offset on unit change keeps
+  // pagination sane when the user drills in/out.
+  const unitFilter = useMemo(() => {
+    if (!currentUnitSlug) return undefined;
+    return getUnitAndDescendantSlugs(allUnits, currentUnitSlug);
+  }, [currentUnitSlug, allUnits]);
+
+  useEffect(() => {
+    setQuery((draft) => {
+      if (unitFilter) {
+        draft.unit = unitFilter;
+      } else {
+        Reflect.deleteProperty(draft, "unit");
+      }
+      draft.offset = 0;
+    });
+  }, [unitFilter, setQuery]);
+
+  const [debouncedQuery] = useDebounceValue(query, 250);
+  const [editing, setEditing] = useState<UserWithAccess | null>(null);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const editUser = useOpenData<string>();
+
+  const { data, isLoading } = useUsersWithAccess(
+    orgId,
+    debouncedQuery as UsersWithAccessQuery,
+  );
+
+  const { mutate: updateUserActivation, isPending: isUpdatingActivation } =
+    useMutation({
+      mutationFn: (args: { idpId: string; deactivate: boolean }) =>
+        args.deactivate
+          ? deactivateOrganizationUser(orgId, args.idpId)
+          : activateOrganizationUser(orgId, args.idpId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: usersWithGrantsKey(orgId) });
+        setConfirmationClose();
+      },
+    });
+
+  useEffect(() => {
+    setConfirmationOptions((draft) => {
+      draft.isPending = isUpdatingActivation;
+    });
+  }, [isUpdatingActivation, setConfirmationOptions]);
+
+  const handleToggleActivation = useCallback(
+    (user: UserWithAccess) => {
+      const deactivate = user.enabled;
+      const display =
+        [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+        user.email ||
+        user.idpId;
+      setConfirmationOpen({
+        title: deactivate ? "Deactivate User" : "Activate User",
+        message: (
+          <span>
+            Are you sure you want to {deactivate ? "deactivate" : "activate"}{" "}
+            the following user account?
+            <span className="block font-bold mt-2">
+              {display}
+              {user.email ? ` (${user.email})` : ""}
+            </span>
+          </span>
+        ),
+        onConfirm: () =>
+          updateUserActivation({ idpId: user.idpId, deactivate }),
+        destructive: deactivate,
+        confirmText: deactivate ? "Deactivate" : "Activate",
+      });
+    },
+    [setConfirmationOpen, updateUserActivation],
+  );
 
   const displayName = (user: UserWithAccess) => {
     const joined = [user.firstName, user.lastName].filter(Boolean).join(" ");
     return joined || user.email || "—";
   };
 
+  const canWrite = hasPermissions([WRITE.ORGANIZATION_USERS]);
+
+  const columns = useMemo(
+    () => [
+      // Sort by firstName since that's what leads the cell — the secondary
+      // email line isn't sortable and would make "User" ambiguous otherwise.
+      columnHelper.accessor((u) => u.firstName ?? "", {
+        id: "firstName",
+        header: "User",
+        cell: ({ row: { original } }) => {
+          const inactive = !original.enabled;
+          return (
+            <div className="flex items-start gap-2">
+              {inactive && (
+                <XCircleIcon
+                  aria-label="Deactivated"
+                  className="mt-0.5 size-4 shrink-0 text-gray-400"
+                />
+              )}
+              <div className={cn(inactive && "text-gray-400")}>
+                <div
+                  className={cn(
+                    "text-sm font-medium",
+                    inactive ? "line-through" : "text-gray-900",
+                  )}
+                >
+                  {displayName(original)}
+                </div>
+                {original.email && (
+                  <div
+                    className={cn(
+                      "text-xs",
+                      inactive ? "line-through text-gray-400" : "text-gray-500",
+                    )}
+                  >
+                    {original.email}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor((u) => u.unitSlug ?? "", {
+        id: "unit",
+        header: labels.unitSingular,
+        cell: ({ row: { original } }) => {
+          const slug = original.unitSlug;
+          if (!slug) {
+            return <span className="italic text-gray-400">—</span>;
+          }
+          return (
+            <span className="text-sm text-gray-700">
+              {unitNameBySlug.get(slug) ?? slug}
+            </span>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "roles",
+        header: "Roles",
+        enableSorting: false,
+        cell: ({ row: { original } }) => {
+          const orgSlugs = original.grants
+            .filter((g) => g.unitId == null)
+            .map((g) => g.roleSlug);
+          const unitCount = original.grants.filter(
+            (g) => g.unitId != null,
+          ).length;
+          const sortedSlugs = sortRoleSlugs(orgSlugs);
+          // Only system admins see the "System admin" chip — org-admins
+          // shouldn't even know whether someone holds the role, since the
+          // role is managed entirely outside the org module.
+          const showSysAdmin = original.isSystemAdmin && isGlobalAdmin;
+          const noOrgRoles = sortedSlugs.length === 0;
+          return (
+            <div className="flex flex-wrap gap-1.5">
+              {showSysAdmin && (
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${roleChipClass("system-admin")}`}
+                  title="Managed in Admin Panel → System admins"
+                >
+                  System admin
+                </span>
+              )}
+              {noOrgRoles && !showSysAdmin ? (
+                <span className="text-xs italic text-gray-400">None</span>
+              ) : (
+                sortedSlugs.map((slug) => (
+                  <span
+                    key={slug}
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${roleChipClass(slug)}`}
+                  >
+                    {roleLabel(slug)}
+                  </span>
+                ))
+              )}
+              {unitCount > 0 && (
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                  +{unitCount} {labels.unitSingular.toLowerCase()}
+                  {unitCount === 1 ? "" : "s"}
+                </span>
+              )}
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        cell: ({ row: { original } }) => {
+          const canEditRoles = !!original.userId;
+          return (
+            <ButtonGroup className="w-full justify-end">
+              <Dropdown
+                valueIcon={<EllipsisVerticalIcon className="size-4" />}
+                actions={[
+                  {
+                    id: "edit-roles",
+                    value: (
+                      <span className="inline-flex items-center gap-1">
+                        <ShieldCheckIcon className="size-4 inline" /> Edit roles
+                      </span>
+                    ),
+                    action: () => setEditing(original),
+                    disabled: !canEditRoles,
+                  },
+                  {
+                    id: "edit-user",
+                    value: (
+                      <span className="inline-flex items-center gap-1">
+                        <PencilIcon className="size-4 inline" /> Edit user
+                      </span>
+                    ),
+                    action: () => editUser.openData(original.idpId),
+                  },
+                  {
+                    id: "toggle-activation",
+                    value: (() => {
+                      const Icon = original.enabled
+                        ? XCircleIcon
+                        : CheckCircleIcon;
+                      return (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1",
+                            original.enabled
+                              ? "text-red-500"
+                              : "text-green-500",
+                          )}
+                        >
+                          <Icon className="size-4 inline" />{" "}
+                          {original.enabled ? "Deactivate" : "Activate"}
+                        </span>
+                      );
+                    })(),
+                    action: () => handleToggleActivation(original),
+                  },
+                ]}
+              />
+            </ButtonGroup>
+          );
+        },
+      }),
+    ],
+    [
+      labels,
+      unitNameBySlug,
+      editUser,
+      handleToggleActivation,
+      roleLabel,
+      isGlobalAdmin,
+    ],
+  );
+
+  const includeInactive = query.enabled === undefined;
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Users</h2>
-          <p className="text-sm text-gray-500">
-            Everyone with access to {orgName} — identity from Keycloak, roles
-            from ThreatZero. Changes take effect immediately.
-          </p>
-        </div>
-        <div>
-          <label htmlFor="users-search" className="sr-only">
-            Search users
-          </label>
-          <input
-            id="users-search"
-            type="search"
-            value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-              setOffset(0);
-            }}
+      <div className="space-y-4 rounded-lg bg-white p-4 ring-1 ring-gray-900/5">
+        <div className="flex flex-wrap items-center gap-4">
+          {canWrite && (
+            <Dropdown
+              buttonClassName="inline-flex items-center gap-x-1.5 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              value={
+                <span className="inline-flex items-center gap-x-1">
+                  <UserPlusIcon className="size-4" />
+                  Add users
+                </span>
+              }
+              valueIcon={
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className="-mr-1 size-5 text-white/80"
+                />
+              }
+              actions={[
+                {
+                  id: "add-one",
+                  // EditOrganizationUser lets the admin pick the unit, so
+                  // this is safe at org scope — the old KC-backed flow had
+                  // the same dialog.
+                  value: (
+                    <span className="inline-flex items-center gap-2">
+                      <UserPlusIcon className="size-4" /> Add a user
+                    </span>
+                  ),
+                  action: () => editUser.openNew(),
+                },
+                {
+                  id: "import-csv",
+                  value: (
+                    <span className="inline-flex items-center gap-2">
+                      <DocumentArrowUpIcon className="size-4" /> Import from CSV
+                    </span>
+                  ),
+                  action: () => setIsBulkUploadOpen(true),
+                },
+              ]}
+            />
+          )}
+          {canWrite && (
+            <label
+              htmlFor="include-inactive-users"
+              className="flex items-center gap-2"
+            >
+              <Checkbox
+                id="include-inactive-users"
+                checked={includeInactive}
+                onChange={(checked) => {
+                  setQuery((draft) => {
+                    if (checked) {
+                      Reflect.deleteProperty(draft, "enabled");
+                    } else {
+                      draft.enabled = true;
+                    }
+                    draft.offset = 0;
+                  });
+                }}
+              />
+              <span className="text-xs font-semibold">Show inactive</span>
+            </label>
+          )}
+          <div className="flex-1" />
+          <SearchInput
             placeholder="Search name or email"
-            className="w-full sm:w-64 rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
+            searchQuery={query.search ?? ""}
+            setSearchQuery={(search) =>
+              setQuery((draft) => {
+                draft.search = search;
+                draft.offset = 0;
+              })
+            }
+          />
+          <Dropdown
+            iconOnly
+            value="More actions"
+            valueIcon={<EllipsisVerticalIcon className="size-5" />}
+            actions={[
+              {
+                id: "change-log",
+                value: (
+                  <span className="inline-flex items-center gap-2">
+                    <ClockIcon className="size-4" /> Change log
+                  </span>
+                ),
+                action: onOpenHistory,
+              },
+            ]}
           />
         </div>
-      </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <HeaderCell>User</HeaderCell>
-              <HeaderCell>{labels.unitSingular}</HeaderCell>
-              <HeaderCell>Roles</HeaderCell>
-              <HeaderCell>Status</HeaderCell>
-              <th scope="col" className="relative px-6 py-3">
-                <span className="sr-only">Edit</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {isLoading ? (
-              <EmptyRow>Loading…</EmptyRow>
-            ) : users.length === 0 ? (
-              <EmptyRow>
-                {debouncedSearch
-                  ? "No users match that search."
-                  : "No users in this organization yet."}
-              </EmptyRow>
-            ) : (
-              users.map((user) => {
-                const orgSlugs = user.grants
-                  .filter((g) => g.unitId == null)
-                  .map((g) => g.roleSlug);
-                const unitCount = user.grants.filter(
-                  (g) => g.unitId != null,
-                ).length;
-                const sortedSlugs = sortRoleSlugs(orgSlugs);
-                const canEdit = !!user.userId;
-                return (
-                  <tr
-                    key={user.idpId}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {displayName(user)}
-                      </div>
-                      {user.email && (
-                        <div className="text-xs text-gray-500">
-                          {user.email}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {user.unitSlug ? (
-                        user.unitSlug
-                      ) : (
-                        <span className="italic text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-wrap gap-1.5">
-                        {sortedSlugs.length === 0 ? (
-                          <span className="text-xs italic text-gray-400">
-                            None
-                          </span>
-                        ) : (
-                          sortedSlugs.map((slug) => (
-                            <span
-                              key={slug}
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${roleChipClass(slug)}`}
-                            >
-                              {roleLabel(slug)}
-                            </span>
-                          ))
-                        )}
-                        {unitCount > 0 && (
-                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
-                            +{unitCount} {labels.unitSingular.toLowerCase()}
-                            {unitCount === 1 ? "" : "s"}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {user.enabled ? (
-                        <span className="inline-flex items-center gap-1 text-green-700">
-                          <span
-                            aria-hidden
-                            className="h-1.5 w-1.5 rounded-full bg-green-500"
-                          />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-gray-500">
-                          <span
-                            aria-hidden
-                            className="h-1.5 w-1.5 rounded-full bg-gray-400"
-                          />
-                          Disabled
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <button
-                        type="button"
-                        aria-label={`Edit roles for ${displayName(user)}`}
-                        title={
-                          canEdit
-                            ? undefined
-                            : "User must log in once before roles can be assigned"
-                        }
-                        disabled={!canEdit}
-                        className="inline-flex items-center rounded-md px-3 py-2 font-medium text-primary-600 hover:bg-primary-50 hover:text-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-transparent"
-                        onClick={() => canEdit && setEditing(user)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+        <DataTable2
+          columns={columns}
+          data={data?.results ?? []}
+          pageState={data}
+          isLoading={isLoading}
+          query={query}
+          setQuery={setQuery}
+          showSearch={false}
+          noRowsMessage={
+            !canWrite
+              ? "No users in this organization yet."
+              : `No users yet. Use "Add users" above to add one.`
+          }
+        />
       </div>
-
-      {count > PAGE_SIZE && (
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <div>
-            Page {currentPage} of {totalPages}
-            {isFetching && <span className="ml-2 text-gray-400">Loading…</span>}
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded-md px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-              disabled={offset === 0}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="rounded-md px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => setOffset(offset + PAGE_SIZE)}
-              disabled={offset + PAGE_SIZE >= count}
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
 
       <RoleAssignmentEditor
         orgId={orgId}
@@ -239,30 +486,19 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
         open={!!editing}
         onClose={() => setEditing(null)}
       />
+      <SlideOver open={editUser.open} setOpen={editUser.setOpen}>
+        <EditOrganizationUser
+          setOpen={editUser.setOpen}
+          create={!editUser.data}
+          userId={editUser.data ?? undefined}
+        />
+      </SlideOver>
+      <BulkUserUploadSlideOver
+        open={isBulkUploadOpen}
+        setOpen={setIsBulkUploadOpen}
+      />
     </div>
   );
 };
-
-const HeaderCell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <th
-    scope="col"
-    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-  >
-    {children}
-  </th>
-);
-
-const EmptyRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <tr>
-    <td
-      colSpan={5}
-      className="px-6 py-10 text-center text-sm text-gray-500"
-      role="status"
-      aria-live="polite"
-    >
-      {children}
-    </td>
-  </tr>
-);
 
 export default OrganizationsAccessAssignments;

@@ -1,13 +1,11 @@
 import { TrashIcon } from "@heroicons/react/20/solid";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "motion/react";
 import { useContext, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router";
+import { AccessRulesPanel } from "../../../auth/rules/AccessRulesPanel";
 import FormField from "../../../components/forms/FormField";
-import MultipleSelect from "../../../components/forms/inputs/MultipleSelect";
 import Toggle from "../../../components/forms/inputs/Toggle";
-import LargeFormSection from "../../../components/forms/LargeFormSection";
-import IconButton from "../../../components/layouts/buttons/IconButton";
-import InlineNotice from "../../../components/layouts/InlineNotice";
-import { DISABLED_ROLE_GROUPS } from "../../../constants/organizations";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { useMe } from "../../../contexts/me/MeProvider";
@@ -15,10 +13,19 @@ import { OrganizationsContext } from "../../../contexts/organizations/organizati
 import {
   deleteOrganization,
   deleteUnit,
-  getRoleGroupsForOrganization,
   saveOrganization,
 } from "../../../queries/organizations";
 import { classNames } from "../../../utils/core";
+import { OrgScopeNotice } from "../components/OrgScopeNotice";
+import { GeneralSection } from "./settings/GeneralSection";
+import { SsoSection } from "./settings/SsoSection";
+
+type SectionKey =
+  | "general"
+  | "access-rules"
+  | "sso"
+  | "notifications"
+  | "advanced";
 
 const MyOrganizationSettings: React.FC = () => {
   const {
@@ -31,29 +38,18 @@ const MyOrganizationSettings: React.FC = () => {
     allUnits,
     navigateAfterDelete,
   } = useContext(OrganizationsContext);
-  const { isGlobalAdmin } = useAuth();
-  const { me } = useMe();
+  useAuth();
+  const { canAny, me } = useMe();
   const {
     setOpen: setConfirmationOpen,
     setClose: setConfirmationClose,
     setConfirmationOptions,
   } = useContext(ConfirmationContext);
 
-  const { data: allRoleGroups } = useQuery({
-    queryKey: [
-      "organization-role-groups",
-      currentOrganization?.id ?? "",
-    ] as const,
-    queryFn: ({ queryKey }) => getRoleGroupsForOrganization(queryKey[1]),
-    enabled: !!currentOrganization,
-  });
-
   const { mutate: doSaveOrganization, isPending: isOrganizationSaving } =
     useMutation({
       mutationFn: saveOrganization,
-      onSuccess: () => {
-        invalidateOrganizationQuery();
-      },
+      onSuccess: () => invalidateOrganizationQuery(),
     });
 
   const { mutate: doDeleteOrganization, isPending: isOrganizationDeleting } =
@@ -75,21 +71,19 @@ const MyOrganizationSettings: React.FC = () => {
       },
     });
 
-  // Disable delete when the user is deleting their own home org/unit. Home is
-  // sourced from `/me.residence` (see `_docs/authorization-model.md §4`). A
-  // null residence — e.g. system admins, unenrolled users — yields no disable,
-  // preserving the prior "fall through on missing data" semantics.
   const deleteDisabled = useMemo(() => {
-    const residence = me?.residence;
+    // Pick the residence row for the org we're acting in. With the
+    // residences[] shape there can be multiple, but only the one matching
+    // the current org gates the delete.
+    const residence = me?.residences?.find(
+      (r) => r.organizationId === currentOrganization?.id,
+    );
     if (!residence) return false;
 
     if (isUnitContext) {
       const residenceUnitId = residence.unitId;
       if (!residenceUnitId || !currentUnit?.id) return false;
 
-      // Walk up from the residence unit: if the current unit matches the
-      // residence unit or any of its ancestors, deletion would orphan the
-      // user's home. Block it.
       const unitsById = new Map((allUnits ?? []).map((u) => [u.id, u]));
       const visited = new Set<string>();
       let cursor: string | null = residenceUnitId;
@@ -101,10 +95,7 @@ const MyOrganizationSettings: React.FC = () => {
       return false;
     }
 
-    return (
-      !!currentOrganization?.id &&
-      residence.organizationId === currentOrganization.id
-    );
+    return true;
   }, [isUnitContext, me, currentOrganization, currentUnit, allUnits]);
 
   const deleteTitle = useMemo(
@@ -151,6 +142,50 @@ const MyOrganizationSettings: React.FC = () => {
     });
   };
 
+  const canManageRules = canAny("manage-org-rules");
+  const canManageUnits = canAny("manage-units");
+  const canManageOrganizations = canAny("manage-organizations");
+  // `manage-idps` is a strict superset of `view-idps`; anyone who can write
+  // the IDP config can read it. The view cap alone is rare (read-only roles).
+  const canViewIdps = canAny("view-idps") || canAny("manage-idps");
+
+  // The General/Notifications/Advanced sections mutate the current subject
+  // (org or unit). Gate on the capability that matches the active scope —
+  // otherwise a unit admin at org scope sees editable fields that 403 on
+  // save.
+  const canEditSubject = isUnitContext
+    ? canManageUnits
+    : canManageOrganizations;
+
+  const availableSections = useMemo<
+    { key: SectionKey; label: string }[]
+  >(() => {
+    const out: { key: SectionKey; label: string }[] = [];
+    if (canEditSubject) out.push({ key: "general", label: "General" });
+    if (canManageRules)
+      out.push({ key: "access-rules", label: "Access rules" });
+    if (canViewIdps) out.push({ key: "sso", label: "Single sign-on" });
+    if (canEditSubject)
+      out.push({ key: "notifications", label: "Notifications" });
+    if (canEditSubject) out.push({ key: "advanced", label: "Advanced" });
+    return out;
+  }, [canManageRules, canEditSubject, canViewIdps]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paramSection = searchParams.get("section") as SectionKey | null;
+  const firstSection = availableSections[0]?.key;
+  const activeSection: SectionKey | undefined =
+    paramSection && availableSections.some((s) => s.key === paramSection)
+      ? paramSection
+      : firstSection;
+
+  const switchSection = (key: SectionKey) => {
+    const next = new URLSearchParams(searchParams);
+    if (key === firstSection) next.delete("section");
+    else next.set("section", key);
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div>
       {currentOrganizationLoading || !currentOrganization ? (
@@ -159,134 +194,219 @@ const MyOrganizationSettings: React.FC = () => {
           <div className="animate-pulse rounded-sm bg-slate-200 w-full h-96" />
         </div>
       ) : (
-        <div className="space-y-4">
-          {isGlobalAdmin && !isUnitContext && (
-            <LargeFormSection heading="Administration" defaultOpen>
-              <FormField
-                field={{
-                  label: "Allowed Role Groups",
-                  helpText:
-                    "Select role groups that this organization's administrators are allowed to grant to their own users.",
-                }}
-                input={
-                  <MultipleSelect
-                    prefix="allowed-role-groups"
-                    options={(allRoleGroups ?? []).map((rg) => ({
-                      key: rg.id,
-                      label: rg.name,
-                      disabled: DISABLED_ROLE_GROUPS.includes(rg.name),
-                    }))}
-                    value={currentOrganization.allowedRoleGroups ?? []}
-                    onChange={(allowedRoleGroups) =>
-                      doSaveOrganization({
-                        id: currentOrganization.id,
-                        allowedRoleGroups,
-                      })
-                    }
-                  />
-                }
-              />
-            </LargeFormSection>
-          )}
-          {!isUnitContext && (
-            <LargeFormSection heading="Notifications" defaultOpen>
-              <div className="space-y-4">
-                <FormField
-                  field={{
-                    label: "Enable Initial Training Reminder Emails",
-                    helpText:
-                      "Enable or disable initial training reminder emails for this organization. These emails are sent to all participants at the beginning of the training availability period.",
-                  }}
-                  input={
-                    <Toggle
-                      prefix="initial-training-reminder-emails"
-                      loading={isOrganizationSaving}
-                      disabled={isOrganizationSaving}
-                      checked={
-                        currentOrganization.notificationSettings
-                          ?.initialReminderEmailsEnabled ?? false
-                      }
-                      onChange={(initialReminderEmailsEnabled) =>
-                        doSaveOrganization({
-                          id: currentOrganization.id,
-                          notificationSettings: {
-                            ...(currentOrganization.notificationSettings ?? {}),
-                            initialReminderEmailsEnabled,
-                          },
-                        })
-                      }
-                    />
-                  }
-                />
-                <FormField
-                  field={{
-                    label: "Enable Follow-Up Training Reminder Emails",
-                    helpText:
-                      "Enable or disable follow-up training reminder emails for this organization. These emails are sent up to two weeks after the initial training reminder email for all participants who have not completed the training.",
-                  }}
-                  input={
-                    <Toggle
-                      prefix="follow-up-training-reminder-emails"
-                      loading={isOrganizationSaving}
-                      disabled={isOrganizationSaving}
-                      checked={
-                        currentOrganization.notificationSettings
-                          ?.followUpReminderEmailsEnabled ?? false
-                      }
-                      onChange={(followUpReminderEmailsEnabled) =>
-                        doSaveOrganization({
-                          id: currentOrganization.id,
-                          notificationSettings: {
-                            ...(currentOrganization.notificationSettings ?? {}),
-                            followUpReminderEmailsEnabled,
-                          },
-                        })
-                      }
-                    />
-                  }
-                />
-              </div>
-            </LargeFormSection>
-          )}
-
-          <LargeFormSection
-            heading="Advanced"
-            // subheading="This is the primary safety contact displayed to users."
-            defaultOpen
+        <div className="space-y-6">
+          <nav
+            aria-label="Settings sections"
+            className="relative flex items-center gap-6 border-b border-gray-200 overflow-x-auto"
           >
-            <InlineNotice
-              heading={"Danger Zone"}
-              body={
-                <div className="space-y-4">
-                  <p>
-                    Actions in this section are permanent and cannot be undone.
-                  </p>
-                  <IconButton
-                    type="button"
-                    icon={TrashIcon}
-                    className={classNames(
-                      "block rounded-md bg-red-600 px-3 py-2 ring-transparent text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-red-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50",
+            {availableSections.map((s) => {
+              const active = activeSection === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => switchSection(s.key)}
+                  className={classNames(
+                    "relative whitespace-nowrap py-3 text-sm font-medium transition-colors",
+                    active
+                      ? "text-gray-900"
+                      : "text-gray-500 hover:text-gray-800",
+                  )}
+                >
+                  {s.label}
+                  {active && (
+                    <motion.span
+                      layoutId="settings-tab-underline"
+                      className="absolute left-0 right-0 -bottom-px h-0.5 bg-primary-400"
+                      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {activeSection === "general" && <GeneralSection />}
+
+              {activeSection === "access-rules" &&
+                (isUnitContext ? (
+                  <OrgScopeNotice
+                    description={({ orgName, unitName }) => (
+                      <>
+                        Access rules cascade down from {orgName} to every unit,
+                        so they're edited one level up. {unitName} inherits the
+                        same rules as a read-only set.
+                      </>
                     )}
-                    text={`Delete ${
-                      isUnitContext
-                        ? (currentUnit?.name ?? "Unit")
-                        : (currentOrganization.name ?? "Organization")
-                    }`}
-                    onClick={() => handleDelete()}
-                    disabled={deleteDisabled}
-                    title={
-                      deleteDisabled
-                        ? `Cannot delete ${
-                            isUnitContext ? "unit" : "organization"
-                          } that you belong to.`
-                        : ""
-                    }
                   />
+                ) : (
+                  <AccessRulesPanel />
+                ))}
+
+              {activeSection === "sso" && <SsoSection />}
+
+              {activeSection === "notifications" &&
+                (isUnitContext ? (
+                  <OrgScopeNotice
+                    description={({ orgName, unitName }) => (
+                      <>
+                        Notification preferences are set at the {orgName} level
+                        and apply to every unit. {unitName} sends the same
+                        emails {orgName} does.
+                      </>
+                    )}
+                  />
+                ) : (
+                  <div className="space-y-5">
+                    <div className="max-w-[62ch]">
+                      <h2 className="text-base font-semibold text-gray-900">
+                        Notifications
+                      </h2>
+                      <p className="mt-1 text-sm text-gray-600">
+                        Control the emails this organization sends to its users.
+                      </p>
+                    </div>
+
+                    <FormField
+                      field={{
+                        label: "Initial training reminder emails",
+                        helpText:
+                          "Sent to all participants at the beginning of the training availability period.",
+                      }}
+                      input={
+                        <Toggle
+                          prefix="initial-training-reminder-emails"
+                          loading={isOrganizationSaving}
+                          disabled={isOrganizationSaving}
+                          checked={
+                            currentOrganization.notificationSettings
+                              ?.initialReminderEmailsEnabled ?? false
+                          }
+                          onChange={(initialReminderEmailsEnabled) =>
+                            doSaveOrganization({
+                              id: currentOrganization.id,
+                              notificationSettings: {
+                                ...(currentOrganization.notificationSettings ??
+                                  {}),
+                                initialReminderEmailsEnabled,
+                              },
+                            })
+                          }
+                        />
+                      }
+                    />
+                    <FormField
+                      field={{
+                        label: "Follow-up training reminder emails",
+                        helpText:
+                          "Sent up to two weeks after the initial reminder for any participant who hasn’t finished.",
+                      }}
+                      input={
+                        <Toggle
+                          prefix="follow-up-training-reminder-emails"
+                          loading={isOrganizationSaving}
+                          disabled={isOrganizationSaving}
+                          checked={
+                            currentOrganization.notificationSettings
+                              ?.followUpReminderEmailsEnabled ?? false
+                          }
+                          onChange={(followUpReminderEmailsEnabled) =>
+                            doSaveOrganization({
+                              id: currentOrganization.id,
+                              notificationSettings: {
+                                ...(currentOrganization.notificationSettings ??
+                                  {}),
+                                followUpReminderEmailsEnabled,
+                              },
+                            })
+                          }
+                        />
+                      }
+                    />
+                  </div>
+                ))}
+
+              {activeSection === "advanced" && (
+                <div className="space-y-6">
+                  <div className="max-w-[62ch]">
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Advanced
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Settings that change how this{" "}
+                      {isUnitContext ? "unit" : "organization"} behaves —
+                      including actions that can't be undone.
+                    </p>
+                  </div>
+                  {/*
+                    Danger Zone — deliberately quiet. The chrome here is
+                    a subtle terracotta surface, not a fire-alarm panel.
+                    The destructive button is a ghost (white card with a
+                    danger-tinted ring) so it reads as deliberate, not
+                    urgent. The full-bleed red moment is reserved for
+                    the confirmation modal, where the user has already
+                    typed the org name — that's where alarm makes sense.
+                  */}
+                  <section className="rounded-lg bg-white ring-1 ring-danger-200/70">
+                    <header className="flex items-start gap-3 border-b border-danger-100 px-5 py-4">
+                      <TrashIcon
+                        aria-hidden="true"
+                        className="mt-0.5 size-5 shrink-0 text-danger-500"
+                      />
+                      <div>
+                        <h3 className="text-sm font-semibold text-danger-700">
+                          Danger zone
+                        </h3>
+                        <p className="mt-0.5 max-w-prose text-sm text-gray-600">
+                          Actions here are permanent. Make sure you've exported
+                          anything you need first.
+                        </p>
+                      </div>
+                    </header>
+                    <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-900">
+                          Delete this {isUnitContext ? "unit" : "organization"}
+                        </div>
+                        <p className="mt-0.5 max-w-prose text-xs text-gray-500">
+                          {isUnitContext
+                            ? "Removes the unit and everything inside it (sub-units, members, training stats). Members reassign manually."
+                            : "Removes the organization and every unit, member, training record, and report attached to it."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete()}
+                        disabled={deleteDisabled}
+                        title={
+                          deleteDisabled
+                            ? `You can't delete a ${
+                                isUnitContext ? "unit" : "organization"
+                              } you belong to.`
+                            : undefined
+                        }
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-danger-700 shadow-xs ring-1 ring-inset ring-danger-200 transition-colors enabled:hover:bg-danger-50 enabled:hover:ring-danger-300 enabled:focus-visible:outline enabled:focus-visible:outline-offset-2 enabled:focus-visible:outline-danger-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <TrashIcon className="size-4" aria-hidden="true" />
+                        Delete{" "}
+                        {isUnitContext
+                          ? (currentUnit?.name ?? "unit")
+                          : (currentOrganization.name ?? "organization")}
+                      </button>
+                    </div>
+                  </section>
                 </div>
-              }
-              level="error"
-            />
-          </LargeFormSection>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       )}
     </div>

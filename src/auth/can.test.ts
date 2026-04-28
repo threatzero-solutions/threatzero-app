@@ -26,7 +26,8 @@ const makeMe = (overrides: Partial<MeResponse> = {}): MeResponse => ({
   units: [],
   capabilities: { organization: [], units: {} },
   tat: { organization: false, units: [] },
-  residence: null,
+  residences: [],
+  isSystemAdmin: false,
   ...overrides,
 });
 

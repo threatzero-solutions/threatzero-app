@@ -151,7 +151,7 @@ const MoveUnitForm: React.FC<MoveUnitFormProps> = ({
         <button
           type="button"
           onClick={() => handleConfirmMove()}
-          className="inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-md transition-colors bg-primary-600 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:w-auto"
           disabled={isDisabled}
           title={isSameParent ? "The unit is already in this location" : ""}
         >

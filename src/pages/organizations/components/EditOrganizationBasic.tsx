@@ -18,6 +18,7 @@ import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHe
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { useMe } from "../../../contexts/me/MeProvider";
+import { ME_QUERY_KEY } from "../../../queries/me";
 import { useAutoSlug } from "../../../hooks/use-auto-slug";
 import {
   getOrganization,
@@ -247,6 +248,12 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
 
       onSaveSuccess?.();
 
+      // /me embeds the org's labelPreset for global label bundles — refresh
+      // it so vocabulary changes propagate without a full page reload.
+      if (isOrganization) {
+        queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+      }
+
       setOpen(false);
     },
   });
@@ -305,12 +312,14 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   // Forbid editing status on the user's own home org. See
-                  // `_docs/authorization-model.md §4`. Null residence (system
-                  // admins, unenrolled users) falls through to enabled.
+                  // `_docs/residence-and-tenant-model.md §3`. An empty
+                  // residences array (system admins, unenrolled users) falls
+                  // through to enabled.
                   disabled={
-                    !!me?.residence?.organizationId &&
                     !!organizationData?.id &&
-                    me.residence.organizationId === organizationData.id
+                    !!me?.residences?.some(
+                      (r) => r.organizationId === organizationData.id,
+                    )
                   }
                 />
               )}
