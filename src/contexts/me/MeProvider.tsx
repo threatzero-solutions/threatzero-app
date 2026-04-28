@@ -159,7 +159,11 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return install403Interceptor(queryClient);
   }, [interceptorReady, queryClient]);
 
-  const isGlobalAdmin = me?.scope.kind === "system";
+  // System-admin authority is orthogonal to the resolved scope. Per the
+  // backend's `ContextResolverGuard`, a system admin who also has any
+  // tenant grant gets `scope.kind === 'tenant'` — relying on that flag
+  // hid system-only UI from real sysadmins. Use the explicit signal.
+  const isGlobalAdmin = me?.isSystemAdmin === true;
   const myOrganizationSlug = me?.organization?.slug;
   const myUnitSlug = me?.units[0]?.slug;
   const hasMultipleUnitAccess = (me?.units.length ?? 0) > 1;

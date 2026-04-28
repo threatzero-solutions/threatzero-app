@@ -10,7 +10,7 @@ import {
   UsersIcon,
 } from "@heroicons/react/20/solid";
 import { useCallback, useContext, useMemo } from "react";
-import { NavLink, Outlet, To, useLocation } from "react-router";
+import { Link, NavLink, Outlet, To, useLocation } from "react-router";
 import {
   myOrganizationPermissionOptions,
   organizationSafetyManagementPermissionOptions,
@@ -47,8 +47,16 @@ const OrganizationsRootInner: React.FC = () => {
 
   const paths = useMemo(() => unitsPath?.split("/") ?? [], [unitsPath]);
 
-  const { search } = useLocation();
+  const { pathname, search } = useLocation();
   const { canNavigate } = useNav();
+
+  // The same component renders for two surfaces:
+  //   /my-organization/*                       — your own org (no parent list)
+  //   /admin-panel/organizations/:orgId/*      — sysadmin viewing one org from a list
+  // In admin context the breadcrumb leads with "Organizations › <Org>" so the
+  // return path is a text crumb where the eye expects it, not a labelless home
+  // icon (which read as "go to my org" — wrong here, since this isn't yours).
+  const inAdminPanel = pathname.startsWith("/admin-panel/");
 
   const unitSlugMap = useMemo(
     () =>
@@ -142,17 +150,55 @@ const OrganizationsRootInner: React.FC = () => {
           className="flex max-w-full overflow-x-scroll"
         >
           <ol role="list" className="flex items-center space-x-4">
-            <li>
-              <div className="flex items-center">
-                <button
-                  onClick={() => setUnitsPath(null)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <HomeIcon aria-hidden="true" className="size-5 shrink-0" />
-                  <span className="sr-only">My Organization</span>
-                </button>
-              </div>
-            </li>
+            {inAdminPanel ? (
+              <>
+                <li>
+                  <div className="flex items-center">
+                    <Link
+                      to="/admin-panel/organizations"
+                      className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                    >
+                      Organizations
+                    </Link>
+                  </div>
+                </li>
+                {currentOrganization && (
+                  <li>
+                    <div className="flex items-center">
+                      <ChevronRightIcon
+                        aria-hidden="true"
+                        className="size-5 shrink-0 text-gray-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setUnitsPath(null)}
+                        className={classNames(
+                          "ml-4 text-sm font-medium",
+                          isUnitContext
+                            ? "text-gray-500 hover:text-gray-700"
+                            : "text-gray-900 cursor-default",
+                        )}
+                        aria-current={isUnitContext ? undefined : "page"}
+                      >
+                        {currentOrganization.name}
+                      </button>
+                    </div>
+                  </li>
+                )}
+              </>
+            ) : (
+              <li>
+                <div className="flex items-center">
+                  <button
+                    onClick={() => setUnitsPath(null)}
+                    className="text-gray-400 hover:text-gray-500"
+                  >
+                    <HomeIcon aria-hidden="true" className="size-5 shrink-0" />
+                    <span className="sr-only">My Organization</span>
+                  </button>
+                </div>
+              </li>
+            )}
             {paths.map((path, idx) => {
               const siblings = siblingsAt(idx);
               const label = unitSlugMap?.get(path)?.name || humanizeSlug(path);

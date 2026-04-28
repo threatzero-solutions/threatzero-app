@@ -312,12 +312,14 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   // Forbid editing status on the user's own home org. See
-                  // `_docs/authorization-model.md §4`. Null residence (system
-                  // admins, unenrolled users) falls through to enabled.
+                  // `_docs/residence-and-tenant-model.md §3`. An empty
+                  // residences array (system admins, unenrolled users) falls
+                  // through to enabled.
                   disabled={
-                    !!me?.residence?.organizationId &&
                     !!organizationData?.id &&
-                    me.residence.organizationId === organizationData.id
+                    !!me?.residences?.some(
+                      (r) => r.organizationId === organizationData.id,
+                    )
                   }
                 />
               )}

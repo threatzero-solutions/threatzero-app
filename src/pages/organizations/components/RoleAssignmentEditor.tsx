@@ -17,11 +17,12 @@
  * can't assign.
  */
 import { useContext, useEffect, useMemo, useState } from "react";
-import { TrashIcon } from "@heroicons/react/20/solid";
+import { ShieldCheckIcon, TrashIcon } from "@heroicons/react/20/solid";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
+import { useMe } from "../../../contexts/me/MeProvider";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import { AssignableRole, UserWithAccess } from "../../../queries/grants";
 import {
@@ -52,6 +53,13 @@ export default function RoleAssignmentEditor({
   const mutation = usePatchUserGrants(orgId);
   const { allUnits } = useContext(OrganizationsContext);
   const { data: roles, isLoading: rolesLoading } = useAssignableRoles(orgId);
+  const { isGlobalAdmin } = useMe();
+  // Reveal the read-only system-admin callout only when (a) the target
+  // user actually holds it AND (b) the viewer is themselves a system
+  // admin. Org-admins shouldn't even know whether someone has the
+  // role — that's the whole reason management lives in a separate
+  // surface and the org module only ever sees a hidden flag.
+  const showSystemAdminNotice = !!user?.isSystemAdmin && isGlobalAdmin;
 
   const orgScopeRoles = useMemo<AssignableRole[]>(
     () => (roles ?? []).filter((r) => r.allowedScopes.includes("organization")),
@@ -225,6 +233,32 @@ export default function RoleAssignmentEditor({
 
         <SlideOverFormBody>
           <div className="px-4 py-6 sm:px-6 space-y-8">
+            {showSystemAdminNotice && (
+              <section
+                aria-label="System administrator"
+                className="flex items-start gap-3 rounded-lg bg-primary-50/70 p-4 ring-1 ring-primary-200/70"
+              >
+                <ShieldCheckIcon
+                  aria-hidden="true"
+                  className="mt-0.5 size-5 shrink-0 text-primary-600"
+                />
+                <div className="min-w-0 text-sm">
+                  <div className="font-semibold text-primary-900">
+                    System administrator
+                  </div>
+                  <p className="mt-1 text-primary-900/80">
+                    This person holds the system-administrator role and can read
+                    and edit every organization. The role is managed centrally
+                    in{" "}
+                    <span className="font-medium">
+                      Admin Panel → System admins
+                    </span>{" "}
+                    and isn&apos;t editable from this view.
+                  </p>
+                </div>
+              </section>
+            )}
+
             {/* Organization-wide roles */}
             <section>
               <h3 className="text-sm font-semibold text-gray-900">

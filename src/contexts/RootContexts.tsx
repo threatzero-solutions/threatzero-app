@@ -4,6 +4,7 @@ import { ConfirmationContextProvider } from "./core/confirmation-context";
 import { CoreContextProvider } from "./core/core-context";
 import { FormsContextProvider } from "./forms/forms-context";
 import { MeProvider } from "./me/MeProvider";
+import { ResidencePickerProvider } from "./me/ResidencePickerProvider";
 import QueryContext from "./QueryContext";
 import { TrainingContextProvider } from "./training/training-context";
 
@@ -12,13 +13,15 @@ export const RootContexts: React.FC<PropsWithChildren> = ({ children }) => {
     <AlertContextProvider>
       <QueryContext>
         <MeProvider>
-          <ConfirmationContextProvider>
-            <CoreContextProvider>
-              <FormsContextProvider>
-                <TrainingContextProvider>{children}</TrainingContextProvider>
-              </FormsContextProvider>
-            </CoreContextProvider>
-          </ConfirmationContextProvider>
+          <ResidencePickerProvider>
+            <ConfirmationContextProvider>
+              <CoreContextProvider>
+                <FormsContextProvider>
+                  <TrainingContextProvider>{children}</TrainingContextProvider>
+                </FormsContextProvider>
+              </CoreContextProvider>
+            </ConfirmationContextProvider>
+          </ResidencePickerProvider>
         </MeProvider>
       </QueryContext>
     </AlertContextProvider>

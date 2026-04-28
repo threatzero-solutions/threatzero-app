@@ -395,7 +395,7 @@ const ViewWatchStats: React.FC = () => {
                     ? "Send training reminder email"
                     : "You do not have permission to send reminders"
                 }
-                className="bg-secondary-600 ring-transparent text-white hover:bg-secondary-500"
+                className="bg-primary-600 ring-transparent text-white hover:bg-primary-500"
               />
               <IconButton
                 icon={CheckCircleIcon}
@@ -412,7 +412,7 @@ const ViewWatchStats: React.FC = () => {
                       ? "Mark training as completed"
                       : "You do not have permission"
                 }
-                className="bg-secondary-600 ring-transparent text-white hover:not-disabled:bg-secondary-500 group [&_svg]:group-hover:group-not-disabled:stroke-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary-600 ring-transparent text-white hover:not-disabled:bg-primary-500 group [&_svg]:group-hover:group-not-disabled:stroke-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </ButtonGroup>
           );
@@ -589,7 +589,7 @@ const ViewWatchStats: React.FC = () => {
             )}
           >
             <div className="flex items-center gap-2">
-              <div className="rounded-md py-1 px-2 bg-secondary-600 text-white text-xs">
+              <div className="rounded-md py-1 px-2 bg-primary-600 text-white text-xs">
                 Course
               </div>
               {stripHtml(
@@ -737,7 +737,7 @@ const ViewWatchStats: React.FC = () => {
         action={
           <button
             type="button"
-            className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+            className="block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             onClick={() => handleDownloadWatchStatsCsv()}
           >
             Download Report (.csv)

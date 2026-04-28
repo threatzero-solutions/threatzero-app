@@ -6,8 +6,6 @@ import { useSearchParams } from "react-router";
 import { AccessRulesPanel } from "../../../auth/rules/AccessRulesPanel";
 import FormField from "../../../components/forms/FormField";
 import Toggle from "../../../components/forms/inputs/Toggle";
-import IconButton from "../../../components/layouts/buttons/IconButton";
-import InlineNotice from "../../../components/layouts/InlineNotice";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
 import { useMe } from "../../../contexts/me/MeProvider";
@@ -74,7 +72,12 @@ const MyOrganizationSettings: React.FC = () => {
     });
 
   const deleteDisabled = useMemo(() => {
-    const residence = me?.residence;
+    // Pick the residence row for the org we're acting in. With the
+    // residences[] shape there can be multiple, but only the one matching
+    // the current org gates the delete.
+    const residence = me?.residences?.find(
+      (r) => r.organizationId === currentOrganization?.id,
+    );
     if (!residence) return false;
 
     if (isUnitContext) {
@@ -92,10 +95,7 @@ const MyOrganizationSettings: React.FC = () => {
       return false;
     }
 
-    return (
-      !!currentOrganization?.id &&
-      residence.organizationId === currentOrganization.id
-    );
+    return true;
   }, [isUnitContext, me, currentOrganization, currentUnit, allUnits]);
 
   const deleteTitle = useMemo(
@@ -335,48 +335,74 @@ const MyOrganizationSettings: React.FC = () => {
                 ))}
 
               {activeSection === "advanced" && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="max-w-[62ch]">
                     <h2 className="text-base font-semibold text-gray-900">
                       Advanced
                     </h2>
                     <p className="mt-1 text-sm text-gray-600">
-                      Destructive actions live here. Changes cannot be undone.
+                      Settings that change how this{" "}
+                      {isUnitContext ? "unit" : "organization"} behaves —
+                      including actions that can't be undone.
                     </p>
                   </div>
-                  <InlineNotice
-                    heading={"Danger Zone"}
-                    body={
-                      <div className="space-y-4">
-                        <p>
-                          Actions in this section are permanent and cannot be
-                          undone.
+                  {/*
+                    Danger Zone — deliberately quiet. The chrome here is
+                    a subtle terracotta surface, not a fire-alarm panel.
+                    The destructive button is a ghost (white card with a
+                    danger-tinted ring) so it reads as deliberate, not
+                    urgent. The full-bleed red moment is reserved for
+                    the confirmation modal, where the user has already
+                    typed the org name — that's where alarm makes sense.
+                  */}
+                  <section className="rounded-lg bg-white ring-1 ring-danger-200/70">
+                    <header className="flex items-start gap-3 border-b border-danger-100 px-5 py-4">
+                      <TrashIcon
+                        aria-hidden="true"
+                        className="mt-0.5 size-5 shrink-0 text-danger-500"
+                      />
+                      <div>
+                        <h3 className="text-sm font-semibold text-danger-700">
+                          Danger zone
+                        </h3>
+                        <p className="mt-0.5 max-w-prose text-sm text-gray-600">
+                          Actions here are permanent. Make sure you've exported
+                          anything you need first.
                         </p>
-                        <IconButton
-                          type="button"
-                          icon={TrashIcon}
-                          className={classNames(
-                            "block rounded-md bg-red-600 px-3 py-2 ring-transparent text-center text-sm font-semibold text-white shadow-xs enabled:hover:bg-red-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50",
-                          )}
-                          text={`Delete ${
-                            isUnitContext
-                              ? (currentUnit?.name ?? "Unit")
-                              : (currentOrganization.name ?? "Organization")
-                          }`}
-                          onClick={() => handleDelete()}
-                          disabled={deleteDisabled}
-                          title={
-                            deleteDisabled
-                              ? `Cannot delete ${
-                                  isUnitContext ? "unit" : "organization"
-                                } that you belong to.`
-                              : ""
-                          }
-                        />
                       </div>
-                    }
-                    level="error"
-                  />
+                    </header>
+                    <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-900">
+                          Delete this {isUnitContext ? "unit" : "organization"}
+                        </div>
+                        <p className="mt-0.5 max-w-prose text-xs text-gray-500">
+                          {isUnitContext
+                            ? "Removes the unit and everything inside it (sub-units, members, training stats). Members reassign manually."
+                            : "Removes the organization and every unit, member, training record, and report attached to it."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete()}
+                        disabled={deleteDisabled}
+                        title={
+                          deleteDisabled
+                            ? `You can't delete a ${
+                                isUnitContext ? "unit" : "organization"
+                              } you belong to.`
+                            : undefined
+                        }
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-danger-700 shadow-xs ring-1 ring-inset ring-danger-200 transition-colors enabled:hover:bg-danger-50 enabled:hover:ring-danger-300 enabled:focus-visible:outline enabled:focus-visible:outline-offset-2 enabled:focus-visible:outline-danger-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <TrashIcon className="size-4" aria-hidden="true" />
+                        Delete{" "}
+                        {isUnitContext
+                          ? (currentUnit?.name ?? "unit")
+                          : (currentOrganization.name ?? "organization")}
+                      </button>
+                    </div>
+                  </section>
                 </div>
               )}
             </motion.div>

@@ -37,6 +37,13 @@ export interface UserWithAccess {
     unitId: string | null;
     unitSlug: string | null;
   }>;
+  /**
+   * True when the user holds the system-admin role. Read-only in the org
+   * module — system-admin is granted/revoked from the dedicated Admin
+   * Panel page so org-admin sessions can't accidentally fan privilege
+   * out across tenants.
+   */
+  isSystemAdmin: boolean;
 }
 
 /**

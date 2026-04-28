@@ -31,7 +31,6 @@ const MyOrganizationTraining: React.FC = () => {
         defaultOpen
       >
         <CourseEnrollmentsInput
-          name="enrollments"
           organizationId={currentOrganization.id}
           accessSettings={currentOrganization.trainingAccessSettings}
         />

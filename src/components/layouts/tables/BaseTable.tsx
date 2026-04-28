@@ -21,6 +21,12 @@ export interface BaseTableProps<T> {
   noRowsMessage?: string;
   showFooter?: boolean;
   rowClassName?: (row: Row<T>) => string;
+  /**
+   * Skip the built-in Paginator2 and let the caller render it elsewhere.
+   * DataTable2 uses this so the pagination footer stays at viewport
+   * width while the columns scroll horizontally on narrow screens.
+   */
+  noPaginator?: boolean;
 }
 
 const BaseTable = <T extends object>({
@@ -30,69 +36,77 @@ const BaseTable = <T extends object>({
   noRowsMessage = "No results.",
   showFooter = true,
   rowClassName,
+  noPaginator = false,
 }: BaseTableProps<T>) => {
   return (
     <>
-      <table
-        style={{
-          width: table.options.enableColumnResizing
-            ? table.getCenterTotalSize()
-            : undefined,
-        }}
-        className="min-w-full divide-y divide-gray-300 table-auto"
-      >
-        <BaseTableHeader table={table} />
-        <BaseTableBody
-          table={table}
-          dense={dense}
-          isLoading={isLoading}
-          noRowsMessage={noRowsMessage}
+      {/* The horizontal-scroll affordance lives here so the columns
+          scroll inside the table area on narrow screens, while siblings
+          (DataTable2's pagination footer, surrounding chrome) stay at
+          page width. Standalone callers without an outer scroll wrapper
+          (e.g. nested tables in modals) get the same behavior. */}
+      <div className="w-full overflow-x-auto">
+        <table
+          style={{
+            width: table.options.enableColumnResizing
+              ? table.getCenterTotalSize()
+              : undefined,
+          }}
+          className="min-w-full divide-y divide-gray-300 table-auto"
         >
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className={rowClassName?.(row)}>
-              {row.getVisibleCells().map((cell, idx) => (
-                <BaseTableCell
-                  key={cell.id}
-                  table={table}
-                  row={row}
-                  cell={cell}
-                  idx={idx}
-                  dense={dense}
-                />
-              ))}
-            </tr>
-          ))}
-        </BaseTableBody>
-        {showFooter && (
-          <tfoot>
-            {table.getFooterGroups().map((footerGroup) => (
-              <tr key={footerGroup.id}>
-                {footerGroup.headers.map((header, idx) => (
-                  <th
-                    key={header.id}
-                    className={classNames(
-                      "py-3.5 text-sm text-left font-semibold text-gray-900 px-2",
-                      idx === 0
-                        ? "pl-4 pr-3 sm:pl-0"
-                        : idx === footerGroup.headers.length - 1
-                          ? "pl-3 pr-4 sm:pl-0"
-                          : "px-2",
-                    )}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.footer,
-                          header.getContext(),
-                        )}
-                  </th>
+          <BaseTableHeader table={table} />
+          <BaseTableBody
+            table={table}
+            dense={dense}
+            isLoading={isLoading}
+            noRowsMessage={noRowsMessage}
+          >
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className={rowClassName?.(row)}>
+                {row.getVisibleCells().map((cell, idx) => (
+                  <BaseTableCell
+                    key={cell.id}
+                    table={table}
+                    row={row}
+                    cell={cell}
+                    idx={idx}
+                    dense={dense}
+                  />
                 ))}
               </tr>
             ))}
-          </tfoot>
-        )}
-      </table>
-      {table.getState().pagination && (
+          </BaseTableBody>
+          {showFooter && (
+            <tfoot>
+              {table.getFooterGroups().map((footerGroup) => (
+                <tr key={footerGroup.id}>
+                  {footerGroup.headers.map((header, idx) => (
+                    <th
+                      key={header.id}
+                      className={classNames(
+                        "py-3.5 text-sm text-left font-semibold text-gray-900 px-2",
+                        idx === 0
+                          ? "pl-4 pr-3 sm:pl-0"
+                          : idx === footerGroup.headers.length - 1
+                            ? "pl-3 pr-4 sm:pl-0"
+                            : "px-2",
+                      )}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.footer,
+                            header.getContext(),
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </tfoot>
+          )}
+        </table>
+      </div>
+      {table.getState().pagination && !noPaginator && (
         <Paginator2
           canPreviousPage={table.getCanPreviousPage()}
           previousPage={table.previousPage}

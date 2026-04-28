@@ -98,6 +98,22 @@ export const GeneralSection: React.FC = () => {
   const [safety, setSafety] = useState(initialSafety);
   useEffect(() => setSafety(initialSafety), [initialSafety]);
 
+  // In unit context, a unit can override the org-level safety contact
+  // OR inherit it. We hide the form fields by default when there's no
+  // unit-specific contact set yet — admins land on a quiet card showing
+  // who the org-level contact is, with an "override" affordance to
+  // reveal the form. When the unit DOES have its own contact, the form
+  // shows immediately.
+  const orgSafetyContact = currentOrganization?.safetyContact ?? null;
+  const unitInheritsFromOrg =
+    isUnitContext && !subject?.safetyContact && !!orgSafetyContact;
+  const [revealUnitForm, setRevealUnitForm] = useState(false);
+  // Reset the override state if the user navigates between subjects.
+  useEffect(() => {
+    setRevealUnitForm(false);
+  }, [currentUnit?.id, isUnitContext]);
+  const showSafetyForm = !unitInheritsFromOrg || revealUnitForm;
+
   if (!currentOrganization) return null;
 
   const policies = subject?.policiesAndProcedures ?? [];
@@ -248,87 +264,123 @@ export const GeneralSection: React.FC = () => {
 
       <Section
         heading="Safety contact"
-        description="The primary person users reach when something goes wrong. Shown anywhere safety guidance appears."
+        description={
+          isUnitContext
+            ? "The primary person users in this unit reach when something goes wrong. Falls back to the organization-level contact if none is set here."
+            : "The primary person users reach when something goes wrong. Shown anywhere safety guidance appears."
+        }
       >
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <FormField
-            field={{ label: "Name", required: true }}
-            input={
-              <Input
-                type={FieldType.TEXT}
-                value={safety.name ?? ""}
-                onChange={(e) =>
-                  setSafety((s) => ({ ...s, name: e.target.value }))
-                }
-                className="w-full"
-                placeholder="Jane Smith"
-              />
-            }
+        {unitInheritsFromOrg && !revealUnitForm && orgSafetyContact ? (
+          <InheritedSafetyContactCard
+            orgName={currentOrganization.name}
+            contact={orgSafetyContact}
+            onOverride={() => setRevealUnitForm(true)}
           />
-          <FormField
-            field={{ label: "Title (optional)" }}
-            input={
-              <Input
-                type={FieldType.TEXT}
-                value={safety.title ?? ""}
-                onChange={(e) =>
-                  setSafety((s) => ({ ...s, title: e.target.value }))
+        ) : null}
+        {showSafetyForm && (
+          <>
+            {isUnitContext && hasExistingSafety && orgSafetyContact && (
+              <p className="mb-4 text-xs text-gray-500">
+                Overrides the organization-level contact:{" "}
+                <span className="font-medium text-gray-700">
+                  {orgSafetyContact.name}
+                </span>
+                {orgSafetyContact.email ? ` · ${orgSafetyContact.email}` : ""}.
+              </p>
+            )}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <FormField
+                field={{ label: "Name", required: true }}
+                input={
+                  <Input
+                    type={FieldType.TEXT}
+                    value={safety.name ?? ""}
+                    onChange={(e) =>
+                      setSafety((s) => ({ ...s, name: e.target.value }))
+                    }
+                    className="w-full"
+                    placeholder="Jane Smith"
+                  />
                 }
-                className="w-full"
-                placeholder="Director of Safety"
               />
-            }
-          />
-          <FormField
-            field={{ label: "Email", required: true }}
-            input={
-              <Input
-                type={FieldType.EMAIL}
-                value={safety.email ?? ""}
-                onChange={(e) =>
-                  setSafety((s) => ({ ...s, email: e.target.value }))
+              <FormField
+                field={{ label: "Title (optional)" }}
+                input={
+                  <Input
+                    type={FieldType.TEXT}
+                    value={safety.title ?? ""}
+                    onChange={(e) =>
+                      setSafety((s) => ({ ...s, title: e.target.value }))
+                    }
+                    className="w-full"
+                    placeholder="Director of Safety"
+                  />
                 }
-                className="w-full"
-                placeholder="safety@example.com"
               />
-            }
-          />
-          <FormField
-            field={{ label: "Phone", required: true }}
-            input={
-              <Input
-                type={FieldType.TEL}
-                value={safety.phone ?? ""}
-                onChange={(e) =>
-                  setSafety((s) => ({
-                    ...s,
-                    phone: formatPhoneNumber(e.target.value),
-                  }))
+              <FormField
+                field={{ label: "Email", required: true }}
+                input={
+                  <Input
+                    type={FieldType.EMAIL}
+                    value={safety.email ?? ""}
+                    onChange={(e) =>
+                      setSafety((s) => ({ ...s, email: e.target.value }))
+                    }
+                    className="w-full"
+                    placeholder="safety@example.com"
+                  />
                 }
-                className="w-full"
-                placeholder="(555) 123-4567"
               />
-            }
-          />
-        </div>
-        <SectionFooter
-          dirty={safetyDirty}
-          canSave={safetyDirty && safetyValid}
-          saving={isSaving}
-          onSave={saveSafety}
-          onDiscard={resetSafety}
-          saveLabel={
-            allSafetyEmpty && hasExistingSafety
-              ? "Remove safety contact"
-              : "Save"
-          }
-          destructive={allSafetyEmpty && hasExistingSafety}
-          hint={
-            safetyDirty && !safetyValid
-              ? "Name, email, and phone are required."
-              : undefined
-          }
-        />
+              <FormField
+                field={{ label: "Phone", required: true }}
+                input={
+                  <Input
+                    type={FieldType.TEL}
+                    value={safety.phone ?? ""}
+                    onChange={(e) =>
+                      setSafety((s) => ({
+                        ...s,
+                        phone: formatPhoneNumber(e.target.value),
+                      }))
+                    }
+                    className="w-full"
+                    placeholder="(555) 123-4567"
+                  />
+                }
+              />
+            </div>
+            {isUnitContext && revealUnitForm && !hasExistingSafety && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRevealUnitForm(false);
+                  setSafety(initialSafety);
+                }}
+                className="mt-3 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                ← Inherit organization-level contact instead
+              </button>
+            )}
+            <SectionFooter
+              dirty={safetyDirty}
+              canSave={safetyDirty && safetyValid}
+              saving={isSaving}
+              onSave={saveSafety}
+              onDiscard={resetSafety}
+              saveLabel={
+                allSafetyEmpty && hasExistingSafety
+                  ? "Remove safety contact"
+                  : "Save"
+              }
+              destructive={allSafetyEmpty && hasExistingSafety}
+              hint={
+                safetyDirty && !safetyValid
+                  ? "Name, email, and phone are required."
+                  : undefined
+              }
+            />
+          </>
+        )}
       </Section>
 
       <Section
@@ -516,6 +568,78 @@ function PolicyRow({
         </button>
       </div>
     </li>
+  );
+}
+
+// ---------- inheritance card for unit-context safety contact ----------
+
+function InheritedSafetyContactCard({
+  orgName,
+  contact,
+  onOverride,
+}: {
+  orgName: string;
+  contact: SafetyContact;
+  onOverride: () => void;
+}) {
+  const initials =
+    (contact.name ?? "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "—";
+
+  return (
+    <div className="rounded-lg bg-gray-50 ring-1 ring-gray-900/5 px-4 py-4">
+      <div className="flex items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700">
+          {initials}
+        </div>
+        <div className="grow min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-900">
+              {contact.name}
+            </span>
+            {contact.title && (
+              <span className="text-xs text-gray-500">{contact.title}</span>
+            )}
+          </div>
+          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-600">
+            {contact.email && (
+              <a
+                href={`mailto:${contact.email}`}
+                className="hover:text-gray-900 transition-colors"
+              >
+                {contact.email}
+              </a>
+            )}
+            {contact.phone && (
+              <a
+                href={`tel:${contact.phone}`}
+                className="hover:text-gray-900 transition-colors"
+              >
+                {contact.phone}
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
+        <p className="text-xs text-gray-500">
+          Inherits from{" "}
+          <span className="font-medium text-gray-700">{orgName}</span>. Used
+          here unless you set a unit-specific contact.
+        </p>
+        <button
+          type="button"
+          onClick={onOverride}
+          className="shrink-0 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+        >
+          Override at unit level
+        </button>
+      </div>
+    </div>
   );
 }
 

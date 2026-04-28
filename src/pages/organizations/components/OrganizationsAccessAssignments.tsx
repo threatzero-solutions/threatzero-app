@@ -67,7 +67,7 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
 }) => {
   const { currentOrganization, allUnits, currentUnitSlug } =
     useContext(OrganizationsContext);
-  const { hasPermissions } = useAuth();
+  const { hasPermissions, isGlobalAdmin } = useAuth();
   const queryClient = useQueryClient();
   const {
     setOpen: setConfirmationOpen,
@@ -261,9 +261,22 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
             (g) => g.unitId != null,
           ).length;
           const sortedSlugs = sortRoleSlugs(orgSlugs);
+          // Only system admins see the "System admin" chip — org-admins
+          // shouldn't even know whether someone holds the role, since the
+          // role is managed entirely outside the org module.
+          const showSysAdmin = original.isSystemAdmin && isGlobalAdmin;
+          const noOrgRoles = sortedSlugs.length === 0;
           return (
             <div className="flex flex-wrap gap-1.5">
-              {sortedSlugs.length === 0 ? (
+              {showSysAdmin && (
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${roleChipClass("system-admin")}`}
+                  title="Managed in Admin Panel → System admins"
+                >
+                  System admin
+                </span>
+              )}
+              {noOrgRoles && !showSysAdmin ? (
                 <span className="text-xs italic text-gray-400">None</span>
               ) : (
                 sortedSlugs.map((slug) => (
@@ -344,7 +357,14 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
         },
       }),
     ],
-    [labels, unitNameBySlug, editUser, handleToggleActivation, roleLabel],
+    [
+      labels,
+      unitNameBySlug,
+      editUser,
+      handleToggleActivation,
+      roleLabel,
+      isGlobalAdmin,
+    ],
   );
 
   const includeInactive = query.enabled === undefined;
@@ -355,7 +375,7 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
         <div className="flex flex-wrap items-center gap-4">
           {canWrite && (
             <Dropdown
-              buttonClassName="inline-flex items-center gap-x-1.5 rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              buttonClassName="inline-flex items-center gap-x-1.5 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               value={
                 <span className="inline-flex items-center gap-x-1">
                   <UserPlusIcon className="size-4" />

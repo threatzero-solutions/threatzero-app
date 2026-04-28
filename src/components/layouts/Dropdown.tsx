@@ -148,6 +148,11 @@ const Dropdown: React.FC<DropdownProps> = ({
         <MenuItems
           ref={refs.setFloating}
           style={floatingStyles}
+          // `portal` renders the menu under document.body so it escapes any
+          // ancestor `overflow-hidden` (e.g., card frames) that would clip
+          // it. Floating-ui still positions correctly because it uses
+          // viewport coordinates, not parent ones.
+          portal
           className={classNames(
             "z-20 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden",
             "max-h-[45vh] overflow-y-auto",
