@@ -280,42 +280,6 @@ export const deactivateOrganizationUser = (
     buildUrl(`/organizations/organizations/${id}/users/${userId}/deactivate/`),
   );
 
-export const assignOrganizationUserToRoleGroup = (
-  id: Organization["id"],
-  userId: string,
-  groupOptions: {
-    groupId?: string;
-    groupPath?: string;
-  },
-) =>
-  axios.post(
-    buildUrl(
-      `/organizations/organizations/${id}/users/${userId}/assign-role-group/`,
-    ),
-    null,
-    {
-      params: groupOptions,
-    },
-  );
-
-export const revokeOrganizationUserToRoleGroup = (
-  id: Organization["id"],
-  userId: string,
-  groupOptions: {
-    groupId?: string;
-    groupPath?: string;
-  },
-) =>
-  axios.post(
-    buildUrl(
-      `/organizations/organizations/${id}/users/${userId}/revoke-role-group/`,
-    ),
-    null,
-    {
-      params: groupOptions,
-    },
-  );
-
 export const createOrganizationIdp = (
   id: Organization["id"],
   createOrganizationIdpDto: OrganizationIdpDto,

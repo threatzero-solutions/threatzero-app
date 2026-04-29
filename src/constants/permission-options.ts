@@ -1,89 +1,103 @@
-import { LEVEL, READ, WRITE } from "./permissions";
+/**
+ * Re-expressed in capability slugs (from `/api/me`) instead of legacy JWT
+ * permission strings. The option-object shape (`permissions`, optional
+ * `type: 'any' | 'all'`) is unchanged so existing nav/guard call sites keep
+ * working — the contents are just capability slugs now.
+ *
+ * Map derived from `threatzero-api/docs/db-authorization-cutover-plan.md §7`
+ * (capability coverage table). See `src/constants/capabilities.ts` for the
+ * canonical slug list.
+ */
+import { CAP } from "./capabilities";
 
 // TRAINING
 export const trainingLibraryPermissionsOptions = {
-  permissions: [READ.COURSES],
+  permissions: [CAP.VIEW_TRAINING],
 };
 
 export const trainingItemPermissionsOptions = {
-  permissions: [READ.COURSES],
+  permissions: [CAP.VIEW_TRAINING],
 };
 
 export const courseBuilderPermissionsOptions = {
-  permissions: [LEVEL.ADMIN, WRITE.COURSES],
+  permissions: [CAP.MANAGE_TRAINING_CONTENT],
 };
 
 // FORMS
 export const formBuilderPermissionsOptions = {
-  permissions: [LEVEL.ADMIN, WRITE.FORMS],
+  permissions: [CAP.MANAGE_FORMS],
 };
 
 // SAFETY MANAGEMENT
 export const safetyManagementPermissionOptions = {
   type: "any" as const,
-  permissions: [
-    READ.TIPS,
-    READ.THREAT_ASSESSMENTS,
-    READ.VIOLENT_INCIDENT_REPORTS,
-    READ.TRAINING_STATS,
-    WRITE.TRAINING_LINKS,
-  ],
+  permissions: [CAP.VIEW_SAFETY_REPORTS, CAP.ADMINISTER_TRAINING],
 };
 
 export const safetyConcernPermissionsOptions = {
-  permissions: [READ.TIPS],
+  permissions: [CAP.VIEW_SAFETY_REPORTS],
 };
 
 export const threatAssessmentPermissionsOptions = {
-  permissions: [READ.THREAT_ASSESSMENTS],
+  permissions: [CAP.VIEW_SAFETY_REPORTS],
 };
 
 export const violentIncidentReportPermissionsOptions = {
-  permissions: [READ.VIOLENT_INCIDENT_REPORTS],
+  permissions: [CAP.VIEW_SAFETY_REPORTS],
 };
 
 export const trainingAdminPermissionOptions = {
-  permissions: [WRITE.TRAINING_LINKS, READ.TRAINING_STATS],
+  permissions: [CAP.ADMINISTER_TRAINING],
   type: "any" as const,
 };
 
 // RESOURCES
 export const resourcePermissionsOptions = {
-  permissions: [READ.RESOURCES],
+  permissions: [CAP.VIEW_TRAINING],
 };
 
 // ADMIN PANEL
 export const adminPanelPermissionOptions = {
-  permissions: [LEVEL.ADMIN],
+  permissions: [CAP.MANAGE_SYSTEM],
   type: "all" as const,
 };
 
-// MY ORGANIZATION
+// MY ORGANIZATION — any user belonging to a tenant org can view. We express
+// this as "has manage-units OR view-org-users OR org scope" — for the guard
+// path, `MANAGE_UNITS` is the most common org-admin cap, but anyone with a
+// tenant scope should see their org page. Handled by the guard via a fallback
+// on `me.organization !== null`; the slug list below gates the nav-link.
 export const myOrganizationPermissionOptions = {
-  permissions: [READ.ORGANIZATIONS],
-  type: "all" as const,
+  permissions: [CAP.MANAGE_UNITS, CAP.VIEW_ORG_USERS, CAP.MANAGE_ORG_USERS],
+  type: "any" as const,
 };
 
 export const organizationUserPermissionOptions = {
-  permissions: [READ.ORGANIZATION_USERS],
+  permissions: [CAP.VIEW_ORG_USERS],
   type: "all" as const,
 };
 
 export const organizationTrainingManagementPermissionOptions = {
-  permissions: [
-    READ.COURSE_ENROLLMENTS,
-    WRITE.COURSE_ENROLLMENTS,
-    WRITE.ORGANIZATION_USERS,
-  ],
+  permissions: [CAP.MANAGE_ENROLLMENTS, CAP.MANAGE_ORG_USERS],
   type: "any" as const,
 };
 
 export const organizationSafetyManagementPermissionOptions = {
-  permissions: [WRITE.ORGANIZATIONS],
+  permissions: [CAP.MANAGE_UNITS],
   type: "all" as const,
 };
 
+// Settings surfaces sub-tabs for several capabilities (general/notifications/
+// advanced need unit-or-org edit rights, access-rules needs manage-org-rules,
+// SSO needs view-idps). Show the tab if the user has any of them; the Settings
+// page itself filters sub-tabs per-capability.
 export const organizationSettingsPermissionOptions = {
-  permissions: [WRITE.ORGANIZATIONS],
-  type: "all" as const,
+  permissions: [
+    CAP.MANAGE_UNITS,
+    CAP.MANAGE_ORGANIZATIONS,
+    CAP.MANAGE_ORG_RULES,
+    CAP.VIEW_IDPS,
+    CAP.MANAGE_IDPS,
+  ],
+  type: "any" as const,
 };

@@ -27,6 +27,7 @@ import {
   Tip,
   TipStatus,
 } from "../../types/entities";
+import RoutingCallout from "./components/RoutingCallout";
 import StatusPill from "./components/StatusPill";
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
@@ -53,6 +54,16 @@ const TipSubmission: React.FC = () => {
     () => hasPermissions([WRITE.TIPS]),
     [hasPermissions],
   );
+
+  // Routing note: the submitter's residence (the `me.residences` row that
+  // matches the current tenant org) is the canonical "submit as me" target
+  // for safety-concern routing. The backend derives it server-side from the
+  // authenticated user; `POST /tips/submit` takes only the submission and
+  // an optional `locationId` (used for public, location-coded URLs — e.g.
+  // a posted QR at the bus stop). The `<RoutingCallout />` rendered below
+  // the form surfaces the user's effective unit and offers a first-set
+  // picker when residence is unset. See `_docs/residence-and-tenant-model.md`
+  // §6.
 
   const queryClient = useQueryClient();
 
@@ -203,7 +214,7 @@ const TipSubmission: React.FC = () => {
             <button
               type="button"
               onClick={() => setManageNotesOpen(true)}
-              className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="block self-start w-max rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               Notes {notes && <span>({notes?.results.length ?? 0})</span>}
             </button>
@@ -220,7 +231,7 @@ const TipSubmission: React.FC = () => {
             <Link to={`/admin-panel/forms/${TIP_SUBMISSION_FORM_SLUG}`}>
               <button
                 type="button"
-                className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                className="block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               >
                 {form ? "Edit Draft" : "+ Create Safety Concern Form"}
               </button>
@@ -228,25 +239,30 @@ const TipSubmission: React.FC = () => {
           )}
         </div>
       ) : (
-        <Form
-          form={form}
-          isLoading={formLoading}
-          submission={tip?.submission}
-          readOnly={!!tip?.submission}
-          onSubmit={handleSubmit}
-          mediaUploadUrl={`${MEDIA_UPLOAD_URL}${
-            searchParams.has("loc_id")
-              ? `?locationId=${searchParams.get("loc_id")}`
-              : ""
-          }`}
-          languages={forms?.map((f) => f.language)}
-          setLanguage={(l) =>
-            setSearchParams((p) => {
-              p.set("language", l.code);
-              return p;
-            })
-          }
-        />
+        <>
+          <Form
+            form={form}
+            isLoading={formLoading}
+            submission={tip?.submission}
+            readOnly={!!tip?.submission}
+            onSubmit={handleSubmit}
+            mediaUploadUrl={`${MEDIA_UPLOAD_URL}${
+              searchParams.has("loc_id")
+                ? `?locationId=${searchParams.get("loc_id")}`
+                : ""
+            }`}
+            languages={forms?.map((f) => f.language)}
+            setLanguage={(l) =>
+              setSearchParams((p) => {
+                p.set("language", l.code);
+                return p;
+              })
+            }
+          />
+          {!tip && (
+            <RoutingCallout hasLocationId={searchParams.has("loc_id")} />
+          )}
+        </>
       )}
       <SlideOver open={manageNotesOpen} setOpen={setManageNotesOpen}>
         <ManageNotes
