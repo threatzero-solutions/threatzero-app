@@ -12,6 +12,7 @@ import ResourceVideos from "./components/resources/ResourceVideos";
 import AuthProvider from "./contexts/auth/AuthProvider";
 import AdminPanel from "./pages/admin-panel/AdminPanel";
 import AdvancedIndex from "./pages/admin-panel/advanced/AdvancedIndex";
+import SystemAdmins from "./pages/admin-panel/system-admins/SystemAdmins";
 import CourseBuilder from "./pages/admin-panel/courses/CourseBuilder";
 import PreviewCourse from "./pages/admin-panel/courses/PreviewCourse";
 import ViewCourses from "./pages/admin-panel/courses/ViewCourses";
@@ -26,11 +27,11 @@ import HelpCenter from "./pages/HelpCenter";
 import Login from "./pages/Login";
 import MyDashboard from "./pages/my-dashboard/MyDashboard";
 import OrganizationsRoot from "./pages/organizations/OrganizationsRoot";
-import OrganizationsSafety from "./pages/organizations/tabs/OrganizationsSafety";
 import OrganizationsSettings from "./pages/organizations/tabs/OrganizationsSettings";
 import OrganizationsTraining from "./pages/organizations/tabs/OrganizationsTraining";
+import OrganizationsAccess from "./pages/organizations/tabs/OrganizationsAccess";
+import OrganizationsTat from "./pages/organizations/tabs/OrganizationsTat";
 import OrganizationsUnits from "./pages/organizations/tabs/OrganizationsUnits";
-import OrganizationsUsers from "./pages/organizations/tabs/OrganizationsUsers";
 import Page404 from "./pages/Page404";
 import SafetyConcernsDashboard from "./pages/safety-management/safety-concerns/SafetyConcernsDashboard";
 import SafetyManagementRoot from "./pages/safety-management/SafetyManagementRoot";
@@ -50,14 +51,24 @@ import { ResourceItemCategories, ResourceItemCategory } from "./types/entities";
 
 const organizationsChildren: RouteObject[] = [
   {
+    path: "users",
+    handle: { title: "Users" },
+    element: <OrganizationsAccess />,
+  },
+  {
+    path: "access",
+    handle: { title: "Users" },
+    element: <OrganizationsAccess />,
+  },
+  {
     path: "units",
     handle: { title: "Units" },
     element: <OrganizationsUnits />,
   },
   {
-    path: "users",
-    handle: { title: "Users" },
-    element: <OrganizationsUsers />,
+    path: "tat",
+    handle: { title: "TAT" },
+    element: <OrganizationsTat />,
   },
   {
     path: "training",
@@ -65,9 +76,10 @@ const organizationsChildren: RouteObject[] = [
     element: <OrganizationsTraining />,
   },
   {
+    // Safety configuration moved under Settings > General. Keep this
+    // route as a redirect so old bookmarks land in the right place.
     path: "safety",
-    handle: { title: "Safety" },
-    element: <OrganizationsSafety />,
+    loader: () => redirect("../settings?section=general"),
   },
   {
     path: "settings",
@@ -76,7 +88,7 @@ const organizationsChildren: RouteObject[] = [
   },
   {
     path: "*?",
-    loader: () => redirect("units"),
+    loader: () => redirect("users"),
   },
 ];
 
@@ -339,6 +351,11 @@ export const router = createBrowserRouter(
                       path: "languages",
                       handle: { title: "Languages" },
                       element: <ViewLanguages />,
+                    },
+                    {
+                      path: "system-admins",
+                      handle: { title: "System Admins" },
+                      element: <SystemAdmins />,
                     },
                     {
                       path: "advanced",

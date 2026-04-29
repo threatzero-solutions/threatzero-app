@@ -105,7 +105,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto disabled:opacity-50",
             destructive
               ? "bg-red-600 enabled:hover:bg-red-500"
-              : "bg-secondary-600 enabled:hover:bg-secondary-500",
+              : "bg-primary-600 enabled:hover:bg-primary-500",
             isPending ? "animate-pulse" : "",
           )}
         >

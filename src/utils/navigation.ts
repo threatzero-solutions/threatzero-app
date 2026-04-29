@@ -1,9 +1,13 @@
 import { useCallback } from "react";
-import { useAuth } from "../contexts/auth/useAuth";
+import { useMe } from "../contexts/me/MeProvider";
 import { NavigationItem } from "../types/core";
 
 export const useNav = () => {
-  const { hasPermissions } = useAuth();
+  // Nav items gate on "does the user hold this capability anywhere?" — org
+  // OR any granted unit. Unit-only grantees (e.g. a plain 'member' who only
+  // has view-training at their unit) would otherwise be invisibly filtered
+  // out because `can(cap)` with no unitId is org-wide by design.
+  const { canAny } = useMe();
 
   const canNavigate = useCallback(
     (item: NavigationItem) => {
@@ -11,12 +15,13 @@ export const useNav = () => {
         return true;
       }
 
-      return hasPermissions(
-        item.permissionOptions.permissions,
-        item.permissionOptions.type,
-      );
+      const { permissions, type = "any" } = item.permissionOptions;
+      const predicate = (cap: string) => canAny(cap);
+      return type === "all"
+        ? permissions.every(predicate)
+        : permissions.some(predicate);
     },
-    [hasPermissions],
+    [canAny],
   );
 
   const filterByPermissions = useCallback(

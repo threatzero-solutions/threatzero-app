@@ -121,7 +121,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
               {canExpand ? (
                 <button
                   onClick={() => row.toggleExpanded()}
-                  className="mr-2 rounded bg-primary-50 p-1 text-primary-500 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 cursor-pointer"
+                  className="mr-2 rounded p-1 text-gray-400 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 cursor-pointer"
                   aria-label={`${isExpanded ? "Collapse" : "Expand"} ${row.original.name}`}
                   aria-expanded={isExpanded}
                 >
@@ -229,7 +229,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
               <button
                 type="button"
                 className={classNames(
-                  "block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600",
+                  "block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600",
                   "inline-flex items-center gap-x-1",
                 )}
                 onClick={() => setAddBaseOrganizationOpen(true)}
@@ -242,7 +242,7 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
             )}
             <FilterBar
               searchOptions={{
-                placeholder: "Search by name or email...",
+                placeholder: `Search ${unitsLabelPlural.toLowerCase()}…`,
                 searchQuery: unitsSearch,
                 setSearchQuery: setUnitsSearch,
               }}
