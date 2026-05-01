@@ -24,6 +24,7 @@ npm run dev        # Vite dev server
 ```
 
 Required env vars (see `src/config.ts`):
+
 - `VITE_APIS_THREATZERO_BASE_URL` -- API base URL
 - `VITE_KEYCLOAK_URL`, `VITE_KEYCLOAK_REALM`, `VITE_KEYCLOAK_CLIENT_ID` -- Keycloak auth
 

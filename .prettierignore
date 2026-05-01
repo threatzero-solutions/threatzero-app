@@ -1,0 +1,7 @@
+# Vendored agent-skill bundles — managed via `skills` tooling, not authored here.
+.agents/
+
+# Build output / installed deps
+dist/
+node_modules/
+coverage/
