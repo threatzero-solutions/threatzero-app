@@ -58,7 +58,7 @@ const TrainingItem: React.FC = () => {
 
   const { authenticated } = useAuth();
   const { me } = useMe();
-  const { requireResidenceUnit } = useResidencePicker();
+  const { requireResidenceUnit, isPickerOpen } = useResidencePicker();
 
   // Residence gate (`_docs/residence-and-tenant-model.md` §6 + §2.3):
   // when the user is authenticated to a tenant org but has no residence
@@ -98,6 +98,8 @@ const TrainingItem: React.FC = () => {
     void requireResidenceUnit({
       organizationId: tenantOrgId,
       dismissible: false,
+      reason:
+        "Before we can record your training progress, tell us where you are most of the time.",
     });
   }, [residenceGateOpen, tenantOrgId, requireResidenceUnit]);
 
@@ -226,15 +228,31 @@ const TrainingItem: React.FC = () => {
   }, [queryClient, state.activeEnrollment?.id]);
 
   if (residenceGateOpen) {
+    // Two layered states for the same gate condition:
+    //   - Modal up → render a quiet, non-redundant placeholder. The modal
+    //     carries the message; duplicating it underneath was confusing.
+    //   - Modal NOT up (escaped, dismissed, or pre-mount race) → surface
+    //     the explanatory note here so the page isn't mysteriously blank.
     return (
       <div>
         {authenticated && <BackButton defaultTo={"/training/library"} />}
-        <div className="mt-8 mx-auto max-w-md text-center text-sm text-gray-600">
-          <p>
-            Pick the unit you belong to before starting training. Your progress
-            is attributed to that unit.
-          </p>
-        </div>
+        {isPickerOpen ? (
+          <div
+            aria-hidden="true"
+            className="mt-8 mx-auto max-w-3xl space-y-3 opacity-30 pointer-events-none select-none"
+          >
+            <div className="aspect-video w-full rounded-lg bg-gray-200" />
+            <div className="h-6 w-3/4 rounded bg-gray-200" />
+            <div className="h-4 w-1/2 rounded bg-gray-100" />
+          </div>
+        ) : (
+          <div className="mt-8 mx-auto max-w-md text-center text-sm text-gray-600">
+            <p>
+              Pick your home base before starting training. Your progress gets
+              attributed there.
+            </p>
+          </div>
+        )}
       </div>
     );
   }
