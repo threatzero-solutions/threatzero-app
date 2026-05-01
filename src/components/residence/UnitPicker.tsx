@@ -1,7 +1,11 @@
 import { DialogTitle } from "@headlessui/react";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import {
+  BuildingOffice2Icon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/outline";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { useMe } from "../../contexts/me/MeProvider";
 import { ME_QUERY_KEY, setMyResidence } from "../../queries/me";
 import { getUnits } from "../../queries/organizations";
@@ -33,25 +37,39 @@ export interface UnitPickerProps {
   availableUnits?: UnitOption[];
   /**
    * Whether the picker can be dismissed without picking. Defaults to true.
-   * The watch-page gate sets this to false (blocking modal); the inline
-   * concerns/tips picker — added in phase 4 — will pass true.
+   * The watch-page gate sets this to false. Note: regardless of this flag,
+   * the "take me to the dashboard" escape link is always present so users
+   * never feel trapped inside the modal.
    */
   dismissible?: boolean;
+  /**
+   * Trigger-specific copy that explains *why* the picker is up right now.
+   * Falls back to a generic warm default. Examples:
+   *   "Before recording your training, tell us your unit so your progress
+   *    is attributed correctly."
+   *   "Before submitting your safety concern, tell us your unit so it
+   *    reaches the right team."
+   */
+  reason?: string;
   onClose: (result: { picked: MeResidence } | null) => void;
 }
+
+const DEFAULT_REASON = "Tell us where you are most of the time.";
 
 const UnitPicker: React.FC<UnitPickerProps> = ({
   open,
   organizationId,
   availableUnits,
   dismissible = true,
+  reason,
   onClose,
 }) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { me } = useMe();
-  const [step, setStep] = useState<"pick" | "confirm">("pick");
   const [selected, setSelected] = useState<UnitOption | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const autoAssignedRef = useRef(false);
 
   const { data: fetchedUnits } = useQuery({
     queryKey: [
@@ -66,8 +84,6 @@ const UnitPicker: React.FC<UnitPickerProps> = ({
     enabled: open && !availableUnits && !!organizationId,
   });
 
-  // Caller-supplied list wins. Otherwise convert the fetched Unit entities
-  // into the trimmed shape the picker expects.
   const unitsForPicker = useMemo<UnitOption[]>(() => {
     if (availableUnits && availableUnits.length > 0) return availableUnits;
     return (fetchedUnits ?? []).map((u: Unit) => ({
@@ -78,20 +94,12 @@ const UnitPicker: React.FC<UnitPickerProps> = ({
     }));
   }, [availableUnits, fetchedUnits]);
 
-  // Build a parent-id → name lookup so the option label can show the
-  // parent in light text for context. The plan's UX line ("Hierarchy shown
-  // for context") doesn't require a tree widget — a one-level breadcrumb
-  // is enough for a first-set decision.
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
     unitsForPicker.forEach((u) => m.set(u.id, u.name));
     return m;
   }, [unitsForPicker]);
 
-  // Filter to units the user has any grant on, plus their existing
-  // residence unit if already set. Users with org-wide grants see every
-  // unit. Users with no grants in this org see nothing — the picker
-  // surfaces an empty-state copy in that case.
   const residenceForOrg = me?.residences?.find(
     (r) => r.organizationId === organizationId,
   );
@@ -103,9 +111,6 @@ const UnitPicker: React.FC<UnitPickerProps> = ({
     return ids;
   }, [me, residenceForOrg]);
 
-  // Org-wide grants → no unit-scope filter. A user with `manage-org-users`
-  // (or any other org-wide capability) is allowed to declare residence
-  // anywhere in the org.
   const hasOrgWideGrant = (me?.capabilities?.organization?.length ?? 0) > 0;
 
   const filteredUnits = useMemo(() => {
@@ -114,31 +119,47 @@ const UnitPicker: React.FC<UnitPickerProps> = ({
   }, [hasOrgWideGrant, unitsForPicker, accessibleUnitIds]);
 
   const setMutation = useMutation({
-    mutationFn: () => {
-      if (!selected) {
-        return Promise.reject(new Error("No unit selected"));
-      }
-      return setMyResidence(organizationId, selected.id);
-    },
+    mutationFn: (unitId: string) => setMyResidence(organizationId, unitId),
     onSuccess: async (residence) => {
       await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
-      setStep("pick");
       setSelected(null);
       setError(null);
       onClose({ picked: residence });
     },
     onError: (err) => {
       const message =
-        err instanceof Error ? err.message : "Could not save residence.";
+        err instanceof Error ? err.message : "Could not save your unit.";
       setError(message);
+      // Auto-assign failed — let manual selection take over.
+      autoAssignedRef.current = false;
     },
   });
+
+  // FE-side single-unit auto-assign. The backend already auto-assigns for
+  // training writes, but this covers any FE-driven pick-flow that didn't
+  // go through that path (e.g., interceptor-triggered picker for an
+  // endpoint that hasn't been taught the auto-assign rule yet).
+  useEffect(() => {
+    if (!open) return;
+    if (autoAssignedRef.current) return;
+    if (filteredUnits.length !== 1) return;
+    autoAssignedRef.current = true;
+    setSelected(filteredUnits[0]);
+    setMutation.mutate(filteredUnits[0].id);
+  }, [open, filteredUnits, setMutation]);
 
   const handleClose = (next: boolean) => {
     if (!dismissible) return;
     if (next) return;
     onClose(null);
   };
+
+  const handleEscape = () => {
+    onClose(null);
+    navigate("/");
+  };
+
+  const showAutoAssigning = autoAssignedRef.current && setMutation.isPending;
 
   return (
     <Modal
@@ -148,71 +169,100 @@ const UnitPicker: React.FC<UnitPickerProps> = ({
         dialogPanel: "sm:max-w-xl",
       }}
     >
-      <div className="bg-white px-6 pt-6 pb-4 rounded-t-lg">
-        <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
-          {step === "pick" ? "Pick your unit" : "Confirm your unit"}
-        </DialogTitle>
-        <p className="mt-2 text-sm text-gray-500">
-          {step === "pick"
-            ? "Select the unit you belong to inside this organization. This determines where your training progress and submissions are attributed."
-            : "Once set, only an administrator can change this. You can pick again if you go back."}
-        </p>
+      <div className="rounded-lg bg-white px-6 pt-7 pb-6 sm:px-8">
+        <div className="flex items-start gap-4">
+          <span
+            aria-hidden="true"
+            className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700"
+          >
+            <BuildingOffice2Icon className="h-6 w-6" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <DialogTitle
+              as="h3"
+              className="text-lg font-semibold text-gray-900"
+            >
+              {showAutoAssigning
+                ? "Saving your selection"
+                : "Where's your home base?"}
+            </DialogTitle>
+            <p className="mt-1.5 text-sm text-gray-700">
+              {showAutoAssigning
+                ? `You're being placed in ${selected?.name ?? "the only available option"}.`
+                : (reason ?? DEFAULT_REASON)}
+            </p>
+          </div>
+        </div>
 
-        {step === "pick" && (
-          <div className="mt-4 max-h-72 overflow-y-auto divide-y divide-gray-100 rounded-md border border-gray-200">
+        {!showAutoAssigning && (
+          <div className="mt-6">
             {filteredUnits.length === 0 ? (
-              <p className="p-4 text-sm text-gray-500">
-                No units are available for you to pick. Contact an administrator
-                to set your residence.
+              <p className="rounded-md bg-gray-50 p-4 text-sm text-gray-600">
+                Nothing's available for you to pick. Contact an administrator to
+                get set up.
               </p>
             ) : (
-              filteredUnits.map((u) => {
-                const parentName = u.parentUnitId
-                  ? nameById.get(u.parentUnitId)
-                  : null;
-                const isSelected = selected?.id === u.id;
-                return (
-                  <button
-                    type="button"
-                    key={u.id}
-                    onClick={() => setSelected(u)}
-                    className={classNames(
-                      "w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3",
-                      isSelected ? "bg-primary-50" : "",
-                    )}
-                  >
-                    <span className="flex-1">
-                      <span className="block text-sm font-medium text-gray-900">
-                        {u.name}
-                      </span>
-                      {parentName && (
-                        <span className="block text-xs text-gray-500">
-                          in {parentName}
-                        </span>
-                      )}
-                    </span>
-                    {isSelected && (
-                      <CheckCircleIcon
-                        aria-hidden="true"
-                        className="h-5 w-5 text-primary-600"
-                      />
-                    )}
-                  </button>
-                );
-              })
+              <ul
+                role="radiogroup"
+                aria-label="Available options"
+                className="grid gap-2"
+              >
+                {filteredUnits.map((u) => {
+                  const parentName = u.parentUnitId
+                    ? nameById.get(u.parentUnitId)
+                    : null;
+                  const isSelected = selected?.id === u.id;
+                  return (
+                    <li key={u.id}>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => setSelected(u)}
+                        className={classNames(
+                          "w-full text-left rounded-lg border px-4 py-3 transition-all duration-150",
+                          "active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2",
+                          isSelected
+                            ? "border-primary-600 bg-primary-50/60 ring-1 ring-primary-600 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50",
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="flex-1 min-w-0">
+                            <span
+                              className={classNames(
+                                "block text-sm font-medium",
+                                isSelected
+                                  ? "text-primary-900"
+                                  : "text-gray-900",
+                              )}
+                            >
+                              {u.name}
+                            </span>
+                            {parentName && (
+                              <span className="mt-0.5 block text-xs text-gray-500">
+                                in {parentName}
+                              </span>
+                            )}
+                          </span>
+                          {isSelected && (
+                            <CheckCircleIcon
+                              aria-hidden="true"
+                              className="h-5 w-5 flex-shrink-0 text-primary-600"
+                            />
+                          )}
+                        </div>
+                        {isSelected && (
+                          <p className="mt-2 text-xs text-primary-900/80">
+                            Once set, only an administrator can change this.
+                          </p>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-          </div>
-        )}
-
-        {step === "confirm" && selected && (
-          <div className="mt-4 rounded-md bg-gray-50 p-4">
-            <p className="text-sm text-gray-700">
-              You picked{" "}
-              <span className="font-semibold text-gray-900">
-                {selected.name}
-              </span>
-              .
-            </p>
           </div>
         )}
 
@@ -221,19 +271,9 @@ const UnitPicker: React.FC<UnitPickerProps> = ({
             {error}
           </p>
         )}
-      </div>
 
-      <div className="bg-gray-50 rounded-b-lg px-6 py-3 flex flex-row-reverse gap-2">
-        {step === "pick" ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setStep("confirm")}
-              disabled={!selected}
-              className="inline-flex justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-primary-500 disabled:opacity-50"
-            >
-              Continue
-            </button>
+        {!showAutoAssigning && filteredUnits.length > 0 && (
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             {dismissible && (
               <button
                 type="button"
@@ -243,33 +283,29 @@ const UnitPicker: React.FC<UnitPickerProps> = ({
                 Cancel
               </button>
             )}
-          </>
-        ) : (
-          <>
             <button
               type="button"
-              onClick={() => setMutation.mutate()}
-              disabled={setMutation.isPending}
+              onClick={() => selected && setMutation.mutate(selected.id)}
+              disabled={!selected || setMutation.isPending}
               className={classNames(
-                "inline-flex justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs enabled:hover:bg-primary-500 disabled:opacity-50",
+                "inline-flex justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors enabled:hover:bg-primary-500 disabled:opacity-50",
                 setMutation.isPending ? "animate-pulse" : "",
               )}
             >
-              Confirm
+              Save
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setStep("pick");
-              }}
-              disabled={setMutation.isPending}
-              className="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Back
-            </button>
-          </>
+          </div>
         )}
+
+        <div className="mt-5 border-t border-gray-100 pt-4 text-center">
+          <button
+            type="button"
+            onClick={handleEscape}
+            className="text-xs text-gray-500 underline-offset-4 hover:text-gray-700 hover:underline"
+          >
+            Take me back to the dashboard
+          </button>
+        </div>
       </div>
     </Modal>
   );

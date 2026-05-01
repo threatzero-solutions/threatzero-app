@@ -33,6 +33,7 @@ interface PickerRequest {
   organizationId: string;
   availableUnits: UnitOption[];
   dismissible: boolean;
+  reason?: string;
   resolve: (result: { picked: true } | null) => void;
 }
 
@@ -41,11 +42,24 @@ interface ResidencePickerContextValue {
     organizationId: string;
     availableUnits?: UnitOption[];
     dismissible?: boolean;
+    /**
+     * Trigger-specific copy explaining why the picker is up. Surfaced as
+     * the modal's primary descriptive line. Falls back to a warm generic
+     * default when omitted.
+     */
+    reason?: string;
   }) => Promise<{ picked: true } | null>;
+  /**
+   * True while the picker modal is currently open. Consumers (e.g., the
+   * training watch page) use this to coordinate their own underlying-page
+   * state — e.g., suppressing redundant gate copy while the modal is up.
+   */
+  isPickerOpen: boolean;
 }
 
 const ResidencePickerContext = createContext<ResidencePickerContextValue>({
   requireResidenceUnit: async () => null,
+  isPickerOpen: false,
 });
 
 export const ResidencePickerProvider: React.FC<PropsWithChildren> = ({
@@ -63,7 +77,7 @@ export const ResidencePickerProvider: React.FC<PropsWithChildren> = ({
 
   const requireResidenceUnit = useCallback<
     ResidencePickerContextValue["requireResidenceUnit"]
-  >(({ organizationId, availableUnits, dismissible }) => {
+  >(({ organizationId, availableUnits, dismissible, reason }) => {
     return new Promise((resolve) => {
       // If a request is already pending, resolve it as cancelled before
       // replacing it. Avoids leaking dangling promises.
@@ -74,6 +88,7 @@ export const ResidencePickerProvider: React.FC<PropsWithChildren> = ({
         organizationId,
         availableUnits: availableUnits ?? [],
         dismissible: dismissible ?? true,
+        reason,
         resolve,
       });
     });
@@ -101,8 +116,8 @@ export const ResidencePickerProvider: React.FC<PropsWithChildren> = ({
   }, []);
 
   const value = useMemo<ResidencePickerContextValue>(
-    () => ({ requireResidenceUnit }),
-    [requireResidenceUnit],
+    () => ({ requireResidenceUnit, isPickerOpen: request !== null }),
+    [requireResidenceUnit, request],
   );
 
   return (
@@ -118,6 +133,7 @@ export const ResidencePickerProvider: React.FC<PropsWithChildren> = ({
               : undefined
           }
           dismissible={request.dismissible}
+          reason={request.reason}
           onClose={handleClose}
         />
       )}
