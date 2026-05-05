@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ReactNode, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
@@ -43,7 +43,6 @@ interface SubunitsTableProps {
   unitIdType?: "id" | "slug";
   setUnitsPath: (unitsPath: string) => void;
   showOnEmpty?: boolean;
-  render?: (children: ReactNode) => ReactNode;
   unitsLabelSingular?: string;
   unitsLabelPlural?: string;
   onAddSubunitSuccess?: () => void;
@@ -57,7 +56,6 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
   unitIdType = "slug",
   setUnitsPath,
   showOnEmpty = true,
-  render = (children) => children,
   unitsLabelSingular = "Unit",
   unitsLabelPlural = "Units",
   onAddSubunitSuccess,
@@ -221,76 +219,74 @@ const SubunitsTable: React.FC<SubunitsTableProps> = ({
   });
 
   return nestedUnits.length > 0 || showOnEmpty ? (
-    render(
-      <>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            {hasPermissions([WRITE.UNITS]) ? (
-              <button
-                type="button"
-                className={classNames(
-                  "block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600",
-                  "inline-flex items-center gap-x-1",
-                )}
-                onClick={() => setAddBaseOrganizationOpen(true)}
-              >
-                <PlusIcon className="size-4 inline" />
-                New {unitsLabelSingular}
-              </button>
-            ) : (
-              <div></div>
-            )}
-            <FilterBar
-              searchOptions={{
-                placeholder: `Search ${unitsLabelPlural.toLowerCase()}…`,
-                searchQuery: unitsSearch,
-                setSearchQuery: setUnitsSearch,
-              }}
-            />
-          </div>
-          <BaseTable
-            table={unitsTable}
-            isLoading={unitsLoading}
-            showFooter={false}
-            noRowsMessage={`No ${unitsLabelPlural.toLowerCase()} found.`}
+    <>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {hasPermissions([WRITE.UNITS]) ? (
+            <button
+              type="button"
+              className={classNames(
+                "block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600",
+                "inline-flex items-center gap-x-1",
+              )}
+              onClick={() => setAddBaseOrganizationOpen(true)}
+            >
+              <PlusIcon className="size-4 inline" />
+              New {unitsLabelSingular}
+            </button>
+          ) : (
+            <div></div>
+          )}
+          <FilterBar
+            searchOptions={{
+              placeholder: `Search ${unitsLabelPlural.toLowerCase()}…`,
+              searchQuery: unitsSearch,
+              setSearchQuery: setUnitsSearch,
+            }}
           />
         </div>
-        <SlideOver
-          open={addBaseOrganizationOpen}
+        <BaseTable
+          table={unitsTable}
+          isLoading={unitsLoading}
+          showFooter={false}
+          noRowsMessage={`No ${unitsLabelPlural.toLowerCase()} found.`}
+        />
+      </div>
+      <SlideOver
+        open={addBaseOrganizationOpen}
+        setOpen={setAddBaseOrganizationOpen}
+      >
+        <EditOrganizationBasic
           setOpen={setAddBaseOrganizationOpen}
-        >
+          create
+          organizationId={organizationId}
+          parentUnitId={thisUnit?.id}
+          level="unit"
+          onSaveSuccess={() => onAddSubunitSuccess?.()}
+        />
+      </SlideOver>
+      <SlideOver open={editUnit.open} setOpen={editUnit.setOpen}>
+        {editUnit.data && (
           <EditOrganizationBasic
-            setOpen={setAddBaseOrganizationOpen}
-            create
+            setOpen={editUnit.setOpen}
+            create={false}
             organizationId={organizationId}
-            parentUnitId={thisUnit?.id}
+            unitId={editUnit.data.id}
             level="unit"
             onSaveSuccess={() => onAddSubunitSuccess?.()}
           />
-        </SlideOver>
-        <SlideOver open={editUnit.open} setOpen={editUnit.setOpen}>
-          {editUnit.data && (
-            <EditOrganizationBasic
-              setOpen={editUnit.setOpen}
-              create={false}
-              organizationId={organizationId}
-              unitId={editUnit.data.id}
-              level="unit"
-              onSaveSuccess={() => onAddSubunitSuccess?.()}
-            />
-          )}
-        </SlideOver>
-        <Modal open={moveUnit.open} setOpen={moveUnit.setOpen}>
-          {moveUnit.data && (
-            <MoveUnitForm
-              organizationId={organizationId}
-              unit={moveUnit.data}
-              setOpen={moveUnit.setOpen}
-            />
-          )}
-        </Modal>
-      </>,
-    )
+        )}
+      </SlideOver>
+      <Modal open={moveUnit.open} setOpen={moveUnit.setOpen}>
+        {moveUnit.data && (
+          <MoveUnitForm
+            organizationId={organizationId}
+            unit={moveUnit.data}
+            setOpen={moveUnit.setOpen}
+          />
+        )}
+      </Modal>
+    </>
   ) : (
     <></>
   );
