@@ -6,6 +6,7 @@ import {
   ChevronRightIcon,
   Cog6ToothIcon,
   HomeIcon,
+  MapPinIcon,
   UserGroupIcon,
   UsersIcon,
 } from "@heroicons/react/20/solid";
@@ -117,6 +118,16 @@ const OrganizationsRootInner: React.FC = () => {
             name: labels.unitPlural,
             to: "units",
             icon: BuildingOffice2Icon,
+          },
+          {
+            // Org-level Locations is the canonical place to manage SOS
+            // locations. Hidden in unit context — the unit tab keeps a
+            // read-only filtered view of its own locations.
+            name: "SOS Locations",
+            to: "locations",
+            icon: MapPinIcon,
+            hidden: isUnitContext,
+            permissionOptions: organizationSafetyManagementPermissionOptions,
           },
           {
             name: "TAT",

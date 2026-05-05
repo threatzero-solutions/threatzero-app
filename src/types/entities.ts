@@ -99,7 +99,8 @@ export interface Unit extends OrganizationBase {
 }
 
 export interface Location extends Base {
-  unit: Unit;
+  organization: Organization;
+  unit: Unit | null;
   name: string;
   locationId: string;
 }
