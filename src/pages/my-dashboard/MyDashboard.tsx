@@ -29,25 +29,23 @@ const MyDashboard: React.FC = () => {
   const hasTeamSection = canViewSafetyReports || canAdministerTraining;
 
   const firstName = keycloak?.tokenParsed?.given_name;
+  const orgSlug = me?.organization?.slug;
   const orgName = me?.organization?.name;
+  const unitSlug = me?.units[0]?.slug;
   const unitName = me?.units[0]?.name;
 
   // Full org + unit entities (for safety contact + policies content).
   // The header reads names from useMe() without waiting on these.
   const { data: myOrganization, isLoading: organizationLoading } = useQuery({
-    queryKey: [
-      "organization",
-      "slug",
-      keycloak!.tokenParsed!.organization,
-    ] as const,
+    queryKey: ["organization", "slug", orgSlug] as const,
     queryFn: ({ queryKey }) => getOrganizationBySlug(queryKey[2]),
-    enabled: !!keycloak?.tokenParsed?.organization,
+    enabled: !!orgSlug,
   });
 
   const { data: myUnit, isLoading: unitLoading } = useQuery({
-    queryKey: ["unit", "slug", keycloak!.tokenParsed!.unit] as const,
+    queryKey: ["unit", "slug", unitSlug] as const,
     queryFn: ({ queryKey }) => getUnitBySlug(queryKey[2]),
-    enabled: !!keycloak?.tokenParsed?.unit,
+    enabled: !!unitSlug,
   });
 
   const orgsLoading = organizationLoading || unitLoading;

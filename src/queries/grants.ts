@@ -197,28 +197,52 @@ export const deleteTatMember = async (
   await axios.delete(url);
 };
 
+/**
+ * One non-blocking warning the server emits when a manual revoke is shadowed
+ * by a rule- or SSO-sourced grant. The manual row was deleted as requested,
+ * but the user retains the capability via the shadowing source. Surface in
+ * the role editor so the admin can edit the underlying rule (or accept the
+ * shadow as intentional).
+ */
+export interface ShadowedRevoke {
+  roleSlug: string;
+  roleName: string;
+  unitId: string | null;
+  unitSlug: string | null;
+  shadowedBy: "rule" | "sso";
+}
+
+export interface PatchUserGrantsResult {
+  grants: UserWithAccess["grants"];
+  shadowedRevokes: ShadowedRevoke[];
+}
+
 export const patchUserGrants = async (
   orgId: string,
   userId: string,
   grants: DesiredGrantInput[],
-): Promise<UserWithAccess["grants"]> => {
+): Promise<PatchUserGrantsResult> => {
   const url = `${API_BASE_URL}/${accessPath(orgId, `/users/${userId}/grants`)}/`;
   const res = await axios.patch(url, { grants });
-  // Server returns the user's full manual-grants array for this org; the
-  // entity shape includes relation objects. Normalize to the trimmed
-  // { roleSlug, unitId, unitSlug } shape we use everywhere else.
-  const data = res.data as Array<{
-    role?: { slug?: string };
-    unitId: string | null;
-    unit?: { slug?: string } | null;
-  }>;
-  return data
+  // Server returns `{ grants: AccessGrant[], shadowedRevokes: [...] }`.
+  // Normalize the grant entities to the trimmed `{ roleSlug, unitId,
+  // unitSlug }` shape used everywhere else.
+  const data = res.data as {
+    grants: Array<{
+      role?: { slug?: string };
+      unitId: string | null;
+      unit?: { slug?: string } | null;
+    }>;
+    shadowedRevokes: ShadowedRevoke[];
+  };
+  const grantsOut = data.grants
     .filter((g) => !!g.role?.slug)
     .map((g) => ({
       roleSlug: g.role!.slug!,
       unitId: g.unitId,
       unitSlug: g.unit?.slug ?? null,
     }));
+  return { grants: grantsOut, shadowedRevokes: data.shadowedRevokes ?? [] };
 };
 
 // ---- TanStack Query key factories ----

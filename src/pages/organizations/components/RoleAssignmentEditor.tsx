@@ -17,14 +17,22 @@
  * can't assign.
  */
 import { useContext, useEffect, useMemo, useState } from "react";
-import { ShieldCheckIcon, TrashIcon } from "@heroicons/react/20/solid";
+import {
+  ExclamationTriangleIcon,
+  ShieldCheckIcon,
+  TrashIcon,
+} from "@heroicons/react/20/solid";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import { useMe } from "../../../contexts/me/MeProvider";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import { AssignableRole, UserWithAccess } from "../../../queries/grants";
+import {
+  AssignableRole,
+  ShadowedRevoke,
+  UserWithAccess,
+} from "../../../queries/grants";
 import {
   useAssignableRoles,
   usePatchUserGrants,
@@ -110,6 +118,10 @@ export default function RoleAssignmentEditor({
 
   const [selected, setSelected] = useState<Set<string>>(initialOrgRoles);
   const [unitRows, setUnitRows] = useState<UnitGrantRow[]>(initialUnitRows);
+  // Server-flagged shadowed revokes from the last save. When non-empty, the
+  // slide-over stays open after save so the admin can read the warning; they
+  // dismiss with the "Done" button. Cleared on each new submit.
+  const [shadowedRevokes, setShadowedRevokes] = useState<ShadowedRevoke[]>([]);
 
   // Reset editor state only when the target user changes identity, not on
   // every user-object reference change. A TanStack Query refetch can hand
@@ -122,6 +134,7 @@ export default function RoleAssignmentEditor({
   useEffect(() => {
     setSelected(initialOrgRoles);
     setUnitRows(initialUnitRows);
+    setShadowedRevokes([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userKey]);
 
@@ -204,12 +217,24 @@ export default function RoleAssignmentEditor({
       return;
     }
 
+    setShadowedRevokes([]);
     mutation.mutate(
       {
         userId: user.userId,
         grants: [...orgGrants, ...editableUnitGrants, ...preservedUnitGrants],
       },
-      { onSuccess: () => onClose() },
+      {
+        onSuccess: (result) => {
+          // Keep the slide-over open when the server flagged shadowed
+          // revokes so the admin sees the warning. They dismiss with the
+          // explicit "Done" button below. Clean save → close immediately.
+          if (result.shadowedRevokes.length > 0) {
+            setShadowedRevokes(result.shadowedRevokes);
+          } else {
+            onClose();
+          }
+        },
+      },
     );
   };
 
@@ -233,6 +258,50 @@ export default function RoleAssignmentEditor({
 
         <SlideOverFormBody>
           <div className="px-4 py-6 sm:px-6 space-y-8">
+            {shadowedRevokes.length > 0 && (
+              <section
+                aria-label="Shadowed revoke warning"
+                className="flex items-start gap-3 rounded-lg bg-amber-50 p-4 ring-1 ring-amber-300"
+              >
+                <ExclamationTriangleIcon
+                  aria-hidden="true"
+                  className="mt-0.5 size-5 shrink-0 text-amber-600"
+                />
+                <div className="min-w-0 text-sm">
+                  <div className="font-semibold text-amber-900">
+                    Saved, but some roles are still granted by a rule
+                  </div>
+                  <p className="mt-1 text-amber-900/80">
+                    You removed the following manual role
+                    {shadowedRevokes.length === 1 ? "" : "s"}, but{" "}
+                    {shadowedRevokes.length === 1 ? "it is" : "they are"} still
+                    granted automatically and will re-apply on the user&apos;s
+                    next login. To fully revoke, edit the underlying access
+                    rule.
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-900/90">
+                    {shadowedRevokes.map((s, i) => (
+                      <li key={`${s.roleSlug}:${s.unitSlug ?? ""}:${i}`}>
+                        <span className="font-medium">
+                          {s.roleName || s.roleSlug}
+                        </span>
+                        {s.unitSlug ? (
+                          <>
+                            {" "}
+                            at unit{" "}
+                            <span className="font-medium">{s.unitSlug}</span>
+                          </>
+                        ) : null}{" "}
+                        <span className="text-amber-900/70">
+                          (via {s.shadowedBy})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )}
+
             {showSystemAdminNotice && (
               <section
                 aria-label="System administrator"
