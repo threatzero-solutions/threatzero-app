@@ -211,9 +211,13 @@ export const OrganizationsContextProvider: React.FC<
   const getMatchingIdp = useCallback(
     (email: string) => {
       const [emailDomain] = email.split("@", 2).reverse();
+      // Email domains are case-insensitive (RFC 5321 §2.3.11); a user typing
+      // or pasting `Acme.com` should match an IDP registered with `acme.com`.
+      const normalized = emailDomain?.toLowerCase();
       return (
-        organizationIdps.find((idp) => idp?.domains.includes(emailDomain)) ??
-        null
+        organizationIdps.find((idp) =>
+          idp?.domains.map((d) => d.toLowerCase()).includes(normalized ?? ""),
+        ) ?? null
       );
     },
     [organizationIdps],

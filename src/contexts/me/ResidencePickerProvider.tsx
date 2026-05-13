@@ -100,8 +100,11 @@ export const ResidencePickerProvider: React.FC<PropsWithChildren> = ({
     return install422ResidenceInterceptor(async (input) =>
       requireResidenceUnit({
         ...input,
-        // 422 retries are blocking by design — the user must pick before
-        // the original request can succeed.
+        // The original 422'd request can't succeed without a residence
+        // pick, but the user is allowed to cancel — the retry then
+        // resolves null, the interceptor re-surfaces the original 422 to
+        // the caller, and the FE renders the usual error toast. Setting
+        // false would trap the user with no way out.
         dismissible: true,
       }),
     );
