@@ -269,15 +269,16 @@ export default function RoleAssignmentEditor({
                 />
                 <div className="min-w-0 text-sm">
                   <div className="font-semibold text-amber-900">
-                    Saved, but some roles are still granted by a rule
+                    Saved, but some roles are still granted automatically
                   </div>
                   <p className="mt-1 text-amber-900/80">
                     You removed the following manual role
                     {shadowedRevokes.length === 1 ? "" : "s"}, but{" "}
                     {shadowedRevokes.length === 1 ? "it is" : "they are"} still
-                    granted automatically and will re-apply on the user&apos;s
-                    next login. To fully revoke, edit the underlying access
-                    rule.
+                    granted from another source and will re-apply on the
+                    user&apos;s next login. To fully revoke, edit the underlying
+                    access rule (or upstream IDP configuration for SSO-sourced
+                    grants).
                   </p>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-900/90">
                     {shadowedRevokes.map((s, i) => (
