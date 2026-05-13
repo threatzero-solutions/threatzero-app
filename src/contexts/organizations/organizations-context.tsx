@@ -108,18 +108,26 @@ export const OrganizationsContextProvider: React.FC<
     });
   }, [queryClient, organizationId, organizationIdType]);
 
+  // Key by `organization.id` (not `organization.slug`) so the cache shares
+  // with `MeProvider`'s identically-keyed units fetch. Previously the
+  // `/my-organization/*` routes keyed by slug here while MeProvider keyed
+  // by id, producing two parallel 10,000-row fetches per page load at
+  // customer scale. We pay one extra request hop here (waiting for the
+  // org-by-slug query to resolve to an id) in exchange for de-duped
+  // payloads everywhere downstream. See
+  // [app#87](https://github.com/threatzero-solutions/threatzero-app/issues/87).
   const { data: allUnits, isLoading: allUnitsLoading } = useQuery({
     queryKey: [
       "units",
       {
-        [`organization.${organizationIdType}`]: organizationId,
+        "organization.id": currentOrganizationId,
         order: { createdTimestamp: "DESC" },
         limit: 10000,
       },
     ] as const,
     queryFn: ({ queryKey }) =>
       getUnits(queryKey[1]).then((units) => units.results),
-    enabled: !!organizationId,
+    enabled: !!currentOrganizationId,
   });
 
   const unitsPath = useMemo(
