@@ -25,6 +25,7 @@ describe("authStore", () => {
     const { authStore } = await loadStore();
     expect(authStore.getSnapshot()).toEqual({
       ready: false,
+      initFailed: false,
       authenticated: false,
       token: null,
       tokenParsed: undefined,
@@ -63,6 +64,7 @@ describe("authStore", () => {
     expect(listener).toHaveBeenCalledTimes(1);
     expect(authStore.getSnapshot()).toEqual({
       ready: true,
+      initFailed: false,
       authenticated: true,
       token: "tok-1",
       tokenParsed: { email: "a@b.com" },
@@ -150,7 +152,7 @@ describe("authStore", () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it("captures an init() rejection into the snapshot error", async () => {
+  it("captures an init() rejection as initFailed without marking ready", async () => {
     const { authStore, keycloak } = await loadStore();
     const boom = new Error("init failed");
     vi.mocked(keycloak.init).mockRejectedValueOnce(boom);
@@ -158,7 +160,12 @@ describe("authStore", () => {
     authStore.subscribe(() => {});
 
     await vi.waitFor(() => {
-      expect(authStore.getSnapshot().error).toBe(boom);
+      expect(authStore.getSnapshot().initFailed).toBe(true);
     });
+    const snap = authStore.getSnapshot();
+    expect(snap.error).toBe(boom);
+    // `ready` stays false — the render gate keys on `initFailed` so the
+    // app can show the error page instead of hanging on the splash.
+    expect(snap.ready).toBe(false);
   });
 });

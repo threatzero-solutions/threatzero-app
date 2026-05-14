@@ -14,8 +14,12 @@ import { authStore, keycloak } from "./authStore";
 import { installAuthInterceptors } from "./installAuthInterceptors";
 
 const AuthCheck: React.FC<
-  PropsWithChildren<{ keycloak: Keycloak; authError: unknown }>
-> = ({ children, keycloak, authError }) => {
+  PropsWithChildren<{
+    keycloak: Keycloak;
+    authError: unknown;
+    initFailed: boolean;
+  }>
+> = ({ children, keycloak, authError, initFailed }) => {
   const navigate = useNavigate();
 
   const isIgnorableError = (error: unknown): [boolean, string | undefined] => {
@@ -31,7 +35,7 @@ const AuthCheck: React.FC<
   };
 
   useEffect(() => {
-    if (authError) return;
+    if (authError || initFailed) return;
 
     const checkAuth = () => {
       if (document.visibilityState === "visible" && !keycloak.authenticated) {
@@ -42,7 +46,17 @@ const AuthCheck: React.FC<
     window.addEventListener("visibilitychange", checkAuth);
 
     return () => window.removeEventListener("visibilitychange", checkAuth);
-  }, [keycloak, authError, navigate]);
+  }, [keycloak, authError, initFailed, navigate]);
+
+  // A rejected `keycloak.init()` means the app can never authenticate —
+  // show the error page rather than the old behavior of hanging on the
+  // splash screen forever. This is distinct from `authError`, which the
+  // Auth0-era `isIgnorableError` path still swallows by design.
+  if (initFailed) {
+    return (
+      <ErrorPage friendlyErrorMessage="We couldn't reach the sign-in service. Please refresh the page to try again." />
+    );
+  }
 
   const [isIgnorableErr, friendlyMsg] = isIgnorableError(authError);
 
@@ -123,8 +137,12 @@ const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {snapshot.ready ? (
-        <AuthCheck keycloak={keycloak} authError={snapshot.error}>
+      {snapshot.ready || snapshot.initFailed ? (
+        <AuthCheck
+          keycloak={keycloak}
+          authError={snapshot.error}
+          initFailed={snapshot.initFailed}
+        >
           {children}
         </AuthCheck>
       ) : (

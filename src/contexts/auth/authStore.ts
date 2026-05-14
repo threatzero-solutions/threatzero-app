@@ -20,6 +20,12 @@ import configJson from "../../config";
 export interface AuthSnapshot {
   /** True once Keycloak's `init()` has resolved successfully (`onReady`). */
   ready: boolean;
+  /**
+   * True if Keycloak's `init()` rejected. The app can never authenticate
+   * in this state — AuthProvider advances past the splash and renders the
+   * error page rather than hanging forever on `ready: false`.
+   */
+  initFailed: boolean;
   authenticated: boolean;
   /** Current access token, or null when unauthenticated / expired. */
   token: string | null;
@@ -43,6 +49,7 @@ const initOptions: KeycloakInitOptions = {
 
 let snapshot: AuthSnapshot = {
   ready: false,
+  initFailed: false,
   authenticated: false,
   token: null,
   tokenParsed: undefined,
@@ -94,7 +101,9 @@ function ensureInit(): void {
     return;
   }
   initStarted = true;
-  keycloak.init(initOptions).catch((error) => setSnapshot({ error }));
+  keycloak
+    .init(initOptions)
+    .catch((error) => setSnapshot({ initFailed: true, error }));
 }
 
 export const authStore = {
