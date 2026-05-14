@@ -158,7 +158,6 @@ const Dropdown: React.FC<DropdownProps> = ({
             "max-h-[45vh] overflow-y-auto",
             showDividers ? "divide-y divide-gray-100" : "",
           )}
-          static={true}
         >
           {!!actions && (
             <ActionGroup
