@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ME_QUERY_KEY } from "./me";
 import {
+  adminSetUserResidence,
   assignableRolesKey,
   DesiredGrantInput,
   getAssignableRoles,
@@ -87,6 +88,37 @@ interface PatchInput {
  *   - /me (if the current viewer edited their own grants, permissions
  *     may have shifted — cheap to over-invalidate)
  */
+/**
+ * Admin-side Move-to-Unit mutation (api#59 + app#90). On success, the
+ * users-with-access list and grant audit refetch so the post-save view
+ * reflects the new unit and any cascaded grants; /me refetches in case
+ * the admin moved themselves.
+ */
+export const useAdminSetUserResidence = (orgId: string | undefined) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      unitId,
+    }: {
+      userId: string;
+      unitId: string | null;
+    }) => {
+      if (!orgId) {
+        throw new Error("orgId required for useAdminSetUserResidence");
+      }
+      return adminSetUserResidence(orgId, userId, unitId);
+    },
+    onSuccess: () => {
+      if (!orgId) return;
+      queryClient.invalidateQueries({ queryKey: usersWithGrantsKey(orgId) });
+      queryClient.invalidateQueries({ queryKey: ["access", "audit", orgId] });
+      queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+    },
+  });
+};
+
 export const usePatchUserGrants = (orgId: string | undefined) => {
   const queryClient = useQueryClient();
 

@@ -6,6 +6,7 @@
  * planned swap to DB-only reads once the KC webhook mirror lands.
  */
 import {
+  ArrowsRightLeftIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   ClockIcon,
@@ -51,6 +52,7 @@ import { labelsForPreset } from "../../../utils/labels";
 import { getUnitAndDescendantSlugs } from "../../../utils/units";
 import BulkUserUploadSlideOver from "./BulkUserUploadSlideOver";
 import EditOrganizationUser from "./EditOrganizationUser";
+import MoveUserToUnitModal from "./MoveUserToUnitModal";
 import RoleAssignmentEditor from "./RoleAssignmentEditor";
 import { roleChipClass, sortRoleSlugs } from "./roleDisplay";
 
@@ -132,6 +134,7 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
 
   const [debouncedQuery] = useDebounceValue(query, 250);
   const [editing, setEditing] = useState<UserWithAccess | null>(null);
+  const [movingUser, setMovingUser] = useState<UserWithAccess | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const editUser = useOpenData<string>();
 
@@ -304,6 +307,13 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
         enableSorting: false,
         cell: ({ row: { original } }) => {
           const canEditRoles = !!original.userId;
+          // "Move to unit" / "Assign to unit" depends on whether the user
+          // already has a residence — admins distinguish the two so the
+          // confirmation copy reads naturally either way. Disabled until
+          // the user has a DB rep (same gate as Edit roles).
+          const moveActionLabel = original.unitSlug
+            ? `Move to ${labels.unitSingular.toLowerCase()}`
+            : `Assign to ${labels.unitSingular.toLowerCase()}`;
           return (
             <ButtonGroup className="w-full justify-end">
               <Dropdown
@@ -317,6 +327,17 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
                       </span>
                     ),
                     action: () => setEditing(original),
+                    disabled: !canEditRoles,
+                  },
+                  {
+                    id: "move-to-unit",
+                    value: (
+                      <span className="inline-flex items-center gap-1">
+                        <ArrowsRightLeftIcon className="size-4 inline" />{" "}
+                        {moveActionLabel}
+                      </span>
+                    ),
+                    action: () => setMovingUser(original),
                     disabled: !canEditRoles,
                   },
                   {
@@ -485,6 +506,16 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
         user={editing}
         open={!!editing}
         onClose={() => setEditing(null)}
+      />
+      <MoveUserToUnitModal
+        orgId={orgId}
+        user={movingUser}
+        open={!!movingUser}
+        onClose={() => setMovingUser(null)}
+        units={allUnits ?? []}
+        labels={labels}
+        unitNameBySlug={unitNameBySlug}
+        roleNameBySlug={roleLabelBySlug}
       />
       <SlideOver open={editUser.open} setOpen={editUser.setOpen}>
         <EditOrganizationUser
