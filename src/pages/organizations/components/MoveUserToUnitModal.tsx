@@ -158,27 +158,27 @@ const MoveUserToUnitModal: React.FC<Props> = ({
       }}
       classNames={{ dialogPanel: "sm:max-w-xl" }}
     >
-      <div className="bg-white px-4 pb-4 pt-5 sm:p-6">
-        <div className="sm:flex sm:items-start">
+      <div className="bg-white px-5 pb-5 pt-5 sm:p-6">
+        <div className="flex items-start gap-3">
           <div
             className={classNames(
-              "mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10",
+              "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
               step === "done" ? "bg-primary-50" : "bg-secondary-100",
             )}
           >
             {step === "done" ? (
               <CheckCircleIcon
                 aria-hidden="true"
-                className="h-6 w-6 text-primary-600"
+                className="h-5 w-5 text-primary-600"
               />
             ) : (
               <ArrowsRightLeftIcon
                 aria-hidden="true"
-                className="h-6 w-6 text-secondary-600"
+                className="h-5 w-5 text-secondary-600"
               />
             )}
           </div>
-          <div className="mt-3 w-full text-center sm:ml-4 sm:mt-0 sm:text-left">
+          <div className="min-w-0 flex-1">
             <DialogTitle
               as="h3"
               className="text-base font-semibold leading-6 text-gray-900"
@@ -186,7 +186,7 @@ const MoveUserToUnitModal: React.FC<Props> = ({
               {step === "select" && (
                 <>
                   {actionLabel}
-                  <span className="block text-sm font-normal text-gray-500">
+                  <span className="mt-0.5 block truncate text-sm font-normal text-gray-500">
                     {displayName}
                     {user.email ? ` (${user.email})` : ""}
                   </span>
@@ -198,7 +198,7 @@ const MoveUserToUnitModal: React.FC<Props> = ({
                 (isInitialAssign ? "Assignment complete" : "Move complete")}
             </DialogTitle>
 
-            <div className="mt-4 space-y-4 text-sm text-gray-700">
+            <div className="mt-3 space-y-3 text-sm text-gray-700">
               {step === "select" && (
                 <SelectStep
                   labels={labels}
@@ -332,27 +332,32 @@ const SelectStep: React.FC<SelectStepProps> = ({
   }
 
   return (
-    <>
-      {!isInitialAssign && currentUnitName && (
-        <p className="text-gray-600">
-          Currently in{" "}
-          <span className="font-medium text-gray-900">{currentUnitName}</span>.
-        </p>
-      )}
-
+    <div>
       <label
         htmlFor="move-to-unit"
         className="block text-sm font-medium text-gray-700"
       >
-        {isInitialAssign
-          ? `Which ${labels.unitSingular.toLowerCase()}?`
-          : `New ${labels.unitSingular.toLowerCase()}`}
+        {isInitialAssign || !currentUnitName ? (
+          <>
+            {isInitialAssign
+              ? `Which ${labels.unitSingular.toLowerCase()}?`
+              : `New ${labels.unitSingular.toLowerCase()}`}
+          </>
+        ) : (
+          <>
+            From{" "}
+            <span className="font-semibold text-gray-900">
+              {currentUnitName}
+            </span>{" "}
+            to
+          </>
+        )}
       </label>
       <select
         id="move-to-unit"
         value={selectedUnitId}
         onChange={(e) => onSelect(e.target.value)}
-        className="block w-full rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
+        className="mt-1.5 block w-full rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
       >
         <option value="">Select…</option>
         {selectableUnits.map((u) => (
@@ -361,7 +366,7 @@ const SelectStep: React.FC<SelectStepProps> = ({
           </option>
         ))}
       </select>
-    </>
+    </div>
   );
 };
 
