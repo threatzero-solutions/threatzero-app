@@ -82,21 +82,9 @@ const MoveUserToUnitModal: React.FC<Props> = ({
     return joined || user.email || "this user";
   }, [user]);
 
-  const assignableUnits = useMemo(
-    () =>
-      (units ?? [])
-        .filter((u) => !u.isDefault)
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [units],
-  );
-
   // Find the user's current unit row so we can name it in the summary and
   // exclude it from the selection list ("move to where you already are"
   // would be a confusing no-op).
-  //
-  // Look up over the full `units` prop, not `assignableUnits` — the latter
-  // excludes the synthetic default unit, and a residence in that bucket
-  // would otherwise resolve to null and silently empty the cascade preview.
   const currentUnit = useMemo(
     () =>
       user?.unitSlug
@@ -107,13 +95,15 @@ const MoveUserToUnitModal: React.FC<Props> = ({
 
   const selectableUnits = useMemo(
     () =>
-      assignableUnits.filter((u) => !currentUnit || u.id !== currentUnit.id),
-    [assignableUnits, currentUnit],
+      [...(units ?? [])]
+        .filter((u) => !currentUnit || u.id !== currentUnit.id)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [units, currentUnit],
   );
 
   const targetUnit = useMemo(
-    () => assignableUnits.find((u) => u.id === selectedUnitId) ?? null,
-    [assignableUnits, selectedUnitId],
+    () => (units ?? []).find((u) => u.id === selectedUnitId) ?? null,
+    [units, selectedUnitId],
   );
 
   // Manual grants the user holds at the current unit. These will cascade

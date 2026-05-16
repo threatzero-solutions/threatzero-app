@@ -82,14 +82,9 @@ export default function RoleAssignmentEditor({
     [unitScopeRoles],
   );
 
-  // Non-default, non-root units in the current org. The "default" unit is a
-  // synthetic org-level bucket the API uses internally; exposing it in the
-  // unit picker would confuse admins. Sorted by name for predictable order.
+  // Sorted by name for predictable order in the unit picker.
   const assignableUnits = useMemo(
-    () =>
-      (allUnits ?? [])
-        .filter((u) => !u.isDefault)
-        .sort((a, b) => a.name.localeCompare(b.name)),
+    () => [...(allUnits ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
     [allUnits],
   );
 

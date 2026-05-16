@@ -22,8 +22,6 @@ interface BuildOpts {
  *   implicitly covers everything beneath it, and the "All Units" suffix
  *   keeps that reading explicit at the dropdown.
  * - Leaf units render as their full path only, e.g. `"Performix › Nampa"`.
- * - The synthetic org-wide "default" unit is always excluded; callers
- *   that want org-scope use the dedicated "Across <org>" option.
  */
 export function buildUnitOptions(
   units: Unit[],
@@ -36,7 +34,6 @@ export function buildUnitOptions(
   }
 
   return units
-    .filter((u) => !u.isDefault)
     .filter((u) => (leafOnly ? !hasChildren.has(u.id) : true))
     .map((u) => {
       const path: string[] = [];

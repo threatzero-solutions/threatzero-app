@@ -95,7 +95,6 @@ export interface Unit extends OrganizationBase {
   subUnits?: Unit[];
   path?: string;
   tatGroupId: string | null;
-  isDefault?: boolean;
 }
 
 export interface Location extends Base {
