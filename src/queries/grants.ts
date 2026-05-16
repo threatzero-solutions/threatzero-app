@@ -9,6 +9,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "../contexts/core/constants";
 import { ItemFilterQueryParams } from "../hooks/use-item-filter-query";
+import type { MeResidence } from "../types/me";
 import { findOneOrFail } from "./utils";
 
 /**
@@ -216,6 +217,28 @@ export interface PatchUserGrantsResult {
   grants: UserWithAccess["grants"];
   shadowedRevokes: ShadowedRevoke[];
 }
+
+/**
+ * Admin-set residence endpoint response (api#59). Returns the persisted
+ * residence row plus cascade counts so the Move-to-Unit modal can render a
+ * post-save summary describing exactly how many manual grants followed the
+ * user to the new unit. `setMyResidence` (self-pick) returns the bare
+ * `MeResidence` shape — the cascade only fires on admin-driven moves.
+ */
+export interface AdminSetResidenceResponse {
+  residence: MeResidence;
+  cascade: { moved: number; deduped: number };
+}
+
+export const adminSetUserResidence = async (
+  orgId: string,
+  userId: string,
+  unitId: string | null,
+): Promise<AdminSetResidenceResponse> => {
+  const url = `${API_BASE_URL}/${accessPath(orgId, `/users/${userId}/residence`)}/`;
+  const res = await axios.put(url, { unitId });
+  return res.data as AdminSetResidenceResponse;
+};
 
 export const patchUserGrants = async (
   orgId: string,

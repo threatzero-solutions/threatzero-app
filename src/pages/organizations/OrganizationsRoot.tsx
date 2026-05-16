@@ -69,8 +69,7 @@ const OrganizationsRootInner: React.FC = () => {
   );
 
   const topLevelUnits = useMemo(
-    () =>
-      allUnits?.filter((unit) => !unit.parentUnitId && !unit.isDefault) ?? [],
+    () => allUnits?.filter((unit) => !unit.parentUnitId) ?? [],
     [allUnits],
   );
 
