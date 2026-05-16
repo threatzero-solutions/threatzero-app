@@ -40,12 +40,6 @@ interface RuleEditorProps {
   inactiveAudiences: Audience[];
   showInactiveAudiences: boolean;
   /**
-   * When false, the "When a claim matches" trigger is hidden and every
-   * new rule starts with `kind="always"`. Existing claim-match rules stay
-   * editable either way so nothing orphans if an org removes its IDP later.
-   */
-  hasIdp: boolean;
-  /**
    * Claim keys the org's IDPs are configured to forward, in their full
    * `tz.idp.*` form. The editor groups them under "From your IDP" in
    * the dropdown.
@@ -90,7 +84,6 @@ export function RuleEditor({
   activeAudiences,
   inactiveAudiences,
   showInactiveAudiences,
-  hasIdp,
   knownClaimKeys = [],
   standardClaims = [],
   orgLabel,
@@ -182,35 +175,35 @@ export function RuleEditor({
           </h3>
         </div>
 
-        {/* WHEN — the trigger-kind toggle is only useful when there's an
-             IDP. When there isn't, "Every user" is the only meaningful
-             option, so we skip the chrome entirely unless the rule being
-             edited is already claim-match (preserve existing data). */}
+        {/* WHEN — the trigger-kind toggle is always shown post-api#75:
+             standard JWT identity claims (given_name, email, etc.) are
+             matchable on every org regardless of IDP setup, so claim-match
+             is a legitimate authoring choice even for IDP-less orgs.
+             (The previous `hasIdp` gate predates the standard-claim
+             allowlist and would now hide a valid option.) */}
         <div className="space-y-4">
-          {(hasIdp || trigger.kind === "claim-match") && (
-            <Segmented
-              groupId="trigger-kind"
-              ariaLabel="When the rule applies"
-              value={trigger.kind}
-              options={[
-                { value: "always", label: "Every user" },
-                { value: "claim-match", label: "When a claim matches" },
-              ]}
-              onChange={(v) => {
-                if (v === "always") setValue("trigger", { kind: "always" });
-                else
-                  setValue("trigger", {
-                    kind: "claim-match",
-                    claimKey: "",
-                    matcher: {
-                      op: "equals",
-                      values: [],
-                      caseInsensitive: true,
-                    },
-                  });
-              }}
-            />
-          )}
+          <Segmented
+            groupId="trigger-kind"
+            ariaLabel="When the rule applies"
+            value={trigger.kind}
+            options={[
+              { value: "always", label: "Every user" },
+              { value: "claim-match", label: "When a claim matches" },
+            ]}
+            onChange={(v) => {
+              if (v === "always") setValue("trigger", { kind: "always" });
+              else
+                setValue("trigger", {
+                  kind: "claim-match",
+                  claimKey: "",
+                  matcher: {
+                    op: "equals",
+                    values: [],
+                    caseInsensitive: true,
+                  },
+                });
+            }}
+          />
 
           <AnimatePresence initial={false}>
             {trigger.kind === "claim-match" && (

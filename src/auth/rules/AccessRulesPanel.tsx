@@ -203,7 +203,6 @@ export function AccessRulesPanel() {
         {draft === "new" && (
           <Collapsible key="new-wrap">
             <RuleEditor
-              hasIdp={hasIdp}
               knownClaimKeys={knownClaimKeys}
               standardClaims={standardClaims}
               initial={
@@ -279,8 +278,8 @@ export function AccessRulesPanel() {
                             transition={{ duration: 0.14 }}
                           >
                             <RuleEditor
-                              hasIdp={hasIdp}
                               knownClaimKeys={knownClaimKeys}
+                              standardClaims={standardClaims}
                               chrome="nested"
                               initial={rule}
                               units={units}
