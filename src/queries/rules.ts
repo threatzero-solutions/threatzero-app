@@ -81,4 +81,24 @@ export const deleteRule = (orgId: string, ruleId: string) =>
 
 export const rulesKey = (orgId: string) => ["rules", orgId] as const;
 
+/**
+ * Powers the rule editor's `claimKey` dropdown. `standardClaims` is the
+ * server's curated allowlist of identity claims that are matchable
+ * without any IDP passthrough mapper config (`given_name`, `email`,
+ * etc.). `idpClaims` will be populated once the API enumerates the
+ * passthrough mappers on the org's IDPs (phase 2 of api#75); today it
+ * comes back empty and the FE merges it with the
+ * `organizationIdps[*].forwardedClaims` source already available locally.
+ */
+export interface RuleAvailableClaims {
+  standardClaims: string[];
+  idpClaims: Array<{ idpAlias: string; claimKey: string }>;
+}
+
+export const getRuleAvailableClaims = (orgId: string) =>
+  findOneOrFail<RuleAvailableClaims>(rulesPath(orgId, "/available-claims"));
+
+export const ruleAvailableClaimsKey = (orgId: string) =>
+  ["rules", orgId, "available-claims"] as const;
+
 export type { MatcherBuilder } from "../auth/rules/matcher-builder";
