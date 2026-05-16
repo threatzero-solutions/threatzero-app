@@ -17,8 +17,10 @@ import {
   createRule,
   CreateRuleInput,
   deleteRule,
+  getRuleAvailableClaims,
   getRules,
   Rule,
+  ruleAvailableClaimsKey,
   rulesKey,
   updateRule,
 } from "../../queries/rules";
@@ -83,6 +85,17 @@ export function AccessRulesPanel() {
     queryFn: () => getAssignableRoles(orgId),
     enabled: !!orgId && canManage,
   });
+
+  // Server-curated allowlist of standard JWT identity claims (api#75)
+  // that admins can match on without setting up an IDP passthrough.
+  // Falls through to an empty list while the request is in flight so
+  // the dropdown still renders the IDP-derived options on first paint.
+  const { data: availableClaims } = useQuery({
+    queryKey: ruleAvailableClaimsKey(orgId),
+    queryFn: () => getRuleAvailableClaims(orgId),
+    enabled: !!orgId && canManage,
+  });
+  const standardClaims = availableClaims?.standardClaims ?? [];
 
   const activeAudiences = useMemo<Audience[]>(() => {
     const enrollments = currentOrganization?.enrollments ?? [];
@@ -190,8 +203,8 @@ export function AccessRulesPanel() {
         {draft === "new" && (
           <Collapsible key="new-wrap">
             <RuleEditor
-              hasIdp={hasIdp}
               knownClaimKeys={knownClaimKeys}
+              standardClaims={standardClaims}
               initial={
                 prefillClaimKey
                   ? ({
@@ -265,8 +278,8 @@ export function AccessRulesPanel() {
                             transition={{ duration: 0.14 }}
                           >
                             <RuleEditor
-                              hasIdp={hasIdp}
                               knownClaimKeys={knownClaimKeys}
+                              standardClaims={standardClaims}
                               chrome="nested"
                               initial={rule}
                               units={units}

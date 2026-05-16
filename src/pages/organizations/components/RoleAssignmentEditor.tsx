@@ -30,6 +30,7 @@ import { useMe } from "../../../contexts/me/MeProvider";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
 import {
   AssignableRole,
+  GrantSource,
   ShadowedRevoke,
   UserWithAccess,
 } from "../../../queries/grants";
@@ -43,6 +44,16 @@ interface UnitGrantRow {
   key: string;
   roleSlug: string;
   unitId: string;
+}
+
+function derivedSourceLabel(source: GrantSource | undefined): string {
+  return source === "sso" ? "SSO" : "Rule";
+}
+
+function derivedSourceTooltip(source: GrantSource | undefined): string {
+  return source === "sso"
+    ? "Granted by your IDP — edit the IDP configuration to change."
+    : "Granted by an access rule — edit the rule to change.";
 }
 
 export interface RoleAssignmentEditorProps {
@@ -88,20 +99,60 @@ export default function RoleAssignmentEditor({
     [allUnits],
   );
 
-  // Initial ORG-level role slugs (unitId === null).
+  // Split the user's grants into manual (editable) and derived (rule/sso,
+  // read-only). Derived grants are projections of an upstream source — the
+  // API rejects direct mutation, and even if it didn't the source would
+  // re-materialize on next eval. We surface them so the admin sees the
+  // user's full effective access, but render the controls disabled.
+  const { derivedOrgRoles, derivedUnitGrants } = useMemo(() => {
+    const orgRoles = new Map<string, GrantSource>(); // roleSlug → source
+    const unitGrants: Array<{
+      roleSlug: string;
+      unitId: string;
+      unitSlug: string | null;
+      source: GrantSource;
+    }> = [];
+    if (!user)
+      return { derivedOrgRoles: orgRoles, derivedUnitGrants: unitGrants };
+    for (const g of user.grants) {
+      if (g.source === "manual") continue;
+      if (g.unitId == null) {
+        orgRoles.set(g.roleSlug, g.source);
+      } else {
+        unitGrants.push({
+          roleSlug: g.roleSlug,
+          unitId: g.unitId,
+          unitSlug: g.unitSlug,
+          source: g.source,
+        });
+      }
+    }
+    return { derivedOrgRoles: orgRoles, derivedUnitGrants: unitGrants };
+  }, [user]);
+
+  // Initial ORG-level role slugs (unitId === null), MANUAL only. Rule/SSO
+  // grants are tracked separately in `derivedOrgRoles` and rendered as
+  // disabled checkboxes — they don't enter the dirty-state set or the
+  // submit payload.
   const initialOrgRoles = useMemo(() => {
     if (!user) return new Set<string>();
     return new Set(
-      user.grants.filter((g) => g.unitId == null).map((g) => g.roleSlug),
+      user.grants
+        .filter((g) => g.source === "manual")
+        .filter((g) => g.unitId == null)
+        .map((g) => g.roleSlug),
     );
   }, [user]);
 
-  // Initial unit-scoped grants as editable rows. A grant whose role isn't in
-  // unitRoleSlugs is still preserved on save (we just don't render it as
-  // editable); see onSubmit below.
+  // Initial unit-scoped MANUAL grants as editable rows. Rule/SSO unit
+  // grants are tracked separately in `derivedUnitGrants` and rendered as
+  // a read-only list. A manual grant whose role isn't in unitRoleSlugs is
+  // still preserved on save (we just don't render it as editable); see
+  // onSubmit below.
   const initialUnitRows = useMemo<UnitGrantRow[]>(() => {
     if (!user) return [];
     return user.grants
+      .filter((g) => g.source === "manual")
       .filter((g) => g.unitId != null)
       .filter((g) => unitRoleSlugs.has(g.roleSlug))
       .map((g, i) => ({
@@ -190,10 +241,14 @@ export default function RoleAssignmentEditor({
     e.preventDefault();
     if (!user) return;
 
-    // Preserve any unit grants for roles outside the unit-scope list (the UI
-    // doesn't render them, but the server's replace-with-set semantics
-    // would revoke them if we didn't carry them back).
+    // Preserve any MANUAL unit grants for roles outside the unit-scope
+    // list — the UI doesn't render them as editable rows, but the
+    // server's replace-with-set semantics would revoke them if we didn't
+    // carry them back. Rule/SSO grants are NOT carried back: the PATCH
+    // endpoint only manages source='manual' rows, and the API would
+    // either reject the foreign sources or silently re-materialize them.
     const preservedUnitGrants = user.grants
+      .filter((g) => g.source === "manual")
       .filter((g) => g.unitId != null)
       .filter((g) => !unitRoleSlugs.has(g.roleSlug))
       .map((g) => ({ roleSlug: g.roleSlug, unitId: g.unitId! }));
@@ -338,25 +393,68 @@ export default function RoleAssignmentEditor({
               ) : (
                 <ul className="mt-4 space-y-3">
                   {orgScopeRoles.map((r) => {
-                    const checked = selected.has(r.slug);
+                    const derivedSource = derivedOrgRoles.get(r.slug);
+                    const hasDerived = derivedSource !== undefined;
+                    // The user's editor opened with the role manually set.
+                    // Tells us whether the checkbox represents an existing
+                    // manual grant that can still be toggled off even when
+                    // a derived overlay (rule/sso) also grants the role.
+                    const initialHadManual = initialOrgRoles.has(r.slug);
+                    // The checkbox is interactive when there's a manual to
+                    // manage. With only a derived overlay there's nothing
+                    // for this control to do — the rule/sso source grants
+                    // the role regardless and can't be revoked here.
+                    const checkboxDisabled = hasDerived && !initialHadManual;
+                    const checked = checkboxDisabled
+                      ? true
+                      : selected.has(r.slug);
+                    // Tooltip mode varies: derived-only emphasizes the
+                    // source; "both" hints that toggling only affects the
+                    // redundant manual grant (the derived layer remains).
+                    const tooltip = checkboxDisabled
+                      ? derivedSourceTooltip(derivedSource)
+                      : hasDerived
+                        ? `Also granted by ${derivedSourceLabel(derivedSource).toLowerCase()} — toggling here only removes the redundant manual grant.`
+                        : undefined;
                     return (
                       <li
                         key={r.slug}
-                        className="flex items-start gap-3 rounded-lg border border-gray-200 p-4 hover:border-gray-300"
+                        className={`flex items-start gap-3 rounded-lg border border-gray-200 p-4 ${
+                          checkboxDisabled
+                            ? "bg-gray-50"
+                            : "hover:border-gray-300"
+                        }`}
+                        title={tooltip}
                       >
                         <input
                           id={`role-${r.slug}`}
                           type="checkbox"
                           checked={checked}
-                          onChange={() => toggle(r.slug)}
-                          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+                          onChange={() => !checkboxDisabled && toggle(r.slug)}
+                          disabled={checkboxDisabled}
+                          aria-describedby={
+                            hasDerived ? `role-${r.slug}-source` : undefined
+                          }
+                          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
                         />
                         <label
                           htmlFor={`role-${r.slug}`}
-                          className="flex-1 cursor-pointer"
+                          className={`flex-1 ${
+                            checkboxDisabled
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer"
+                          }`}
                         >
-                          <span className="block text-sm font-medium text-gray-900">
+                          <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
                             {r.name}
+                            {hasDerived && (
+                              <span
+                                id={`role-${r.slug}-source`}
+                                className="inline-flex items-center rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-700 ring-1 ring-primary-200"
+                              >
+                                {derivedSourceLabel(derivedSource)}
+                              </span>
+                            )}
                           </span>
                           {r.description && (
                             <span className="block text-sm text-gray-500">
@@ -392,6 +490,46 @@ export default function RoleAssignmentEditor({
                 </p>
               ) : (
                 <>
+                  {derivedUnitGrants.length > 0 && (
+                    <ul
+                      className="mt-4 space-y-3"
+                      aria-label="Unit roles granted by rules or SSO"
+                    >
+                      {derivedUnitGrants.map((g, i) => (
+                        <li
+                          key={`derived-${g.roleSlug}-${g.unitId}-${i}`}
+                          className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4"
+                          title={derivedSourceTooltip(g.source)}
+                        >
+                          <div className="flex-1 min-w-[10rem] text-sm">
+                            <span className="block text-xs font-medium text-gray-500">
+                              Role
+                            </span>
+                            <span className="mt-1 inline-flex items-center gap-2 text-gray-900">
+                              {unitScopeRoles.find((r) => r.slug === g.roleSlug)
+                                ?.name ?? g.roleSlug}
+                              <span className="inline-flex items-center rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-700 ring-1 ring-primary-200">
+                                {derivedSourceLabel(g.source)}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-[10rem] text-sm">
+                            <span className="block text-xs font-medium text-gray-500">
+                              Unit
+                            </span>
+                            <span className="mt-1 block text-gray-900">
+                              {assignableUnits.find((u) => u.id === g.unitId)
+                                ?.name ??
+                                g.unitSlug ??
+                                "(unknown unit)"}
+                            </span>
+                          </div>
+                          {/* No remove button — derived grants are not directly
+                              revocable. Admin edits the rule/IDP to change. */}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <ul className="mt-4 space-y-3">
                     {unitRows.map((row) => (
                       <li
