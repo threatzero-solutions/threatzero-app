@@ -394,39 +394,60 @@ export default function RoleAssignmentEditor({
                 <ul className="mt-4 space-y-3">
                   {orgScopeRoles.map((r) => {
                     const derivedSource = derivedOrgRoles.get(r.slug);
-                    const isDerived = derivedSource !== undefined;
-                    const checked = isDerived || selected.has(r.slug);
-                    const title = isDerived
+                    const hasDerived = derivedSource !== undefined;
+                    // The user's editor opened with the role manually set.
+                    // Tells us whether the checkbox represents an existing
+                    // manual grant that can still be toggled off even when
+                    // a derived overlay (rule/sso) also grants the role.
+                    const initialHadManual = initialOrgRoles.has(r.slug);
+                    // The checkbox is interactive when there's a manual to
+                    // manage. With only a derived overlay there's nothing
+                    // for this control to do — the rule/sso source grants
+                    // the role regardless and can't be revoked here.
+                    const checkboxDisabled = hasDerived && !initialHadManual;
+                    const checked = checkboxDisabled
+                      ? true
+                      : selected.has(r.slug);
+                    // Tooltip mode varies: derived-only emphasizes the
+                    // source; "both" hints that toggling only affects the
+                    // redundant manual grant (the derived layer remains).
+                    const tooltip = checkboxDisabled
                       ? derivedSourceTooltip(derivedSource)
-                      : undefined;
+                      : hasDerived
+                        ? `Also granted by ${derivedSourceLabel(derivedSource).toLowerCase()} — toggling here only removes the redundant manual grant.`
+                        : undefined;
                     return (
                       <li
                         key={r.slug}
                         className={`flex items-start gap-3 rounded-lg border border-gray-200 p-4 ${
-                          isDerived ? "bg-gray-50" : "hover:border-gray-300"
+                          checkboxDisabled
+                            ? "bg-gray-50"
+                            : "hover:border-gray-300"
                         }`}
-                        title={title}
+                        title={tooltip}
                       >
                         <input
                           id={`role-${r.slug}`}
                           type="checkbox"
                           checked={checked}
-                          onChange={() => !isDerived && toggle(r.slug)}
-                          disabled={isDerived}
+                          onChange={() => !checkboxDisabled && toggle(r.slug)}
+                          disabled={checkboxDisabled}
                           aria-describedby={
-                            isDerived ? `role-${r.slug}-source` : undefined
+                            hasDerived ? `role-${r.slug}-source` : undefined
                           }
                           className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
                         />
                         <label
                           htmlFor={`role-${r.slug}`}
                           className={`flex-1 ${
-                            isDerived ? "cursor-not-allowed" : "cursor-pointer"
+                            checkboxDisabled
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer"
                           }`}
                         >
                           <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
                             {r.name}
-                            {isDerived && (
+                            {hasDerived && (
                               <span
                                 id={`role-${r.slug}-source`}
                                 className="inline-flex items-center rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-700 ring-1 ring-primary-200"
