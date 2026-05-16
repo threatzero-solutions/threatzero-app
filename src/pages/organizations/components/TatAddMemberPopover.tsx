@@ -62,13 +62,17 @@ const TatAddMemberPopover: React.FC<Props> = ({
 
   const handleSelect = (user: UserWithAccess | null, close: () => void) => {
     if (!user || !user.userId) return;
-    // Replace-with-set PATCH: preserve all existing grants, append the new
-    // tat-member at this scope. Backend dedupes, but callers are expected
-    // to send the full desired set.
-    const next = user.grants.map((g) => ({
-      roleSlug: g.roleSlug,
-      unitId: g.unitId ?? undefined,
-    }));
+    // Replace-with-set PATCH: preserve all existing MANUAL grants and append
+    // the new tat-member at this scope. The endpoint only manages
+    // source='manual' rows, so derived (rule/sso) grants must NOT be
+    // carried in the desired set — they would either be reinterpreted as
+    // new manual rows or silently dropped, both wrong.
+    const next = user.grants
+      .filter((g) => g.source === "manual")
+      .map((g) => ({
+        roleSlug: g.roleSlug,
+        unitId: g.unitId ?? undefined,
+      }));
     next.push({ roleSlug: "tat-member", unitId: unitId ?? undefined });
     mutation.mutate(
       { userId: user.userId, grants: next },
