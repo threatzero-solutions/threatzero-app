@@ -93,12 +93,16 @@ const MoveUserToUnitModal: React.FC<Props> = ({
   // Find the user's current unit row so we can name it in the summary and
   // exclude it from the selection list ("move to where you already are"
   // would be a confusing no-op).
+  //
+  // Look up over the full `units` prop, not `assignableUnits` — the latter
+  // excludes the synthetic default unit, and a residence in that bucket
+  // would otherwise resolve to null and silently empty the cascade preview.
   const currentUnit = useMemo(
     () =>
       user?.unitSlug
-        ? (assignableUnits.find((u) => u.slug === user.unitSlug) ?? null)
+        ? ((units ?? []).find((u) => u.slug === user.unitSlug) ?? null)
         : null,
-    [assignableUnits, user?.unitSlug],
+    [units, user?.unitSlug],
   );
 
   const selectableUnits = useMemo(

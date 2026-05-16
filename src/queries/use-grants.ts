@@ -113,6 +113,10 @@ export const useAdminSetUserResidence = (orgId: string | undefined) => {
     onSuccess: () => {
       if (!orgId) return;
       queryClient.invalidateQueries({ queryKey: usersWithGrantsKey(orgId) });
+      // The cascade can move or dedup a `tat-member` grant at the old unit,
+      // which shifts a row's bucket in the TAT roster (org-wide vs. unit X).
+      // Invalidate to match `usePatchUserGrants`.
+      queryClient.invalidateQueries({ queryKey: tatRosterKey(orgId) });
       queryClient.invalidateQueries({ queryKey: ["access", "audit", orgId] });
       queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
     },
