@@ -189,6 +189,16 @@ const EditSOSLocation: React.FC<EditSOSLocationProps> = ({
                   value={field.value as Unit | null | undefined}
                   onChange={(e) => field.onChange(e?.target?.value ?? null)}
                   name={field.name}
+                  // Scope to the current org — without this, system admins
+                  // see every unit across every organization and can
+                  // accidentally route a SOS location to a cross-org unit.
+                  // Matches the pattern used by EditOrganizationUser,
+                  // MoveUnitForm, etc. (app#98).
+                  queryFilter={
+                    currentOrganization
+                      ? { ["organization.id"]: currentOrganization.id }
+                      : undefined
+                  }
                 />
               )}
             />
