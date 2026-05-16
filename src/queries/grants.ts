@@ -13,9 +13,17 @@ import type { MeResidence } from "../types/me";
 import { findOneOrFail } from "./utils";
 
 /**
+ * Provenance of a single AccessGrant. Mirrors the backend `ProvenanceEnum`.
+ * The role editor uses this to disable controls on rule- and SSO-derived
+ * grants (those are projections of their source, not directly editable).
+ */
+export type GrantSource = "manual" | "rule" | "sso";
+
+/**
  * One row in the merged Users + Access list. Mirrors `UserWithAccessDto`
- * on the backend. Carries KC identity + DB manual grants scoped to the
- * organization being listed. See `_docs/users-access-merge-plan.md`.
+ * on the backend. Carries KC identity + the user's full effective grants
+ * (manual, rule, and SSO) scoped to the organization being listed. See
+ * `_docs/users-access-merge-plan.md`.
  */
 export interface UserWithAccess {
   idpId: string;
@@ -37,6 +45,14 @@ export interface UserWithAccess {
     roleSlug: string;
     unitId: string | null;
     unitSlug: string | null;
+    /**
+     * Where the grant came from. `'manual'` is admin-set and editable from
+     * this UI. `'rule'` and `'sso'` are projections of an upstream source
+     * — surfaced for visibility so admins see the user's full effective
+     * access, but the editor disables direct mutation (the API would
+     * reject, and even if it didn't the source would re-materialize).
+     */
+    source: GrantSource;
   }>;
   /**
    * True when the user holds the system-admin role. Read-only in the org
@@ -255,6 +271,7 @@ export const patchUserGrants = async (
       role?: { slug?: string };
       unitId: string | null;
       unit?: { slug?: string } | null;
+      source?: GrantSource;
     }>;
     shadowedRevokes: ShadowedRevoke[];
   };
@@ -264,6 +281,9 @@ export const patchUserGrants = async (
       roleSlug: g.role!.slug!,
       unitId: g.unitId,
       unitSlug: g.unit?.slug ?? null,
+      // PATCH only writes manual grants; legacy responses without `source`
+      // are safely defaulted so older API versions don't break the type.
+      source: g.source ?? "manual",
     }));
   return { grants: grantsOut, shadowedRevokes: data.shadowedRevokes ?? [] };
 };

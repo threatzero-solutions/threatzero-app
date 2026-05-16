@@ -107,20 +107,23 @@ const MoveUserToUnitModal: React.FC<Props> = ({
   );
 
   // Manual grants the user holds at the current unit. These will cascade
-  // with the move per api#59 (the backend filters to source='manual' and
-  // `UserWithAccess.grants` already excludes SSO/rule rows). Org-scoped
-  // grants stay put, and grants at other units are independent.
+  // with the move per api#59 (the backend filters to source='manual').
+  // Org-scoped grants stay put, and grants at other units are independent.
+  // Rule/SSO-derived grants are excluded from the preview — the backend
+  // cascade only touches manual rows, so showing the others here would
+  // mislead the admin about what actually moves.
   const grantBreakdown = useMemo<{
     willMove: UserWithAccess["grants"];
     willStay: UserWithAccess["grants"];
   }>(() => {
     if (!user) return { willMove: [], willStay: [] };
+    const manualGrants = user.grants.filter((g) => g.source === "manual");
     const willMove = currentUnit
-      ? user.grants.filter((g) => g.unitId === currentUnit.id)
+      ? manualGrants.filter((g) => g.unitId === currentUnit.id)
       : [];
     const willStay = currentUnit
-      ? user.grants.filter((g) => g.unitId !== currentUnit.id)
-      : user.grants;
+      ? manualGrants.filter((g) => g.unitId !== currentUnit.id)
+      : manualGrants;
     return { willMove, willStay };
   }, [user, currentUnit]);
 
