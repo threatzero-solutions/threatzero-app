@@ -17,6 +17,8 @@ import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverF
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
 import { useAuth } from "../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../contexts/core/confirmation-context";
+import { useMe } from "../../../contexts/me/MeProvider";
+import { ME_QUERY_KEY } from "../../../queries/me";
 import { useAutoSlug } from "../../../hooks/use-auto-slug";
 import {
   getOrganization,
@@ -31,11 +33,13 @@ import {
   FieldType,
   Organization,
   OrganizationBase,
+  OrganizationLabelPreset,
   OrganizationStatus,
   Transient,
   Unit,
 } from "../../../types/entities";
 import { classNames, slugify } from "../../../utils/core";
+import { labelsForPreset } from "../../../utils/labels";
 import { OrganizationStatusBadge } from "./OrganizationStatusBadge";
 
 interface EditOrganizationBasicProps {
@@ -55,6 +59,7 @@ type TransientOrganizationBase = Omit<
   parentUnit?: Pick<Unit, "id"> | null;
   organization?: Pick<Organization, "id">;
   status?: OrganizationStatus;
+  labelPreset?: OrganizationLabelPreset;
 };
 
 const INITIAL_ORGANIZATION_BASE: TransientOrganizationBase = {
@@ -62,6 +67,30 @@ const INITIAL_ORGANIZATION_BASE: TransientOrganizationBase = {
   slug: "",
   address: "",
 };
+
+interface PresetOption {
+  value: OrganizationLabelPreset;
+  headline: string;
+  example: string;
+}
+
+const LABEL_PRESET_OPTIONS: PresetOption[] = [
+  {
+    value: OrganizationLabelPreset.DEFAULT,
+    headline: "Default",
+    example: 'Renders as "Unit" / "Units" — use when nothing else fits.',
+  },
+  {
+    value: OrganizationLabelPreset.SCHOOL,
+    headline: "School or district",
+    example: 'Renders as "School" / "Schools" across the app.',
+  },
+  {
+    value: OrganizationLabelPreset.BUSINESS,
+    headline: "Company, office, or other business",
+    example: 'Renders as "Site" / "Sites" across the app.',
+  },
+];
 
 const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   setOpen,
@@ -72,7 +101,8 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
   parentUnitId,
   onSaveSuccess,
 }) => {
-  const { accessTokenClaims, isGlobalAdmin } = useAuth();
+  const { isGlobalAdmin } = useAuth();
+  const { me } = useMe();
   const { openConfirmDiscard } = useContext(ConfirmationContext);
 
   const { data: organizationData } = useQuery({
@@ -102,6 +132,9 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
       slug: baseData.slug,
       status: baseData.status,
       address: baseData.address,
+      labelPreset:
+        (baseData.labelPreset as OrganizationLabelPreset | undefined) ??
+        OrganizationLabelPreset.DEFAULT,
     };
 
     if (!isOrganization) {
@@ -215,6 +248,12 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
 
       onSaveSuccess?.();
 
+      // /me embeds the org's labelPreset for global label bundles — refresh
+      // it so vocabulary changes propagate without a full page reload.
+      if (isOrganization) {
+        queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+      }
+
       setOpen(false);
     },
   });
@@ -272,8 +311,15 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
+                  // Forbid editing status on the user's own home org. See
+                  // `_docs/residence-and-tenant-model.md §3`. An empty
+                  // residences array (system admins, unenrolled users) falls
+                  // through to enabled.
                   disabled={
-                    accessTokenClaims?.organization === organizationData?.slug
+                    !!organizationData?.id &&
+                    !!me?.residences?.some(
+                      (r) => r.organizationId === organizationData.id,
+                    )
                   }
                 />
               )}
@@ -357,6 +403,64 @@ const EditOrganizationBasic: React.FC<EditOrganizationBasicProps> = ({
         <SlideOverField name="address" label="Address (Optional)">
           <TextArea {...register("address")} rows={3} className="w-full" />
         </SlideOverField>
+        {isOrganization && (
+          <SlideOverField
+            name="labelPreset"
+            label="Vocabulary"
+            helpText="Controls how the app refers to this organization's substructure (what the default preset calls 'units') and the dashboard 'team' grouping. Choose the closest match; free-form labels aren't supported."
+          >
+            <Controller
+              control={formMethods.control}
+              name="labelPreset"
+              render={({ field }) => (
+                <RadioOptions
+                  orientation="vertical"
+                  options={LABEL_PRESET_OPTIONS.reduce(
+                    (acc, option) => ({
+                      ...acc,
+                      [option.value]: (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-gray-900">
+                            {option.headline}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {option.example}
+                          </span>
+                        </div>
+                      ),
+                    }),
+                    {},
+                  )}
+                  value={field.value ?? OrganizationLabelPreset.DEFAULT}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
+            {/* Preview under the radio so admins see exactly what lands in
+                the UI after a save. */}
+            <div className="mt-2 text-xs text-gray-500">
+              Current preview:{" "}
+              <span className="font-medium text-gray-700">
+                {
+                  labelsForPreset(
+                    (watch("labelPreset") as OrganizationLabelPreset) ??
+                      OrganizationLabelPreset.DEFAULT,
+                  ).unitSingular
+                }
+              </span>{" "}
+              /{" "}
+              <span className="font-medium text-gray-700">
+                {
+                  labelsForPreset(
+                    (watch("labelPreset") as OrganizationLabelPreset) ??
+                      OrganizationLabelPreset.DEFAULT,
+                  ).unitPlural
+                }
+              </span>
+            </div>
+          </SlideOverField>
+        )}
         {create && !isOrganization && (
           <SlideOverField
             name="autoAddLocation"

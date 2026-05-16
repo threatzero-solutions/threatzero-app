@@ -3,16 +3,14 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { Fragment } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/auth/useAuth";
+import { useLogout } from "../hooks/use-logout";
 import { classNames } from "../utils/core";
 
 const UserMenu: React.FC = () => {
   const { keycloak } = useAuth();
+  const logout = useLogout();
 
-  const handleLogout = () => {
-    keycloak?.logout({
-      redirectUri: window.location.origin,
-    });
-  };
+  const handleLogout = () => logout();
 
   return (
     <Menu as="div" className="relative inline-block text-left">

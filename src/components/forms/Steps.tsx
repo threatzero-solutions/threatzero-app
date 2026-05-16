@@ -31,7 +31,7 @@ const Steps: React.FC<StepsProps> = ({ steps, currentIdx, children }) => {
               <>
                 {stepIdx !== steps.length - 1 ? (
                   <div
-                    className="absolute left-4 top-4 -ml-px mt-0.5 h-full w-0.5 bg-secondary-600"
+                    className="absolute left-4 top-4 -ml-px mt-0.5 h-full w-0.5 bg-primary-600"
                     aria-hidden="true"
                   />
                 ) : null}
@@ -40,7 +40,7 @@ const Steps: React.FC<StepsProps> = ({ steps, currentIdx, children }) => {
                   className="group relative flex items-start"
                 >
                   <span className="flex h-9 items-center cursor-pointer">
-                    <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-secondary-600 group-hover:bg-secondary-800">
+                    <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 group-hover:bg-secondary-800">
                       <span className="h-2.5 w-2.5 rounded-full bg-white group-hover:bg-gray-300" />
                     </span>
                   </span>
@@ -67,7 +67,7 @@ const Steps: React.FC<StepsProps> = ({ steps, currentIdx, children }) => {
                 >
                   <span className="flex h-9 items-center" aria-hidden="true">
                     <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-secondary-600 bg-white">
-                      <span className="h-2.5 w-2.5 rounded-full bg-secondary-600" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-primary-600" />
                     </span>
                   </span>
                   <span className="ml-4 flex min-w-0 flex-col">

@@ -190,7 +190,7 @@ export const Step: React.FC<StepProps> = ({
         <div
           className={cn(
             "absolute left-4 top-4 -ml-px mt-0.5 h-full w-0.5",
-            isPastStep ? "bg-secondary-600" : "bg-gray-300",
+            isPastStep ? "bg-primary-600" : "bg-gray-300",
           )}
           aria-hidden="true"
         />
@@ -207,7 +207,7 @@ export const Step: React.FC<StepProps> = ({
             className={cn(
               "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
               isPastStep
-                ? "bg-secondary-600 group-hover:group-enabled:bg-secondary-800"
+                ? "bg-primary-600 group-hover:group-enabled:bg-secondary-800"
                 : isCurrentStep
                   ? "border-2 border-secondary-600 bg-white"
                   : "border-2 border-gray-300 bg-white group-hover:group-enabled:border-gray-400",
@@ -219,7 +219,7 @@ export const Step: React.FC<StepProps> = ({
                 isPastStep
                   ? "bg-white group-hover:group-enabled:bg-gray-300"
                   : isCurrentStep
-                    ? "bg-secondary-600"
+                    ? "bg-primary-600"
                     : " bg-transparent group-hover:group-enabled:bg-gray-300",
               )}
             />
@@ -276,7 +276,7 @@ export function StepForwardButton({ children }: PropsWithChildren) {
     <button
       onClick={stepForward}
       type="button"
-      className="enabled:cursor-pointer inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400"
+      className="enabled:cursor-pointer inline-flex justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:bg-primary-400"
       disabled={!getCanStepForward(stepIndex)}
     >
       {children}

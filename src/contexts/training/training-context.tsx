@@ -28,6 +28,8 @@ import {
 import { sortEnrollmentsByScoreFn } from "../../utils/training";
 import { useAuth } from "../auth/useAuth";
 import { withAuthenticationRequired } from "../auth/withAuthenticationRequired";
+import { useMe } from "../me/MeProvider";
+import { CAP } from "../../constants/capabilities";
 
 export interface TrainingState {
   activeCourse?: TrainingCourse;
@@ -190,10 +192,17 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
     const [state, dispatch] = useReducer(trainingReducer, INITIAL_STATE);
 
     const { accessTokenClaims } = useAuth();
+    // Provider is mounted at the app root, so these queries would otherwise
+    // fire for every authenticated user — including those without training
+    // access, producing a 403 on /api/training/*. Gate on the same capability
+    // the Training Library nav link uses.
+    const { canAny } = useMe();
+    const canViewTraining = canAny(CAP.VIEW_TRAINING);
 
     const { data: enrollments } = useQuery({
       queryKey: ["my-course-enrollments"],
       queryFn: () => getMyCourseEnrollments(),
+      enabled: canViewTraining,
     });
 
     const { data: activeCourse, isPending: courseLoading } = useQuery({
@@ -203,7 +212,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
         state.activeEnrollment?.course.id,
       ] as const,
       queryFn: ({ queryKey }) => getTrainingCourse(queryKey[2]),
-      enabled: !!state.activeEnrollment?.course.id,
+      enabled: canViewTraining && !!state.activeEnrollment?.course.id,
     });
 
     const { data: itemCompletions } = useQuery({
@@ -212,7 +221,7 @@ export const TrainingContextProvider: React.FC<PropsWithChildren> =
         { "enrollment.id": activeEnrollmentId, limit: 100 },
       ] as const,
       queryFn: ({ queryKey }) => getMyItemCompletions(queryKey[1]),
-      enabled: !!activeEnrollmentId,
+      enabled: canViewTraining && !!activeEnrollmentId,
     });
 
     useEffect(() => {

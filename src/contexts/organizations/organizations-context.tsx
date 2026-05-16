@@ -7,10 +7,9 @@ import {
   getOrganization,
   getOrganizationBySlug,
   getOrganizationIdp,
-  getRoleGroupsForOrganization,
   getUnits,
 } from "../../queries/organizations";
-import { KeycloakGroupDto, OrganizationIdpDto } from "../../types/api";
+import { OrganizationIdpDto } from "../../types/api";
 import { Organization, Unit } from "../../types/entities";
 import { useAuth } from "../auth/useAuth";
 
@@ -29,7 +28,6 @@ export interface OrganizationsContextType {
   organizationIdpsLoading: boolean;
   getMatchingIdp: (email: string) => OrganizationIdpDto | null;
   getIdpAttributes: (idp?: OrganizationIdpDto | null) => string[];
-  getIdpRoleGroups: (idp?: OrganizationIdpDto | null) => string[];
   invalidateCurrentUnitQuery: () => void;
   invalidateAllUnitsQuery: () => void;
   unitsPath?: string | null;
@@ -40,8 +38,6 @@ export interface OrganizationsContextType {
       | ((prevUnitsPath: string | null) => string | null),
   ) => void;
   isUnitContext: boolean;
-  roleGroups?: KeycloakGroupDto[] | null;
-  roleGroupsLoading: boolean;
   invalidateOrganizationUsersQuery: (
     unitsSlugs?: (string | undefined)[],
   ) => void;
@@ -56,12 +52,10 @@ export const OrganizationsContext = createContext<OrganizationsContextType>({
   organizationIdpsLoading: false,
   getMatchingIdp: () => null,
   getIdpAttributes: () => [],
-  getIdpRoleGroups: () => [],
   invalidateCurrentUnitQuery: () => {},
   invalidateAllUnitsQuery: () => {},
   setUnitsPath: () => {},
   isUnitContext: false,
-  roleGroupsLoading: false,
   invalidateOrganizationUsersQuery: () => {},
   navigateAfterDelete: () => {},
 });
@@ -114,18 +108,26 @@ export const OrganizationsContextProvider: React.FC<
     });
   }, [queryClient, organizationId, organizationIdType]);
 
+  // Key by `organization.id` (not `organization.slug`) so the cache shares
+  // with `MeProvider`'s identically-keyed units fetch. Previously the
+  // `/my-organization/*` routes keyed by slug here while MeProvider keyed
+  // by id, producing two parallel 10,000-row fetches per page load at
+  // customer scale. We pay one extra request hop here (waiting for the
+  // org-by-slug query to resolve to an id) in exchange for de-duped
+  // payloads everywhere downstream. See
+  // [app#87](https://github.com/threatzero-solutions/threatzero-app/issues/87).
   const { data: allUnits, isLoading: allUnitsLoading } = useQuery({
     queryKey: [
       "units",
       {
-        [`organization.${organizationIdType}`]: organizationId,
+        "organization.id": currentOrganizationId,
         order: { createdTimestamp: "DESC" },
         limit: 10000,
       },
     ] as const,
     queryFn: ({ queryKey }) =>
       getUnits(queryKey[1]).then((units) => units.results),
-    enabled: !!organizationId,
+    enabled: !!currentOrganizationId,
   });
 
   const unitsPath = useMemo(
@@ -217,9 +219,13 @@ export const OrganizationsContextProvider: React.FC<
   const getMatchingIdp = useCallback(
     (email: string) => {
       const [emailDomain] = email.split("@", 2).reverse();
+      // Email domains are case-insensitive (RFC 5321 §2.3.11); a user typing
+      // or pasting `Acme.com` should match an IDP registered with `acme.com`.
+      const normalized = emailDomain?.toLowerCase();
       return (
-        organizationIdps.find((idp) => idp?.domains.includes(emailDomain)) ??
-        null
+        organizationIdps.find((idp) =>
+          idp?.domains.map((d) => d.toLowerCase()).includes(normalized ?? ""),
+        ) ?? null
       );
     },
     [organizationIdps],
@@ -235,42 +241,13 @@ export const OrganizationsContextProvider: React.FC<
     }
 
     const attributes: string[] = ["firstName", "lastName", "username"];
-    if (idp.audienceMatchers?.length || idp.defaultAudience) {
-      attributes.push("audience");
-    }
-
-    if (idp.unitMatchers?.length) {
-      attributes.push("unit");
-      attributes.push("organization_unit_path");
-    }
-
     idp.syncAttributes?.forEach((a) => {
       attributes.push(a.internalName);
     });
-
+    idp.forwardedClaims?.forEach((c) => {
+      attributes.push(c.claimKey);
+    });
     return attributes;
-  };
-
-  const getIdpRoleGroups = (idp?: OrganizationIdpDto | null): string[] => {
-    if (idp === null) {
-      return [];
-    }
-
-    if (idp === undefined) {
-      return [...new Set(organizationIdps.flatMap((i) => getIdpRoleGroups(i)))];
-    }
-
-    const groups: string[] = [];
-    if (idp.roleGroupMatchers) {
-      idp.roleGroupMatchers.forEach((rg) => {
-        groups.push(rg.roleGroup);
-      });
-    }
-    if (idp.defaultRoleGroups) {
-      groups.push(...idp.defaultRoleGroups);
-    }
-
-    return groups;
   };
 
   const invalidateAllUnitsQuery = useCallback(() => {
@@ -336,13 +313,6 @@ export const OrganizationsContextProvider: React.FC<
     [queryClient, currentOrganization?.id, currentUnitSlug],
   );
 
-  const { data: roleGroups, isLoading: roleGroupsLoading } = useQuery({
-    queryKey: ["roleGroups", currentOrganization?.id] as const,
-    queryFn: ({ queryKey }) =>
-      queryKey[1] ? getRoleGroupsForOrganization(queryKey[1]) : null,
-    enabled: !!currentOrganization?.id,
-  });
-
   const navigateAfterDelete = useCallback(() => {
     const unitsPath = searchParams.get("unitsPath");
     if (!unitsPath) {
@@ -376,15 +346,12 @@ export const OrganizationsContextProvider: React.FC<
         organizationIdps,
         organizationIdpsLoading,
         getMatchingIdp,
-        getIdpRoleGroups,
         getIdpAttributes,
         invalidateCurrentUnitQuery,
         invalidateAllUnitsQuery,
         unitsPath,
         setUnitsPath,
         isUnitContext: !!currentUnitSlug,
-        roleGroups,
-        roleGroupsLoading,
         invalidateOrganizationUsersQuery,
         navigateAfterDelete,
       }}

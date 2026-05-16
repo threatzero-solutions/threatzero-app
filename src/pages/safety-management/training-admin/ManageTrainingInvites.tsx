@@ -522,7 +522,7 @@ const ManageTrainingInvites: React.FC = () => {
               </p>
             </div>
             <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-              <label className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+              <label className="block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600">
                 + Upload From CSV
                 <input
                   type="file"
@@ -845,7 +845,7 @@ const ManageTrainingInvites: React.FC = () => {
           action={
             <button
               type="button"
-              className="block rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+              className="block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               onClick={() => handleDownloadTrainingLinksCsv()}
             >
               Download (.csv)

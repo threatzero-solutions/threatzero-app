@@ -2,7 +2,9 @@ import { ArrowRightIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { MouseEvent } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import Input from "../../../components/forms/inputs/Input";
+import Select from "../../../components/forms/inputs/Select";
 import DataTable from "../../../components/layouts/tables/DataTable";
+import { IDP_PROFILE_FIELDS } from "../../../constants/idp-profile-fields";
 import { OrganizationIdpDto, SyncAttributeDto } from "../../../types/api";
 
 const AddAttributeButton: React.FC<{
@@ -25,6 +27,11 @@ const DEFAULT_SYNC_ATTRIBUTE: SyncAttributeDto = {
   internalName: "",
 };
 
+const PROFILE_FIELD_OPTIONS = IDP_PROFILE_FIELDS.map(({ value, label }) => ({
+  key: value,
+  label,
+}));
+
 const SyncAttributesInput: React.FC = () => {
   const { control } = useFormContext<OrganizationIdpDto>();
   const { fields, append, remove, update } = useFieldArray({
@@ -39,7 +46,7 @@ const SyncAttributesInput: React.FC = () => {
         data={{
           headers: [
             {
-              label: "External Name",
+              label: "IDP claim",
               key: "externalName",
             },
             {
@@ -48,11 +55,11 @@ const SyncAttributesInput: React.FC = () => {
               noSort: true,
             },
             {
-              label: "ThreatZero Name",
+              label: "Profile field",
               key: "internalName",
             },
             {
-              label: <span className="sr-only">Delete Unit Matcher</span>,
+              label: <span className="sr-only">Delete claim mapping</span>,
               key: "delete",
               align: "right",
               noSort: true,
@@ -67,17 +74,18 @@ const SyncAttributesInput: React.FC = () => {
                 onChange={(e) =>
                   update(idx, { ...field, externalName: e.target.value })
                 }
+                placeholder="e.g. given_name, department"
                 required
               />
             ),
             arrowSeparator: <ArrowRightIcon className="w-4 h-4" />,
             internalName: (
-              <Input
+              <Select
                 value={field.internalName ?? ""}
-                className="w-full"
                 onChange={(e) =>
                   update(idx, { ...field, internalName: e.target.value })
                 }
+                options={PROFILE_FIELD_OPTIONS}
                 required
               />
             ),
@@ -90,13 +98,16 @@ const SyncAttributesInput: React.FC = () => {
         }}
         notFoundDetail={
           <AddAttributeButton
-            value="+ Add a sync attribute"
+            value="+ Add claim mapping"
             onClick={() => append(DEFAULT_SYNC_ATTRIBUTE)}
           />
         }
       />
       {fields.length > 0 && (
-        <AddAttributeButton onClick={() => append(DEFAULT_SYNC_ATTRIBUTE)} />
+        <AddAttributeButton
+          value="+ Add claim mapping"
+          onClick={() => append(DEFAULT_SYNC_ATTRIBUTE)}
+        />
       )}
     </div>
   );

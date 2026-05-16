@@ -15,7 +15,7 @@ const Toggle = forwardRef<
       ref={ref}
       className={(b) =>
         cn(
-          "group inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition data-checked:bg-secondary-600 data-disabled:opacity-50",
+          "group inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition data-checked:bg-primary-600 data-disabled:opacity-50",
           typeof className === "function" ? className(b) : className,
         )
       }

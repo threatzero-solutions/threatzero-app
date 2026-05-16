@@ -21,6 +21,8 @@ import {
   DISPLAY_COMPLETION_THRESHOLD,
 } from "../../constants/core";
 import { useAuth } from "../../contexts/auth/useAuth";
+import { useMe } from "../../contexts/me/MeProvider";
+import { useResidencePicker } from "../../contexts/me/ResidencePickerProvider";
 import { TrainingContext } from "../../contexts/training/training-context";
 import {
   getMyItemCompletion,
@@ -55,6 +57,51 @@ const TrainingItem: React.FC = () => {
   >();
 
   const { authenticated } = useAuth();
+  const { me } = useMe();
+  const { requireResidenceUnit, isPickerOpen } = useResidencePicker();
+
+  // Residence gate (`_docs/residence-and-tenant-model.md` §6 + §2.3):
+  // when the user is authenticated to a tenant org but has no residence
+  // unit set there, block the watch page and open the picker. Browse and
+  // library views are NOT gated — only the watch page that can write
+  // progress.
+  //
+  // Public/watch-token viewers (`!authenticated`) don't go through this
+  // gate; their token already carries org+unit and the backend's defense-
+  // in-depth check will throw `RESIDENCE_UNIT_REQUIRED` if they somehow
+  // hit a write without one.
+  const tenantOrgId = me?.scope.kind === "tenant" ? me.organization?.id : null;
+  const myResidenceForTenant = useMemo(
+    () =>
+      tenantOrgId
+        ? me?.residences.find((r) => r.organizationId === tenantOrgId)
+        : undefined,
+    [me, tenantOrgId],
+  );
+  const residenceGateOpen =
+    authenticated &&
+    !!tenantOrgId &&
+    (myResidenceForTenant === undefined ||
+      myResidenceForTenant.unitId === null);
+
+  // Open the picker exactly once per gate-open transition. Promise-based:
+  // resolves when the user picks (and `/me` invalidates → gate closes) or
+  // cancels (gate stays open, but the user is shown the gate copy below).
+  const gatePromptedRef = useRef(false);
+  useEffect(() => {
+    if (!residenceGateOpen || !tenantOrgId) {
+      gatePromptedRef.current = false;
+      return;
+    }
+    if (gatePromptedRef.current) return;
+    gatePromptedRef.current = true;
+    void requireResidenceUnit({
+      organizationId: tenantOrgId,
+      dismissible: false,
+      reason:
+        "Before we can record your training progress, tell us where you are most of the time.",
+    });
+  }, [residenceGateOpen, tenantOrgId, requireResidenceUnit]);
 
   const sectionId = useMemo(() => {
     const sId = searchParams.get("sectionId");
@@ -179,6 +226,36 @@ const TrainingItem: React.FC = () => {
       });
     };
   }, [queryClient, state.activeEnrollment?.id]);
+
+  if (residenceGateOpen) {
+    // Two layered states for the same gate condition:
+    //   - Modal up → render a quiet, non-redundant placeholder. The modal
+    //     carries the message; duplicating it underneath was confusing.
+    //   - Modal NOT up (escaped, dismissed, or pre-mount race) → surface
+    //     the explanatory note here so the page isn't mysteriously blank.
+    return (
+      <div>
+        {authenticated && <BackButton defaultTo={"/training/library"} />}
+        {isPickerOpen ? (
+          <div
+            aria-hidden="true"
+            className="mt-8 mx-auto max-w-3xl space-y-3 opacity-30 pointer-events-none select-none"
+          >
+            <div className="aspect-video w-full rounded-lg bg-gray-200" />
+            <div className="h-6 w-3/4 rounded bg-gray-200" />
+            <div className="h-4 w-1/2 rounded bg-gray-100" />
+          </div>
+        ) : (
+          <div className="mt-8 mx-auto max-w-md text-center text-sm text-gray-600">
+            <p>
+              Pick your home base before starting training. Your progress gets
+              attributed there.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

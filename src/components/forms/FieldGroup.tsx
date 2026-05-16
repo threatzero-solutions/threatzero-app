@@ -120,7 +120,7 @@ const FieldGroup: React.FC<FormGroupProps> = ({
             ) : (
               <button
                 onClick={() => handleEditField({ group })}
-                className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                className="block self-start w-max rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               >
                 + Add Field
               </button>
@@ -166,7 +166,7 @@ const FieldGroup: React.FC<FormGroupProps> = ({
                     parentGroup: group,
                   })
                 }
-                className="block self-start w-max rounded-md bg-secondary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600"
+                className="block self-start w-max rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               >
                 + Add Subgroup
               </button>

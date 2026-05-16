@@ -2,9 +2,46 @@
 
 @plugin '@tailwindcss/forms';
 
+/*
+ * THREATZERO COLOR SYSTEM
+ * =======================
+ * The brand asset (logo) is charcoal + warm orange. There is no blue in
+ * the brand. This palette retires the legacy `secondary-*` blue, replaces
+ * cool gray with warm-tinted neutrals, and reserves saturated orange for
+ * the 10% rule (CTAs, focus, active states — never fields).
+ *
+ * Roles:
+ *   primary-*    — brand orange. Reserve for primary CTAs, focus rings,
+ *                  active-tab indicators, brand moments. Rarity is what
+ *                  gives it power.
+ *   warm-*       — warm-tinted neutrals (hue 70, very low chroma).
+ *                  Backgrounds, body text, dividers, surfaces. Replaces
+ *                  cool gray-* across the app — gray-* is aliased to
+ *                  warm-* below so 697 existing utility classes inherit
+ *                  the warm tilt without rewrites.
+ *   secondary-*  — ink/charcoal action scale (formerly blue). Same hue
+ *                  family as warm but darker and slightly saturated, for
+ *                  muted secondary buttons, hover ink, and high-contrast
+ *                  borders. The 203 existing `secondary-*` usages now
+ *                  resolve to charcoal — coherent with brand instead of
+ *                  fighting it.
+ *   success/warning/danger — muted semantic states. Tuned to feel
+ *                  professional, never traffic-light, never tactical.
+ *                  `info` deliberately omitted; use warm-* for
+ *                  informational chrome.
+ *   link-*       — narrow exception for inline body-text hyperlinks,
+ *                  where the blue convention is too strong to break.
+ *                  Low saturation, slate-leaning so it doesn't compete
+ *                  with the brand.
+ *
+ * OKLCH was chosen for perceptual uniformity — equal lightness steps
+ * read as equal regardless of hue. Reduce chroma at lightness extremes
+ * to avoid garish tints near white/black.
+ */
 @theme {
   --color-ss-threatzero-orange: #f7941d;
 
+  /* PRIMARY — brand orange. Unchanged from prior palette. */
   --color-primary-50: #fff7eb;
   --color-primary-100: #fde9c8;
   --color-primary-200: #fbd28c;
@@ -17,17 +54,78 @@
   --color-primary-900: #762311;
   --color-primary-950: #440f04;
 
-  --color-secondary-50: #f0f8fe;
-  --color-secondary-100: #deedfb;
-  --color-secondary-200: #c4e2f9;
-  --color-secondary-300: #9bcff5;
-  --color-secondary-400: #6cb4ee;
-  --color-secondary-500: #589fe9;
-  --color-secondary-600: #357bdb;
-  --color-secondary-700: #2c66c9;
-  --color-secondary-800: #2a53a3;
-  --color-secondary-900: #274881;
-  --color-secondary-950: #1c2e4f;
+  /* WARM neutrals — orange-tinted gray, hue 70, chroma 0.005-0.014. */
+  --color-warm-50: oklch(98.5% 0.005 70);
+  --color-warm-100: oklch(96.5% 0.008 70);
+  --color-warm-200: oklch(91.5% 0.012 70);
+  --color-warm-300: oklch(82% 0.014 70);
+  --color-warm-400: oklch(70% 0.014 70);
+  --color-warm-500: oklch(58% 0.014 70);
+  --color-warm-600: oklch(48% 0.012 70);
+  --color-warm-700: oklch(38% 0.012 70);
+  --color-warm-800: oklch(28% 0.01 70);
+  --color-warm-900: oklch(20% 0.01 70);
+  --color-warm-950: oklch(14% 0.008 70);
+
+  /* GRAY — alias to warm so existing utility classes inherit the warm
+   * tilt globally. New code should prefer warm-* explicitly. */
+  --color-gray-50: oklch(98.5% 0.005 70);
+  --color-gray-100: oklch(96.5% 0.008 70);
+  --color-gray-200: oklch(91.5% 0.012 70);
+  --color-gray-300: oklch(82% 0.014 70);
+  --color-gray-400: oklch(70% 0.014 70);
+  --color-gray-500: oklch(58% 0.014 70);
+  --color-gray-600: oklch(48% 0.012 70);
+  --color-gray-700: oklch(38% 0.012 70);
+  --color-gray-800: oklch(28% 0.01 70);
+  --color-gray-900: oklch(20% 0.01 70);
+  --color-gray-950: oklch(14% 0.008 70);
+
+  /* SECONDARY — charcoal/ink action scale. Same hue family as warm but
+   * deeper and slightly more saturated to feel like "applied" rather
+   * than "ambient". Replaces the legacy blue palette in place so 203
+   * existing utilities (bg-secondary-600, text-secondary-700, etc.) all
+   * resolve to ink. */
+  --color-secondary-50: oklch(97% 0.008 70);
+  --color-secondary-100: oklch(94% 0.012 70);
+  --color-secondary-200: oklch(88% 0.014 70);
+  --color-secondary-300: oklch(76% 0.016 70);
+  --color-secondary-400: oklch(60% 0.016 70);
+  --color-secondary-500: oklch(45% 0.016 70);
+  --color-secondary-600: oklch(36% 0.014 70);
+  --color-secondary-700: oklch(28% 0.012 70);
+  --color-secondary-800: oklch(22% 0.01 70);
+  --color-secondary-900: oklch(15% 0.008 70);
+  --color-secondary-950: oklch(9% 0.006 70);
+
+  /* SEMANTIC — muted, never traffic-light. Hues kept in the warm family
+   * where possible so error/warning don't feel discordant against
+   * orange. */
+  --color-success-50: oklch(96% 0.025 145);
+  --color-success-100: oklch(92% 0.04 145);
+  --color-success-500: oklch(58% 0.1 145);
+  --color-success-600: oklch(50% 0.1 145);
+  --color-success-700: oklch(42% 0.09 145);
+
+  --color-warning-50: oklch(97% 0.03 80);
+  --color-warning-100: oklch(93% 0.06 80);
+  --color-warning-500: oklch(74% 0.13 80);
+  --color-warning-600: oklch(64% 0.13 80);
+  --color-warning-700: oklch(52% 0.12 80);
+
+  --color-danger-50: oklch(96% 0.03 25);
+  --color-danger-100: oklch(92% 0.05 25);
+  --color-danger-500: oklch(56% 0.13 25);
+  --color-danger-600: oklch(48% 0.13 25);
+  --color-danger-700: oklch(40% 0.12 25);
+
+  /* LINK — narrow exception for inline body-text hyperlinks. Slate-blue,
+   * deliberately desaturated so it doesn't compete with brand orange. */
+  --color-link-500: oklch(50% 0.1 240);
+  --color-link-600: oklch(42% 0.1 240);
+  --color-link-700: oklch(35% 0.08 240);
+
+  --font-welcome: "EB Garamond", ui-serif, Georgia, Cambria, serif;
 
   --grid-template-columns-video-card: repeat(auto-fit, minmax(250px, 1fr));
 

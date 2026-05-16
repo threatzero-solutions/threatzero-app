@@ -227,7 +227,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             <div>
               Filter
               {activeFilterCount > 0 && (
-                <span className="ml-1 text-white text-xs rounded-full bg-secondary-600 px-1.5 py-0.5">
+                <span className="ml-1 text-white text-xs rounded-full bg-primary-600 px-1.5 py-0.5">
                   {activeFilterCount}
                 </span>
               )}

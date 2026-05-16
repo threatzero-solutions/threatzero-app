@@ -73,11 +73,15 @@ export interface SyncAttributeToAttributeDto extends SyncAttributeDto {
   isMultivalue?: boolean;
 }
 
-export interface RoleGroupMatcherDto {
-  attributeId?: string;
+export interface ForwardedClaimDto {
+  /** Upstream claim name on the IDP side. */
   externalName: string;
-  pattern: string;
-  roleGroup: string;
+  /**
+   * Namespaced key the rule engine matches on. Always persisted as
+   * `tz.idp.<short>`; the UI hides the prefix so admins only type
+   * the short name.
+   */
+  claimKey: string;
 }
 
 export interface OrganizationIdpDto {
@@ -85,12 +89,10 @@ export interface OrganizationIdpDto {
   name: string;
   protocol: string;
   domains: string[];
+  /** Profile attributes synced onto the user (firstName, picture, etc.). */
   syncAttributes?: SyncAttributeDto[];
-  unitMatchers?: SyncAttributeToAttributeDto[];
-  audienceMatchers?: SyncAttributeToAttributeDto[];
-  roleGroupMatchers: RoleGroupMatcherDto[];
-  defaultRoleGroups: string[];
-  defaultAudience?: string | null;
+  /** Raw claim passthrough under `tz.idp.*` for Access Rules to match on. */
+  forwardedClaims?: ForwardedClaimDto[];
   importedConfig: Record<string, string>;
 }
 
@@ -103,7 +105,6 @@ export interface OrganizationUser {
   email: string;
   attributes: Record<string, string[] | undefined>;
   groups?: string[];
-  canAccessTraining?: boolean;
 }
 
 export interface KeycloakGroupDto {

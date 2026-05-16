@@ -13,10 +13,12 @@ import {
   asPageInfo,
   asPaginationState,
   asSortingState,
+  cn,
   isNil,
 } from "../../../utils/core";
 import { SearchInputProps } from "../../forms/inputs/SearchInput";
 import FilterBar, { FilterBarFilterOptions } from "../FilterBar";
+import Paginator2 from "../Paginator2";
 import BaseTable, { BaseTableProps } from "./BaseTable";
 import TableHeader, { TableHeaderProps } from "./TableHeader";
 
@@ -111,8 +113,8 @@ const DataTable2 = <T extends object>({
   }, [showSearch, searchOptionsProp, query, setQuery]);
 
   return (
-    <div className={className}>
-      <div className="flex flex-col gap-4">
+    <div className={cn("min-w-0", className)}>
+      <div className="flex min-w-0 flex-col gap-4">
         {(title || subtitle || action) && (
           <TableHeader title={title} subtitle={subtitle} action={action} />
         )}
@@ -126,13 +128,43 @@ const DataTable2 = <T extends object>({
         ) : (
           <></>
         )}
-        <div className="flow-root">
-          <div className="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <BaseTable table={table} {...passThroughProps} />
+        {/* Only the table rows + header scroll horizontally — the
+            pagination footer below stays at page width and shrinks to
+            fit. The negative margin lets the table bleed edge-to-edge
+            on mobile; on desktop, sibling padding cancels it back out
+            so the table sits flush with the rest of the card. */}
+        <div className="min-w-0 flow-root">
+          <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+            <div className="sm:px-6 lg:px-8">
+              <BaseTable table={table} noPaginator {...passThroughProps} />
             </div>
           </div>
         </div>
+        {table.getState().pagination && (
+          <Paginator2
+            canPreviousPage={table.getCanPreviousPage()}
+            previousPage={table.previousPage}
+            canNextPage={table.getCanNextPage()}
+            nextPage={table.nextPage}
+            rowStart={Math.min(
+              table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1,
+              table.getRowCount(),
+            )}
+            rowEnd={Math.min(
+              (table.getState().pagination.pageIndex + 1) *
+                table.getState().pagination.pageSize,
+              table.getRowCount(),
+            )}
+            rowTotal={table.getRowCount()}
+            pageCount={table.getPageCount()}
+            setPageIndex={table.setPageIndex}
+            pageIndex={table.getState().pagination.pageIndex}
+            pageSize={table.getState().pagination.pageSize}
+            setPageSize={table.setPageSize}
+          />
+        )}
       </div>
     </div>
   );

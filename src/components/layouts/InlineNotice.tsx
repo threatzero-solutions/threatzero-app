@@ -5,7 +5,7 @@ import {
   XCircleIcon,
 } from "@heroicons/react/20/solid";
 import { ReactNode } from "react";
-import { classNames } from "../../utils/core";
+import { cn } from "../../utils/core";
 
 interface InlineNoticeProps {
   heading: ReactNode;
@@ -14,74 +14,60 @@ interface InlineNoticeProps {
   className?: string;
 }
 
+// Muted semantic palette per the ThreatZero brand brief: warm
+// professionalism, never traffic-light. Errors are terracotta, warnings
+// are warm gold, success is sage, info is a quiet warm-neutral with no
+// secondary blue.
+const LEVEL_STYLES = {
+  error: {
+    surface: "bg-danger-50",
+    heading: "text-danger-700",
+    body: "text-danger-700/90",
+    iconColor: "text-danger-500",
+    Icon: XCircleIcon,
+  },
+  warning: {
+    surface: "bg-warning-50",
+    heading: "text-warning-700",
+    body: "text-warning-700/90",
+    iconColor: "text-warning-500",
+    Icon: ExclamationTriangleIcon,
+  },
+  success: {
+    surface: "bg-success-50",
+    heading: "text-success-700",
+    body: "text-success-700/90",
+    iconColor: "text-success-500",
+    Icon: CheckCircleIcon,
+  },
+  info: {
+    surface: "bg-gray-100",
+    heading: "text-gray-800",
+    body: "text-gray-600",
+    iconColor: "text-gray-400",
+    Icon: InformationCircleIcon,
+  },
+} as const;
+
 const InlineNotice: React.FC<InlineNoticeProps> = ({
   heading,
   body,
   level = "info",
   className,
 }) => {
+  const styles = LEVEL_STYLES[level];
+  const { Icon } = styles;
   return (
-    <div
-      className={classNames(
-        "rounded-md p-4",
-        level === "error"
-          ? "bg-red-50"
-          : level === "warning"
-            ? "bg-yellow-50"
-            : level === "success"
-              ? "bg-green-50"
-              : "bg-blue-50",
-        className,
-      )}
-    >
+    <div className={cn("rounded-md p-4", styles.surface, className)}>
       <div className="flex">
         <div className="shrink-0">
-          {level === "error" ? (
-            <XCircleIcon aria-hidden="true" className="size-5 text-red-400" />
-          ) : level === "warning" ? (
-            <ExclamationTriangleIcon
-              aria-hidden="true"
-              className="size-5 text-yellow-400"
-            />
-          ) : level === "success" ? (
-            <CheckCircleIcon
-              aria-hidden="true"
-              className="size-5 text-green-400"
-            />
-          ) : (
-            <InformationCircleIcon
-              aria-hidden="true"
-              className="size-5 text-blue-400"
-            />
-          )}
+          <Icon aria-hidden="true" className={cn("size-5", styles.iconColor)} />
         </div>
-        <div className="ml-3">
-          <h3
-            className={classNames(
-              "text-sm font-medium",
-              level === "error"
-                ? "text-red-800"
-                : level === "warning"
-                  ? "text-yellow-800"
-                  : level === "success"
-                    ? "text-green-800"
-                    : "text-blue-800",
-            )}
-          >
+        <div className="ml-3 grow">
+          <h3 className={cn("text-sm font-medium", styles.heading)}>
             {heading}
           </h3>
-          <div
-            className={classNames(
-              "mt-2 text-sm",
-              level === "error"
-                ? "text-red-700"
-                : level === "warning"
-                  ? "text-yellow-700"
-                  : level === "success"
-                    ? "text-green-700"
-                    : "text-blue-700",
-            )}
-          >
+          <div className={cn("mt-2 text-sm", styles.body)}>
             {typeof body === "string" ? <p>{body}</p> : body}
           </div>
         </div>

@@ -251,34 +251,36 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                     >
                       <div className="px-4 py-5 sm:p-6">
                         <h3 className="text-base font-semibold leading-6 text-gray-900">
-                          Set Access Expiration
+                          Set access expiration
                         </h3>
                         <div className="mt-2 max-w-md text-sm text-gray-500">
                           <p>
-                            This is the last day the organizaiton will be able
-                            to use this token to access the associated training
-                            item.
+                            The last day the organization can use this token to
+                            access the associated training item.
                           </p>
                         </div>
                         <div className="mt-5 sm:flex sm:items-center w-full">
                           <div className="w-full">
-                            <label htmlFor="idp-alias" className="sr-only">
-                              IDP Alias
+                            <label
+                              htmlFor="scorm-expiration"
+                              className="sr-only"
+                            >
+                              Access expiration date
                             </label>
                             <input
-                              id="idp-alias"
+                              id="scorm-expiration"
                               type="date"
                               {...register("expiration")}
                               onKeyUp={(e) =>
                                 e.key === "Enter" && handleSetExpiration(close)
                               }
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 sm:text-sm sm:leading-6"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
                             />
                           </div>
                           <button
                             type="button"
                             onClick={() => handleSetExpiration(close)}
-                            className="mt-3 inline-flex w-full items-center justify-center rounded-md transition-colors bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 sm:ml-3 sm:mt-0 sm:w-auto"
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-md transition-colors bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:ml-3 sm:mt-0 sm:w-auto"
                           >
                             Set
                           </button>
@@ -312,7 +314,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
               icon={ArrowDownTrayIcon}
               text="Download SCORM"
               type="button"
-              className="bg-secondary-500 text-white enabled:hover:bg-secondary-600 ring-transparent disabled:opacity-50 disabled:cursor-default rounded-e-none"
+              className="bg-primary-500 text-white enabled:hover:bg-primary-600 ring-transparent disabled:opacity-50 disabled:cursor-default rounded-e-none"
               onClick={() => handleDownloadScormPackage()}
               disabled={expired}
               title={
@@ -322,7 +324,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
               }
             />
             <Menu>
-              <MenuButton className="rounded-md bg-secondary-500 text-white enabled:hover:bg-secondary-600 disabled:opacity-50 disabled:cursor-default ring-transparent rounded-s-none p-1.5 transition-colors border-s">
+              <MenuButton className="rounded-md bg-primary-500 text-white enabled:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-default ring-transparent rounded-s-none p-1.5 transition-colors border-s">
                 <ChevronDownIcon className="size-4" />
               </MenuButton>
               <MenuItems
@@ -336,7 +338,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                   <IconButton
                     icon={ArrowDownTrayIcon}
                     text="Version 1.2 (Default)"
-                    className="transition-colors enabled:hover:bg-secondary-600 rounded-none shadow-none ring-transparent"
+                    className="transition-colors enabled:hover:bg-primary-600 rounded-none shadow-none ring-transparent"
                     onClick={() => handleDownloadScormPackage("1.2")}
                   />
                 </MenuItem>
@@ -344,7 +346,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                   <IconButton
                     icon={ArrowDownTrayIcon}
                     text="Version 2004 (3rd Edition)"
-                    className="transition-colors enabled:hover:bg-secondary-600 rounded-none shadow-none ring-transparent"
+                    className="transition-colors enabled:hover:bg-primary-600 rounded-none shadow-none ring-transparent"
                     onClick={() => handleDownloadScormPackage("2004.3")}
                   />
                 </MenuItem>
@@ -352,7 +354,7 @@ const LmsTokenRow: React.FC<{ lmsToken: LmsTrainingToken }> = ({
                   <IconButton
                     icon={ArrowDownTrayIcon}
                     text="Version 2004 (4th Edition)"
-                    className="transition-colors enabled:hover:bg-secondary-600 rounded-none shadow-none ring-transparent"
+                    className="transition-colors enabled:hover:bg-primary-600 rounded-none shadow-none ring-transparent"
                     onClick={() => handleDownloadScormPackage("2004.4")}
                   />
                 </MenuItem>
@@ -515,8 +517,8 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
   return (
     <div className="flex h-screen flex-col">
       <SlideOverHeading
-        title="Manage Scorm Packages"
-        description="A SCORM package allows an external LMS to import our training content. Here you can automatically create a SCORM package for any training item or revoke access to an existing SCORM integration."
+        title="Manage SCORM packages"
+        description="A SCORM package lets an external LMS import this training content. Create a package for any training item, set expiration, or revoke access here."
         setOpen={setOpen}
       >
         <div className="flex flex-col pt-2 text-gray-500">
@@ -607,7 +609,7 @@ const ManageScormPackages: React.FC<ManageScormPackagesProps> = ({
                 icon={PlusCircleIcon}
                 text="Create SCORM Package"
                 type="button"
-                className="bg-secondary-500 text-white hover:bg-secondary-600 ring-transparent"
+                className="bg-primary-500 text-white hover:bg-primary-600 ring-transparent"
                 onClick={() => createLmsTokenMutation.mutate(item.id)}
               />
             </ButtonGroup>

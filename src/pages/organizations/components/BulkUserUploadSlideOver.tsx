@@ -650,7 +650,6 @@ function Step3ReviewAndUpload(props: Partial<ComponentProps<typeof Step>>) {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        canAccessTraining: !!user.trainingGroup,
         attributes: {
           audience: user.trainingGroup ? [user.trainingGroup.slug] : [],
           ...(user.unit ? { unit: [user.unit.slug] } : {}),
@@ -893,7 +892,7 @@ function Step3ReviewAndUpload(props: Partial<ComponentProps<typeof Step>>) {
         <button
           type="button"
           className={cn(
-            "inline-flex justify-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-secondary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:bg-secondary-400",
+            "inline-flex justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:bg-primary-400",
             uploadState.inProgress && "animate-pulse",
           )}
           disabled={userDataErrors.length > 0 || !uploadState.allWaiting}

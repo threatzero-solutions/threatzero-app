@@ -1,26 +1,25 @@
 import {
   PropsWithChildren,
   createContext,
-  useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
-import configJson from "../../config";
 import { useNavigate } from "react-router";
+import Keycloak from "keycloak-js";
 import ErrorPage from "../../pages/ErrorPage";
-import Keycloak, { KeycloakConfig, KeycloakInitOptions } from "keycloak-js";
-import axios, { InternalAxiosRequestConfig } from "axios";
 import SplashScreen from "../../components/layouts/SplashScreen";
-import { LEVEL } from "../../constants/permissions";
-import { getUnits } from "../../queries/organizations";
-
-const TOKEN_MIN_VALIDATY_SECONDS = 2;
+import { authStore, keycloak } from "./authStore";
+import { installAuthInterceptors } from "./installAuthInterceptors";
 
 const AuthCheck: React.FC<
-  PropsWithChildren<{ keycloak: Keycloak; authError: unknown }>
-> = ({ children, keycloak, authError }) => {
+  PropsWithChildren<{
+    keycloak: Keycloak;
+    authError: unknown;
+    initFailed: boolean;
+  }>
+> = ({ children, keycloak, authError, initFailed }) => {
   const navigate = useNavigate();
 
   const isIgnorableError = (error: unknown): [boolean, string | undefined] => {
@@ -36,9 +35,9 @@ const AuthCheck: React.FC<
   };
 
   useEffect(() => {
-    if (authError) return;
+    if (authError || initFailed) return;
 
-    const checkAuth = async () => {
+    const checkAuth = () => {
       if (document.visibilityState === "visible" && !keycloak.authenticated) {
         navigate("/login");
       }
@@ -47,7 +46,17 @@ const AuthCheck: React.FC<
     window.addEventListener("visibilitychange", checkAuth);
 
     return () => window.removeEventListener("visibilitychange", checkAuth);
-  });
+  }, [keycloak, authError, initFailed, navigate]);
+
+  // A rejected `keycloak.init()` means the app can never authenticate —
+  // show the error page rather than the old behavior of hanging on the
+  // splash screen forever. This is distinct from `authError`, which the
+  // Auth0-era `isIgnorableError` path still swallows by design.
+  if (initFailed) {
+    return (
+      <ErrorPage friendlyErrorMessage="We couldn't reach the sign-in service. Please refresh the page to try again." />
+    );
+  }
 
   const [isIgnorableErr, friendlyMsg] = isIgnorableError(authError);
 
@@ -62,32 +71,31 @@ const AuthCheck: React.FC<
   );
 };
 
+/**
+ * AuthContext scope is narrowed after the DB-authorization cutover:
+ *  - keycloak / accessToken / authenticated: token lifecycle (still JWT-backed).
+ *  - accessTokenClaims: identity fields only (email, name, picture, etc.).
+ *  - interceptorReady: axios auth interceptor is ready to sign requests.
+ *
+ * Authorization state (permissions, roles, scope, my-org/unit) moved to
+ * `MeContext` / `useMe()` and is sourced from `GET /api/me`. See
+ * `threatzero-api/docs/db-authorization-cutover-plan.md §3.1` for the
+ * frozen response shape and `_docs/authorization-model.md` for the model.
+ *
+ * Token/auth state is mirrored from the Keycloak instance via
+ * `authStore` + `useSyncExternalStore`; see `./authStore.ts`.
+ */
 export interface AuthContextType {
   keycloak: Keycloak | null;
   authError: unknown;
   accessToken: string | null;
   authenticated: boolean;
-  addEventListener: (
-    event: string,
-    cb: (kc: Keycloak, ...args: unknown[]) => void,
-  ) => void;
   /**
-   * Checks if the user has the required permissions.
-   * @param requiredPermissions An array of permissions to check for
-   * @param type The type of permissions to check for ("any" or "all"). Defaults to "any"
-   * @returns `true` if the user has the required permissions, `false` otherwise
+   * Identity claims from the JWT — name, email, picture, given/family name.
+   * NOT used for permissions, roles, org slug, or unit slug anymore.
    */
-  hasPermissions: (
-    requiredPermissions: string[],
-    type?: "any" | "all",
-  ) => boolean;
   accessTokenClaims?: { [key: string]: unknown } | null;
   interceptorReady: boolean;
-  hasMultipleUnitAccess: boolean;
-  hasMultipleOrganizationAccess: boolean;
-  myOrganizationSlug?: string;
-  myUnitSlug?: string;
-  isGlobalAdmin: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -95,220 +103,46 @@ export const AuthContext = createContext<AuthContextType>({
   authError: null,
   accessToken: null,
   authenticated: false,
-  addEventListener: () => {},
-  hasPermissions: () => false,
   interceptorReady: false,
-  hasMultipleUnitAccess: false,
-  hasMultipleOrganizationAccess: false,
-  isGlobalAdmin: false,
 });
 
-const _keycloak = new Keycloak(configJson.keycloak.config as KeycloakConfig);
-
 const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [keycloak, setKeycloak] = useState<Keycloak | null>(null);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [authError, setAuthError] = useState<unknown>();
+  const snapshot = useSyncExternalStore(
+    authStore.subscribe,
+    authStore.getSnapshot,
+    authStore.getServerSnapshot,
+  );
   const [interceptorReady, setInterceptorReady] = useState(false);
-  const kcInitializing = useRef(false);
-
-  const eventCallbacks = new Map<
-    string,
-    Set<(kc: Keycloak, ...args: unknown[]) => void>
-  >();
-
-  const addEventListener = (
-    event: string,
-    cb: (kc: Keycloak, ...args: unknown[]) => void,
-  ) => {
-    if (!eventCallbacks.has(event)) {
-      eventCallbacks.set(event, new Set<() => void>());
-    }
-    eventCallbacks.get(event)?.add(cb);
-  };
-
-  const _newAccessToken = (kc: Keycloak) => {
-    setAccessToken(kc.token ?? null);
-    setAuthenticated(!!kc.authenticated);
-  };
-
-  const _revokeAccessToken = (kc: Keycloak) => {
-    setAccessToken(null);
-    setAuthenticated(!!kc.authenticated);
-  };
-
-  const _onReady = (kc: Keycloak, authenticated: unknown) => {
-    setKeycloak(kc);
-    setAuthenticated(!!authenticated);
-  };
-
-  const _onError = (_: Keycloak, error: unknown) => {
-    setAuthError(error);
-  };
-
-  const handleEvent =
-    (event: string, kc: Keycloak) =>
-    (...args: unknown[]) => {
-      eventCallbacks.get(event)?.forEach((cb) => {
-        cb(kc, ...args);
-      });
-    };
 
   useEffect(() => {
-    addEventListener("onReady", _onReady);
-
-    // New token events
-    addEventListener("newToken", _newAccessToken);
-    addEventListener("onAuthSuccess", _newAccessToken);
-    addEventListener("onAuthRefreshSuccess", _newAccessToken);
-
-    // Logout events
-    addEventListener("onAuthLogout", _revokeAccessToken);
-    addEventListener("onTokenExpired", _revokeAccessToken);
-
-    // Error events
-    addEventListener("onAuthError", _onError);
-
-    _keycloak.onReady = handleEvent("onReady", _keycloak);
-    _keycloak.onAuthSuccess = handleEvent("onAuthSuccess", _keycloak);
-    _keycloak.onAuthRefreshSuccess = handleEvent(
-      "onAuthRefreshSuccess",
-      _keycloak,
-    );
-    _keycloak.onAuthLogout = handleEvent("onAuthLogout", _keycloak);
-    _keycloak.onTokenExpired = handleEvent("onTokenExpired", _keycloak);
-    _keycloak.onActionUpdate = handleEvent("onActionUpdate", _keycloak);
-    _keycloak.onAuthError = handleEvent("onAuthError", _keycloak);
-
-    if (!kcInitializing.current) {
-      kcInitializing.current = true;
-      _keycloak
-        .init({
-          onLoad: "check-sso",
-          pkceMethod: "S256",
-          scope: "openid profile email",
-          checkLoginIframe: false, // Login IFrame is increasingly unsupported in modern browsers.
-          ...(configJson.keycloak.initOptions as KeycloakInitOptions),
-        })
-        .catch((e) => setAuthError(e));
-    }
-  });
-
-  useEffect(() => {
-    if (!accessToken || !keycloak) {
-      return;
-    }
-
-    axios.interceptors.request.use(
-      async (config) => {
-        try {
-          await keycloak.updateToken(TOKEN_MIN_VALIDATY_SECONDS);
-        } catch (e) {
-          console.error("Update token failed", e);
-        }
-
-        const headers: Record<string, string> = {};
-        if (!("x-local-noauth" in config.headers)) {
-          headers["Authorization"] = `Bearer ${keycloak.token}`;
-        }
-
-        return {
-          ...config,
-          headers: {
-            ...config.headers,
-            ...headers,
-          },
-        } as InternalAxiosRequestConfig;
-      },
-      (error) => {
-        return Promise.reject(error);
-      },
-    );
-
-    axios.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      async (error) => {
-        if (error.response && error.response.status === 401) {
-          if (keycloak.isTokenExpired()) {
-            await keycloak.login();
-          }
-        }
-        return Promise.reject(error);
-      },
-    );
+    const eject = installAuthInterceptors(keycloak);
     setInterceptorReady(true);
-  }, [accessToken, keycloak]);
+    return () => {
+      eject();
+      setInterceptorReady(false);
+    };
+  }, []);
 
-  const hasPermissions = useCallback(
-    (requiredPermissions: string[], type?: "any" | "all"): boolean => {
-      const permissions =
-        keycloak?.tokenParsed?.resource_access?.["threatzero-api"]?.roles;
-      if (!permissions || !Array.isArray(permissions)) {
-        return false;
-      }
-
-      const predicate = (p: string) => permissions.includes(p);
-      switch (type) {
-        case "all":
-          return requiredPermissions.every(predicate);
-        case "any":
-        default:
-          return requiredPermissions.some(predicate);
-      }
-    },
-    [keycloak],
-  );
-
-  const accessTokenClaims = useMemo(() => keycloak?.tokenParsed, [keycloak]);
-
-  const myOrganizationSlug = useMemo(
-    () => accessTokenClaims?.organization,
-    [accessTokenClaims],
-  );
-
-  const myUnitSlug = useMemo(
-    () => accessTokenClaims?.unit,
-    [accessTokenClaims],
-  );
-
-  const [hasMultipleUnitAccess, setHasMultipleUnitAccess] = useState(false);
-  useEffect(() => {
-    if (!interceptorReady) {
-      return;
-    }
-    getUnits({ limit: 1 }).then((units) =>
-      setHasMultipleUnitAccess(units.count > 1),
-    );
-  }, [interceptorReady]);
-
-  const isGlobalAdmin = useMemo(
-    () => hasPermissions([LEVEL.ADMIN]),
-    [hasPermissions],
+  const value = useMemo<AuthContextType>(
+    () => ({
+      keycloak: snapshot.ready ? keycloak : null,
+      authError: snapshot.error,
+      accessToken: snapshot.token,
+      authenticated: snapshot.authenticated,
+      accessTokenClaims: snapshot.tokenParsed ?? null,
+      interceptorReady,
+    }),
+    [snapshot, interceptorReady],
   );
 
   return (
-    <AuthContext.Provider
-      value={{
-        keycloak,
-        authError,
-        accessToken,
-        authenticated,
-        addEventListener,
-        hasPermissions,
-        accessTokenClaims,
-        interceptorReady,
-        hasMultipleUnitAccess,
-        hasMultipleOrganizationAccess: isGlobalAdmin,
-        myOrganizationSlug,
-        myUnitSlug,
-        isGlobalAdmin,
-      }}
-    >
-      {keycloak ? (
-        <AuthCheck keycloak={keycloak} authError={authError}>
+    <AuthContext.Provider value={value}>
+      {snapshot.ready || snapshot.initFailed ? (
+        <AuthCheck
+          keycloak={keycloak}
+          authError={snapshot.error}
+          initFailed={snapshot.initFailed}
+        >
           {children}
         </AuthCheck>
       ) : (

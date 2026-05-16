@@ -49,6 +49,17 @@ export enum OrganizationStatus {
   INACTIVE = "inactive",
 }
 
+/**
+ * Vocabulary preset for this organization. Maps to a frontend label
+ * bundle via `labelsForPreset()` in `utils/labels.ts`. Matches the
+ * `OrganizationLabelPreset` enum in the API.
+ */
+export enum OrganizationLabelPreset {
+  DEFAULT = "default",
+  SCHOOL = "school",
+  BUSINESS = "business",
+}
+
 export interface OrganizationNotificationSettings {
   initialReminderEmailsEnabled: boolean;
   followUpReminderEmailsEnabled: boolean;
@@ -57,12 +68,12 @@ export interface OrganizationNotificationSettings {
 /** Represents an organization (ie district, company, etc.) */
 export interface Organization extends OrganizationBase {
   status: OrganizationStatus;
+  labelPreset: OrganizationLabelPreset;
   groupId: string | null;
   enrollments?: CourseEnrollment[];
   resources?: ResourceItem[];
   idpSlugs: string[] | null;
   allowedAudiences: string[];
-  allowedRoleGroups: string[] | null;
   trainingAccessSettings: OrganizationTrainingAccessSettings | null;
   notificationSettings: OrganizationNotificationSettings | null;
 }
@@ -84,11 +95,11 @@ export interface Unit extends OrganizationBase {
   subUnits?: Unit[];
   path?: string;
   tatGroupId: string | null;
-  isDefault?: boolean;
 }
 
 export interface Location extends Base {
-  unit: Unit;
+  organization: Organization;
+  unit: Unit | null;
   name: string;
   locationId: string;
 }

@@ -1,35 +1,40 @@
-import { Fragment, PropsWithChildren, useEffect, useState } from "react";
+import { Fragment, PropsWithChildren } from "react";
 import { Navigate } from "react-router";
-import { useAuth } from "../contexts/auth/useAuth";
+import { useMe } from "../contexts/me/MeProvider";
 
 export interface RequirePermissionsOptions extends PropsWithChildren {
+  /** 'any' (default) passes if any capability matches; 'all' requires all. */
   type?: "any" | "all";
+  /** Capability slugs (see `src/constants/capabilities.ts`). */
   permissions: string[];
   fallbackTo?: string;
 }
 
+/**
+ * Capability-aware route guard. Capabilities come from `/api/me`, not the
+ * JWT. While `/me` is still loading we render "Loading..." rather than
+ * bouncing, so a stale cache redirect doesn't fire during refresh.
+ */
 const RequirePermissions: React.FC<RequirePermissionsOptions> = ({
-  type,
+  type = "any",
   permissions,
   fallbackTo,
   children,
 }) => {
-  const [permissionsSatisfied, setPermissionsSatisfied] = useState<
-    boolean | null
-  >(null);
-  const { hasPermissions } = useAuth();
+  const { me, isInitialLoading, can } = useMe();
 
-  useEffect(() => {
-    setPermissionsSatisfied(hasPermissions(permissions, type));
-  }, [hasPermissions, permissions, type]);
+  if (isInitialLoading || me === undefined) {
+    return <div>Loading...</div>;
+  }
 
-  return permissionsSatisfied !== false ? (
-    <Fragment>
-      {permissionsSatisfied ? children : <div>Loading...</div>}
-    </Fragment>
-  ) : (
-    <Navigate to={fallbackTo ?? "/"} />
-  );
+  const predicate = (cap: string) => can(cap);
+  const satisfied =
+    type === "all" ? permissions.every(predicate) : permissions.some(predicate);
+
+  if (satisfied) {
+    return <Fragment>{children}</Fragment>;
+  }
+  return <Navigate to={fallbackTo ?? "/"} />;
 };
 
 export default RequirePermissions;

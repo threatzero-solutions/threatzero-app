@@ -114,7 +114,10 @@ const Select: React.FC<SelectProps> = ({
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm">
+                <ListboxOptions
+                  anchor={{ to: "bottom start", gap: 4 }}
+                  className="z-30 max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm [width:var(--button-width)]"
+                >
                   {options.map(({ key, label, disabled, disabledText }) => (
                     <ListboxOption
                       key={key}
