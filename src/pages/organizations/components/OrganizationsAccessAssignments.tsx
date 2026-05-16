@@ -136,7 +136,7 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
   const [editing, setEditing] = useState<UserWithAccess | null>(null);
   const [movingUser, setMovingUser] = useState<UserWithAccess | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const editUser = useOpenData<string>();
+  const editUser = useOpenData<UserWithAccess>();
 
   const { data, isLoading } = useUsersWithAccess(
     orgId,
@@ -347,7 +347,7 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
                         <PencilIcon className="size-4 inline" /> Edit user
                       </span>
                     ),
-                    action: () => editUser.openData(original.idpId),
+                    action: () => editUser.openData(original),
                   },
                   {
                     id: "toggle-activation",
@@ -521,7 +521,7 @@ const OrganizationsAccessAssignments: React.FC<Props> = ({
         <EditOrganizationUser
           setOpen={editUser.setOpen}
           create={!editUser.data}
-          userId={editUser.data ?? undefined}
+          user={editUser.data ?? undefined}
         />
       </SlideOver>
       <BulkUserUploadSlideOver
