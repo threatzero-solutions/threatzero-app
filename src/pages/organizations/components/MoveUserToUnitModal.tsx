@@ -158,7 +158,7 @@ const MoveUserToUnitModal: React.FC<Props> = ({
       }}
       classNames={{ dialogPanel: "sm:max-w-xl" }}
     >
-      <div className="bg-white px-5 pb-5 pt-5 sm:p-6">
+      <div className="bg-white px-5 pb-5 pt-5 sm:p-6 rounded-t-lg">
         <div className="flex items-start gap-3">
           <div
             className={classNames(
