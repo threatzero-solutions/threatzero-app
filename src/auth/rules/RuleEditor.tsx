@@ -1,13 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 // motion.form was animating just opacity during exit, which left a gap
 // at the element's full height until AnimatePresence finished. Height
 // is now owned by <Collapsible> on the outside.
 
 import FormField from "../../components/forms/FormField";
-import Input from "../../components/forms/inputs/Input";
 import Select from "../../components/forms/inputs/Select";
 import Toggle from "../../components/forms/inputs/Toggle";
 import { AssignableRole } from "../../queries/grants";
@@ -16,7 +15,7 @@ import { Audience, Unit } from "../../types/entities";
 import { classNames } from "../../utils/core";
 import { AudienceSelect } from "./AudienceSelect";
 import { ChipInput } from "./ChipInput";
-import { toDisplayClaimKey, toFullClaimKey } from "./claim-key";
+import { toDisplayClaimKey } from "./claim-key";
 import { Collapsible } from "./Collapsible";
 import { MatcherOp } from "./matcher-builder";
 import {
@@ -48,11 +47,17 @@ interface RuleEditorProps {
   hasIdp: boolean;
   /**
    * Claim keys the org's IDPs are configured to forward, in their full
-   * `tz.idp.*` form. The editor strips the prefix for the datalist so
-   * admins pick from short names; free text is still accepted and is
-   * re-prefixed before submit.
+   * `tz.idp.*` form. The editor groups them under "From your IDP" in
+   * the dropdown.
    */
   knownClaimKeys?: string[];
+  /**
+   * Standard JWT identity claims the engine matches without any IDP
+   * passthrough config (`given_name`, `email`, etc.). Returned by the
+   * API's `/rules/available-claims` endpoint (api#75). Grouped under
+   * "Standard identity" in the dropdown.
+   */
+  standardClaims?: string[];
   orgLabel: string;
   /**
    * `standalone` adds its own ring/shadow (used for "new" above the list);
@@ -87,6 +92,7 @@ export function RuleEditor({
   showInactiveAudiences,
   hasIdp,
   knownClaimKeys = [],
+  standardClaims = [],
   orgLabel,
   chrome = "standalone",
   onCancel,
@@ -119,16 +125,48 @@ export function RuleEditor({
   const trigger = useWatch({ control, name: "trigger" });
   const effect = useWatch({ control, name: "effect" });
 
-  // Datalist options: strip the namespace so admins pick from short
-  // names ("department") instead of the namespaced form they never
-  // need to see.
-  const knownClaimShortNames = useMemo(
-    () =>
-      Array.from(
-        new Set(knownClaimKeys.map((k) => toDisplayClaimKey(k))),
-      ).sort(),
-    [knownClaimKeys],
-  );
+  // Dropdown options for the `claimKey` picker (api#75). Two groups:
+  // standard identity claims (always available) + IDP-forwarded claims
+  // (per-org). The visible label strips the `tz.idp.` namespace from
+  // IDP claims so admins see short names, but the underlying value is
+  // the full key the server stores. A small group-header row is
+  // rendered via `disabled` rows for visual separation.
+  const claimOptions = useMemo(() => {
+    const groups: {
+      key: string;
+      label: ReactNode;
+      disabled?: boolean;
+      disabledText?: string;
+    }[] = [];
+
+    const idpKeys = Array.from(new Set(knownClaimKeys)).sort();
+    const stdKeys = Array.from(new Set(standardClaims)).sort();
+
+    if (stdKeys.length > 0) {
+      groups.push({
+        key: "__group_standard",
+        label: "Standard identity",
+        disabled: true,
+      });
+      for (const key of stdKeys) {
+        groups.push({ key, label: key });
+      }
+    }
+    if (idpKeys.length > 0) {
+      groups.push({
+        key: "__group_idp",
+        label: "From your IDP",
+        disabled: true,
+      });
+      for (const key of idpKeys) {
+        groups.push({ key, label: toDisplayClaimKey(key) });
+      }
+    }
+
+    return groups;
+  }, [knownClaimKeys, standardClaims]);
+
+  const noClaimsAvailable = claimOptions.length === 0;
 
   const panelCx =
     chrome === "standalone"
@@ -181,39 +219,25 @@ export function RuleEditor({
                   <FormField
                     field={{
                       label: "Claim name",
-                      helpText:
-                        knownClaimShortNames.length > 0
-                          ? "Pick one your identity provider forwards, or type a custom key."
-                          : "The key used in the ID token from your identity provider.",
+                      helpText: noClaimsAvailable
+                        ? "Your IDP isn't forwarding any claims yet. Add a passthrough mapper on the IDP and a standard identity claim like email or given_name will appear here on next reload."
+                        : "Pick the claim from the user's ID token to match against. Standard identity claims are always available; the rest come from your IDP's passthrough mappers.",
                     }}
                     input={
                       <Controller
                         control={control}
                         name="trigger.claimKey"
                         render={({ field }) => (
-                          <>
-                            <Input
-                              value={toDisplayClaimKey(field.value)}
-                              onChange={(e) =>
-                                field.onChange(toFullClaimKey(e.target.value))
-                              }
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
-                              list="rule-editor-claim-keys"
-                              placeholder={
-                                knownClaimShortNames[0] ?? "e.g. department"
-                              }
-                              className="w-full font-mono text-xs"
-                            />
-                            {knownClaimShortNames.length > 0 && (
-                              <datalist id="rule-editor-claim-keys">
-                                {knownClaimShortNames.map((k) => (
-                                  <option key={k} value={k} />
-                                ))}
-                              </datalist>
-                            )}
-                          </>
+                          <Select
+                            name={field.name}
+                            ref={field.ref}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            onBlur={field.onBlur}
+                            options={claimOptions}
+                            className="w-full font-mono text-xs"
+                            disabled={noClaimsAvailable}
+                          />
                         )}
                       />
                     }
