@@ -82,17 +82,16 @@ export const deleteRule = (orgId: string, ruleId: string) =>
 export const rulesKey = (orgId: string) => ["rules", orgId] as const;
 
 /**
- * Powers the rule editor's `claimKey` dropdown. `standardClaims` is the
- * server's curated allowlist of identity claims that are matchable
- * without any IDP passthrough mapper config (`given_name`, `email`,
- * etc.). `idpClaims` will be populated once the API enumerates the
- * passthrough mappers on the org's IDPs (phase 2 of api#75); today it
- * comes back empty and the FE merges it with the
- * `organizationIdps[*].forwardedClaims` source already available locally.
+ * Powers the rule editor's `claimKey` dropdown — server-curated allowlist
+ * of standard JWT identity claims (`given_name`, `email`, etc.) that the
+ * engine matches without any IDP passthrough config.
+ *
+ * IDP-forwarded `tz.idp.*` claims are sourced separately from
+ * `organizationIdps[*].forwardedClaims` in the `OrganizationsContext` —
+ * the FE merges the two when building the dropdown.
  */
 export interface RuleAvailableClaims {
   standardClaims: string[];
-  idpClaims: Array<{ idpAlias: string; claimKey: string }>;
 }
 
 export const getRuleAvailableClaims = (orgId: string) =>
