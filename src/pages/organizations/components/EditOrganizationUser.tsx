@@ -11,12 +11,9 @@ import SlideOverField from "../../../components/layouts/slide-over/SlideOverFiel
 import SlideOverForm from "../../../components/layouts/slide-over/SlideOverForm";
 import SlideOverFormBody from "../../../components/layouts/slide-over/SlideOverFormBody";
 import SlideOverHeading from "../../../components/layouts/slide-over/SlideOverHeading";
-import PillBadge from "../../../components/PillBadge";
 import { OrganizationsContext } from "../../../contexts/organizations/organizations-context";
-import {
-  getOrganizationUsers,
-  saveOrganizationUser,
-} from "../../../queries/organizations";
+import { UserWithAccess } from "../../../queries/grants";
+import { saveOrganizationUser } from "../../../queries/organizations";
 import { getTrainingAudiences } from "../../../queries/training";
 import { OrganizationUser } from "../../../types/api";
 import { FieldType, Unit } from "../../../types/entities";
@@ -25,7 +22,13 @@ import AudiencesSelect from "../../training-library/components/AudiencesSelect";
 interface EditOrganizationUserProps {
   setOpen: (open: boolean) => void;
   create: boolean;
-  userId?: string;
+  /**
+   * Existing user to edit, taken straight from the Users+Access list row.
+   * The row already carries every field the form needs (firstName, lastName,
+   * email, unitSlug, audienceSlugs) so we hydrate from it directly — no
+   * second fetch through the slow KC-backed list endpoint.
+   */
+  user?: UserWithAccess;
 }
 
 const createUserSchema = z.object({
@@ -66,7 +69,7 @@ const INITIAL_USER: TForm = {
 const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
   setOpen,
   create,
-  userId,
+  user,
 }) => {
   const {
     currentOrganization: organization,
@@ -75,28 +78,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     getIdpAttributes,
     invalidateOrganizationUsersQuery,
   } = useContext(OrganizationsContext);
-
-  const { data: userData } = useQuery({
-    queryKey: [
-      "organizations-user",
-      organization?.id,
-      userId,
-      {
-        unit: unitSlug,
-      },
-    ] as const,
-    queryFn: ({ queryKey }) =>
-      getOrganizationUsers(queryKey[1], {
-        id: queryKey[2],
-        ...queryKey[3],
-      }).then((users) => {
-        if (users.results.length > 0) {
-          return users.results[0];
-        }
-        throw new Error("User not found.");
-      }),
-    enabled: !!userId,
-  });
 
   const { data: allAudiences } = useQuery({
     queryKey: ["training-audiences"] as const,
@@ -122,14 +103,22 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
     [allowedAudiences],
   );
 
-  const formDefaultValues = useMemo(() => {
-    return userData
-      ? toTransientUser(userData)
-      : {
-          ...INITIAL_USER,
-          unitSlug: unitSlug ?? "",
-        };
-  }, [unitSlug, userData]);
+  const formDefaultValues = useMemo<TForm>(() => {
+    if (user) {
+      return {
+        id: user.idpId,
+        firstName: user.firstName ?? "",
+        lastName: user.lastName ?? "",
+        email: user.email ?? "",
+        unitSlug: user.unitSlug ?? "",
+        audienceSlugs: user.audienceSlugs ?? [],
+      };
+    }
+    return {
+      ...INITIAL_USER,
+      unitSlug: unitSlug ?? "",
+    };
+  }, [unitSlug, user]);
 
   const formMethods = useForm<TForm>({
     resolver: (create
@@ -188,8 +177,12 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
       submitDisabled={!isDirty}
     >
       <SlideOverHeading
-        title={create ? "Add User" : "Edit User"}
-        description=""
+        title={create ? "Add user" : "Edit user"}
+        description={
+          create
+            ? "Add a user to this organization. They'll receive an invitation email to set their password."
+            : "Update name, email, or training groups. Unit changes are made from the row's Move to unit action; roles from Manage roles."
+        }
         setOpen={setOpen}
       />
       <SlideOverFormBody>
@@ -239,7 +232,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {...register("firstName")}
             className="w-full"
           />
-          {idpAttributes.includes("firstName") && <SSOField />}
         </SlideOverField>
         <SlideOverField name="lastName" label="Last Name">
           <Input
@@ -248,7 +240,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {...register("lastName")}
             className="w-full"
           />
-          {idpAttributes.includes("lastName") && <SSOField />}
         </SlideOverField>
         {organization && !formDefaultValues.unitSlug && (
           <SlideOverField name="unitSlug" label="Unit">
@@ -272,7 +263,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
             {unitSlugState.error?.message && (
               <p className="text-red-500">{unitSlugState.error.message}</p>
             )}
-            {idpAttributes.includes("unit") && <SSOField />}
           </SlideOverField>
         )}
         <SlideOverField
@@ -298,7 +288,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
               />
             )}
           />
-          {idpAttributes.includes("audience") && <SSOField />}
         </SlideOverField>
       </SlideOverFormBody>
     </SlideOverForm>
@@ -306,17 +295,6 @@ const EditOrganizationUser: React.FC<EditOrganizationUserProps> = ({
 };
 
 export default EditOrganizationUser;
-
-const SSOField = () => (
-  <PillBadge
-    displayValue={
-      <>
-        <BoltIcon className="size-3" /> SSO field
-      </>
-    }
-    color="green"
-  />
-);
 
 const toOrgUser = (user: TForm): Partial<OrganizationUser> => ({
   id: "id" in user ? user.id : undefined,
@@ -328,16 +306,4 @@ const toOrgUser = (user: TForm): Partial<OrganizationUser> => ({
     audience: user.audienceSlugs,
     ...(user.unitSlug ? { unit: [user.unitSlug] } : {}),
   },
-});
-
-const toTransientUser = (
-  orgUser: OrganizationUser,
-  unitSlug?: string,
-): TForm => ({
-  id: orgUser.id,
-  firstName: orgUser.firstName,
-  lastName: orgUser.lastName,
-  email: orgUser.email,
-  unitSlug: orgUser.attributes.unit?.at(0) ?? unitSlug ?? "",
-  audienceSlugs: orgUser.attributes.audience ?? [],
 });
