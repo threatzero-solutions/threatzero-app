@@ -160,6 +160,30 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* SplashScreen indicator. The brand-orange ring softly scales and fades
+   under the wordmark while keycloak.init + /me are in flight. ease-out
+   exponential timing so it never feels jittery. */
+@keyframes tz-splash-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.15;
+  }
+}
+.tz-splash-pulse {
+  animation: tz-splash-pulse 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tz-splash-pulse {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
 code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;

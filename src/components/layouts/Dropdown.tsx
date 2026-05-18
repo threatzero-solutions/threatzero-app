@@ -1,19 +1,6 @@
-import {
-  flip,
-  offset,
-  Placement,
-  useFloating,
-  UseFloatingOptions,
-} from "@floating-ui/react";
-import {
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-  Transition,
-} from "@headlessui/react";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { Fragment, MouseEventHandler, ReactNode } from "react";
+import { MouseEventHandler, ReactNode } from "react";
 import { classNames } from "../../utils/core";
 
 export interface DropdownAction {
@@ -31,7 +18,22 @@ export interface DropdownActionGroup {
   hidden?: boolean;
 }
 
-interface DropdownProps extends UseFloatingOptions {
+/**
+ * Headless UI's `anchor` accepts either `"bottom-end"` style strings or
+ * `"bottom end"`. We standardize call sites on the hyphenated form (matches
+ * the Floating UI naming we used previously) and translate at the boundary.
+ */
+type DropdownPlacement =
+  | "top"
+  | "top-start"
+  | "top-end"
+  | "bottom"
+  | "bottom-start"
+  | "bottom-end"
+  | "left"
+  | "right";
+
+interface DropdownProps {
   value?: ReactNode;
   valueIcon?: ReactNode;
   iconOnly?: boolean;
@@ -40,7 +42,7 @@ interface DropdownProps extends UseFloatingOptions {
   className?: string;
   /** Override the trigger button's class list (e.g. to use brand colors). */
   buttonClassName?: string;
-  placement?: Placement;
+  placement?: DropdownPlacement;
   showDividers?: boolean;
   disabled?: boolean;
 }
@@ -84,6 +86,46 @@ const ActionGroup: React.FC<{ actionGroup: DropdownActionGroup }> = ({
   );
 };
 
+/**
+ * Map our hyphenated placement to the `to` syntax Headless UI's anchor
+ * positioning expects. The default `bottom-end` reads as "the menu's
+ * top-right corner aligns with the button's bottom-right corner."
+ */
+const toAnchor = (p: DropdownPlacement) =>
+  p.replace("-", " ") as
+    | "bottom end"
+    | "bottom start"
+    | "bottom"
+    | "top end"
+    | "top start"
+    | "top"
+    | "left"
+    | "right";
+
+/**
+ * Pick a CSS transform-origin so the open animation grows out of the
+ * corner closest to the trigger button rather than from the menu's
+ * center. Without this the menu would visibly slide as it scales.
+ */
+const originFor = (p: DropdownPlacement): string => {
+  switch (p) {
+    case "top":
+    case "top-start":
+      return "origin-bottom-left";
+    case "top-end":
+      return "origin-bottom-right";
+    case "bottom":
+    case "bottom-start":
+      return "origin-top-left";
+    case "bottom-end":
+      return "origin-top-right";
+    case "left":
+      return "origin-right";
+    case "right":
+      return "origin-left";
+  }
+};
+
 const Dropdown: React.FC<DropdownProps> = ({
   value,
   valueIcon,
@@ -95,14 +137,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   placement = "bottom-end",
   showDividers,
   disabled,
-  ...floatingProps
 }) => {
-  const { refs, floatingStyles } = useFloating({
-    middleware: [flip(), offset({ mainAxis: 8 })],
-    placement,
-    ...floatingProps,
-  });
-
   return (
     <Menu
       as="div"
@@ -110,7 +145,6 @@ const Dropdown: React.FC<DropdownProps> = ({
       aria-disabled={disabled}
     >
       <MenuButton
-        ref={refs.setReference}
         type="button"
         className={
           buttonClassName ??
@@ -136,42 +170,43 @@ const Dropdown: React.FC<DropdownProps> = ({
         )}
       </MenuButton>
 
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
+      {/*
+       * Letting Headless UI own both positioning (`anchor`) and the
+       * open/close transition (`transition` + data-closed:* classes) fixes
+       * the "menu flies in from the page corner" bug: it applies the
+       * floating coordinates to the panel BEFORE any transition class
+       * paint, so the open animation only ever scales+fades at the final
+       * anchor point. Going through our own `useFloating` + a Headless UI
+       * Transition wrapper put Tailwind's transform-based `scale-*` in a
+       * fight with Floating UI's inline `transform: translate(...)`, and
+       * the first paint landed at document origin. Same root cause as
+       * 2610f25 but the previous fix only narrowed the window — it never
+       * closed it.
+       */}
+      <MenuItems
+        anchor={{ to: toAnchor(placement), gap: 8 }}
+        transition
+        portal
+        className={classNames(
+          "z-20 w-56 pb-2 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden",
+          "max-h-[45vh] overflow-y-auto",
+          originFor(placement),
+          "transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 data-leave:duration-75 data-leave:ease-in",
+          showDividers ? "divide-y divide-gray-100" : "",
+        )}
       >
-        <MenuItems
-          ref={refs.setFloating}
-          style={floatingStyles}
-          // `portal` renders the menu under document.body so it escapes any
-          // ancestor `overflow-hidden` (e.g., card frames) that would clip
-          // it. Floating-ui still positions correctly because it uses
-          // viewport coordinates, not parent ones.
-          portal
-          className={classNames(
-            "z-20 pb-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden",
-            "max-h-[45vh] overflow-y-auto",
-            showDividers ? "divide-y divide-gray-100" : "",
-          )}
-        >
-          {!!actions && (
-            <ActionGroup
-              actionGroup={{
-                id: "ungrouped-actions",
-                actions: actions,
-              }}
-            />
-          )}
-          {actionGroups?.map((actionGroup) => (
-            <ActionGroup key={actionGroup.id} actionGroup={actionGroup} />
-          ))}
-        </MenuItems>
-      </Transition>
+        {!!actions && (
+          <ActionGroup
+            actionGroup={{
+              id: "ungrouped-actions",
+              actions: actions,
+            }}
+          />
+        )}
+        {actionGroups?.map((actionGroup) => (
+          <ActionGroup key={actionGroup.id} actionGroup={actionGroup} />
+        ))}
+      </MenuItems>
     </Menu>
   );
 };

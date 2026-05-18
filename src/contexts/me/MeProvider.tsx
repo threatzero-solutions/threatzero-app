@@ -14,6 +14,7 @@ import {
   makeCanAny,
   UnitTreeNode,
 } from "../../auth/can";
+import SplashScreen from "../../components/layouts/SplashScreen";
 import { getMe, ME_QUERY_KEY } from "../../queries/me";
 import { getUnits } from "../../queries/organizations";
 import { MeResponse } from "../../types/me";
@@ -220,6 +221,16 @@ export const MeProvider: React.FC<PropsWithChildren> = ({ children }) => {
       labels,
     ],
   );
+
+  // Hold the splash through the first `/me` round-trip when the user is
+  // authenticated. Without this gate, AuthProvider's splash hides as soon
+  // as keycloak.init() resolves and the first render runs with `me=undefined`
+  // → permission gates default closed → flash of a minimal-permissions
+  // layout before /me lands. Unauthenticated routes (login, sso-callback)
+  // skip the gate because `enabled` is false.
+  if (enabled && isPending) {
+    return <SplashScreen />;
+  }
 
   return <MeContext.Provider value={value}>{children}</MeContext.Provider>;
 };
