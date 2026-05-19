@@ -1,9 +1,8 @@
 /**
  * Identified Account button. The trigger shows who you are (avatar +
  * name + email) so identity isn't a click away; the panel exposes
- * Help Center and Sign Out. For system admins, the panel reveals the
- * current org as labeled context. Cross-org switching from the chrome
- * is deferred (see the shape brief § Open Questions).
+ * Manage account (Keycloak's hosted account console — name, email,
+ * password, 2FA, sessions, linked IdPs), Help Center, and Sign Out.
  *
  * Reuses Headless UI Menu directly for the panel mechanics. The
  * existing Dropdown component fits action lists; this menu's
@@ -12,9 +11,10 @@
  */
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Link } from "react-router";
+import { useAuth } from "../../contexts/auth/useAuth";
 import { useMe } from "../../contexts/me/MeProvider";
 import { useLogout } from "../../hooks/use-logout";
-import { Lifebuoy, SignOut } from "./icons";
+import { ArrowSquareOut, Lifebuoy, SignOut, UserGear } from "./icons";
 
 const initials = (name: string | null, email: string): string => {
   if (name) {
@@ -26,8 +26,11 @@ const initials = (name: string | null, email: string): string => {
 };
 
 const AccountMenu: React.FC<{ compact?: boolean }> = ({ compact }) => {
-  const { me, isGlobalAdmin } = useMe();
+  const { me } = useMe();
+  const { keycloak } = useAuth();
   const logout = useLogout();
+
+  const accountUrl = keycloak?.createAccountUrl();
 
   const name =
     me?.identity?.name ??
@@ -91,22 +94,37 @@ const AccountMenu: React.FC<{ compact?: boolean }> = ({ compact }) => {
           )}
         </div>
 
-        {/* System admin scope hint. Switcher logic deferred — see brief. */}
-        {isGlobalAdmin && me?.organization && (
-          <div className="px-4 py-3 border-b border-warm-200">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-secondary-500">
-              Acting in
-            </p>
-            <p className="mt-1 text-sm text-secondary-800 truncate">
-              {me.organization.name}
-            </p>
-            <p className="mt-1 text-[11px] text-secondary-500">
-              Cross-org switching from here is coming soon.
-            </p>
-          </div>
-        )}
-
         <div className="py-1">
+          {accountUrl && (
+            <MenuItem>
+              {({ focus }) => (
+                <a
+                  href={accountUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={[
+                    "flex items-center gap-2.5 px-4 py-2 text-sm",
+                    focus
+                      ? "bg-warm-100 text-secondary-900"
+                      : "text-secondary-700",
+                  ].join(" ")}
+                >
+                  <UserGear
+                    size={18}
+                    weight="regular"
+                    className="text-secondary-500"
+                  />
+                  <span className="flex-1">Manage account</span>
+                  <ArrowSquareOut
+                    size={14}
+                    weight="regular"
+                    className="text-secondary-400 shrink-0"
+                    aria-hidden="true"
+                  />
+                </a>
+              )}
+            </MenuItem>
+          )}
           <MenuItem>
             {({ focus }) => (
               <Link

@@ -21,6 +21,8 @@ import {
   List as Bars,
   X as Close,
   SignOut,
+  UserGear,
+  ArrowSquareOut,
 } from "@phosphor-icons/react";
 
 export {
@@ -37,4 +39,6 @@ export {
   Bars,
   Close,
   SignOut,
+  UserGear,
+  ArrowSquareOut,
 };
