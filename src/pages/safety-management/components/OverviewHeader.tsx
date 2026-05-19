@@ -23,7 +23,7 @@
  */
 import React from "react";
 
-type ChipTone = "amber" | "secondary" | "muted";
+type ChipTone = "primary" | "secondary" | "muted";
 
 export interface OverviewChip {
   count: number;
@@ -39,31 +39,31 @@ export interface OverviewTrend {
 }
 
 const toneSurface: Record<ChipTone, string> = {
-  amber: "bg-amber-50 ring-amber-200/70",
+  primary: "bg-primary-50 ring-primary-200/70",
   secondary: "bg-secondary-50 ring-secondary-200",
   muted: "bg-warm-100 ring-warm-200",
 };
 
 const toneSurfaceActive: Record<ChipTone, string> = {
-  amber: "bg-amber-100 ring-amber-400",
+  primary: "bg-primary-100 ring-primary-400",
   secondary: "bg-secondary-100 ring-secondary-400",
   muted: "bg-warm-200 ring-warm-400",
 };
 
 const toneSurfaceHover: Record<ChipTone, string> = {
-  amber: "hover:bg-amber-100/70 hover:ring-amber-300",
+  primary: "hover:bg-primary-100/70 hover:ring-primary-300",
   secondary: "hover:bg-secondary-100/70 hover:ring-secondary-300",
   muted: "hover:bg-warm-200/70 hover:ring-warm-300",
 };
 
 const toneNum: Record<ChipTone, string> = {
-  amber: "text-amber-900",
+  primary: "text-primary-900",
   secondary: "text-secondary-900",
   muted: "text-secondary-900",
 };
 
 const toneLabel: Record<ChipTone, string> = {
-  amber: "text-amber-800",
+  primary: "text-primary-800",
   secondary: "text-secondary-700",
   muted: "text-secondary-600",
 };
@@ -132,7 +132,6 @@ interface OverviewHeaderProps {
   /** Small context label after the number, e.g. "all-time" or "this org". */
   totalContext?: string;
   loading?: boolean;
-  accent?: { count: number; label: string };
   statusChips?: OverviewChip[];
   /** Chip value matching the active filter, so a chip can render pressed. */
   activeStatus?: string;
@@ -145,7 +144,6 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
   total,
   totalContext,
   loading,
-  accent,
   statusChips,
   activeStatus,
   onStatusChange,
@@ -180,15 +178,6 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
         {totalContext && (
           <span className="text-xs font-medium uppercase tracking-wider text-secondary-500">
             {totalContext}
-          </span>
-        )}
-        {accent && accent.count > 0 && (
-          <span className="text-sm font-semibold whitespace-nowrap text-primary-700">
-            <span
-              aria-hidden="true"
-              className="inline-block h-1.5 w-1.5 rounded-full align-middle bg-primary-500 mr-1.5"
-            />
-            {accent.count} {accent.label}
           </span>
         )}
       </div>

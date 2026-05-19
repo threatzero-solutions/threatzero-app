@@ -181,14 +181,6 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
             total={assessmentStats?.total}
             totalContext="all-time"
             loading={assessmentStatsLoading}
-            accent={
-              assessmentStats?.subtotals.statuses.in_progress
-                ? {
-                    count: assessmentStats.subtotals.statuses.in_progress,
-                    label: "in progress",
-                  }
-                : undefined
-            }
             statusChips={
               assessmentStats
                 ? [
@@ -196,7 +188,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                       count:
                         assessmentStats.subtotals.statuses.in_progress ?? 0,
                       label: "In progress",
-                      tone: "amber",
+                      tone: "primary",
                       value: AssessmentStatus.IN_PROGRESS,
                     },
                     {

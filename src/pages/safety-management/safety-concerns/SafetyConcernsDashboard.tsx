@@ -170,18 +170,13 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
         total={tipStats?.total}
         totalContext="all-time"
         loading={tipStatsLoading}
-        accent={
-          tipStats?.subtotals.statuses.new
-            ? { count: tipStats.subtotals.statuses.new, label: "new" }
-            : undefined
-        }
         statusChips={
           tipStats
             ? [
                 {
                   count: tipStats.subtotals.statuses.new ?? 0,
                   label: "New",
-                  tone: "amber",
+                  tone: "primary",
                   value: TipStatus.NEW,
                 },
                 {

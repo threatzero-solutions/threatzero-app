@@ -188,14 +188,6 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
             total={violentIncidentReportStats?.total}
             totalContext="all-time"
             loading={violentIncidentReportStatsLoading}
-            accent={
-              violentIncidentReportStats?.subtotals.statuses.new
-                ? {
-                    count: violentIncidentReportStats.subtotals.statuses.new,
-                    label: "new",
-                  }
-                : undefined
-            }
             statusChips={
               violentIncidentReportStats
                 ? [
@@ -203,7 +195,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
                       count:
                         violentIncidentReportStats.subtotals.statuses.new ?? 0,
                       label: "New",
-                      tone: "amber",
+                      tone: "primary",
                       value: ViolentIncidentReportStatus.NEW,
                     },
                     {
