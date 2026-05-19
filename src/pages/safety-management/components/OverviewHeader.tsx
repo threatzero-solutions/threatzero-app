@@ -1,18 +1,25 @@
 /**
  * Page-header overview for the Safety Management dashboards (Safety
- * Concerns / Threat Assessments / Violent Incident Log). Mirrors the
- * vocabulary of the user dashboard's `SafetyManagementCard → CountBlock`
- * but expands it from a card tile to an inline page header: big total
- * + accent, a row of status chips, and a row of "new since" trend
- * chips. No card surface — lives in the page's vertical rhythm.
+ * Concerns / Threat Assessments / Violent Incident Log). Inline, no
+ * card: lives in the page's vertical rhythm.
  *
- * The chip palette comes from the dashboard tile:
+ * Composition: big tabular total + brand-orange accent ("12 new"),
+ * a row of status chips that act as quick filters, and a quiet inline
+ * "Last 7d/30d/90d" line below.
+ *
+ * The chip palette echoes the user dashboard's SafetyManagementCard
+ * tile:
  *   - amber:     attention statuses (new, in-progress)
  *   - secondary: action statuses (reviewed, ongoing)
- *   - muted:     terminal statuses (resolved, complete) + trend chips
+ *   - muted:     terminal statuses (resolved, complete)
  *
- * Pages assemble their own chip arrays from the per-record-type stats
- * shape so this component stays presentational.
+ * Chips become interactive when `onChipClick` is provided; the page
+ * wires that to the DataTable's status filter so clicking "New"
+ * filters the table to status=new. The currently-active filter
+ * value (if any) is passed as `activeKey` and gets a pressed style.
+ *
+ * Trend counts are rendered inline (not as chips) so they visually
+ * demote from "stats you might act on" to "metadata about the total".
  */
 import React from "react";
 
@@ -22,12 +29,31 @@ export interface OverviewChip {
   count: number;
   label: string;
   tone?: ChipTone;
+  /** When set, the chip becomes a filter button keyed off this value. */
+  value?: string;
+}
+
+export interface OverviewTrend {
+  count: number;
+  label: string;
 }
 
 const toneSurface: Record<ChipTone, string> = {
   amber: "bg-amber-50 ring-amber-200/70",
   secondary: "bg-secondary-50 ring-secondary-200",
   muted: "bg-warm-100 ring-warm-200",
+};
+
+const toneSurfaceActive: Record<ChipTone, string> = {
+  amber: "bg-amber-100 ring-amber-400",
+  secondary: "bg-secondary-100 ring-secondary-400",
+  muted: "bg-warm-200 ring-warm-400",
+};
+
+const toneSurfaceHover: Record<ChipTone, string> = {
+  amber: "hover:bg-amber-100/70 hover:ring-amber-300",
+  secondary: "hover:bg-secondary-100/70 hover:ring-secondary-300",
+  muted: "hover:bg-warm-200/70 hover:ring-warm-300",
 };
 
 const toneNum: Record<ChipTone, string> = {
@@ -42,45 +68,88 @@ const toneLabel: Record<ChipTone, string> = {
   muted: "text-secondary-600",
 };
 
-const Chip: React.FC<OverviewChip> = ({ count, label, tone = "muted" }) => (
-  <span
-    className={[
-      "inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1",
-      toneSurface[tone],
-    ].join(" ")}
-  >
-    <span
-      className={["text-sm font-bold tabular-nums", toneNum[tone]].join(" ")}
-    >
-      {count}
-    </span>
-    <span
-      className={[
-        "text-[10.5px] font-semibold uppercase tracking-wider",
-        toneLabel[tone],
-      ].join(" ")}
-    >
-      {label}
-    </span>
-  </span>
-);
+interface ChipProps extends OverviewChip {
+  active?: boolean;
+  onClick?: () => void;
+}
+
+const Chip: React.FC<ChipProps> = ({
+  count,
+  label,
+  tone = "muted",
+  active,
+  onClick,
+}) => {
+  const className = [
+    "inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 transition-colors",
+    active ? toneSurfaceActive[tone] : toneSurface[tone],
+    onClick && !active ? toneSurfaceHover[tone] : "",
+    onClick
+      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const content = (
+    <>
+      <span
+        className={[
+          "min-w-[1.25rem] text-center text-sm font-bold tabular-nums",
+          toneNum[tone],
+        ].join(" ")}
+      >
+        {count}
+      </span>
+      <span
+        className={[
+          "text-[10.5px] font-semibold uppercase tracking-wider",
+          toneLabel[tone],
+        ].join(" ")}
+      >
+        {label}
+      </span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        className={className}
+      >
+        {content}
+      </button>
+    );
+  }
+  return <span className={className}>{content}</span>;
+};
 
 interface OverviewHeaderProps {
   total?: number;
-  totalLabel: string;
+  /** Small context label after the number, e.g. "all-time" or "this org". */
+  totalContext?: string;
   loading?: boolean;
   accent?: { count: number; label: string };
   statusChips?: OverviewChip[];
-  trendChips?: OverviewChip[];
+  /** Chip value matching the active filter, so a chip can render pressed. */
+  activeStatus?: string;
+  /** Toggle: pass current active value to clear; pass a new value to set. */
+  onStatusChange?: (next: string | undefined) => void;
+  trends?: OverviewTrend[];
 }
 
 const OverviewHeader: React.FC<OverviewHeaderProps> = ({
   total,
-  totalLabel,
+  totalContext,
   loading,
   accent,
   statusChips,
-  trendChips,
+  activeStatus,
+  onStatusChange,
+  trends,
 }) => {
   if (loading) {
     return (
@@ -97,14 +166,7 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
             />
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={`t-${i}`}
-              className="h-7 w-28 animate-pulse rounded-full bg-warm-100"
-            />
-          ))}
-        </div>
+        <div className="h-3 w-64 animate-pulse rounded bg-warm-100" />
       </div>
     );
   }
@@ -115,14 +177,16 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
         <span className="text-4xl font-bold tabular-nums leading-none text-secondary-900">
           {total ?? 0}
         </span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-secondary-500">
-          {totalLabel}
-        </span>
+        {totalContext && (
+          <span className="text-xs font-medium uppercase tracking-wider text-secondary-500">
+            {totalContext}
+          </span>
+        )}
         {accent && accent.count > 0 && (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700">
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700">
             <span
               aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-amber-500"
+              className="h-1.5 w-1.5 rounded-full bg-primary-500"
             />
             {accent.count} {accent.label}
           </span>
@@ -131,18 +195,40 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
 
       {statusChips && statusChips.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {statusChips.map((c, i) => (
-            <Chip key={`status-${i}`} {...c} />
-          ))}
+          {statusChips.map((c) => {
+            const active = !!c.value && c.value === activeStatus;
+            const handleClick =
+              onStatusChange && c.value
+                ? () => onStatusChange(active ? undefined : c.value)
+                : undefined;
+            return (
+              <Chip
+                key={c.value ?? c.label}
+                {...c}
+                active={active}
+                onClick={handleClick}
+              />
+            );
+          })}
         </div>
       )}
 
-      {trendChips && trendChips.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {trendChips.map((c, i) => (
-            <Chip key={`trend-${i}`} tone="muted" {...c} />
+      {trends && trends.length > 0 && (
+        <p className="text-xs text-secondary-500">
+          {trends.map((t, i) => (
+            <span key={t.label}>
+              {i > 0 && (
+                <span aria-hidden="true" className="mx-2 text-secondary-300">
+                  ·
+                </span>
+              )}
+              <span>{t.label}: </span>
+              <span className="font-semibold tabular-nums text-secondary-700">
+                {t.count}
+              </span>
+            </span>
           ))}
-        </div>
+        </p>
       )}
     </div>
   );

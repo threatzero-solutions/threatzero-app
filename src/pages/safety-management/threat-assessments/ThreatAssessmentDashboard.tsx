@@ -174,10 +174,10 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
   ]);
 
   return (
-    <div className={"space-y-12"}>
+    <div className={"space-y-6"}>
       <OverviewHeader
         total={assessmentStats?.total}
-        totalLabel="threat assessments"
+        totalContext="all-time"
         loading={assessmentStatsLoading}
         accent={
           assessmentStats?.subtotals.statuses.in_progress
@@ -194,6 +194,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                   count: assessmentStats.subtotals.statuses.in_progress ?? 0,
                   label: "In progress",
                   tone: "amber",
+                  value: AssessmentStatus.IN_PROGRESS,
                 },
                 {
                   count:
@@ -201,6 +202,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                       .concluded_management_ongoing ?? 0,
                   label: "Mgmt ongoing",
                   tone: "secondary",
+                  value: AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING,
                 },
                 {
                   count:
@@ -208,11 +210,16 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                       .concluded_management_complete ?? 0,
                   label: "Complete",
                   tone: "muted",
+                  value: AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE,
                 },
               ]
             : undefined
         }
-        trendChips={
+        activeStatus={tableFilterOptions.status as string | undefined}
+        onStatusChange={(next) =>
+          setTableFilterOptions({ ...tableFilterOptions, status: next })
+        }
+        trends={
           assessmentStats
             ? [
                 {
@@ -238,8 +245,6 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
         columns={columns}
         isLoading={assessmentsLoading}
         noRowsMessage="No assessments found."
-        title="View Assessments"
-        subtitle="Sort and filter through active and closed threat assessments."
         action={
           <Link to={"./new"}>
             <button

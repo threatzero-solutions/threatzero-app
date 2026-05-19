@@ -181,10 +181,10 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
   ]);
 
   return (
-    <div className={"space-y-12"}>
+    <div className={"space-y-6"}>
       <OverviewHeader
         total={violentIncidentReportStats?.total}
-        totalLabel="violent incidents"
+        totalContext="all-time"
         loading={violentIncidentReportStatsLoading}
         accent={
           violentIncidentReportStats?.subtotals.statuses.new
@@ -201,17 +201,23 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
                   count: violentIncidentReportStats.subtotals.statuses.new ?? 0,
                   label: "New",
                   tone: "amber",
+                  value: ViolentIncidentReportStatus.NEW,
                 },
                 {
                   count:
                     violentIncidentReportStats.subtotals.statuses.reviewed ?? 0,
                   label: "Reviewed",
                   tone: "secondary",
+                  value: ViolentIncidentReportStatus.REVIEWED,
                 },
               ]
             : undefined
         }
-        trendChips={
+        activeStatus={tableFilterOptions.status as string | undefined}
+        onStatusChange={(next) =>
+          setTableFilterOptions({ ...tableFilterOptions, status: next })
+        }
+        trends={
           violentIncidentReportStats
             ? [
                 {
@@ -239,8 +245,6 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
         columns={columns}
         isLoading={violentIncidentReportsLoading}
         noRowsMessage="Violent incident log empty."
-        title="Violent Incident Log"
-        subtitle="View, add or edit violent incident reports."
         action={
           <Link to={"./new"}>
             <button

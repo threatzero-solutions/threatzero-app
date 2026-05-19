@@ -165,10 +165,10 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
   }, [canAlterTip, location, saveTipMutation, hasMultipleUnitAccess]);
 
   return (
-    <div className={"space-y-12"}>
+    <div className={"space-y-6"}>
       <OverviewHeader
         total={tipStats?.total}
-        totalLabel="safety concerns"
+        totalContext="all-time"
         loading={tipStatsLoading}
         accent={
           tipStats?.subtotals.statuses.new
@@ -182,21 +182,28 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
                   count: tipStats.subtotals.statuses.new ?? 0,
                   label: "New",
                   tone: "amber",
+                  value: TipStatus.NEW,
                 },
                 {
                   count: tipStats.subtotals.statuses.reviewed ?? 0,
                   label: "Reviewed",
                   tone: "secondary",
+                  value: TipStatus.REVIEWED,
                 },
                 {
                   count: tipStats.subtotals.statuses.resolved ?? 0,
                   label: "Resolved",
                   tone: "muted",
+                  value: TipStatus.RESOLVED,
                 },
               ]
             : undefined
         }
-        trendChips={
+        activeStatus={tableFilterOptions.status as string | undefined}
+        onStatusChange={(next) =>
+          setTableFilterOptions({ ...tableFilterOptions, status: next })
+        }
+        trends={
           tipStats
             ? [
                 {
@@ -222,8 +229,6 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
         columns={columns}
         isLoading={tipsLoading}
         noRowsMessage="No safety concerns found."
-        title="View Safety Concerns"
-        subtitle="Sort and filter through safety concern submissions."
         query={tableFilterOptions}
         setQuery={setTableFilterOptions}
         pageState={tips}
