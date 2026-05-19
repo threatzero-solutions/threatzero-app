@@ -31,6 +31,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router";
 import { useNav } from "../../utils/navigation";
 import Logo from "../brand/Logo";
+import { ArrowUpRight } from "@phosphor-icons/react";
 import { CaretRight, Close, Lifebuoy } from "./icons";
 import {
   ChromeNavItem,
@@ -165,17 +166,31 @@ const SosCallout: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => (
   <Link
     to="/safety-concerns"
     onClick={onNavigate}
+    aria-label="Report a safety concern. Sense, observe, share."
     className={[
-      "group block mx-3 mt-3 rounded-xl px-4 py-3",
-      "bg-primary-400 text-white hover:bg-primary-500 transition-colors",
+      "group block mx-3 mt-4 rounded-xl px-4 py-3.5",
+      "bg-primary-400 text-white ring-1 ring-primary-500/40 shadow-sm",
+      "hover:bg-primary-500 hover:shadow-md hover:-translate-y-0.5",
+      "transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+      "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
       "focus-visible:ring-offset-warm-100 focus-visible:ring-primary-500",
-      "shadow-sm",
     ].join(" ")}
   >
-    <p className="text-base font-bold tracking-tight leading-none">S.O.S.</p>
-    <p className="mt-1 text-[11px] uppercase tracking-wider text-primary-50/90 leading-tight">
-      Sense · Observe · Share
+    <div className="flex items-center justify-between gap-3">
+      <p className="text-[17px] font-bold tracking-[0.15em] leading-none">
+        S.O.S.
+      </p>
+      <ArrowUpRight
+        size={16}
+        weight="bold"
+        className="text-white/75 shrink-0 transition-all duration-200 group-hover:text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
+        aria-hidden="true"
+      />
+    </div>
+    <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-primary-50/85 leading-snug">
+      Sense <span className="text-white/40">·</span> Observe{" "}
+      <span className="text-white/40">·</span> Share
     </p>
   </Link>
 );
