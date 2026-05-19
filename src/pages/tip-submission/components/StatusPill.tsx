@@ -11,7 +11,7 @@ const toneFor = (status: TipStatus): StatusBadgeTone => {
     case TipStatus.NEW:
       return "primary";
     case TipStatus.REVIEWED:
-      return "secondary";
+      return "info";
     case TipStatus.RESOLVED:
       return "success";
     default:

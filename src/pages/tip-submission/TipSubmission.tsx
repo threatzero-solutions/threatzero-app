@@ -37,7 +37,7 @@ const TIP_STATUS_OPTIONS: StatusOption<TipStatus>[] = [
   {
     value: TipStatus.REVIEWED,
     label: fromStatus(TipStatus.REVIEWED),
-    tone: "secondary",
+    tone: "info",
   },
   {
     value: TipStatus.RESOLVED,

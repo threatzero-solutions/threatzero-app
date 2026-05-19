@@ -20,6 +20,7 @@ import React from "react";
 export type StatusBadgeTone =
   | "primary"
   | "secondary"
+  | "info"
   | "success"
   | "warning"
   | "muted";
@@ -32,6 +33,7 @@ interface StatusBadgeProps {
 export const statusBadgeToneStyles: Record<StatusBadgeTone, string> = {
   primary: "bg-primary-50 ring-primary-200/70 text-primary-800",
   secondary: "bg-secondary-50 ring-secondary-200 text-secondary-700",
+  info: "bg-info-50 ring-info-200 text-info-700",
   success: "bg-success-50 ring-success-200 text-success-700",
   warning: "bg-warning-50 ring-warning-200 text-warning-700",
   muted: "bg-warm-100 ring-warm-200 text-secondary-600",

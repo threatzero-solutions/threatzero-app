@@ -182,7 +182,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
                 {
                   count: tipStats.subtotals.statuses.reviewed ?? 0,
                   label: "Reviewed",
-                  tone: "secondary",
+                  tone: "info",
                   value: TipStatus.REVIEWED,
                 },
                 {

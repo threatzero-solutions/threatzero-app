@@ -41,7 +41,7 @@ const ASSESSMENT_STATUS_OPTIONS: StatusOption<AssessmentStatus>[] = [
   {
     value: AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING,
     label: fromStatus(AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING),
-    tone: "secondary",
+    tone: "info",
   },
   {
     value: AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE,
@@ -51,7 +51,7 @@ const ASSESSMENT_STATUS_OPTIONS: StatusOption<AssessmentStatus>[] = [
   {
     value: AssessmentStatus.CLOSED_SUPERFICIAL_THREAT,
     label: fromStatus(AssessmentStatus.CLOSED_SUPERFICIAL_THREAT),
-    tone: "warning",
+    tone: "muted",
   },
 ];
 

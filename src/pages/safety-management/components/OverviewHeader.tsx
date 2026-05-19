@@ -23,7 +23,7 @@
  */
 import React from "react";
 
-type ChipTone = "primary" | "secondary" | "muted";
+type ChipTone = "primary" | "info" | "success" | "secondary" | "muted";
 
 export interface OverviewChip {
   count: number;
@@ -40,30 +40,40 @@ export interface OverviewTrend {
 
 const toneSurface: Record<ChipTone, string> = {
   primary: "bg-primary-50 ring-primary-200/70",
+  info: "bg-info-50 ring-info-200",
+  success: "bg-success-50 ring-success-200",
   secondary: "bg-secondary-50 ring-secondary-200",
   muted: "bg-warm-100 ring-warm-200",
 };
 
 const toneSurfaceActive: Record<ChipTone, string> = {
   primary: "bg-primary-100 ring-primary-400",
+  info: "bg-info-100 ring-info-400",
+  success: "bg-success-100 ring-success-400",
   secondary: "bg-secondary-100 ring-secondary-400",
   muted: "bg-warm-200 ring-warm-400",
 };
 
 const toneSurfaceHover: Record<ChipTone, string> = {
   primary: "hover:bg-primary-100/70 hover:ring-primary-300",
+  info: "hover:bg-info-100/70 hover:ring-info-300",
+  success: "hover:bg-success-100/70 hover:ring-success-300",
   secondary: "hover:bg-secondary-100/70 hover:ring-secondary-300",
   muted: "hover:bg-warm-200/70 hover:ring-warm-300",
 };
 
 const toneNum: Record<ChipTone, string> = {
   primary: "text-primary-900",
+  info: "text-info-700",
+  success: "text-success-700",
   secondary: "text-secondary-900",
   muted: "text-secondary-900",
 };
 
 const toneLabel: Record<ChipTone, string> = {
   primary: "text-primary-800",
+  info: "text-info-700",
+  success: "text-success-700",
   secondary: "text-secondary-700",
   muted: "text-secondary-600",
 };

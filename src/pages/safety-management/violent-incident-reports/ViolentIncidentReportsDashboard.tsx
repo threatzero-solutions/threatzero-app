@@ -203,7 +203,7 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
                         violentIncidentReportStats.subtotals.statuses
                           .reviewed ?? 0,
                       label: "Reviewed",
-                      tone: "secondary",
+                      tone: "success",
                       value: ViolentIncidentReportStatus.REVIEWED,
                     },
                   ]
