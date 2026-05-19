@@ -14,6 +14,14 @@ export interface RequirePermissionsOptions extends PropsWithChildren {
  * Capability-aware route guard. Capabilities come from `/api/me`, not the
  * JWT. While `/me` is still loading we render "Loading..." rather than
  * bouncing, so a stale cache redirect doesn't fire during refresh.
+ *
+ * The "can I enter this page at all" question is intentionally
+ * unit-inclusive: a unit-only grantee (e.g., a unit-admin scoped to a
+ * single school) should reach `/my-organization/*` and see the surfaces
+ * their unit-scoped caps cover. `canAny` is the right call here —
+ * `can()` checks org-wide only and would bounce unit-only grantees
+ * despite legitimate access (app#86). Per-surface scoping inside each
+ * page is handled by the page's own `can()` / `canAny()` checks.
  */
 const RequirePermissions: React.FC<RequirePermissionsOptions> = ({
   type = "any",
@@ -21,13 +29,13 @@ const RequirePermissions: React.FC<RequirePermissionsOptions> = ({
   fallbackTo,
   children,
 }) => {
-  const { me, isInitialLoading, can } = useMe();
+  const { me, isInitialLoading, canAny } = useMe();
 
   if (isInitialLoading || me === undefined) {
     return <div>Loading...</div>;
   }
 
-  const predicate = (cap: string) => can(cap);
+  const predicate = (cap: string) => canAny(cap);
   const satisfied =
     type === "all" ? permissions.every(predicate) : permissions.some(predicate);
 
