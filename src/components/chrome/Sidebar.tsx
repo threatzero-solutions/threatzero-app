@@ -386,26 +386,14 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
               leaveTo="-translate-x-full"
             >
               <DialogPanel className="relative flex w-64 bg-warm-100">
-                <TransitionChild
-                  as={Fragment}
-                  enter="ease-out duration-200"
-                  enterFrom="opacity-0"
-                  enterTo="opacity-100"
-                  leave="ease-in duration-150"
-                  leaveFrom="opacity-100"
-                  leaveTo="opacity-0"
+                <button
+                  type="button"
+                  className="absolute right-2 top-5 p-2 rounded-md text-secondary-500 hover:text-secondary-800 hover:bg-warm-200/60 transition-colors z-10"
+                  onClick={onMobileClose}
                 >
-                  <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
-                    <button
-                      type="button"
-                      className="p-2.5 text-white"
-                      onClick={onMobileClose}
-                    >
-                      <span className="sr-only">Close sidebar</span>
-                      <Close size={24} aria-hidden="true" />
-                    </button>
-                  </div>
-                </TransitionChild>
+                  <span className="sr-only">Close sidebar</span>
+                  <Close size={20} aria-hidden="true" />
+                </button>
                 <SidebarBody
                   pathname={pathname}
                   openGroup={openGroup}
