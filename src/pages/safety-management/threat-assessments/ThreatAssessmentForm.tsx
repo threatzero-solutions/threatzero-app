@@ -48,6 +48,11 @@ const ASSESSMENT_STATUS_OPTIONS: StatusOption<AssessmentStatus>[] = [
     label: fromStatus(AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE),
     tone: "success",
   },
+  {
+    value: AssessmentStatus.CLOSED_SUPERFICIAL_THREAT,
+    label: fromStatus(AssessmentStatus.CLOSED_SUPERFICIAL_THREAT),
+    tone: "muted",
+  },
 ];
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
