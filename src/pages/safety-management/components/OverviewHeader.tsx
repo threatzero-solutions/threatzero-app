@@ -29,8 +29,13 @@ export interface OverviewChip {
   count: number;
   label: string;
   tone?: ChipTone;
-  /** When set, the chip becomes a filter button keyed off this value. */
-  value?: string;
+  /**
+   * When set, the chip becomes a filter button keyed off this value.
+   * Pass an array to collapse multiple equivalent statuses into one
+   * chip (e.g. Complete + Closed Superficial Threat → one "Complete"
+   * chip that filters to either).
+   */
+  value?: string | string[];
 }
 
 export interface OverviewTrend {
@@ -144,11 +149,22 @@ interface OverviewHeaderProps {
   loading?: boolean;
   statusChips?: OverviewChip[];
   /** Chip value matching the active filter, so a chip can render pressed. */
-  activeStatus?: string;
-  /** Toggle: pass current active value to clear; pass a new value to set. */
-  onStatusChange?: (next: string | undefined) => void;
+  activeStatus?: string | string[];
+  /** Toggle: pass undefined to clear; pass a new value or array to set. */
+  onStatusChange?: (next: string | string[] | undefined) => void;
   trends?: OverviewTrend[];
 }
+
+const sameValue = (
+  a: string | string[] | undefined,
+  b: string | string[] | undefined,
+): boolean => {
+  if (a === undefined || b === undefined) return a === b;
+  const arrA = Array.isArray(a) ? [...a].sort() : [a];
+  const arrB = Array.isArray(b) ? [...b].sort() : [b];
+  if (arrA.length !== arrB.length) return false;
+  return arrA.every((v, i) => v === arrB[i]);
+};
 
 const OverviewHeader: React.FC<OverviewHeaderProps> = ({
   total,
@@ -195,18 +211,16 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
       {statusChips && statusChips.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {statusChips.map((c) => {
-            const active = !!c.value && c.value === activeStatus;
+            const active = !!c.value && sameValue(c.value, activeStatus);
             const handleClick =
               onStatusChange && c.value
                 ? () => onStatusChange(active ? undefined : c.value)
                 : undefined;
+            const key = Array.isArray(c.value)
+              ? c.value.join("+")
+              : (c.value ?? c.label);
             return (
-              <Chip
-                key={c.value ?? c.label}
-                {...c}
-                active={active}
-                onClick={handleClick}
-              />
+              <Chip key={key} {...c} active={active} onClick={handleClick} />
             );
           })}
         </div>

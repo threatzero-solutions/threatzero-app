@@ -200,17 +200,29 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                       value: AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING,
                     },
                     {
+                      // Roll closed-superficial into Complete: both are
+                      // terminal "case closed" states from a triage POV.
+                      // The static badge in the table still shows each
+                      // status distinctly (success vs muted), but the
+                      // hero filter collapses them.
                       count:
-                        assessmentStats.subtotals.statuses
-                          .concluded_management_complete ?? 0,
+                        (assessmentStats.subtotals.statuses
+                          .concluded_management_complete ?? 0) +
+                        (assessmentStats.subtotals.statuses
+                          .closed_superficial_threat ?? 0),
                       label: "Complete",
-                      tone: "muted",
-                      value: AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE,
+                      tone: "success",
+                      value: [
+                        AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE,
+                        AssessmentStatus.CLOSED_SUPERFICIAL_THREAT,
+                      ],
                     },
                   ]
                 : undefined
             }
-            activeStatus={tableFilterOptions.status as string | undefined}
+            activeStatus={
+              tableFilterOptions.status as string | string[] | undefined
+            }
             onStatusChange={(next) =>
               setTableFilterOptions({ ...tableFilterOptions, status: next })
             }
@@ -263,7 +275,9 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
             {
               key: "status",
               label: "Status",
-              defaultValue: tableFilterOptions.status as string | undefined,
+              defaultValue: Array.isArray(tableFilterOptions.status)
+                ? undefined
+                : (tableFilterOptions.status as string | undefined),
               options: Object.values(AssessmentStatus).map((status) => ({
                 value: status,
                 label: fromStatus(status),
