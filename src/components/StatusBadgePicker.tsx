@@ -16,10 +16,16 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { CaretDown, Check, CircleNotch } from "@phosphor-icons/react";
 import StatusBadge, {
-  statusBadgeBaseClass,
   statusBadgeToneStyles,
   StatusBadgeTone,
 } from "./StatusBadge";
+
+// The picker trigger is bigger than the static badge — it's the
+// primary editable element on the details page, so it carries more
+// presence. The option list inside the popover uses the standard
+// StatusBadge size for compactness.
+const pickerTriggerClass =
+  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 ring-1 ring-inset text-xs font-semibold uppercase leading-none tracking-wider whitespace-nowrap";
 
 export interface StatusOption<T extends string> {
   value: T;
@@ -55,9 +61,9 @@ function StatusBadgePicker<T extends string>({
       <MenuButton
         disabled={loading}
         className={[
-          statusBadgeBaseClass,
+          pickerTriggerClass,
           statusBadgeToneStyles[current.tone],
-          "gap-1.5 transition-all",
+          "transition-all",
           "hover:brightness-95 focus-visible:outline-none focus-visible:ring-primary-400",
           "data-open:brightness-95",
           loading ? "cursor-wait opacity-80" : "cursor-pointer",
@@ -66,14 +72,14 @@ function StatusBadgePicker<T extends string>({
         <span>{current.label}</span>
         {loading ? (
           <CircleNotch
-            size={10}
+            size={12}
             weight="bold"
             className="animate-spin opacity-80"
             aria-hidden="true"
           />
         ) : (
           <CaretDown
-            size={10}
+            size={12}
             weight="bold"
             className="opacity-70 transition-transform group-data-open:rotate-180"
             aria-hidden="true"
