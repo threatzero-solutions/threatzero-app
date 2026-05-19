@@ -190,7 +190,7 @@ export const router = createBrowserRouter(
                 },
                 {
                   path: "safety-concerns",
-                  handle: { title: "Safety Concerns" },
+                  handle: { title: "Report a Concern" },
                   children: [
                     {
                       path: "",
