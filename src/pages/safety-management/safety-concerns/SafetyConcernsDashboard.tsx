@@ -166,10 +166,6 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
 
   return (
     <div className={"space-y-12"}>
-      <h3 className="text-2xl font-semibold leading-6 text-gray-900">
-        Safety Concerns
-      </h3>
-
       {/* STATS */}
       <StatsDisplay
         heading="New Since"

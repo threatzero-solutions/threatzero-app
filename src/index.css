@@ -151,44 +151,53 @@
   }
 }
 
-body {
-  margin: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/*
+ * Custom rules wrapped in @layer utilities. Tailwind v4 + the Vite
+ * plugin silently drop top-level rules below the `@layer base` block
+ * above — the dev server compiles them out and the splash pulse, body
+ * font, code font, etc. never reach the browser. Layered rules survive.
+ */
+@layer utilities {
+  body {
+    margin: 0;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+      "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-/* SplashScreen indicator. The brand-orange ring softly scales and fades
-   under the wordmark while keycloak.init + /me are in flight. ease-out
-   exponential timing so it never feels jittery. */
-@keyframes tz-splash-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
+  /* SplashScreen indicator. The brand-orange ring softly scales and
+     fades under the wordmark while keycloak.init + /me are in flight.
+     ease-out exponential timing so it never feels jittery. */
+  @keyframes tz-splash-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0.15;
+    }
   }
-  50% {
-    transform: scale(1.5);
-    opacity: 0.15;
-  }
-}
-.tz-splash-pulse {
-  animation: tz-splash-pulse 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
   .tz-splash-pulse {
-    animation: none;
-    opacity: 0.6;
+    animation: tz-splash-pulse 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
-}
+  @media (prefers-reduced-motion: reduce) {
+    .tz-splash-pulse {
+      animation: none;
+      opacity: 0.6;
+    }
+  }
 
-code {
-  font-family:
-    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
-}
+  code {
+    font-family:
+      source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  }
 
-.snap-y-proximity {
-  scroll-snap-type: y proximity;
+  .snap-y-proximity {
+    scroll-snap-type: y proximity;
+  }
 }

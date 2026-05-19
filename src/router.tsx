@@ -221,7 +221,7 @@ export const router = createBrowserRouter(
                     // },
                     {
                       path: "safety-concerns",
-                      handle: { title: "Administrative Reports" },
+                      handle: { title: "Safety Concerns" },
                       children: [
                         {
                           path: "",
