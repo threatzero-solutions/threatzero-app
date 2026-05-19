@@ -9,7 +9,7 @@ import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import EditableCell from "../../../components/layouts/EditableCell";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import StatsDisplay from "../../../components/StatsDisplay";
+import OverviewHeader from "../components/OverviewHeader";
 import { threatAssessmentPermissionsOptions } from "../../../constants/permission-options";
 import { WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
@@ -23,7 +23,7 @@ import {
   saveThreatAssessment,
 } from "../../../queries/safety-management";
 import { AssessmentStatus, ThreatAssessment } from "../../../types/entities";
-import { fromDaysKey, fromStatus } from "../../../utils/core";
+import { fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
 
 dayjs.extend(relativeTime);
@@ -175,42 +175,60 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
 
   return (
     <div className={"space-y-12"}>
-      {/* STATS */}
-      <StatsDisplay
-        heading="New Since"
+      <OverviewHeader
+        total={assessmentStats?.total}
+        totalLabel="threat assessments"
         loading={assessmentStatsLoading}
-        stats={
-          assessmentStats &&
-          Object.entries(assessmentStats.subtotals.newSince).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: fromDaysKey(key),
-              stat: subtotal,
-              detail: `${(
-                (subtotal / (assessmentStats.total || 1)) *
-                100
-              ).toFixed(2)}%`,
-            }),
-          )
+        accent={
+          assessmentStats?.subtotals.statuses.in_progress
+            ? {
+                count: assessmentStats.subtotals.statuses.in_progress,
+                label: "in progress",
+              }
+            : undefined
         }
-      />
-
-      <StatsDisplay
-        heading="Totals by Status"
-        loading={assessmentStatsLoading}
-        stats={
-          assessmentStats &&
-          Object.entries(assessmentStats.subtotals.statuses).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: <StatusPill status={key as AssessmentStatus} />,
-              stat: subtotal,
-              detail: `${(
-                (subtotal / (assessmentStats.total || 1)) *
-                100
-              ).toFixed(2)}%`,
-            }),
-          )
+        statusChips={
+          assessmentStats
+            ? [
+                {
+                  count: assessmentStats.subtotals.statuses.in_progress ?? 0,
+                  label: "In progress",
+                  tone: "amber",
+                },
+                {
+                  count:
+                    assessmentStats.subtotals.statuses
+                      .concluded_management_ongoing ?? 0,
+                  label: "Mgmt ongoing",
+                  tone: "secondary",
+                },
+                {
+                  count:
+                    assessmentStats.subtotals.statuses
+                      .concluded_management_complete ?? 0,
+                  label: "Complete",
+                  tone: "muted",
+                },
+              ]
+            : undefined
+        }
+        trendChips={
+          assessmentStats
+            ? [
+                {
+                  count: assessmentStats.subtotals.newSince.days7 ?? 0,
+                  label: "Last 7d",
+                },
+                {
+                  count: assessmentStats.subtotals.newSince.days30 ?? 0,
+                  label: "Last 30d",
+                },
+                {
+                  count: assessmentStats.subtotals.newSince.days90 ?? 0,
+                  label: "Last 90d",
+                },
+              ]
+            : undefined
         }
       />
 

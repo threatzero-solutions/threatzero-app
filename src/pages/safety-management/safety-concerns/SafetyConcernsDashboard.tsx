@@ -8,7 +8,7 @@ import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import EditableCell from "../../../components/layouts/EditableCell";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import StatsDisplay from "../../../components/StatsDisplay";
+import OverviewHeader from "../components/OverviewHeader";
 import { safetyConcernPermissionsOptions } from "../../../constants/permission-options";
 import { WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
@@ -22,7 +22,7 @@ import {
   saveTip,
 } from "../../../queries/safety-management";
 import { Tip, TipStatus } from "../../../types/entities";
-import { fromDaysKey, fromStatus } from "../../../utils/core";
+import { fromStatus } from "../../../utils/core";
 import StatusPill from "../../tip-submission/components/StatusPill";
 
 const columnHelper = createColumnHelper<Tip>();
@@ -166,40 +166,53 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
 
   return (
     <div className={"space-y-12"}>
-      {/* STATS */}
-      <StatsDisplay
-        heading="New Since"
+      <OverviewHeader
+        total={tipStats?.total}
+        totalLabel="safety concerns"
         loading={tipStatsLoading}
-        stats={
-          tipStats &&
-          Object.entries(tipStats.subtotals.newSince).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: fromDaysKey(key),
-              stat: subtotal,
-              detail: `${((subtotal / (tipStats.total || 1)) * 100).toFixed(
-                2,
-              )}%`,
-            }),
-          )
+        accent={
+          tipStats?.subtotals.statuses.new
+            ? { count: tipStats.subtotals.statuses.new, label: "new" }
+            : undefined
         }
-      />
-
-      <StatsDisplay
-        heading="Totals by Status"
-        loading={tipStatsLoading}
-        stats={
-          tipStats &&
-          Object.entries(tipStats.subtotals.statuses).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: <StatusPill status={key as TipStatus} />,
-              stat: subtotal,
-              detail: `${((subtotal / (tipStats.total || 1)) * 100).toFixed(
-                2,
-              )}%`,
-            }),
-          )
+        statusChips={
+          tipStats
+            ? [
+                {
+                  count: tipStats.subtotals.statuses.new ?? 0,
+                  label: "New",
+                  tone: "amber",
+                },
+                {
+                  count: tipStats.subtotals.statuses.reviewed ?? 0,
+                  label: "Reviewed",
+                  tone: "secondary",
+                },
+                {
+                  count: tipStats.subtotals.statuses.resolved ?? 0,
+                  label: "Resolved",
+                  tone: "muted",
+                },
+              ]
+            : undefined
+        }
+        trendChips={
+          tipStats
+            ? [
+                {
+                  count: tipStats.subtotals.newSince.days7 ?? 0,
+                  label: "Last 7d",
+                },
+                {
+                  count: tipStats.subtotals.newSince.days30 ?? 0,
+                  label: "Last 30d",
+                },
+                {
+                  count: tipStats.subtotals.newSince.days90 ?? 0,
+                  label: "Last 90d",
+                },
+              ]
+            : undefined
         }
       />
 

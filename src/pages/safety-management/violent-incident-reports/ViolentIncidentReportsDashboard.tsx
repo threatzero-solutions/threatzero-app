@@ -9,7 +9,7 @@ import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import EditableCell from "../../../components/layouts/EditableCell";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import StatsDisplay from "../../../components/StatsDisplay";
+import OverviewHeader from "../components/OverviewHeader";
 import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
 import { WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
@@ -26,7 +26,7 @@ import {
   ViolentIncidentReport,
   ViolentIncidentReportStatus,
 } from "../../../types/entities";
-import { fromDaysKey, fromStatus } from "../../../utils/core";
+import { fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
 
 dayjs.extend(relativeTime);
@@ -182,44 +182,58 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
 
   return (
     <div className={"space-y-12"}>
-      {/* STATS */}
-      <StatsDisplay
-        heading="New Since"
+      <OverviewHeader
+        total={violentIncidentReportStats?.total}
+        totalLabel="violent incidents"
         loading={violentIncidentReportStatsLoading}
-        stats={
-          violentIncidentReportStats &&
-          Object.entries(violentIncidentReportStats.subtotals.newSince).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: fromDaysKey(key),
-              stat: subtotal,
-              detail: `${(
-                (subtotal / (violentIncidentReportStats.total || 1)) *
-                100
-              ).toFixed(2)}%`,
-            }),
-          )
+        accent={
+          violentIncidentReportStats?.subtotals.statuses.new
+            ? {
+                count: violentIncidentReportStats.subtotals.statuses.new,
+                label: "new",
+              }
+            : undefined
+        }
+        statusChips={
+          violentIncidentReportStats
+            ? [
+                {
+                  count: violentIncidentReportStats.subtotals.statuses.new ?? 0,
+                  label: "New",
+                  tone: "amber",
+                },
+                {
+                  count:
+                    violentIncidentReportStats.subtotals.statuses.reviewed ?? 0,
+                  label: "Reviewed",
+                  tone: "secondary",
+                },
+              ]
+            : undefined
+        }
+        trendChips={
+          violentIncidentReportStats
+            ? [
+                {
+                  count:
+                    violentIncidentReportStats.subtotals.newSince.days7 ?? 0,
+                  label: "Last 7d",
+                },
+                {
+                  count:
+                    violentIncidentReportStats.subtotals.newSince.days30 ?? 0,
+                  label: "Last 30d",
+                },
+                {
+                  count:
+                    violentIncidentReportStats.subtotals.newSince.days90 ?? 0,
+                  label: "Last 90d",
+                },
+              ]
+            : undefined
         }
       />
 
-      <StatsDisplay
-        heading="Totals by Status"
-        loading={violentIncidentReportStatsLoading}
-        stats={
-          violentIncidentReportStats &&
-          Object.entries(violentIncidentReportStats.subtotals.statuses).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: <StatusPill status={key as ViolentIncidentReportStatus} />,
-              stat: subtotal,
-              detail: `${(
-                (subtotal / (violentIncidentReportStats.total || 1)) *
-                100
-              ).toFixed(2)}%`,
-            }),
-          )
-        }
-      />
       <DataTable2
         data={violentIncidentReports?.results ?? []}
         columns={columns}
