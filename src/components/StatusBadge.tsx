@@ -32,7 +32,7 @@ export const statusBadgeToneStyles: Record<StatusBadgeTone, string> = {
 };
 
 export const statusBadgeBaseClass =
-  "inline-flex items-center rounded-full px-2 py-0.5 ring-1 ring-inset text-[10.5px] font-semibold uppercase leading-none tracking-wider whitespace-nowrap";
+  "inline-flex items-center rounded-full px-2.5 py-1 ring-1 ring-inset text-[10.5px] font-semibold uppercase leading-none tracking-wider whitespace-nowrap";
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({ label, tone }) => (
   <span
