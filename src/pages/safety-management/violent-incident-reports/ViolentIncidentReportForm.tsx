@@ -182,7 +182,7 @@ const ViolentIncidentReportForm: React.FC = () => {
     <>
       <BackButton defaultTo={"../"} valueOnDefault="Back to Dashboard" />
       {violentIncidentReport && (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-4 sticky top-16 border-b bg-gray-50 border-gray-200 py-5 z-10">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-4 sticky top-16 border-b bg-gray-50 border-gray-200 py-5 z-20">
           <div className="flex items-center gap-3">
             <StatusBadgePicker
               value={violentIncidentReport.status}
