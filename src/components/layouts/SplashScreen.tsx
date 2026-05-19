@@ -1,17 +1,23 @@
 /**
  * Pre-app loading screen shown while keycloak.init() and the first /me
  * request are in flight. Warm cream backdrop matches the app's loaded
- * chrome so there's no color shift on hand-off. The canonical Wordmark
- * gives the brand a moment to land, and a thin brand-orange ring
- * pulses softly underneath as the only motion cue. Keyframes +
- * reduced-motion guard live in `src/index.css`.
+ * chrome so there's no color shift on hand-off, full TZ_logo gives the
+ * brand a moment to land, and a thin brand-orange ring pulses softly
+ * underneath as the only motion cue. Keyframes + reduced-motion guard
+ * live in `src/index.css`.
+ *
+ * Locked: PR #105 splash design. Don't pull this into chrome-level
+ * lockup changes; the splash is its own surface.
  */
-import Wordmark from "../brand/Wordmark";
-
 const SplashScreen: React.FC = () => {
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center gap-10 bg-warm-50">
-      <Wordmark size="lg" />
+      <img
+        src="/TZ_logo.png"
+        alt="ThreatZero"
+        className="w-72 max-w-[60vw] select-none"
+        draggable={false}
+      />
       <div
         aria-hidden="true"
         className="tz-splash-pulse h-3 w-3 rounded-full border-2 border-primary-400"

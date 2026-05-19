@@ -6,19 +6,31 @@
  * route the sidebar can't see, and the sidebar never lists one the
  * palette wouldn't find.
  *
- * Each item declares its own icon component (Phosphor) and optional
- * permission options, which both consumers run through `useNav` to
- * filter to the current user's grants.
+ * Structure: the nav is divided into sections. The first section has no
+ * title (it's what training participants see); subsequent sections
+ * carry uppercase typographic headers (`SAFETY MANAGEMENT`, `ADMIN
+ * PANEL`). A section is hidden when none of its items pass the user's
+ * permission filter.
+ *
+ * Items can still be nested via `children` for the rare expandable
+ * sub-tree (e.g. Resources with four category pages); the sidebar
+ * renders those as Disclosure groups within their section.
  */
 import { ReactNode } from "react";
 import {
   House,
   GraduationCap,
-  Flag,
   ShieldCheck,
   FolderSimple,
-  GearSix,
   Buildings,
+  Toolbox,
+  Notepad,
+  Stack,
+  Translate,
+  UserGear,
+  Wrench,
+  Warning,
+  WarningOctagon,
 } from "@phosphor-icons/react";
 import {
   trainingLibraryPermissionsOptions,
@@ -44,87 +56,124 @@ export interface ChromeNavItem extends NavigationItem {
   children?: ChromeNavItem[];
 }
 
-/**
- * Top-level chrome nav. "Share a Safety Concern" is now "Safety Concerns"
- * and "Additional Resources" is now "Resources" — the verb→noun rename
- * called out in the critique.
- */
-export const CHROME_NAV: ChromeNavItem[] = [
+export interface ChromeNavSection {
+  /** Optional uppercase header; the first section typically has none. */
+  title?: string;
+  /** Section-level gate; hides the whole section when items still resolve. */
+  permissionOptions?: NavigationItem["permissionOptions"];
+  items: ChromeNavItem[];
+}
+
+export const CHROME_NAV: ChromeNavSection[] = [
+  // Top group — what training participants see. No header.
   {
-    name: "My Dashboard",
-    to: "/dashboard",
-    icon: House,
+    items: [
+      {
+        name: "My Dashboard",
+        to: "/dashboard",
+        icon: House,
+      },
+      {
+        name: "Training Library",
+        to: "/training/library",
+        icon: GraduationCap,
+        permissionOptions: trainingLibraryPermissionsOptions,
+      },
+      {
+        name: "Training Tools",
+        to: "/safety-management/training-admin",
+        icon: Toolbox,
+        permissionOptions: trainingAdminPermissionOptions,
+      },
+      {
+        name: "Resources",
+        icon: FolderSimple,
+        permissionOptions: resourcePermissionsOptions,
+        children: [
+          { name: "Prevention", to: "/resources/prevention" },
+          { name: "Preparation", to: "/resources/preparation" },
+          { name: "Response", to: "/resources/response" },
+          { name: "Resilience", to: "/resources/resilience" },
+        ],
+      },
+      {
+        name: "My Organization",
+        to: "/my-organization",
+        icon: Buildings,
+        permissionOptions: myOrganizationPermissionOptions,
+      },
+    ],
   },
+  // Safety Management section
   {
-    name: "Training Library",
-    to: "/training/library",
-    icon: GraduationCap,
-    permissionOptions: trainingLibraryPermissionsOptions,
-  },
-  {
-    name: "Safety Concerns",
-    to: "/safety-concerns",
-    icon: Flag,
-  },
-  {
-    name: "Safety Management",
-    icon: ShieldCheck,
+    title: "Safety Management",
     permissionOptions: safetyManagementPermissionOptions,
-    children: [
+    items: [
       {
         name: "Safety Concerns",
         to: "/safety-management/safety-concerns",
+        icon: Warning,
         permissionOptions: safetyConcernPermissionsOptions,
       },
       {
         name: "Threat Assessments",
         to: "/safety-management/threat-assessments",
+        icon: ShieldCheck,
         permissionOptions: threatAssessmentPermissionsOptions,
       },
       {
         name: "Violent Incident Log",
         to: "/safety-management/violent-incident-reports",
+        icon: WarningOctagon,
         permissionOptions: violentIncidentReportPermissionsOptions,
       },
+    ],
+  },
+  // Admin Panel section — flattens the old in-page tabs into the chrome
+  // so admins can jump straight to a sub-surface from anywhere.
+  {
+    title: "Admin Panel",
+    permissionOptions: adminPanelPermissionOptions,
+    items: [
       {
-        name: "Training Admin",
-        to: "/safety-management/training-admin",
-        permissionOptions: trainingAdminPermissionOptions,
+        name: "Organizations",
+        to: "/admin-panel/organizations",
+        icon: Buildings,
+      },
+      {
+        name: "Courses",
+        to: "/admin-panel/courses",
+        icon: GraduationCap,
+      },
+      {
+        name: "Forms",
+        to: "/admin-panel/forms",
+        icon: Notepad,
+      },
+      {
+        name: "Resources",
+        to: "/admin-panel/resources",
+        icon: Stack,
+      },
+      {
+        name: "Languages",
+        to: "/admin-panel/languages",
+        icon: Translate,
+      },
+      {
+        name: "System Admins",
+        to: "/admin-panel/system-admins",
+        icon: UserGear,
+      },
+      {
+        name: "Advanced",
+        to: "/admin-panel/advanced",
+        icon: Wrench,
       },
     ],
-  },
-  {
-    name: "Resources",
-    icon: FolderSimple,
-    permissionOptions: resourcePermissionsOptions,
-    children: [
-      { name: "Prevention", to: "/resources/prevention" },
-      { name: "Preparation", to: "/resources/preparation" },
-      { name: "Response", to: "/resources/response" },
-      { name: "Resilience", to: "/resources/resilience" },
-    ],
-  },
-  {
-    name: "Admin Panel",
-    to: "/admin-panel",
-    icon: GearSix,
-    permissionOptions: adminPanelPermissionOptions,
-  },
-  {
-    name: "My Organization",
-    to: "/my-organization",
-    icon: Buildings,
-    permissionOptions: myOrganizationPermissionOptions,
   },
 ];
 
-/**
- * Flatten the nav into a list of navigable destinations for the command
- * palette's search index. Parent items without a `to` (group headers) are
- * skipped; their children carry the path. The label includes the parent
- * for context ("Safety Management · Threat Assessments") so the palette
- * disambiguates when multiple entries share a leaf name.
- */
 export interface FlatNavEntry {
   id: string;
   label: string;
@@ -134,29 +183,40 @@ export interface FlatNavEntry {
   permissionOptions?: NavigationItem["permissionOptions"];
 }
 
-export const flattenNav = (items: ChromeNavItem[]): FlatNavEntry[] => {
+/**
+ * Flatten the sectioned nav into a list of navigable destinations for
+ * the command palette's search index. Each entry inherits the section's
+ * title as `group` for context. Disclosure parents without a `to` are
+ * skipped; their children carry the path with the parent name as group.
+ */
+export const flattenNav = (sections: ChromeNavSection[]): FlatNavEntry[] => {
   const out: FlatNavEntry[] = [];
-  for (const item of items) {
-    if (item.to) {
-      out.push({
-        id: item.to,
-        label: item.name,
-        to: item.to,
-        icon: item.icon,
-        permissionOptions: item.permissionOptions,
-      });
-    }
-    if (item.children) {
-      for (const child of item.children) {
-        if (!child.to) continue;
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (item.to) {
         out.push({
-          id: child.to,
-          label: child.name,
-          to: child.to,
-          group: item.name,
+          id: item.to,
+          label: item.name,
+          to: item.to,
+          group: section.title,
           icon: item.icon,
-          permissionOptions: child.permissionOptions,
+          permissionOptions: item.permissionOptions,
         });
+      }
+      if (item.children) {
+        for (const child of item.children) {
+          if (!child.to) continue;
+          out.push({
+            id: child.to,
+            label: child.name,
+            to: child.to,
+            group: section.title
+              ? `${section.title} · ${item.name}`
+              : item.name,
+            icon: item.icon,
+            permissionOptions: child.permissionOptions,
+          });
+        }
       }
     }
   }

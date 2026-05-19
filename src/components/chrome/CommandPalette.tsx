@@ -22,7 +22,7 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 import { Command } from "cmdk";
-import { Fragment, useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useNav } from "../../utils/navigation";
 import { MagnifyingGlass } from "./icons";
@@ -39,6 +39,16 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 }) => {
   const navigate = useNavigate();
   const { canNavigate } = useNav();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // HeadlessUI Dialog's auto-focus lands on the panel root, not the cmdk
+  // input. Push focus explicitly once the transition has mounted so the
+  // user can type immediately on open.
+  useEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [open]);
 
   // Global Cmd-K / Ctrl-K to toggle. We don't claim other shortcuts.
   useEffect(() => {
@@ -128,9 +138,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     aria-hidden="true"
                   />
                   <Command.Input
+                    ref={inputRef}
                     placeholder="Search…"
-                    autoFocus
-                    className="flex-1 h-12 bg-transparent text-sm text-secondary-900 placeholder:text-secondary-400 focus:outline-none"
+                    className="flex-1 h-12 border-0 bg-transparent text-sm text-secondary-900 placeholder:text-secondary-400 focus:outline-none focus:ring-0"
                   />
                   <kbd className="text-[11px] font-medium px-1.5 py-0.5 rounded bg-warm-100 text-secondary-500">
                     Esc

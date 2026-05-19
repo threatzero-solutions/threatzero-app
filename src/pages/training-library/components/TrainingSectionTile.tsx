@@ -179,7 +179,7 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
   return (
     <div
       className={cn(
-        "relative",
+        "relative h-full",
         !navigateDisabled ? "cursor-pointer" : "",
         classNames?.container,
       )}

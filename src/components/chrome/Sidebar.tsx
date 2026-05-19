@@ -1,21 +1,24 @@
 /**
  * Primary nav rail. Fixed on lg+, drawer on mobile (the drawer is
- * driven externally by `Shell` which owns the open state — keeps the
- * hamburger that opens it co-located with the rest of the top bar).
+ * driven externally by `Shell` which owns the open state).
  *
  * Design notes:
  * - warm-100 surface, border-r warm-200, no shadow. Sidebar earns its
  *   contrast from the surface delta against the warm-50 content; no
  *   need to lean on elevation.
- * - Wordmark sits in a tight h-14 strip up top. No PNG, no h-32 dead
- *   zone. The lockup component owns the typography; this file only
- *   places it.
- * - Single-open accordion: opening one Disclosure group closes its
- *   siblings. Route presence wins: on mount, the group containing the
- *   active route auto-opens, even if a sibling was previously open.
+ * - Real TZ_logo at h-14 in the header strip, sized so the wordmark
+ *   and the SOLUTIONS subline are both legible.
+ * - Items are organized into sections. The top section has no title
+ *   (it's what training participants see); subsequent sections carry
+ *   small uppercase typographic headers. A section hides entirely
+ *   when no items pass the user's permission filter.
+ * - SOS CTA below the last nav section: a distinct primary-orange
+ *   panel with "S.O.S." and the "Sense · Observe · Share" tagline.
+ *   Replaces the old "Share a Safety Concern" nav item with a real
+ *   call to action.
  * - Active item: warm-200/70 pill, primary-500 icon, secondary-900
  *   text, trailing primary-400 dot. No left-stripe border (banned),
- *   no lifted card (anti-carry from Variant B).
+ *   no lifted card.
  * - Help Center sits pinned at the bottom under a hairline border.
  */
 import {
@@ -25,11 +28,16 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 import { useNav } from "../../utils/navigation";
-import Wordmark from "../brand/Wordmark";
+import Logo from "../brand/Logo";
 import { CaretRight, Close, Lifebuoy } from "./icons";
-import { ChromeNavItem, CHROME_NAV, PhosphorIcon } from "./nav-config";
+import {
+  ChromeNavItem,
+  ChromeNavSection,
+  CHROME_NAV,
+  PhosphorIcon,
+} from "./nav-config";
 
 interface SidebarProps {
   /** Mobile drawer open state. Desktop ignores this; rail is always shown. */
@@ -63,97 +71,113 @@ const ItemIcon: React.FC<{ icon?: PhosphorIcon; active: boolean }> = ({
     />
   ) : null;
 
-const NavList: React.FC<{
-  items: ChromeNavItem[];
+const SectionItem: React.FC<{
+  item: ChromeNavItem;
   pathname: string;
   openGroup: string | null;
   onToggleGroup: (name: string | null) => void;
   onNavigate?: () => void;
-}> = ({ items, pathname, openGroup, onToggleGroup, onNavigate }) => (
-  <ul className="space-y-0.5">
-    {items.map((item) => {
-      const isLeaf = !item.children?.length;
-      if (isLeaf && item.to) {
-        return (
-          <li key={item.name}>
-            <NavLink
-              to={item.to}
-              onClick={onNavigate}
-              className={({ isActive }) => linkClasses({ active: isActive })}
-            >
-              {({ isActive }) => (
-                <>
-                  <ItemIcon icon={item.icon} active={isActive} />
-                  <span className="flex-1 text-left">{item.name}</span>
-                  {isActive && (
-                    <span
-                      aria-hidden="true"
-                      className="h-1.5 w-1.5 rounded-full bg-primary-400 shrink-0"
-                    />
-                  )}
-                </>
+}> = ({ item, pathname, openGroup, onToggleGroup, onNavigate }) => {
+  const hasChildren = !!item.children?.length;
+  if (!hasChildren && item.to) {
+    return (
+      <li>
+        <NavLink
+          to={item.to}
+          onClick={onNavigate}
+          className={({ isActive }) => linkClasses({ active: isActive })}
+        >
+          {({ isActive }) => (
+            <>
+              <ItemIcon icon={item.icon} active={isActive} />
+              <span className="flex-1 text-left">{item.name}</span>
+              {isActive && (
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 rounded-full bg-primary-400 shrink-0"
+                />
               )}
-            </NavLink>
-          </li>
-        );
-      }
-      const isOpen = openGroup === item.name;
-      const groupActive = item.children!.some(
-        (c) => c.to && pathname.startsWith(c.to),
-      );
-      return (
-        <li key={item.name}>
-          <button
-            type="button"
-            aria-expanded={isOpen}
-            onClick={() => onToggleGroup(isOpen ? null : item.name)}
-            className={linkClasses({ active: groupActive && !isOpen })}
-          >
-            <ItemIcon icon={item.icon} active={groupActive} />
-            <span className="flex-1 text-left">{item.name}</span>
-            <CaretRight
-              size={14}
-              weight="bold"
-              className={[
-                "text-secondary-400 shrink-0 transition-transform duration-150",
-                isOpen ? "rotate-90" : "",
-              ].join(" ")}
-              aria-hidden="true"
-            />
-          </button>
-          {isOpen && (
-            <ul className="mt-1 ml-9 mb-2 space-y-0.5">
-              {item.children!.map((child) =>
-                child.to ? (
-                  <li key={child.name}>
-                    <NavLink
-                      to={child.to}
-                      onClick={onNavigate}
-                      className={({ isActive }) =>
-                        linkClasses({ active: isActive, child: true })
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <span className="flex-1 text-left">{child.name}</span>
-                          {isActive && (
-                            <span
-                              aria-hidden="true"
-                              className="h-1.5 w-1.5 rounded-full bg-primary-400 shrink-0"
-                            />
-                          )}
-                        </>
-                      )}
-                    </NavLink>
-                  </li>
-                ) : null,
-              )}
-            </ul>
+            </>
           )}
-        </li>
-      );
-    })}
-  </ul>
+        </NavLink>
+      </li>
+    );
+  }
+
+  const isOpen = openGroup === item.name;
+  const groupActive = item.children!.some(
+    (c) => c.to && pathname.startsWith(c.to),
+  );
+  return (
+    <li>
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        onClick={() => onToggleGroup(isOpen ? null : item.name)}
+        className={linkClasses({ active: groupActive && !isOpen })}
+      >
+        <ItemIcon icon={item.icon} active={groupActive} />
+        <span className="flex-1 text-left">{item.name}</span>
+        <CaretRight
+          size={14}
+          weight="bold"
+          className={[
+            "text-secondary-400 shrink-0 transition-transform duration-150",
+            isOpen ? "rotate-90" : "",
+          ].join(" ")}
+          aria-hidden="true"
+        />
+      </button>
+      {isOpen && (
+        <ul className="mt-1 ml-9 mb-2 space-y-0.5">
+          {item.children!.map((child) =>
+            child.to ? (
+              <li key={child.name}>
+                <NavLink
+                  to={child.to}
+                  onClick={onNavigate}
+                  className={({ isActive }) =>
+                    linkClasses({ active: isActive, child: true })
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span className="flex-1 text-left">{child.name}</span>
+                      {isActive && (
+                        <span
+                          aria-hidden="true"
+                          className="h-1.5 w-1.5 rounded-full bg-primary-400 shrink-0"
+                        />
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              </li>
+            ) : null,
+          )}
+        </ul>
+      )}
+    </li>
+  );
+};
+
+const SosCallout: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => (
+  <Link
+    to="/safety-concerns"
+    onClick={onNavigate}
+    className={[
+      "group block mx-3 mt-3 rounded-xl px-4 py-3",
+      "bg-primary-400 text-white hover:bg-primary-500 transition-colors",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+      "focus-visible:ring-offset-warm-100 focus-visible:ring-primary-500",
+      "shadow-sm",
+    ].join(" ")}
+  >
+    <p className="text-base font-bold tracking-tight leading-none">S.O.S.</p>
+    <p className="mt-1 text-[11px] uppercase tracking-wider text-primary-50/90 leading-tight">
+      Sense · Observe · Share
+    </p>
+  </Link>
 );
 
 const SidebarBody: React.FC<{
@@ -163,30 +187,66 @@ const SidebarBody: React.FC<{
   onNavigate?: () => void;
 }> = ({ pathname, openGroup, onToggleGroup, onNavigate }) => {
   const { canNavigate, filterByPermissions } = useNav();
-  const items = useMemo(
-    () =>
-      (CHROME_NAV as ChromeNavItem[])
+
+  const sections = useMemo<ChromeNavSection[]>(() => {
+    return CHROME_NAV.map((section) => {
+      // Run permission filter on the items inside the section.
+      const items = (section.items as ChromeNavItem[])
         .filter(canNavigate)
-        .map(filterByPermissions) as ChromeNavItem[],
-    [canNavigate, filterByPermissions],
-  );
+        .map(filterByPermissions) as ChromeNavItem[];
+      return { ...section, items };
+    }).filter((section) => {
+      // Drop the section if its own gate fails OR no items survived.
+      // `canNavigate` only consults `permissionOptions`; the cast lets
+      // us reuse the helper without inventing a fake `name`.
+      if (
+        section.permissionOptions &&
+        !canNavigate({
+          name: section.title ?? "",
+          permissionOptions: section.permissionOptions,
+        })
+      ) {
+        return false;
+      }
+      return section.items.length > 0;
+    });
+  }, [canNavigate, filterByPermissions]);
 
   return (
     <div className="flex h-full flex-col">
-      {/* Wordmark strip */}
-      <div className="px-5 h-14 flex items-center shrink-0">
-        <Wordmark size="md" />
+      {/* Logo strip */}
+      <div className="px-5 h-20 flex items-center shrink-0">
+        <Logo size="md" variant="lockup" className="h-14 w-auto" />
       </div>
 
       {/* Primary nav */}
       <nav aria-label="Primary" className="flex-1 px-3 pb-4 overflow-y-auto">
-        <NavList
-          items={items}
-          pathname={pathname}
-          openGroup={openGroup}
-          onToggleGroup={onToggleGroup}
-          onNavigate={onNavigate}
-        />
+        <div className="space-y-5">
+          {sections.map((section, idx) => (
+            <div key={section.title ?? `section-${idx}`}>
+              {section.title && (
+                <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-secondary-500">
+                  {section.title}
+                </p>
+              )}
+              <ul className="space-y-0.5">
+                {section.items.map((item) => (
+                  <SectionItem
+                    key={item.name}
+                    item={item}
+                    pathname={pathname}
+                    openGroup={openGroup}
+                    onToggleGroup={onToggleGroup}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* SOS callout — distinct from regular nav, always visible. */}
+        <SosCallout onNavigate={onNavigate} />
       </nav>
 
       {/* Help Center pinned at the bottom */}
@@ -219,14 +279,15 @@ const SidebarBody: React.FC<{
 const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
   const { pathname } = useLocation();
 
-  // Auto-open the group containing the active route. Route presence wins
-  // over user-toggled state (per the brief). When the user clicks a
-  // sibling group, we honor that; we only auto-set when the active route
-  // changes to one not currently covered by `openGroup`.
+  // Auto-open the Disclosure group containing the active route (the
+  // only group with a Disclosure is currently "Resources"). Route
+  // presence wins over user-toggled state.
   const groupForPath = useMemo<string | null>(() => {
-    for (const item of CHROME_NAV) {
-      if (item.children?.some((c) => c.to && pathname.startsWith(c.to))) {
-        return item.name;
+    for (const section of CHROME_NAV) {
+      for (const item of section.items) {
+        if (item.children?.some((c) => c.to && pathname.startsWith(c.to))) {
+          return item.name;
+        }
       }
     }
     return null;
@@ -234,8 +295,6 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
 
   const [openGroup, setOpenGroup] = useState<string | null>(groupForPath);
   useEffect(() => {
-    // When the active route belongs to a group, ensure that group is open.
-    // Leaving alone otherwise — the user's last toggle persists.
     if (groupForPath) setOpenGroup(groupForPath);
   }, [groupForPath]);
 

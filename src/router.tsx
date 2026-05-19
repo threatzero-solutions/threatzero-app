@@ -253,7 +253,7 @@ export const router = createBrowserRouter(
                     },
                     {
                       path: "training-admin",
-                      handle: { title: "Training Admin" },
+                      handle: { title: "Training Tools" },
                       element: <TrainingAdminDashboard />,
                       children: [
                         {
