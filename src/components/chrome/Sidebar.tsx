@@ -361,7 +361,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <DialogPanel className="relative mr-16 flex w-full max-w-xs flex-1 bg-warm-100">
+              <DialogPanel className="relative flex w-64 bg-warm-100">
                 <TransitionChild
                   as={Fragment}
                   enter="ease-out duration-200"
