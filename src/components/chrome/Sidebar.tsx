@@ -163,34 +163,39 @@ const SectionItem: React.FC<{
 };
 
 const SosCallout: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => (
+  // Surface is primary-700 (deep orange, ~12% luminance) so primary-50
+  // foreground reaches ~6:1 contrast at all text sizes — passes WCAG AA
+  // for the small uppercase tagline and AAA for the heading. Earlier
+  // primary-400 with white text sat at 2.4:1 and quietly failed AA.
   <Link
     to="/safety-concerns"
     onClick={onNavigate}
     aria-label="Report a safety concern. Sense, observe, share."
     className={[
       "group block mx-3 mt-4 rounded-xl px-4 py-3.5",
-      "bg-primary-400 text-white ring-1 ring-primary-500/40 shadow-sm",
-      "hover:bg-primary-500 hover:shadow-md hover:-translate-y-0.5",
-      "transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+      "bg-primary-700 text-primary-50 ring-1 ring-primary-800/40 shadow-sm",
+      "hover:bg-primary-800 hover:shadow-md hover:-translate-y-0.5",
+      "transition-[background-color,transform,box-shadow] duration-200",
+      "ease-[cubic-bezier(0.22,1,0.36,1)]",
       "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-      "focus-visible:ring-offset-warm-100 focus-visible:ring-primary-500",
+      "focus-visible:ring-offset-warm-100 focus-visible:ring-secondary-900",
     ].join(" ")}
   >
     <div className="flex items-center justify-between gap-3">
-      <p className="text-[17px] font-bold tracking-[0.15em] leading-none">
+      <p className="text-[1.0625rem] font-bold tracking-[0.15em] leading-none">
         S.O.S.
       </p>
       <ArrowUpRight
         size={16}
         weight="bold"
-        className="text-white/75 shrink-0 transition-all duration-200 group-hover:text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
+        className="text-primary-50/80 shrink-0 transition-[transform,color] duration-200 group-hover:text-primary-50 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
         aria-hidden="true"
       />
     </div>
-    <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-primary-50/85 leading-snug">
-      Sense <span className="text-white/40">·</span> Observe{" "}
-      <span className="text-white/40">·</span> Share
+    <p className="mt-2 text-[0.625rem] uppercase tracking-[0.18em] text-primary-50/90 leading-snug">
+      Sense <span className="text-primary-200/60">·</span> Observe{" "}
+      <span className="text-primary-200/60">·</span> Share
     </p>
   </Link>
 );
