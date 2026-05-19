@@ -272,7 +272,6 @@ const TrainingSectionTile: React.FC<TrainingSectionTileProps> = ({
                   />
                 }
                 iconOnly
-                strategy="fixed"
                 actions={[
                   {
                     id: "edit",
