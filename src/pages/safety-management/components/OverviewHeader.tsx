@@ -95,7 +95,7 @@ const Chip: React.FC<ChipProps> = ({
     <>
       <span
         className={[
-          "min-w-[1.25rem] text-center text-sm font-bold tabular-nums",
+          "min-w-[1.25rem] text-center text-sm font-bold leading-none tabular-nums",
           toneNum[tone],
         ].join(" ")}
       >
@@ -103,7 +103,7 @@ const Chip: React.FC<ChipProps> = ({
       </span>
       <span
         className={[
-          "text-[10.5px] font-semibold uppercase tracking-wider",
+          "text-[10.5px] font-semibold uppercase leading-none tracking-wider",
           toneLabel[tone],
         ].join(" ")}
       >
@@ -183,10 +183,10 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
           </span>
         )}
         {accent && accent.count > 0 && (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700">
+          <span className="text-sm font-semibold whitespace-nowrap text-primary-700">
             <span
               aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-primary-500"
+              className="inline-block h-1.5 w-1.5 rounded-full align-middle bg-primary-500 mr-1.5"
             />
             {accent.count} {accent.label}
           </span>

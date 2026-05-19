@@ -175,77 +175,74 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
 
   return (
     <div className={"space-y-6"}>
-      <OverviewHeader
-        total={assessmentStats?.total}
-        totalContext="all-time"
-        loading={assessmentStatsLoading}
-        accent={
-          assessmentStats?.subtotals.statuses.in_progress
-            ? {
-                count: assessmentStats.subtotals.statuses.in_progress,
-                label: "in progress",
-              }
-            : undefined
-        }
-        statusChips={
-          assessmentStats
-            ? [
-                {
-                  count: assessmentStats.subtotals.statuses.in_progress ?? 0,
-                  label: "In progress",
-                  tone: "amber",
-                  value: AssessmentStatus.IN_PROGRESS,
-                },
-                {
-                  count:
-                    assessmentStats.subtotals.statuses
-                      .concluded_management_ongoing ?? 0,
-                  label: "Mgmt ongoing",
-                  tone: "secondary",
-                  value: AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING,
-                },
-                {
-                  count:
-                    assessmentStats.subtotals.statuses
-                      .concluded_management_complete ?? 0,
-                  label: "Complete",
-                  tone: "muted",
-                  value: AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE,
-                },
-              ]
-            : undefined
-        }
-        activeStatus={tableFilterOptions.status as string | undefined}
-        onStatusChange={(next) =>
-          setTableFilterOptions({ ...tableFilterOptions, status: next })
-        }
-        trends={
-          assessmentStats
-            ? [
-                {
-                  count: assessmentStats.subtotals.newSince.days7 ?? 0,
-                  label: "Last 7d",
-                },
-                {
-                  count: assessmentStats.subtotals.newSince.days30 ?? 0,
-                  label: "Last 30d",
-                },
-                {
-                  count: assessmentStats.subtotals.newSince.days90 ?? 0,
-                  label: "Last 90d",
-                },
-              ]
-            : undefined
-        }
-      />
-
-      {/* VIEW ASSESSMENTS */}
-      <DataTable2
-        data={assessments?.results ?? []}
-        columns={columns}
-        isLoading={assessmentsLoading}
-        noRowsMessage="No assessments found."
-        action={
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <OverviewHeader
+            total={assessmentStats?.total}
+            totalContext="all-time"
+            loading={assessmentStatsLoading}
+            accent={
+              assessmentStats?.subtotals.statuses.in_progress
+                ? {
+                    count: assessmentStats.subtotals.statuses.in_progress,
+                    label: "in progress",
+                  }
+                : undefined
+            }
+            statusChips={
+              assessmentStats
+                ? [
+                    {
+                      count:
+                        assessmentStats.subtotals.statuses.in_progress ?? 0,
+                      label: "In progress",
+                      tone: "amber",
+                      value: AssessmentStatus.IN_PROGRESS,
+                    },
+                    {
+                      count:
+                        assessmentStats.subtotals.statuses
+                          .concluded_management_ongoing ?? 0,
+                      label: "Mgmt ongoing",
+                      tone: "secondary",
+                      value: AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING,
+                    },
+                    {
+                      count:
+                        assessmentStats.subtotals.statuses
+                          .concluded_management_complete ?? 0,
+                      label: "Complete",
+                      tone: "muted",
+                      value: AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE,
+                    },
+                  ]
+                : undefined
+            }
+            activeStatus={tableFilterOptions.status as string | undefined}
+            onStatusChange={(next) =>
+              setTableFilterOptions({ ...tableFilterOptions, status: next })
+            }
+            trends={
+              assessmentStats
+                ? [
+                    {
+                      count: assessmentStats.subtotals.newSince.days7 ?? 0,
+                      label: "Last 7d",
+                    },
+                    {
+                      count: assessmentStats.subtotals.newSince.days30 ?? 0,
+                      label: "Last 30d",
+                    },
+                    {
+                      count: assessmentStats.subtotals.newSince.days90 ?? 0,
+                      label: "Last 90d",
+                    },
+                  ]
+                : undefined
+            }
+          />
+        </div>
+        <div className="shrink-0 sm:pt-1">
           <Link to={"./new"}>
             <button
               type="button"
@@ -254,7 +251,15 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
               + Start New Assessment
             </button>
           </Link>
-        }
+        </div>
+      </div>
+
+      {/* VIEW ASSESSMENTS */}
+      <DataTable2
+        data={assessments?.results ?? []}
+        columns={columns}
+        isLoading={assessmentsLoading}
+        noRowsMessage="No assessments found."
         query={tableFilterOptions}
         setQuery={setTableFilterOptions}
         pageState={assessments}

@@ -182,70 +182,72 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
 
   return (
     <div className={"space-y-6"}>
-      <OverviewHeader
-        total={violentIncidentReportStats?.total}
-        totalContext="all-time"
-        loading={violentIncidentReportStatsLoading}
-        accent={
-          violentIncidentReportStats?.subtotals.statuses.new
-            ? {
-                count: violentIncidentReportStats.subtotals.statuses.new,
-                label: "new",
-              }
-            : undefined
-        }
-        statusChips={
-          violentIncidentReportStats
-            ? [
-                {
-                  count: violentIncidentReportStats.subtotals.statuses.new ?? 0,
-                  label: "New",
-                  tone: "amber",
-                  value: ViolentIncidentReportStatus.NEW,
-                },
-                {
-                  count:
-                    violentIncidentReportStats.subtotals.statuses.reviewed ?? 0,
-                  label: "Reviewed",
-                  tone: "secondary",
-                  value: ViolentIncidentReportStatus.REVIEWED,
-                },
-              ]
-            : undefined
-        }
-        activeStatus={tableFilterOptions.status as string | undefined}
-        onStatusChange={(next) =>
-          setTableFilterOptions({ ...tableFilterOptions, status: next })
-        }
-        trends={
-          violentIncidentReportStats
-            ? [
-                {
-                  count:
-                    violentIncidentReportStats.subtotals.newSince.days7 ?? 0,
-                  label: "Last 7d",
-                },
-                {
-                  count:
-                    violentIncidentReportStats.subtotals.newSince.days30 ?? 0,
-                  label: "Last 30d",
-                },
-                {
-                  count:
-                    violentIncidentReportStats.subtotals.newSince.days90 ?? 0,
-                  label: "Last 90d",
-                },
-              ]
-            : undefined
-        }
-      />
-
-      <DataTable2
-        data={violentIncidentReports?.results ?? []}
-        columns={columns}
-        isLoading={violentIncidentReportsLoading}
-        noRowsMessage="Violent incident log empty."
-        action={
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <OverviewHeader
+            total={violentIncidentReportStats?.total}
+            totalContext="all-time"
+            loading={violentIncidentReportStatsLoading}
+            accent={
+              violentIncidentReportStats?.subtotals.statuses.new
+                ? {
+                    count: violentIncidentReportStats.subtotals.statuses.new,
+                    label: "new",
+                  }
+                : undefined
+            }
+            statusChips={
+              violentIncidentReportStats
+                ? [
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.statuses.new ?? 0,
+                      label: "New",
+                      tone: "amber",
+                      value: ViolentIncidentReportStatus.NEW,
+                    },
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.statuses
+                          .reviewed ?? 0,
+                      label: "Reviewed",
+                      tone: "secondary",
+                      value: ViolentIncidentReportStatus.REVIEWED,
+                    },
+                  ]
+                : undefined
+            }
+            activeStatus={tableFilterOptions.status as string | undefined}
+            onStatusChange={(next) =>
+              setTableFilterOptions({ ...tableFilterOptions, status: next })
+            }
+            trends={
+              violentIncidentReportStats
+                ? [
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.newSince.days7 ??
+                        0,
+                      label: "Last 7d",
+                    },
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.newSince.days30 ??
+                        0,
+                      label: "Last 30d",
+                    },
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.newSince.days90 ??
+                        0,
+                      label: "Last 90d",
+                    },
+                  ]
+                : undefined
+            }
+          />
+        </div>
+        <div className="shrink-0 sm:pt-1">
           <Link to={"./new"}>
             <button
               type="button"
@@ -254,7 +256,14 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
               + Report Violent Incident
             </button>
           </Link>
-        }
+        </div>
+      </div>
+
+      <DataTable2
+        data={violentIncidentReports?.results ?? []}
+        columns={columns}
+        isLoading={violentIncidentReportsLoading}
+        noRowsMessage="Violent incident log empty."
         query={tableFilterOptions}
         setQuery={setTableFilterOptions}
         pageState={violentIncidentReports}
