@@ -24,21 +24,19 @@ interface StatusBadgeProps {
   tone: StatusBadgeTone;
 }
 
-const toneStyles: Record<StatusBadgeTone, string> = {
+export const statusBadgeToneStyles: Record<StatusBadgeTone, string> = {
   primary: "bg-primary-50 ring-primary-200/70 text-primary-800",
   secondary: "bg-secondary-50 ring-secondary-200 text-secondary-700",
   success: "bg-success-50 ring-success-200 text-success-700",
   muted: "bg-warm-100 ring-warm-200 text-secondary-600",
 };
 
+export const statusBadgeBaseClass =
+  "inline-flex items-center rounded-full px-2 py-0.5 ring-1 ring-inset text-[10.5px] font-semibold uppercase leading-none tracking-wider whitespace-nowrap";
+
 const StatusBadge: React.FC<StatusBadgeProps> = ({ label, tone }) => (
   <span
-    className={[
-      "inline-flex items-center rounded-full px-2 py-0.5 ring-1 ring-inset",
-      "text-[10.5px] font-semibold uppercase leading-none tracking-wider",
-      "whitespace-nowrap",
-      toneStyles[tone],
-    ].join(" ")}
+    className={[statusBadgeBaseClass, statusBadgeToneStyles[tone]].join(" ")}
   >
     {label}
   </span>

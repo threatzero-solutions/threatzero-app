@@ -4,10 +4,12 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import Form from "../../../components/forms/Form";
 import BackButton from "../../../components/layouts/BackButton";
-import Dropdown, { DropdownAction } from "../../../components/layouts/Dropdown";
 import EditableCell from "../../../components/layouts/EditableCell";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import ManageNotes from "../../../components/notes/ManageNotes";
+import StatusBadgePicker, {
+  StatusOption,
+} from "../../../components/StatusBadgePicker";
 import { VIOLENT_INCIDENT_REPORT_FORM_SLUG } from "../../../constants/forms";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import { AlertContext } from "../../../contexts/alert/alert-context";
@@ -28,8 +30,20 @@ import {
   FormSubmission,
   ViolentIncidentReportStatus,
 } from "../../../types/entities";
-import { simulateDownload } from "../../../utils/core";
-import StatusPill from "./components/StatusPill";
+import { fromStatus, simulateDownload } from "../../../utils/core";
+
+const VIR_STATUS_OPTIONS: StatusOption<ViolentIncidentReportStatus>[] = [
+  {
+    value: ViolentIncidentReportStatus.NEW,
+    label: fromStatus(ViolentIncidentReportStatus.NEW),
+    tone: "primary",
+  },
+  {
+    value: ViolentIncidentReportStatus.REVIEWED,
+    label: fromStatus(ViolentIncidentReportStatus.REVIEWED),
+    tone: "success",
+  },
+];
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/violent-incident-reports/submissions/presigned-upload-urls`;
 
@@ -136,43 +150,16 @@ const ViolentIncidentReportForm: React.FC = () => {
     },
   });
 
-  const violentIncidentReportActions: DropdownAction[] = useMemo(
-    () => [
-      {
-        id: "edit",
-        value: "Edit",
-        action: () => setIsEditing(true),
-        hidden: !canAlterViolentIncidentReport || isEditing,
-      },
-      {
-        id: "pdf",
-        value: "Download as PDF",
-        action: () => {
-          setInfo("Downloading as PDF...", { id: infoAlertId });
-          downloadViolentIncidentReportToPdfMutation.mutate(
-            violentIncidentReport?.id,
-          );
-        },
-        hidden: !violentIncidentReport,
-      },
-      ...Object.entries(ViolentIncidentReportStatus).map(([key, value]) => ({
-        id: `status-${key}`,
-        value: <StatusPill status={value} />,
-        action: () => changeStatus(value),
-        hidden: violentIncidentReport?.status === value,
-      })),
-    ],
-    [
-      changeStatus,
-      violentIncidentReport,
-      canAlterViolentIncidentReport,
-      isEditing,
-      setIsEditing,
-      downloadViolentIncidentReportToPdfMutation,
-      setInfo,
-      infoAlertId,
-    ],
-  );
+  const downloadPdf = useCallback(() => {
+    if (!violentIncidentReport) return;
+    setInfo("Downloading as PDF...", { id: infoAlertId });
+    downloadViolentIncidentReportToPdfMutation.mutate(violentIncidentReport.id);
+  }, [
+    violentIncidentReport,
+    downloadViolentIncidentReportToPdfMutation,
+    setInfo,
+    infoAlertId,
+  ]);
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
@@ -195,14 +182,15 @@ const ViolentIncidentReportForm: React.FC = () => {
     <>
       <BackButton defaultTo={"../"} valueOnDefault="Back to Dashboard" />
       {violentIncidentReport && (
-        <div className="flex justify-between items-end mb-4 sticky top-0 border-b bg-gray-50 border-gray-200 py-5 z-20">
-          <Dropdown
-            actions={violentIncidentReportActions}
-            value="Actions"
-            placement="bottom-start"
-          />
-
-          <div className="flex gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-4 sticky top-0 border-b bg-gray-50 border-gray-200 py-5 z-20">
+          <div className="flex items-center gap-3">
+            <StatusBadgePicker
+              value={violentIncidentReport.status}
+              options={VIR_STATUS_OPTIONS}
+              onChange={changeStatus}
+              disabled={!canAlterViolentIncidentReport}
+              loading={violentIncidentReportMutation.isPending}
+            />
             <span className="flex items-center gap-1 text-sm">
               <span className="font-medium">Tag:</span>
               <span className="italic">
@@ -220,18 +208,29 @@ const ViolentIncidentReportForm: React.FC = () => {
                 />
               </span>
             </span>
-            {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
-              PoC files:
-              <POCFilesButtonCompact
-                pocFiles={violentIncidentReport.pocFiles}
-                className="text-gray-500"
-              />
-            </span> */}
-            <StatusPill status={violentIncidentReport.status} />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {canAlterViolentIncidentReport && !isEditing && (
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-secondary-800 ring-1 ring-inset ring-warm-300 hover:bg-warm-50 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                Edit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={downloadPdf}
+              disabled={downloadViolentIncidentReportToPdfMutation.isPending}
+              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-secondary-800 ring-1 ring-inset ring-warm-300 hover:bg-warm-50 disabled:opacity-60 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+            >
+              Download PDF
+            </button>
             <button
               type="button"
               onClick={() => setManageNotesOpen(true)}
-              className="block self-start w-max rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               Notes {notes && <span>({notes?.results.length ?? 0})</span>}
             </button>
