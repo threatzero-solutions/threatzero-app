@@ -385,7 +385,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <DialogPanel className="relative flex w-64 bg-warm-100">
+              <DialogPanel className="relative flex w-64 flex-col bg-warm-100">
                 <button
                   type="button"
                   className="absolute right-2 top-5 p-2 rounded-md text-secondary-500 hover:text-secondary-800 hover:bg-warm-200/60 transition-colors z-10"
