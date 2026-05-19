@@ -29,7 +29,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenSidebar, onOpenSearch }) => {
 
   return (
     <header
-      className="sticky top-0 z-10 h-16 bg-white border-b border-warm-200 flex items-center gap-3 lg:gap-6 px-4 lg:px-7"
+      className="sticky top-0 z-30 h-16 bg-white border-b border-warm-200 flex items-center gap-3 lg:gap-6 px-4 lg:px-7"
       role="banner"
     >
       {/* Mobile hamburger */}
