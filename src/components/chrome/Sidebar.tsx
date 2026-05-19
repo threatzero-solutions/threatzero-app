@@ -163,13 +163,12 @@ const SectionItem: React.FC<{
 };
 
 const SosCallout: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => (
-  // Typographic SOS, not a filled tile. The acronym is the design:
-  // each row leads with one of `S O S` in brand orange, and the rest
-  // of the word flows to its right. The framework "Sense Observe
-  // Share" reads in full while the vertical letter column still says
-  // SOS at a glance. Contrast lives between primary-600/secondary-800
-  // text and a warm-50 surface (both clear of the WCAG AA bar), so
-  // we keep brand warmth without the somber filled-tile aesthetic.
+  // Quieter hover: no surface lift, no compound icon motion. The only
+  // moving piece is the arrow gliding right ~3px on a slower curve, so
+  // the eye reads "go this way" instead of "button pops". The surface
+  // warms from warm-50 to warm-100 (not white — too stark) and the
+  // ring shifts to primary-300 (not 400 — less saturated). Arrow
+  // trails the surface by ~80ms so the motion reads as flow.
   <Link
     to="/safety-concerns"
     onClick={onNavigate}
@@ -177,10 +176,10 @@ const SosCallout: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => (
     className={[
       "group block mx-3 mt-4 rounded-xl px-4 py-3.5",
       "bg-warm-50 ring-1 ring-warm-300",
-      "hover:bg-white hover:ring-primary-400 hover:-translate-y-0.5",
-      "transition-[background-color,transform,box-shadow,border-color] duration-200",
+      "hover:bg-warm-100 hover:ring-primary-300",
+      "transition-[background-color,box-shadow] duration-[280ms]",
       "ease-[cubic-bezier(0.22,1,0.36,1)]",
-      "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+      "motion-reduce:transition-none",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
       "focus-visible:ring-offset-warm-100 focus-visible:ring-primary-500",
     ].join(" ")}
@@ -207,13 +206,18 @@ const SosCallout: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => (
       ))}
     </div>
     <div className="mt-2.5 pt-2 border-t border-warm-200 flex items-center justify-between gap-2">
-      <span className="text-[0.6875rem] text-secondary-600 group-hover:text-secondary-800 transition-colors">
+      <span className="text-[0.6875rem] text-secondary-600">
         Report a concern
       </span>
       <ArrowUpRight
         size={14}
         weight="bold"
-        className="text-secondary-500 shrink-0 transition-[transform,color] duration-200 group-hover:text-primary-600 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
+        className={[
+          "text-secondary-500 shrink-0",
+          "transition-[transform,color] duration-[360ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "group-hover:text-primary-600 group-hover:translate-x-[3px]",
+          "motion-reduce:transition-none motion-reduce:group-hover:translate-x-0",
+        ].join(" ")}
         aria-hidden="true"
       />
     </div>
