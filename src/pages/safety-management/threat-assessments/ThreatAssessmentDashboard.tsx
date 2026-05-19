@@ -275,9 +275,11 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
             {
               key: "status",
               label: "Status",
-              defaultValue: Array.isArray(tableFilterOptions.status)
-                ? undefined
-                : (tableFilterOptions.status as string | undefined),
+              many: true,
+              defaultValue: tableFilterOptions.status as
+                | string
+                | string[]
+                | undefined,
               options: Object.values(AssessmentStatus).map((status) => ({
                 value: status,
                 label: fromStatus(status),

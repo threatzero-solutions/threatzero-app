@@ -1,5 +1,5 @@
 import { MinusCircleIcon } from "@heroicons/react/20/solid";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Updater, useImmer } from "use-immer";
 import { useLocalStorage } from "usehooks-ts";
 import { ItemFilterQueryParams } from "../../hooks/use-item-filter-query";
@@ -108,11 +108,10 @@ const FilterBar: React.FC<FilterBarProps> = ({
   filterOptions,
   className,
 }) => {
-  /** Used to keep track of whether user interacts with filters. */
-  const stable = useRef(false);
-
   /** Used to keep track of filter values internally, to simplify and consolidate
    * the logic of handling multiple select filters and single select filters.
+   * Mirrors the upstream `defaultValue` of each filter so hero-pill clicks
+   * and other external state changes stay in sync with the dropdown.
    */
   const [filterValues, setFilterValues] = useImmer(
     buildFilterValues(filterOptions?.filters ?? []),
@@ -139,9 +138,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   >("filter-options", {});
 
   useEffect(() => {
-    // Only update until user interacts with filters. This is because upstream defaults may
-    // change during initial render.
-    if (!stable.current && filterOptions?.filters) {
+    if (filterOptions?.filters) {
       setFilterValues(buildFilterValues(filterOptions.filters));
     }
 
@@ -172,9 +169,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
         }[],
   ) => {
     e.preventDefault();
-
-    // Consider props stable once user interacts with filters.
-    stable.current = true;
 
     setFilterValues((draft) => {
       const toUpdate: { key: string; value: string | string[] | undefined }[] =

@@ -81,9 +81,18 @@ export const CHROME_NAV: ChromeNavSection[] = [
       },
       {
         name: "Training Tools",
-        to: "/safety-management/training-admin",
         icon: Toolbox,
         permissionOptions: trainingAdminPermissionOptions,
+        children: [
+          {
+            name: "Completions",
+            to: "/safety-management/training-admin/completions",
+          },
+          {
+            name: "Invites",
+            to: "/safety-management/training-admin/invites",
+          },
+        ],
       },
       {
         name: "Resources",

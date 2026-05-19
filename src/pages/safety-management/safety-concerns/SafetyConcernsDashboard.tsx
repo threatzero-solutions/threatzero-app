@@ -188,7 +188,7 @@ const SafetyConcernsDashboard: React.FC = withRequirePermissions(() => {
                 {
                   count: tipStats.subtotals.statuses.resolved ?? 0,
                   label: "Resolved",
-                  tone: "muted",
+                  tone: "success",
                   value: TipStatus.RESOLVED,
                 },
               ]
