@@ -163,40 +163,60 @@ const SectionItem: React.FC<{
 };
 
 const SosCallout: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => (
-  // Surface is primary-700 (deep orange, ~12% luminance) so primary-50
-  // foreground reaches ~6:1 contrast at all text sizes — passes WCAG AA
-  // for the small uppercase tagline and AAA for the heading. Earlier
-  // primary-400 with white text sat at 2.4:1 and quietly failed AA.
+  // Typographic SOS, not a filled tile. The acronym is the design:
+  // each row leads with one of `S O S` in brand orange, and the rest
+  // of the word flows to its right. The framework "Sense Observe
+  // Share" reads in full while the vertical letter column still says
+  // SOS at a glance. Contrast lives between primary-600/secondary-800
+  // text and a warm-50 surface (both clear of the WCAG AA bar), so
+  // we keep brand warmth without the somber filled-tile aesthetic.
   <Link
     to="/safety-concerns"
     onClick={onNavigate}
     aria-label="Report a safety concern. Sense, observe, share."
     className={[
       "group block mx-3 mt-4 rounded-xl px-4 py-3.5",
-      "bg-primary-700 text-primary-50 ring-1 ring-primary-800/40 shadow-sm",
-      "hover:bg-primary-800 hover:shadow-md hover:-translate-y-0.5",
-      "transition-[background-color,transform,box-shadow] duration-200",
+      "bg-warm-50 ring-1 ring-warm-300",
+      "hover:bg-white hover:ring-primary-400 hover:-translate-y-0.5",
+      "transition-[background-color,transform,box-shadow,border-color] duration-200",
       "ease-[cubic-bezier(0.22,1,0.36,1)]",
       "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-      "focus-visible:ring-offset-warm-100 focus-visible:ring-secondary-900",
+      "focus-visible:ring-offset-warm-100 focus-visible:ring-primary-500",
     ].join(" ")}
   >
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-[1.0625rem] font-bold tracking-[0.15em] leading-none">
-        S.O.S.
-      </p>
+    <div className="space-y-0.5">
+      {(
+        [
+          ["S", "ENSE"],
+          ["O", "BSERVE"],
+          ["S", "HARE"],
+        ] as const
+      ).map(([head, tail], i) => (
+        <div
+          key={i}
+          className="flex items-baseline gap-[0.3em] text-[0.875rem] leading-tight"
+        >
+          <span className="font-bold text-primary-600 tracking-[0.05em]">
+            {head}
+          </span>
+          <span className="font-medium tracking-[0.18em] text-secondary-800">
+            {tail}
+          </span>
+        </div>
+      ))}
+    </div>
+    <div className="mt-2.5 pt-2 border-t border-warm-200 flex items-center justify-between gap-2">
+      <span className="text-[0.6875rem] text-secondary-600 group-hover:text-secondary-800 transition-colors">
+        Report a concern
+      </span>
       <ArrowUpRight
-        size={16}
+        size={14}
         weight="bold"
-        className="text-primary-50/80 shrink-0 transition-[transform,color] duration-200 group-hover:text-primary-50 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
+        className="text-secondary-500 shrink-0 transition-[transform,color] duration-200 group-hover:text-primary-600 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
         aria-hidden="true"
       />
     </div>
-    <p className="mt-2 text-[0.625rem] uppercase tracking-[0.18em] text-primary-50/90 leading-snug">
-      Sense <span className="text-primary-200/60">·</span> Observe{" "}
-      <span className="text-primary-200/60">·</span> Share
-    </p>
   </Link>
 );
 
