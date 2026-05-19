@@ -81,7 +81,7 @@ const Chip: React.FC<ChipProps> = ({
   onClick,
 }) => {
   const className = [
-    "inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 transition-colors",
+    "inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 ring-inset transition-colors",
     active ? toneSurfaceActive[tone] : toneSurface[tone],
     onClick && !active ? toneSurfaceHover[tone] : "",
     onClick
