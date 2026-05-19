@@ -259,7 +259,7 @@ const SidebarBody: React.FC<{
   return (
     <div className="flex h-full flex-col">
       {/* Logo strip */}
-      <div className="px-5 h-20 flex items-center shrink-0">
+      <div className="px-5 h-20 flex items-center justify-center shrink-0">
         <Logo size="md" variant="lockup" className="h-14 w-auto" />
       </div>
 
