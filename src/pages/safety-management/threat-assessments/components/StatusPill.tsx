@@ -16,6 +16,8 @@ const toneFor = (status: AssessmentStatus): StatusBadgeTone => {
       return "secondary";
     case AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE:
       return "success";
+    case AssessmentStatus.CLOSED_SUPERFICIAL_THREAT:
+      return "warning";
     default:
       return "muted";
   }

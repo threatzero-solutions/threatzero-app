@@ -51,7 +51,7 @@ const ASSESSMENT_STATUS_OPTIONS: StatusOption<AssessmentStatus>[] = [
   {
     value: AssessmentStatus.CLOSED_SUPERFICIAL_THREAT,
     label: fromStatus(AssessmentStatus.CLOSED_SUPERFICIAL_THREAT),
-    tone: "muted",
+    tone: "warning",
   },
 ];
 
