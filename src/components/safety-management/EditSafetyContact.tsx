@@ -7,7 +7,9 @@ import SlideOverField from "../layouts/slide-over/SlideOverField";
 import SlideOverFormBody from "../layouts/slide-over/SlideOverFormBody";
 import SlideOverForm from "../layouts/slide-over/SlideOverForm";
 
-const INPUT_DATA: Array<Partial<Field> & { name: keyof SafetyContact }> = [
+type ContactFields = Pick<SafetyContact, "name" | "email" | "phone" | "title">;
+
+const INPUT_DATA: Array<Partial<Field> & { name: keyof ContactFields }> = [
   {
     name: "name",
     label: "Name",
@@ -44,59 +46,62 @@ const INPUT_DATA: Array<Partial<Field> & { name: keyof SafetyContact }> = [
 
 interface EditSafetyContactProps {
   safetyContact?: Partial<SafetyContact> | null;
-  setSafetyContact: (safetyContact: Partial<SafetyContact> | null) => void;
+  onSave: (values: ContactFields) => void;
+  onDelete?: () => void;
   setOpen: (open: boolean) => void;
+  saving?: boolean;
 }
 
 const EditSafetyContact: React.FC<EditSafetyContactProps> = ({
   safetyContact,
-  setSafetyContact,
+  onSave,
+  onDelete,
   setOpen,
+  saving,
 }) => {
-  const [tempSafetyContact, setTempSafetyContact] = useState<
-    Partial<SafetyContact>
-  >(safetyContact ?? {});
+  const [draft, setDraft] = useState<Partial<ContactFields>>({
+    name: safetyContact?.name ?? "",
+    email: safetyContact?.email ?? "",
+    phone: safetyContact?.phone ?? "",
+    title: safetyContact?.title ?? "",
+  });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setTempSafetyContact((v) => {
-      const name = e.target.name;
+    setDraft((v) => {
+      const name = e.target.name as keyof ContactFields;
       let newValue = e.target.value;
-
       if (name === "phone") {
         newValue = formatPhoneNumber(newValue);
       }
-
-      return {
-        ...v,
-        [name]: newValue,
-      };
+      return { ...v, [name]: newValue };
     });
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     event.stopPropagation();
-
-    setSafetyContact(tempSafetyContact);
-    setOpen(false);
+    onSave({
+      name: (draft.name ?? "").trim(),
+      email: (draft.email ?? "").trim(),
+      phone: (draft.phone ?? "").trim(),
+      title: draft.title?.trim() || null,
+    });
   };
 
-  const handleRemove = () => {
-    setSafetyContact(null);
-    setOpen(false);
-  };
+  const isEditing = !!safetyContact?.id;
 
   return (
     <SlideOverForm
       onSubmit={handleSubmit}
       onClose={() => setOpen(false)}
-      onDelete={() => handleRemove()}
-      deleteText="Clear"
+      onDelete={isEditing && onDelete ? onDelete : undefined}
+      deleteText="Remove"
       submitText="Save"
+      isSaving={saving}
     >
       <SlideOverHeading
-        title={safetyContact ? "Add safety contact" : "Edit safety contact"}
-        description="Enter the details of this organization's safety contact."
+        title={isEditing ? "Edit safety contact" : "Add safety contact"}
+        description="Enter the details of this safety contact."
         setOpen={setOpen}
       />
       <SlideOverFormBody>
@@ -110,7 +115,7 @@ const EditSafetyContact: React.FC<EditSafetyContactProps> = ({
             <FormInput
               field={input}
               onChange={handleChange}
-              value={tempSafetyContact[input.name as keyof SafetyContact] ?? ""}
+              value={draft[input.name as keyof ContactFields] ?? ""}
             />
           </SlideOverField>
         ))}

@@ -6,6 +6,7 @@ import {
   Form,
   Note,
   POCFile,
+  SafetyContact,
   ThreatAssessment,
   Tip,
   TipStatus,
@@ -73,6 +74,60 @@ export const getResourceAsPDF = (resourceName: string) => (id?: string) =>
         })
         .then((res) => res.data)
     : Promise.reject(new Error(`${resourceName} ID must not be empty.`));
+
+// Safety contacts
+
+/**
+ * Exactly one of organizationId / unitId. Modeled as a discriminated union
+ * so the type system rejects empty (neither set) and ambiguous (both set)
+ * payloads before they reach the server. The API enforces the same xor at
+ * runtime via CHK_safety_contact_owner_xor.
+ */
+export type SafetyContactOwnerRef =
+  | { organizationId: string; unitId?: never }
+  | { unitId: string; organizationId?: never };
+
+interface SafetyContactFields {
+  name: string;
+  email: string;
+  phone: string;
+  title?: string | null;
+}
+
+export type CreateSafetyContactPayload = SafetyContactOwnerRef &
+  SafetyContactFields;
+
+export type UpdateSafetyContactPayload = Partial<SafetyContactFields>;
+
+export const createSafetyContact = (payload: CreateSafetyContactPayload) =>
+  insertOne<SafetyContact>("/safety-management/safety-contacts", payload);
+
+export const updateSafetyContact = (
+  id: string,
+  payload: UpdateSafetyContactPayload,
+) =>
+  axios
+    .patch<SafetyContact>(
+      buildUrl(`/safety-management/safety-contacts/${id}`),
+      payload,
+    )
+    .then((res) => res.data);
+
+export const deleteSafetyContact = (id: string) =>
+  axios
+    .delete(buildUrl(`/safety-management/safety-contacts/${id}`))
+    .then((res) => res.data);
+
+export type ReorderSafetyContactsPayload = SafetyContactOwnerRef & {
+  ids: string[];
+};
+
+export const reorderSafetyContacts = (payload: ReorderSafetyContactsPayload) =>
+  axios
+    .post<
+      SafetyContact[]
+    >(buildUrl("/safety-management/safety-contacts/reorder"), payload)
+    .then((res) => res.data);
 
 // POC Files
 

@@ -31,7 +31,7 @@ export interface OrganizationBase extends Base {
   slug: string;
   name: string;
   address: string | null;
-  safetyContact?: SafetyContact | null;
+  safetyContacts: SafetyContact[];
   policiesAndProcedures: OrganizationPolicyFile[];
 }
 
@@ -331,7 +331,10 @@ export interface SafetyContact extends Base {
   name: string;
   email: string;
   phone: string;
-  title?: string;
+  title?: string | null;
+  order: number;
+  organizationId?: string | null;
+  unitId?: string | null;
 }
 
 export interface OrganizationPolicyFile extends Base {
