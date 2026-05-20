@@ -190,7 +190,7 @@ export const router = createBrowserRouter(
                 },
                 {
                   path: "safety-concerns",
-                  handle: { title: "S.O.S." },
+                  handle: { title: "Report a Concern" },
                   children: [
                     {
                       path: "",
@@ -221,7 +221,7 @@ export const router = createBrowserRouter(
                     // },
                     {
                       path: "safety-concerns",
-                      handle: { title: "Administrative Reports" },
+                      handle: { title: "Safety Concerns" },
                       children: [
                         {
                           path: "",
@@ -253,7 +253,7 @@ export const router = createBrowserRouter(
                     },
                     {
                       path: "training-admin",
-                      handle: { title: "Training Admin" },
+                      handle: { title: "Training Tools" },
                       element: <TrainingAdminDashboard />,
                       children: [
                         {

@@ -1,4 +1,4 @@
-import PillBadge from "../../../components/PillBadge";
+import StatusBadge, { StatusBadgeTone } from "../../../components/StatusBadge";
 import { TipStatus } from "../../../types/entities";
 import { fromStatus } from "../../../utils/core";
 
@@ -6,27 +6,21 @@ interface StatusPillProps {
   status: TipStatus;
 }
 
-const getColorFromStatus = (status: TipStatus) => {
+const toneFor = (status: TipStatus): StatusBadgeTone => {
   switch (status) {
     case TipStatus.NEW:
-      return "yellow";
+      return "primary";
     case TipStatus.REVIEWED:
-      return "blue";
+      return "info";
     case TipStatus.RESOLVED:
-      return "green";
+      return "success";
     default:
-      return "gray";
+      return "muted";
   }
 };
 
-const StatusPill: React.FC<StatusPillProps> = ({ status }) => {
-  return (
-    <PillBadge
-      color={getColorFromStatus(status)}
-      value={status}
-      displayValue={fromStatus(status)}
-    />
-  );
-};
+const StatusPill: React.FC<StatusPillProps> = ({ status }) => (
+  <StatusBadge label={fromStatus(status)} tone={toneFor(status)} />
+);
 
 export default StatusPill;

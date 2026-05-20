@@ -4,10 +4,12 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import Form from "../../../components/forms/Form";
 import BackButton from "../../../components/layouts/BackButton";
-import Dropdown, { DropdownAction } from "../../../components/layouts/Dropdown";
 import EditableCell from "../../../components/layouts/EditableCell";
 import SlideOver from "../../../components/layouts/slide-over/SlideOver";
 import ManageNotes from "../../../components/notes/ManageNotes";
+import StatusBadgePicker, {
+  StatusOption,
+} from "../../../components/StatusBadgePicker";
 import { THREAT_ASSESSMENT_FORM_SLUG } from "../../../constants/forms";
 import { LEVEL, WRITE } from "../../../constants/permissions";
 import { AlertContext } from "../../../contexts/alert/alert-context";
@@ -28,8 +30,30 @@ import {
   FormState,
   FormSubmission,
 } from "../../../types/entities";
-import { simulateDownload } from "../../../utils/core";
-import StatusPill from "./components/StatusPill";
+import { fromStatus, simulateDownload } from "../../../utils/core";
+
+const ASSESSMENT_STATUS_OPTIONS: StatusOption<AssessmentStatus>[] = [
+  {
+    value: AssessmentStatus.IN_PROGRESS,
+    label: fromStatus(AssessmentStatus.IN_PROGRESS),
+    tone: "primary",
+  },
+  {
+    value: AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING,
+    label: fromStatus(AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING),
+    tone: "info",
+  },
+  {
+    value: AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE,
+    label: fromStatus(AssessmentStatus.CONCLUDED_MANAGEMENT_COMPLETE),
+    tone: "success",
+  },
+  {
+    value: AssessmentStatus.CLOSED_SUPERFICIAL_THREAT,
+    label: fromStatus(AssessmentStatus.CLOSED_SUPERFICIAL_THREAT),
+    tone: "muted",
+  },
+];
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/assessments/submissions/presigned-upload-urls`;
 
@@ -131,41 +155,11 @@ const ThreatAssessmentForm: React.FC = () => {
     },
   });
 
-  const assessmentActions: DropdownAction[] = useMemo(
-    () => [
-      {
-        id: "edit",
-        value: "Edit",
-        action: () => setIsEditing(true),
-        hidden: !canAlterAssessment || isEditing,
-      },
-      {
-        id: "pdf",
-        value: "Download as PDF",
-        action: () => {
-          setInfo("Downloading assessment as PDF...", { id: infoAlertId });
-          downloadAssessmentAsPdfMutation.mutate(assessment?.id);
-        },
-        hidden: !assessment,
-      },
-      ...Object.entries(AssessmentStatus).map(([key, value]) => ({
-        id: `status-${key}`,
-        value: <StatusPill status={value} />,
-        action: () => changeStatus(value),
-        hidden: assessment?.status === value,
-      })),
-    ],
-    [
-      changeStatus,
-      assessment,
-      canAlterAssessment,
-      isEditing,
-      setIsEditing,
-      downloadAssessmentAsPdfMutation,
-      setInfo,
-      infoAlertId,
-    ],
-  );
+  const downloadPdf = useCallback(() => {
+    if (!assessment) return;
+    setInfo("Downloading assessment as PDF...", { id: infoAlertId });
+    downloadAssessmentAsPdfMutation.mutate(assessment.id);
+  }, [assessment, downloadAssessmentAsPdfMutation, setInfo, infoAlertId]);
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
@@ -188,14 +182,15 @@ const ThreatAssessmentForm: React.FC = () => {
     <>
       <BackButton defaultTo={"../"} valueOnDefault="Back to Dashboard" />
       {assessment && (
-        <div className="flex justify-between items-end mb-4 sticky top-0 border-b bg-gray-50 border-gray-200 py-5 z-20">
-          <Dropdown
-            actions={assessmentActions}
-            value="Actions"
-            placement="bottom-start"
-          />
-
-          <div className="flex gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-4 sticky top-16 border-b bg-gray-50 border-gray-200 py-5 z-20">
+          <div className="flex items-center gap-3">
+            <StatusBadgePicker
+              value={assessment.status}
+              options={ASSESSMENT_STATUS_OPTIONS}
+              onChange={changeStatus}
+              disabled={!canAlterAssessment}
+              loading={assessmentMutation.isPending}
+            />
             <span className="flex items-center gap-1 text-sm">
               <span className="font-medium">Tag:</span>
               <span className="italic">
@@ -213,18 +208,29 @@ const ThreatAssessmentForm: React.FC = () => {
                 />
               </span>
             </span>
-            {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
-              PoC files:
-              <POCFilesButtonCompact
-                pocFiles={assessment.pocFiles}
-                className="text-gray-500"
-              />
-            </span> */}
-            <StatusPill status={assessment.status} />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {canAlterAssessment && !isEditing && (
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-secondary-800 ring-1 ring-inset ring-warm-300 hover:bg-warm-50 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                Edit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={downloadPdf}
+              disabled={downloadAssessmentAsPdfMutation.isPending}
+              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-secondary-800 ring-1 ring-inset ring-warm-300 hover:bg-warm-50 disabled:opacity-60 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+            >
+              Download PDF
+            </button>
             <button
               type="button"
               onClick={() => setManageNotesOpen(true)}
-              className="block self-start w-max rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               Notes {notes && <span>({notes?.results.length ?? 0})</span>}
             </button>

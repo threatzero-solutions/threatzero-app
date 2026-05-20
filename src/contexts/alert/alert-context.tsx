@@ -251,7 +251,6 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
             </div>
           </div>
         </AlertPortal>
-        ,
       </ErrorBoundary>
     </AlertContext.Provider>
   );

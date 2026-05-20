@@ -49,7 +49,10 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
         {/* <StarIcon className="h-4 w-4 mr-1" /> */}
         <span className="whitespace-nowrap">&#9733; {title ?? "Featured"}</span>
       </h2>
-      <div role="grid" className="mt-3 grid grid-cols-1 gap-5 sm:gap-6">
+      <div
+        role="grid"
+        className="mt-3 grid auto-rows-fr grid-cols-1 gap-5 sm:gap-6"
+      >
         <TrainingSectionTile
           section={featuredSection}
           featuredWindow={window ?? undefined}

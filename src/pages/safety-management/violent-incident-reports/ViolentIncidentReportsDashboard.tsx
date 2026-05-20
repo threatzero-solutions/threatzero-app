@@ -9,7 +9,7 @@ import ButtonGroup from "../../../components/layouts/buttons/ButtonGroup";
 import IconButton from "../../../components/layouts/buttons/IconButton";
 import EditableCell from "../../../components/layouts/EditableCell";
 import DataTable2 from "../../../components/layouts/tables/DataTable2";
-import StatsDisplay from "../../../components/StatsDisplay";
+import OverviewHeader from "../components/OverviewHeader";
 import { violentIncidentReportPermissionsOptions } from "../../../constants/permission-options";
 import { WRITE } from "../../../constants/permissions";
 import { useAuth } from "../../../contexts/auth/useAuth";
@@ -26,7 +26,7 @@ import {
   ViolentIncidentReport,
   ViolentIncidentReportStatus,
 } from "../../../types/entities";
-import { fromDaysKey, fromStatus } from "../../../utils/core";
+import { fromStatus } from "../../../utils/core";
 import StatusPill from "./components/StatusPill";
 
 dayjs.extend(relativeTime);
@@ -181,57 +181,65 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
   ]);
 
   return (
-    <div className={"space-y-12"}>
-      <h3 className="text-2xl font-semibold leading-6 text-gray-900">
-        Violent Incident Log
-      </h3>
-
-      {/* STATS */}
-      <StatsDisplay
-        heading="New Since"
-        loading={violentIncidentReportStatsLoading}
-        stats={
-          violentIncidentReportStats &&
-          Object.entries(violentIncidentReportStats.subtotals.newSince).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: fromDaysKey(key),
-              stat: subtotal,
-              detail: `${(
-                (subtotal / (violentIncidentReportStats.total || 1)) *
-                100
-              ).toFixed(2)}%`,
-            }),
-          )
-        }
-      />
-
-      <StatsDisplay
-        heading="Totals by Status"
-        loading={violentIncidentReportStatsLoading}
-        stats={
-          violentIncidentReportStats &&
-          Object.entries(violentIncidentReportStats.subtotals.statuses).map(
-            ([key, subtotal]) => ({
-              key: key,
-              name: <StatusPill status={key as ViolentIncidentReportStatus} />,
-              stat: subtotal,
-              detail: `${(
-                (subtotal / (violentIncidentReportStats.total || 1)) *
-                100
-              ).toFixed(2)}%`,
-            }),
-          )
-        }
-      />
-      <DataTable2
-        data={violentIncidentReports?.results ?? []}
-        columns={columns}
-        isLoading={violentIncidentReportsLoading}
-        noRowsMessage="Violent incident log empty."
-        title="Violent Incident Log"
-        subtitle="View, add or edit violent incident reports."
-        action={
+    <div className={"space-y-6"}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <OverviewHeader
+            total={violentIncidentReportStats?.total}
+            totalContext="all-time"
+            loading={violentIncidentReportStatsLoading}
+            statusChips={
+              violentIncidentReportStats
+                ? [
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.statuses.new ?? 0,
+                      label: "New",
+                      tone: "primary",
+                      value: ViolentIncidentReportStatus.NEW,
+                    },
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.statuses
+                          .reviewed ?? 0,
+                      label: "Reviewed",
+                      tone: "success",
+                      value: ViolentIncidentReportStatus.REVIEWED,
+                    },
+                  ]
+                : undefined
+            }
+            activeStatus={tableFilterOptions.status as string | undefined}
+            onStatusChange={(next) =>
+              setTableFilterOptions({ ...tableFilterOptions, status: next })
+            }
+            trends={
+              violentIncidentReportStats
+                ? [
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.newSince.days7 ??
+                        0,
+                      label: "Last 7d",
+                    },
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.newSince.days30 ??
+                        0,
+                      label: "Last 30d",
+                    },
+                    {
+                      count:
+                        violentIncidentReportStats.subtotals.newSince.days90 ??
+                        0,
+                      label: "Last 90d",
+                    },
+                  ]
+                : undefined
+            }
+          />
+        </div>
+        <div className="shrink-0 sm:pt-1">
           <Link to={"./new"}>
             <button
               type="button"
@@ -240,7 +248,14 @@ const ViolentIncidentReportsDashboard: React.FC = withRequirePermissions(() => {
               + Report Violent Incident
             </button>
           </Link>
-        }
+        </div>
+      </div>
+
+      <DataTable2
+        data={violentIncidentReports?.results ?? []}
+        columns={columns}
+        isLoading={violentIncidentReportsLoading}
+        noRowsMessage="Violent incident log empty."
         query={tableFilterOptions}
         setQuery={setTableFilterOptions}
         pageState={violentIncidentReports}

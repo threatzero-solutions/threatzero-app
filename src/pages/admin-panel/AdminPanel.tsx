@@ -1,25 +1,16 @@
 import { Outlet } from "react-router";
-import PageNavBar from "../../components/layouts/PageNavBar";
 import { adminPanelPermissionOptions } from "../../constants/permission-options";
 import { withRequirePermissions } from "../../guards/with-require-permissions";
 
-const navigation = [
-  { name: "Organizations", to: "organizations" },
-  { name: "Courses", to: "courses" },
-  { name: "Forms", to: "forms" },
-  { name: "Resources", to: "resources" },
-  { name: "Languages", to: "languages" },
-  { name: "System admins", to: "system-admins" },
-  { name: "Advanced", to: "advanced" },
-];
-
-const AdminPanel: React.FC = withRequirePermissions(() => {
-  return (
-    <>
-      <PageNavBar navigation={navigation} />
-      <Outlet />
-    </>
-  );
-}, adminPanelPermissionOptions);
+/**
+ * Admin Panel layout shell. Used to render a dark PageNavBar with tabs
+ * for Organizations / Courses / Forms / etc., but the chrome rework
+ * surfaces those as their own section in the sidebar. The page itself
+ * now just renders the active sub-route via Outlet.
+ */
+const AdminPanel: React.FC = withRequirePermissions(
+  () => <Outlet />,
+  adminPanelPermissionOptions,
+);
 
 export default AdminPanel;

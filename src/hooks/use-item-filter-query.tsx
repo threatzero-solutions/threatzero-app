@@ -10,6 +10,19 @@ import { useSearchParams } from "react-router";
 import { useImmer } from "use-immer";
 import { useDebounceValue } from "usehooks-ts";
 
+type CustomParamValue = string | string[] | undefined;
+
+const normalizeCustom = (v: unknown): CustomParamValue => {
+  if (Array.isArray(v)) {
+    const cleaned = v
+      .filter((x) => x !== undefined && x !== null && x !== "")
+      .map(String);
+    return cleaned.length ? cleaned : undefined;
+  }
+  if (v === undefined || v === null || v === "") return undefined;
+  return `${v}`;
+};
+
 export interface ItemFilterQueryParams {
   offset?: string | number;
   order?: Ordering;
@@ -32,50 +45,30 @@ export const useItemFilterQuery = (
 
   const prefix = options.prefix ?? DEFAULT_PREFIX;
 
-  const parameterizeOptions = <T,>(
-    options: ItemFilterQueryParams,
-    valueMap: (v: string | undefined) => T,
-  ) => {
-    // Extracting limit from options even though it's not used so only custom params are left.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { offset, order, search, limit, ...customParams } = options;
-    const p: Record<string, T> = {
-      offset: valueMap(offset ? `${offset}` : undefined),
-      order: valueMap(order && stringifyOrder(order)),
-      search: valueMap(search),
-      ...Object.entries(customParams ?? {}).reduce(
-        (acc, [k, v]) => {
-          const value = v !== undefined ? `${v}` : v;
-          acc[k] = valueMap(value);
-          return acc;
-        },
-        {} as Record<string, T>,
-      ),
-    };
-    return p;
-  };
-
   const removeEmpties = (obj: object) => {
     return Object.fromEntries(
-      Object.entries(obj).filter(([, v]) => Number.isInteger(v) || !!v),
+      Object.entries(obj).filter(([, v]) => {
+        if (Array.isArray(v)) return v.length > 0;
+        return Number.isInteger(v) || !!v;
+      }),
     );
   };
 
   const [searchParams, setSearchParams] = useSearchParams();
 
   const parsedSearchParams = useMemo<ItemFilterQueryParams>(() => {
-    const customParams = Array.from(searchParams.entries()).reduce(
-      (acc, [key, value]) => {
-        if (key.startsWith(prefix) && value) {
-          const k = key.slice(prefix.length);
-          if (!["offset", "order", "search", "limit"].includes(k)) {
-            acc[snakeToCamel(k)] = value;
-          }
-        }
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
+    const seen = new Set<string>();
+    const customParams: Record<string, string | string[]> = {};
+    for (const key of searchParams.keys()) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (!key.startsWith(prefix)) continue;
+      const k = key.slice(prefix.length);
+      if (["offset", "order", "search", "limit"].includes(k)) continue;
+      const values = searchParams.getAll(key).filter(Boolean);
+      if (values.length === 0) continue;
+      customParams[snakeToCamel(k)] = values.length === 1 ? values[0] : values;
+    }
 
     const orderParam = searchParams.get(`${prefix}order`);
 
@@ -112,18 +105,34 @@ export const useItemFilterQuery = (
     }
 
     const prefix = options.prefix ?? DEFAULT_PREFIX;
-    const p = parameterizeOptions(params, (v) => v);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { offset, order, search, limit, ...customParams } = params;
+    const p: Record<string, CustomParamValue> = {
+      offset: normalizeCustom(offset),
+      order: normalizeCustom(order && stringifyOrder(order)),
+      search: normalizeCustom(search),
+    };
+    for (const [k, v] of Object.entries(customParams ?? {})) {
+      p[k] = normalizeCustom(v);
+    }
+
     setSearchParams(
       (draft) => {
-        Object.entries(p).forEach(([k, v]) => {
+        for (const [k, v] of Object.entries(p)) {
           const key = `${prefix}${camelToSnake(k)}`;
-          const currentValue = draft.get(key);
-          if (v && v !== currentValue) {
-            draft.set(key, v);
-          } else if (!v) {
+          if (v === undefined) {
             draft.delete(key);
+            continue;
           }
-        });
+          // Re-emit the key from scratch so single→array and
+          // array→single transitions don't leave stale entries behind.
+          draft.delete(key);
+          if (Array.isArray(v)) {
+            for (const vv of v) draft.append(key, vv);
+          } else {
+            draft.set(key, v);
+          }
+        }
         return draft;
       },
       { replace: true },

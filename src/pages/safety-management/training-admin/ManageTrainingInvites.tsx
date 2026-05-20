@@ -504,11 +504,6 @@ const ManageTrainingInvites: React.FC = () => {
   return (
     <>
       <div className="flex flex-col gap-16">
-        <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center ">
-          <h1 className="text-base font-semibold leading-6 text-gray-900">
-            Manage Training Invites
-          </h1>
-        </div>
         <form className="flex flex-col gap-4" onSubmit={onSubmitSendInvites}>
           {/* SEND NEW INVITES */}
           <div className="sm:flex sm:items-center">
