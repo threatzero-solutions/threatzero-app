@@ -96,7 +96,8 @@ const EditSafetyContact: React.FC<EditSafetyContactProps> = ({
       onClose={() => setOpen(false)}
       onDelete={isEditing && onDelete ? onDelete : undefined}
       deleteText="Remove"
-      submitText={saving ? "Saving…" : "Save"}
+      submitText="Save"
+      isSaving={saving}
     >
       <SlideOverHeading
         title={isEditing ? "Edit safety contact" : "Add safety contact"}

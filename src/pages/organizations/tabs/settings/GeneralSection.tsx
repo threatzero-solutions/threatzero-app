@@ -29,6 +29,7 @@ import {
   createSafetyContact,
   deleteSafetyContact,
   reorderSafetyContacts,
+  type SafetyContactOwnerRef,
   updateSafetyContact,
 } from "../../../../queries/safety-management";
 import {
@@ -113,16 +114,24 @@ export const GeneralSection: React.FC = () => {
       onSuccess: () => invalidateAfterContact(),
     });
 
+  /** Build the current owner reference, or null if the IDs aren't ready yet. */
+  const buildOwnerRef = (): SafetyContactOwnerRef | null => {
+    if (isUnitContext) {
+      return currentUnit?.id ? { unitId: currentUnit.id } : null;
+    }
+    return currentOrganization?.id
+      ? { organizationId: currentOrganization.id }
+      : null;
+  };
+
   const moveContact = (index: number, delta: 1 | -1) => {
     const next = [...safetyContacts];
     const target = index + delta;
     if (target < 0 || target >= next.length) return;
     [next[index], next[target]] = [next[target], next[index]];
-    const ownerId = isUnitContext
-      ? { unitId: currentUnit?.id }
-      : { organizationId: currentOrganization?.id };
-    if (!ownerId.unitId && !ownerId.organizationId) return;
-    reorderContactsMutate({ ...ownerId, ids: next.map((c) => c.id) });
+    const owner = buildOwnerRef();
+    if (!owner) return;
+    reorderContactsMutate({ ...owner, ids: next.map((c) => c.id) });
   };
 
   const handleSave = useCallback(
@@ -180,12 +189,10 @@ export const GeneralSection: React.FC = () => {
         { onSuccess: () => setEditContactOpen(false) },
       );
     } else {
-      const ownerId = isUnitContext
-        ? { unitId: currentUnit?.id }
-        : { organizationId: currentOrganization?.id };
-      if (!ownerId.unitId && !ownerId.organizationId) return;
+      const owner = buildOwnerRef();
+      if (!owner) return;
       createContactMutate(
-        { ...ownerId, ...values },
+        { ...owner, ...values },
         { onSuccess: () => setEditContactOpen(false) },
       );
     }

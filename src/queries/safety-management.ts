@@ -71,18 +71,27 @@ export const getResourceAsPDF = (resourceName: string) => (id?: string) =>
 
 // Safety contacts
 
-export interface CreateSafetyContactPayload {
-  organizationId?: string;
-  unitId?: string;
+/**
+ * Exactly one of organizationId / unitId. Modeled as a discriminated union
+ * so the type system rejects empty (neither set) and ambiguous (both set)
+ * payloads before they reach the server. The API enforces the same xor at
+ * runtime via CHK_safety_contact_owner_xor.
+ */
+export type SafetyContactOwnerRef =
+  | { organizationId: string; unitId?: never }
+  | { unitId: string; organizationId?: never };
+
+interface SafetyContactFields {
   name: string;
   email: string;
   phone: string;
   title?: string | null;
 }
 
-export type UpdateSafetyContactPayload = Partial<
-  Omit<CreateSafetyContactPayload, "organizationId" | "unitId">
->;
+export type CreateSafetyContactPayload = SafetyContactOwnerRef &
+  SafetyContactFields;
+
+export type UpdateSafetyContactPayload = Partial<SafetyContactFields>;
 
 export const createSafetyContact = (payload: CreateSafetyContactPayload) =>
   insertOne<SafetyContact>("/safety-management/safety-contacts", payload);
@@ -103,11 +112,9 @@ export const deleteSafetyContact = (id: string) =>
     .delete(buildUrl(`/safety-management/safety-contacts/${id}`))
     .then((res) => res.data);
 
-export interface ReorderSafetyContactsPayload {
-  organizationId?: string;
-  unitId?: string;
+export type ReorderSafetyContactsPayload = SafetyContactOwnerRef & {
   ids: string[];
-}
+};
 
 export const reorderSafetyContacts = (payload: ReorderSafetyContactsPayload) =>
   axios
