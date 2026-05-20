@@ -54,7 +54,7 @@ interface EditOrganizationBasicProps {
 
 type TransientOrganizationBase = Omit<
   Transient<OrganizationBase>,
-  "safetyContact" | "policiesAndProcedures"
+  "safetyContacts" | "policiesAndProcedures"
 > & {
   parentUnit?: Pick<Unit, "id"> | null;
   organization?: Pick<Organization, "id">;

@@ -6,6 +6,7 @@ import {
   Form,
   Note,
   POCFile,
+  SafetyContact,
   ThreatAssessment,
   Tip,
   TipStatus,
@@ -67,6 +68,53 @@ export const getResourceAsPDF = (resourceName: string) => (id?: string) =>
         })
         .then((res) => res.data)
     : Promise.reject(new Error(`${resourceName} ID must not be empty.`));
+
+// Safety contacts
+
+export interface CreateSafetyContactPayload {
+  organizationId?: string;
+  unitId?: string;
+  name: string;
+  email: string;
+  phone: string;
+  title?: string | null;
+}
+
+export type UpdateSafetyContactPayload = Partial<
+  Omit<CreateSafetyContactPayload, "organizationId" | "unitId">
+>;
+
+export const createSafetyContact = (payload: CreateSafetyContactPayload) =>
+  insertOne<SafetyContact>("/safety-management/safety-contacts", payload);
+
+export const updateSafetyContact = (
+  id: string,
+  payload: UpdateSafetyContactPayload,
+) =>
+  axios
+    .patch<SafetyContact>(
+      buildUrl(`/safety-management/safety-contacts/${id}`),
+      payload,
+    )
+    .then((res) => res.data);
+
+export const deleteSafetyContact = (id: string) =>
+  axios
+    .delete(buildUrl(`/safety-management/safety-contacts/${id}`))
+    .then((res) => res.data);
+
+export interface ReorderSafetyContactsPayload {
+  organizationId?: string;
+  unitId?: string;
+  ids: string[];
+}
+
+export const reorderSafetyContacts = (payload: ReorderSafetyContactsPayload) =>
+  axios
+    .post<
+      SafetyContact[]
+    >(buildUrl("/safety-management/safety-contacts/reorder"), payload)
+    .then((res) => res.data);
 
 // POC Files
 

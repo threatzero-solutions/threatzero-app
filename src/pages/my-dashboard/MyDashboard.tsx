@@ -49,8 +49,17 @@ const MyDashboard: React.FC = () => {
   });
 
   const orgsLoading = organizationLoading || unitLoading;
-  const mySafetyContact =
-    myUnit?.safetyContact ?? myOrganization?.safetyContact;
+  // Two-tier display: the user's unit contacts read as the primary list
+  // (the page header already identifies the unit, no eyebrow needed), and
+  // org contacts surface below as fallback under an explicit label. With
+  // no unit contacts, org contacts become the primary list.
+  const unitSafetyContacts = myUnit?.safetyContacts ?? [];
+  const orgSafetyContacts = myOrganization?.safetyContacts ?? [];
+  const hasUnitContacts = unitSafetyContacts.length > 0;
+  const primaryContacts = hasUnitContacts
+    ? unitSafetyContacts
+    : orgSafetyContacts;
+  const secondaryContacts = hasUnitContacts ? orgSafetyContacts : [];
   const myPoliciesAndProcedures = [
     ...(myUnit?.policiesAndProcedures ?? []),
     ...(myOrganization?.policiesAndProcedures ?? []),
@@ -98,7 +107,7 @@ const MyDashboard: React.FC = () => {
             people.
           </div>
         </div>
-        <span className="hidden items-center gap-1 rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors group-hover:bg-primary-600 sm:inline-flex">
+        <span className="hidden items-center gap-1 rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors group-hover:bg-primary-700 sm:inline-flex">
           Report
           <ArrowRightIcon className="h-4 w-4" />
         </span>
@@ -115,25 +124,45 @@ const MyDashboard: React.FC = () => {
         </h2>
         <div className="grid gap-5 sm:grid-cols-2 sm:divide-x sm:divide-gray-100">
           <div className="space-y-2 sm:pr-5">
-            <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-              <LifebuoyIcon aria-hidden className="h-4 w-4 text-gray-500" />
-              Safety contact
+            <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-secondary-700">
+              <LifebuoyIcon
+                aria-hidden
+                className="h-4 w-4 text-secondary-500"
+              />
+              {primaryContacts.length + secondaryContacts.length > 1
+                ? "Safety contacts"
+                : "Safety contact"}
             </h3>
-            <div className="text-sm text-gray-700">
+            <div className="text-sm">
               {orgsLoading ? (
-                <div className="space-y-2">
-                  {[0, 1, 2].map((i) => (
-                    <span
-                      key={i}
-                      className="block h-3.5 w-full animate-pulse rounded bg-gray-200/60"
-                    />
-                  ))}
-                </div>
-              ) : mySafetyContact ? (
-                <SafetyContactBody value={mySafetyContact} />
+                <SafetyContactSkeleton />
+              ) : primaryContacts.length > 0 ? (
+                <>
+                  <ul className="space-y-4">
+                    {primaryContacts.map((c) => (
+                      <li key={c.id}>
+                        <SafetyContactBody value={c} />
+                      </li>
+                    ))}
+                  </ul>
+                  {secondaryContacts.length > 0 && (
+                    <div className="mt-5 pt-4">
+                      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-secondary-500">
+                        Also available from {orgName}
+                      </p>
+                      <ul className="space-y-3">
+                        {secondaryContacts.map((c) => (
+                          <li key={c.id}>
+                            <SafetyContactBody value={c} muted />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
               ) : (
-                <span className="text-gray-500">
-                  No safety contact listed for your organization yet.
+                <span className="text-secondary-500">
+                  Your organization hasn&rsquo;t named a safety contact yet.
                 </span>
               )}
             </div>
@@ -204,5 +233,26 @@ const MyDashboard: React.FC = () => {
     </div>
   );
 };
+
+/**
+ * Shape-matched skeleton for the safety contact rows. Four lines per
+ * stand-in (name, role, phone, email) with widths that taper to imply the
+ * actual content rhythm. Two placeholder contacts is enough; real data
+ * lands before the eye finishes the second row.
+ */
+function SafetyContactSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[0, 1].map((row) => (
+        <div key={row} className="space-y-1.5">
+          <span className="block h-3.5 w-2/5 animate-pulse rounded bg-secondary-100" />
+          <span className="block h-3 w-3/5 animate-pulse rounded bg-secondary-100/70" />
+          <span className="block h-3 w-1/3 animate-pulse rounded bg-secondary-100" />
+          <span className="block h-3 w-1/2 animate-pulse rounded bg-secondary-100/70" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default MyDashboard;
