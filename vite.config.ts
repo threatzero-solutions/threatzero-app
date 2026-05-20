@@ -23,7 +23,9 @@ const gitSha = (() => {
 // set in the build environment. Local `npm run build` without them stays
 // silent and still produces a working bundle.
 const sentryPluginEnabled =
-  !!process.env.SENTRY_AUTH_TOKEN && !!process.env.SENTRY_PROJECT;
+  !!process.env.SENTRY_AUTH_TOKEN &&
+  !!process.env.SENTRY_ORG &&
+  !!process.env.SENTRY_PROJECT;
 
 // https://vitejs.dev/config/
 export default defineConfig({
