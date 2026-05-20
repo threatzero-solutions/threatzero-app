@@ -1,14 +1,21 @@
-import { PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/20/solid";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import FormField from "../../../../components/forms/FormField";
 import Input from "../../../../components/forms/inputs/Input";
 import TextArea from "../../../../components/forms/inputs/TextArea";
 import IconButton from "../../../../components/layouts/buttons/IconButton";
 import SlideOver from "../../../../components/layouts/slide-over/SlideOver";
 import EditOrganizationPolicyFile from "../../../../components/safety-management/EditOrganizationPolicyFile";
-import { formatPhoneNumber } from "../../../../utils/core";
+import EditSafetyContact from "../../../../components/safety-management/EditSafetyContact";
+import { formatPhoneNumber, stripPhoneNumber } from "../../../../utils/core";
 import { useAuth } from "../../../../contexts/auth/useAuth";
 import { ConfirmationContext } from "../../../../contexts/core/confirmation-context";
 import { OrganizationsContext } from "../../../../contexts/organizations/organizations-context";
@@ -19,6 +26,13 @@ import {
   saveUnit,
 } from "../../../../queries/organizations";
 import {
+  createSafetyContact,
+  deleteSafetyContact,
+  reorderSafetyContacts,
+  type SafetyContactOwnerRef,
+  updateSafetyContact,
+} from "../../../../queries/safety-management";
+import {
   FieldType,
   Organization,
   OrganizationLabelPreset,
@@ -28,13 +42,6 @@ import {
 import { OrganizationStatusBadge } from "../../components/OrganizationStatusBadge";
 
 type PolicyDraft = Partial<OrganizationPolicyFile> & { id?: string };
-
-const EMPTY_SAFETY: Partial<SafetyContact> = {
-  name: "",
-  email: "",
-  phone: "",
-  title: "",
-};
 
 export const GeneralSection: React.FC = () => {
   const { isGlobalAdmin } = useAuth();
@@ -52,6 +59,10 @@ export const GeneralSection: React.FC = () => {
   const [editPolicyOpen, setEditPolicyOpen] = useState(false);
   const [policyDraft, setPolicyDraft] = useState<PolicyDraft | undefined>();
 
+  const [editContactOpen, setEditContactOpen] = useState(false);
+  // null = creating a new contact; otherwise editing the existing one
+  const [contactDraft, setContactDraft] = useState<SafetyContact | null>(null);
+
   const { mutate: saveOrganizationMutate, isPending: organizationIsSaving } =
     useMutation({
       mutationFn: saveOrganization,
@@ -62,6 +73,66 @@ export const GeneralSection: React.FC = () => {
     mutationFn: saveUnit,
     onSuccess: () => invalidateCurrentUnitQuery(),
   });
+
+  const invalidateAfterContact = () => {
+    if (isUnitContext) {
+      invalidateCurrentUnitQuery();
+    } else {
+      invalidateOrganizationQuery();
+    }
+  };
+
+  const { mutate: createContactMutate, isPending: createContactPending } =
+    useMutation({
+      mutationFn: createSafetyContact,
+      onSuccess: () => invalidateAfterContact(),
+    });
+
+  const { mutate: updateContactMutate, isPending: updateContactPending } =
+    useMutation({
+      mutationFn: ({
+        id,
+        ...payload
+      }: {
+        id: string;
+        name: string;
+        email: string;
+        phone: string;
+        title?: string | null;
+      }) => updateSafetyContact(id, payload),
+      onSuccess: () => invalidateAfterContact(),
+    });
+
+  const { mutate: deleteContactMutate } = useMutation({
+    mutationFn: deleteSafetyContact,
+    onSuccess: () => invalidateAfterContact(),
+  });
+
+  const { mutate: reorderContactsMutate, isPending: reorderPending } =
+    useMutation({
+      mutationFn: reorderSafetyContacts,
+      onSuccess: () => invalidateAfterContact(),
+    });
+
+  /** Build the current owner reference, or null if the IDs aren't ready yet. */
+  const buildOwnerRef = (): SafetyContactOwnerRef | null => {
+    if (isUnitContext) {
+      return currentUnit?.id ? { unitId: currentUnit.id } : null;
+    }
+    return currentOrganization?.id
+      ? { organizationId: currentOrganization.id }
+      : null;
+  };
+
+  const moveContact = (index: number, delta: 1 | -1) => {
+    const next = [...safetyContacts];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    const owner = buildOwnerRef();
+    if (!owner) return;
+    reorderContactsMutate({ ...owner, ids: next.map((c) => c.id) });
+  };
 
   const handleSave = useCallback(
     (data: Partial<Organization>) => {
@@ -90,29 +161,59 @@ export const GeneralSection: React.FC = () => {
   useEffect(() => setName(subject?.name ?? ""), [subject?.name]);
   useEffect(() => setAddress(subject?.address ?? ""), [subject?.address]);
 
-  // --- safety contact: local mirror, blur-to-save ---
-  const initialSafety = useMemo<Partial<SafetyContact>>(
-    () => ({ ...EMPTY_SAFETY, ...(subject?.safetyContact ?? {}) }),
-    [subject?.safetyContact],
-  );
-  const [safety, setSafety] = useState(initialSafety);
-  useEffect(() => setSafety(initialSafety), [initialSafety]);
+  const safetyContacts = subject?.safetyContacts ?? [];
+  // Unit context: org-level contacts are *also* shown, in a quieter tier
+  // below the unit's own contacts. They're not editable from this screen
+  // (that happens on the org-level Settings page).
+  const orgSafetyContacts = isUnitContext
+    ? (currentOrganization?.safetyContacts ?? [])
+    : [];
 
-  // In unit context, a unit can override the org-level safety contact
-  // OR inherit it. We hide the form fields by default when there's no
-  // unit-specific contact set yet — admins land on a quiet card showing
-  // who the org-level contact is, with an "override" affordance to
-  // reveal the form. When the unit DOES have its own contact, the form
-  // shows immediately.
-  const orgSafetyContact = currentOrganization?.safetyContact ?? null;
-  const unitInheritsFromOrg =
-    isUnitContext && !subject?.safetyContact && !!orgSafetyContact;
-  const [revealUnitForm, setRevealUnitForm] = useState(false);
-  // Reset the override state if the user navigates between subjects.
-  useEffect(() => {
-    setRevealUnitForm(false);
-  }, [currentUnit?.id, isUnitContext]);
-  const showSafetyForm = !unitInheritsFromOrg || revealUnitForm;
+  const openAddContact = () => {
+    setContactDraft(null);
+    setEditContactOpen(true);
+  };
+  const openEditContact = (contact: SafetyContact) => {
+    setContactDraft(contact);
+    setEditContactOpen(true);
+  };
+  const handleSaveContact = (values: {
+    name: string;
+    email: string;
+    phone: string;
+    title?: string | null;
+  }) => {
+    if (contactDraft?.id) {
+      updateContactMutate(
+        { id: contactDraft.id, ...values },
+        { onSuccess: () => setEditContactOpen(false) },
+      );
+    } else {
+      const owner = buildOwnerRef();
+      if (!owner) return;
+      createContactMutate(
+        { ...owner, ...values },
+        { onSuccess: () => setEditContactOpen(false) },
+      );
+    }
+  };
+  const handleDeleteContact = () => {
+    if (!contactDraft?.id) return;
+    const target = contactDraft;
+    openConfirm({
+      title: `Remove ${target.name || "this contact"}?`,
+      message:
+        "Users won't see this contact in safety information until you add them back.",
+      destructive: true,
+      confirmText: "Remove",
+      onConfirm: () => {
+        deleteContactMutate(target.id);
+        setEditContactOpen(false);
+        closeConfirm();
+      },
+    });
+  };
+  const contactsBusy = createContactPending || updateContactPending;
 
   if (!currentOrganization) return null;
 
@@ -135,34 +236,6 @@ export const GeneralSection: React.FC = () => {
     setName(subject?.name ?? "");
     setAddress(subject?.address ?? "");
   };
-
-  const safetyKey = (v: Partial<SafetyContact>) =>
-    JSON.stringify({
-      name: (v.name ?? "").trim(),
-      email: (v.email ?? "").trim(),
-      phone: (v.phone ?? "").trim(),
-      title: (v.title ?? "").trim(),
-    });
-  const safetyDirty = safetyKey(safety) !== safetyKey(initialSafety);
-  const hasExistingSafety = !!subject?.safetyContact;
-  const allSafetyEmpty =
-    !safety.name?.trim() &&
-    !safety.email?.trim() &&
-    !safety.phone?.trim() &&
-    !safety.title?.trim();
-  const safetyComplete =
-    !!safety.name?.trim() && !!safety.email?.trim() && !!safety.phone?.trim();
-  // Saveable when either (a) all required fields are filled OR
-  // (b) the user has cleared every field to remove an existing contact.
-  const safetyValid = safetyComplete || (allSafetyEmpty && hasExistingSafety);
-
-  const saveSafety = () => {
-    if (!safetyDirty || !safetyValid) return;
-    handleSave({
-      safetyContact: (allSafetyEmpty ? null : safety) as SafetyContact | null,
-    });
-  };
-  const resetSafety = () => setSafety(initialSafety);
 
   const handleRemovePolicy = (file: PolicyDraft) => {
     openConfirm({
@@ -263,123 +336,70 @@ export const GeneralSection: React.FC = () => {
       </Section>
 
       <Section
-        heading="Safety contact"
+        heading={
+          safetyContacts.length > 1 ? "Safety contacts" : "Safety contact"
+        }
         description={
           isUnitContext
-            ? "The primary person users in this unit reach when something goes wrong. Falls back to the organization-level contact if none is set here."
-            : "The primary person users reach when something goes wrong. Shown anywhere safety guidance appears."
+            ? "People users at this unit reach when something goes wrong. Organization-level contacts are also shown to unit users."
+            : "People users reach when something goes wrong. Shown anywhere safety guidance appears."
+        }
+        action={
+          <IconButton
+            icon={PlusIcon}
+            text="Add contact"
+            type="button"
+            onClick={openAddContact}
+            className="bg-white ring-gray-300 text-gray-900 hover:bg-gray-50"
+          />
         }
       >
-        {unitInheritsFromOrg && !revealUnitForm && orgSafetyContact ? (
-          <InheritedSafetyContactCard
-            orgName={currentOrganization.name}
-            contact={orgSafetyContact}
-            onOverride={() => setRevealUnitForm(true)}
-          />
-        ) : null}
-        {showSafetyForm && (
-          <>
-            {isUnitContext && hasExistingSafety && orgSafetyContact && (
-              <p className="mb-4 text-xs text-gray-500">
-                Overrides the organization-level contact:{" "}
-                <span className="font-medium text-gray-700">
-                  {orgSafetyContact.name}
-                </span>
-                {orgSafetyContact.email ? ` · ${orgSafetyContact.email}` : ""}.
-              </p>
-            )}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <FormField
-                field={{ label: "Name", required: true }}
-                input={
-                  <Input
-                    type={FieldType.TEXT}
-                    value={safety.name ?? ""}
-                    onChange={(e) =>
-                      setSafety((s) => ({ ...s, name: e.target.value }))
-                    }
-                    className="w-full"
-                    placeholder="Jane Smith"
-                  />
+        {safetyContacts.length > 0 ? (
+          <ul className="divide-y divide-gray-100">
+            {safetyContacts.map((c, i) => (
+              <SafetyContactRow
+                key={c.id}
+                contact={c}
+                onEdit={() => openEditContact(c)}
+                onMoveUp={
+                  i > 0 && !reorderPending
+                    ? () => moveContact(i, -1)
+                    : undefined
+                }
+                onMoveDown={
+                  i < safetyContacts.length - 1 && !reorderPending
+                    ? () => moveContact(i, 1)
+                    : undefined
                 }
               />
-              <FormField
-                field={{ label: "Title (optional)" }}
-                input={
-                  <Input
-                    type={FieldType.TEXT}
-                    value={safety.title ?? ""}
-                    onChange={(e) =>
-                      setSafety((s) => ({ ...s, title: e.target.value }))
-                    }
-                    className="w-full"
-                    placeholder="Director of Safety"
-                  />
-                }
-              />
-              <FormField
-                field={{ label: "Email", required: true }}
-                input={
-                  <Input
-                    type={FieldType.EMAIL}
-                    value={safety.email ?? ""}
-                    onChange={(e) =>
-                      setSafety((s) => ({ ...s, email: e.target.value }))
-                    }
-                    className="w-full"
-                    placeholder="safety@example.com"
-                  />
-                }
-              />
-              <FormField
-                field={{ label: "Phone", required: true }}
-                input={
-                  <Input
-                    type={FieldType.TEL}
-                    value={safety.phone ?? ""}
-                    onChange={(e) =>
-                      setSafety((s) => ({
-                        ...s,
-                        phone: formatPhoneNumber(e.target.value),
-                      }))
-                    }
-                    className="w-full"
-                    placeholder="(555) 123-4567"
-                  />
-                }
-              />
+            ))}
+          </ul>
+        ) : (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="text-sm text-gray-500"
+          >
+            No safety contacts yet.
+          </motion.p>
+        )}
+        {isUnitContext && orgSafetyContacts.length > 0 && (
+          <div className="mt-6 rounded-lg bg-gray-50 ring-1 ring-gray-900/5 px-4 py-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <h4 className="text-sm font-semibold text-gray-900">
+                Inherited from {currentOrganization.name}
+              </h4>
+              <span className="text-xs text-gray-500">
+                Also shown to users at this unit.
+              </span>
             </div>
-            {isUnitContext && revealUnitForm && !hasExistingSafety && (
-              <button
-                type="button"
-                onClick={() => {
-                  setRevealUnitForm(false);
-                  setSafety(initialSafety);
-                }}
-                className="mt-3 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                ← Inherit organization-level contact instead
-              </button>
-            )}
-            <SectionFooter
-              dirty={safetyDirty}
-              canSave={safetyDirty && safetyValid}
-              saving={isSaving}
-              onSave={saveSafety}
-              onDiscard={resetSafety}
-              saveLabel={
-                allSafetyEmpty && hasExistingSafety
-                  ? "Remove safety contact"
-                  : "Save"
-              }
-              destructive={allSafetyEmpty && hasExistingSafety}
-              hint={
-                safetyDirty && !safetyValid
-                  ? "Name, email, and phone are required."
-                  : undefined
-              }
-            />
-          </>
+            <ul className="mt-2 divide-y divide-gray-200/70">
+              {orgSafetyContacts.map((c) => (
+                <SafetyContactRow key={c.id} contact={c} muted />
+              ))}
+            </ul>
+          </div>
         )}
       </Section>
 
@@ -419,9 +439,6 @@ export const GeneralSection: React.FC = () => {
         )}
       </Section>
 
-      {/* Only policies need a slide-over — file upload is complex enough to
-          warrant the dedicated surface. Details + safety contact are fully
-          inline above. */}
       <SlideOver open={editPolicyOpen} setOpen={setEditPolicyOpen}>
         <EditOrganizationPolicyFile
           generatePolicyUploadsUrlsUrl={policyUploadUrl}
@@ -429,6 +446,16 @@ export const GeneralSection: React.FC = () => {
           onSave={handleSavePolicy}
           setOpen={setEditPolicyOpen}
           saving={isSaving}
+        />
+      </SlideOver>
+
+      <SlideOver open={editContactOpen} setOpen={setEditContactOpen}>
+        <EditSafetyContact
+          safetyContact={contactDraft}
+          onSave={handleSaveContact}
+          onDelete={handleDeleteContact}
+          setOpen={setEditContactOpen}
+          saving={contactsBusy}
         />
       </SlideOver>
 
@@ -571,16 +598,20 @@ function PolicyRow({
   );
 }
 
-// ---------- inheritance card for unit-context safety contact ----------
+// ---------- safety contact row ----------
 
-function InheritedSafetyContactCard({
-  orgName,
+function SafetyContactRow({
   contact,
-  onOverride,
+  onEdit,
+  onMoveUp,
+  onMoveDown,
+  muted,
 }: {
-  orgName: string;
   contact: SafetyContact;
-  onOverride: () => void;
+  onEdit?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  muted?: boolean;
 }) {
   const initials =
     (contact.name ?? "")
@@ -589,57 +620,88 @@ function InheritedSafetyContactCard({
       .slice(0, 2)
       .map((p) => p[0]?.toUpperCase())
       .join("") || "—";
-
   return (
-    <div className="rounded-lg bg-gray-50 ring-1 ring-gray-900/5 px-4 py-4">
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700">
-          {initials}
+    <li className="group flex items-center gap-3 py-3">
+      <div
+        className={
+          "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold " +
+          (muted
+            ? "bg-gray-200 text-gray-600"
+            : "bg-primary-100 text-primary-700")
+        }
+        aria-hidden="true"
+      >
+        {initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span
+            className={
+              "text-sm font-medium " +
+              (muted ? "text-gray-700" : "text-gray-900")
+            }
+          >
+            {contact.name}
+          </span>
+          {contact.title && (
+            <span className="text-xs text-gray-500">{contact.title}</span>
+          )}
         </div>
-        <div className="grow min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-900">
-              {contact.name}
-            </span>
-            {contact.title && (
-              <span className="text-xs text-gray-500">{contact.title}</span>
-            )}
-          </div>
-          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-600">
-            {contact.email && (
-              <a
-                href={`mailto:${contact.email}`}
-                className="hover:text-gray-900 transition-colors"
-              >
-                {contact.email}
-              </a>
-            )}
-            {contact.phone && (
-              <a
-                href={`tel:${contact.phone}`}
-                className="hover:text-gray-900 transition-colors"
-              >
-                {contact.phone}
-              </a>
-            )}
-          </div>
+        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-600">
+          {contact.email && (
+            <a
+              href={`mailto:${contact.email}`}
+              className="hover:text-gray-900 transition-colors"
+            >
+              {contact.email}
+            </a>
+          )}
+          {contact.phone && (
+            <a
+              href={`tel:${stripPhoneNumber(contact.phone)}`}
+              className="hover:text-gray-900 transition-colors"
+            >
+              {formatPhoneNumber(contact.phone)}
+            </a>
+          )}
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
-        <p className="text-xs text-gray-500">
-          Inherits from{" "}
-          <span className="font-medium text-gray-700">{orgName}</span>. Used
-          here unless you set a unit-specific contact.
-        </p>
+      {(onMoveUp || onMoveDown) && (
+        <div className="flex shrink-0 flex-col">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!onMoveUp}
+            title="Move up"
+            className="text-gray-400 transition-colors hover:text-gray-900 disabled:opacity-25 disabled:hover:text-gray-400"
+          >
+            <ArrowUpIcon className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Move up</span>
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!onMoveDown}
+            title="Move down"
+            className="text-gray-400 transition-colors hover:text-gray-900 disabled:opacity-25 disabled:hover:text-gray-400"
+          >
+            <ArrowDownIcon className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Move down</span>
+          </button>
+        </div>
+      )}
+      {onEdit && (
         <button
           type="button"
-          onClick={onOverride}
-          className="shrink-0 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+          onClick={onEdit}
+          title="Edit"
+          className="text-gray-400 hover:text-gray-900 transition-colors"
         >
-          Override at unit level
+          <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Edit</span>
         </button>
-      </div>
-    </div>
+      )}
+    </li>
   );
 }
 
