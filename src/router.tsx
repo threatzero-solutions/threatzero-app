@@ -1,4 +1,10 @@
-import { createBrowserRouter, redirect, RouteObject } from "react-router";
+import * as Sentry from "@sentry/react";
+import {
+  createBrowserRouter,
+  LoaderFunctionArgs,
+  redirect,
+  RouteObject,
+} from "react-router";
 import App from "./App";
 import FormBuilder from "./components/forms/FormBuilder";
 import PublicLayout from "./components/layouts/PublicLayout";
@@ -98,7 +104,10 @@ const organizationsChildren: RouteObject[] = [
   },
 ];
 
-export const router = createBrowserRouter(
+const sentryCreateBrowserRouter =
+  Sentry.wrapCreateBrowserRouterV7(createBrowserRouter);
+
+export const router = sentryCreateBrowserRouter(
   [
     {
       path: "/sos",
@@ -202,7 +211,7 @@ export const router = createBrowserRouter(
                     },
                     {
                       path: ":tipId",
-                      loader: ({ params }) =>
+                      loader: ({ params }: LoaderFunctionArgs) =>
                         redirect(
                           `../../administrative-reports/safety-concerns/${params.tipId}`,
                         ),
@@ -377,7 +386,7 @@ export const router = createBrowserRouter(
                 {
                   path: "resources/:category",
                   handle: { title: "Resources" },
-                  loader: ({ params }) => {
+                  loader: ({ params }: LoaderFunctionArgs) => {
                     if (
                       !ResourceItemCategories.includes(
                         params.category as ResourceItemCategory,
