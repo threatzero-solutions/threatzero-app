@@ -29,7 +29,13 @@ import { DeepPartial } from "../types/core";
 
 export interface SafetyManagementResourceFilterOptions extends ItemFilterQueryParams {
   unitSlug?: string;
-  status?: string;
+  /**
+   * Accepts a single status or an array of statuses. Hero chips that
+   * collapse semantically-equivalent statuses (e.g. Complete + Closed
+   * Superficial Threat on threat assessments) pass an array; the
+   * backend's BaseQueryDto turns that into `WHERE status IN (...)`.
+   */
+  status?: string | string[];
 }
 
 export const getResourceForm =

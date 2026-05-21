@@ -134,7 +134,7 @@ const TeamTrainingOverviewCard: React.FC = () => {
               : {}),
             "enrollment.id": enrollmentId!,
             "item.id": itemIds,
-          }) as unknown as Promise<Summary>,
+          }),
         enabled: canQuery,
       };
     }),
@@ -142,12 +142,15 @@ const TeamTrainingOverviewCard: React.FC = () => {
 
   const header = (
     <div className="flex items-baseline justify-between gap-2">
-      <h2 className="text-base font-semibold text-gray-900">
+      <h2
+        id="team-training-heading"
+        className="text-base font-semibold text-gray-900"
+      >
         {labels.teamSingular} training overview
       </h2>
       <Link
         to="/safety-management/training-admin"
-        className="text-xs font-medium text-secondary-700 hover:text-secondary-800 hover:underline"
+        className="py-1 text-xs font-medium text-secondary-700 hover:text-secondary-800 hover:underline"
       >
         View completions &rarr;
       </Link>
@@ -160,7 +163,10 @@ const TeamTrainingOverviewCard: React.FC = () => {
 
   if (courseLoading) {
     return (
-      <section className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+      <section
+        aria-labelledby="team-training-heading"
+        className="space-y-3 rounded-xl border border-gray-200 bg-white p-5"
+      >
         {header}
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
@@ -176,7 +182,10 @@ const TeamTrainingOverviewCard: React.FC = () => {
 
   if (visible.length === 0) {
     return (
-      <section className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+      <section
+        aria-labelledby="team-training-heading"
+        className="space-y-3 rounded-xl border border-gray-200 bg-white p-5"
+      >
         {header}
         <div className="text-sm text-gray-500">
           No current or recent training to report on.
@@ -186,7 +195,10 @@ const TeamTrainingOverviewCard: React.FC = () => {
   }
 
   return (
-    <section className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+    <section
+      aria-labelledby="team-training-heading"
+      className="space-y-3 rounded-xl border border-gray-200 bg-white p-5"
+    >
       {header}
 
       {courseTitle && (
@@ -231,14 +243,14 @@ const OverviewRow: React.FC<RowProps> = ({ entry, summary, loading }) => {
     state === "current"
       ? "text-gray-900 font-semibold"
       : "text-gray-600 font-medium";
-  const metaClass = state === "current" ? "text-primary-700" : "text-gray-400";
+  const metaClass = state === "current" ? "text-primary-700" : "text-gray-600";
   const barBg = state === "current" ? "bg-primary-500" : "bg-gray-400";
   const pctClass = state === "current" ? "text-primary-700" : "text-gray-500";
 
   return (
     <li>
       <div
-        className={`grid grid-cols-[80px_minmax(0,1fr)_200px] items-center gap-4 rounded-lg border px-3 py-2.5 ${rowBg}`}
+        className={`grid grid-cols-[80px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 rounded-lg border px-3 py-2.5 md:grid-cols-[80px_minmax(0,1fr)_200px] ${rowBg}`}
       >
         <div
           aria-hidden
@@ -247,6 +259,8 @@ const OverviewRow: React.FC<RowProps> = ({ entry, summary, loading }) => {
           <img
             src={sectionThumb(section)}
             alt=""
+            loading="lazy"
+            decoding="async"
             className={`h-full w-full object-cover ${state === "past" ? "grayscale" : ""}`}
           />
         </div>
@@ -266,11 +280,13 @@ const OverviewRow: React.FC<RowProps> = ({ entry, summary, loading }) => {
         </div>
 
         {loading ? (
-          <div className="h-2 w-full animate-pulse rounded-full bg-gray-100" />
+          <div className="col-span-2 h-2 w-full animate-pulse rounded-full bg-gray-100 md:col-span-1" />
         ) : total === 0 ? (
-          <div className="text-right text-xs text-gray-400">No enrollees</div>
+          <div className="col-span-2 text-right text-xs text-gray-600 md:col-span-1">
+            No enrollees
+          </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="col-span-2 flex items-center gap-3 md:col-span-1">
             <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
               <span
                 className={`absolute inset-y-0 left-0 rounded-full ${barBg}`}
@@ -279,7 +295,7 @@ const OverviewRow: React.FC<RowProps> = ({ entry, summary, loading }) => {
             </div>
             <span className="flex shrink-0 items-baseline gap-1 text-xs tabular-nums">
               <strong className="font-bold text-gray-900">{completed}</strong>
-              <span className="text-gray-400">/{total}</span>
+              <span className="text-gray-600">/{total}</span>
               <span className={`ml-1 w-8 text-right font-semibold ${pctClass}`}>
                 {Math.round(percent * 100)}%
               </span>

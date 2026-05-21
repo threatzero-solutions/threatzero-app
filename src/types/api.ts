@@ -1,10 +1,19 @@
+/**
+ * Stats shape returned by `/tips/stats`, `/threat-assessments/stats`, and
+ * `/violent-incident-reports/stats`. The `Status` generic is informational
+ * (it documents which enum's values are the status keys) — keys are typed
+ * as `string` because the API serializes enum *values* (e.g. "new"), not
+ * member names (e.g. "NEW"). Doing `keyof Status` for a TS string enum
+ * resolves to `keyof string` and breaks property access.
+ */
 export interface SafetyManagementResourceStats<
-  Status extends Record<number, string>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _Status extends Record<number, string> = Record<number, string>,
 > {
   total: number;
   subtotals: {
     newSince: Record<string, number>;
-    statuses: Record<keyof Status, number>;
+    statuses: Record<string, number>;
   };
 }
 

@@ -38,7 +38,6 @@ const PreviewCourse: React.FC = () => {
             updatedOn: dayjs().format(),
           }
         }
-        showMultipleEnrollments
       />
     </>
   );

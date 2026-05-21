@@ -103,21 +103,42 @@
    * orange. */
   --color-success-50: oklch(96% 0.025 145);
   --color-success-100: oklch(92% 0.04 145);
+  --color-success-200: oklch(88% 0.06 145);
+  --color-success-300: oklch(80% 0.075 145);
+  --color-success-400: oklch(70% 0.09 145);
   --color-success-500: oklch(58% 0.1 145);
   --color-success-600: oklch(50% 0.1 145);
   --color-success-700: oklch(42% 0.09 145);
 
   --color-warning-50: oklch(97% 0.03 80);
   --color-warning-100: oklch(93% 0.06 80);
+  --color-warning-200: oklch(88% 0.08 80);
+  --color-warning-300: oklch(83% 0.1 80);
+  --color-warning-400: oklch(78% 0.12 80);
   --color-warning-500: oklch(74% 0.13 80);
   --color-warning-600: oklch(64% 0.13 80);
   --color-warning-700: oklch(52% 0.12 80);
 
   --color-danger-50: oklch(96% 0.03 25);
   --color-danger-100: oklch(92% 0.05 25);
+  --color-danger-200: oklch(88% 0.07 25);
   --color-danger-500: oklch(56% 0.13 25);
   --color-danger-600: oklch(48% 0.13 25);
   --color-danger-700: oklch(40% 0.12 25);
+
+  /* INFO — slate-leaning blue (hue 235), low chroma so it sits beside
+     brand orange without competing. Used for status badges where the
+     four-state taxonomy needs a cooler hue between primary (action)
+     and success (terminal positive). Not for default chrome — keep
+     informational surfaces warm. */
+  --color-info-50: oklch(96% 0.015 235);
+  --color-info-100: oklch(92% 0.025 235);
+  --color-info-200: oklch(85% 0.045 235);
+  --color-info-300: oklch(75% 0.06 235);
+  --color-info-400: oklch(65% 0.075 235);
+  --color-info-500: oklch(55% 0.08 235);
+  --color-info-600: oklch(48% 0.08 235);
+  --color-info-700: oklch(38% 0.07 235);
 
   /* LINK — narrow exception for inline body-text hyperlinks. Slate-blue,
    * deliberately desaturated so it doesn't compete with brand orange. */
@@ -151,44 +172,53 @@
   }
 }
 
-body {
-  margin: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/*
+ * Custom rules wrapped in @layer utilities. Tailwind v4 + the Vite
+ * plugin silently drop top-level rules below the `@layer base` block
+ * above — the dev server compiles them out and the splash pulse, body
+ * font, code font, etc. never reach the browser. Layered rules survive.
+ */
+@layer utilities {
+  body {
+    margin: 0;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+      "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-/* SplashScreen indicator. The brand-orange ring softly scales and fades
-   under the wordmark while keycloak.init + /me are in flight. ease-out
-   exponential timing so it never feels jittery. */
-@keyframes tz-splash-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
+  /* SplashScreen indicator. The brand-orange ring softly scales and
+     fades under the wordmark while keycloak.init + /me are in flight.
+     ease-out exponential timing so it never feels jittery. */
+  @keyframes tz-splash-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0.15;
+    }
   }
-  50% {
-    transform: scale(1.5);
-    opacity: 0.15;
-  }
-}
-.tz-splash-pulse {
-  animation: tz-splash-pulse 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
   .tz-splash-pulse {
-    animation: none;
-    opacity: 0.6;
+    animation: tz-splash-pulse 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
-}
+  @media (prefers-reduced-motion: reduce) {
+    .tz-splash-pulse {
+      animation: none;
+      opacity: 0.6;
+    }
+  }
 
-code {
-  font-family:
-    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
-}
+  code {
+    font-family:
+      source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  }
 
-.snap-y-proximity {
-  scroll-snap-type: y proximity;
+  .snap-y-proximity {
+    scroll-snap-type: y proximity;
+  }
 }

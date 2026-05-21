@@ -152,11 +152,16 @@ const MyTraining: React.FC = () => {
 
   const header = (
     <div className="flex items-baseline justify-between gap-2">
-      <h2 className="text-base font-semibold text-gray-900">My training</h2>
+      <h2
+        id="my-training-heading"
+        className="text-lg font-semibold text-gray-900"
+      >
+        My training
+      </h2>
       <Link
         to="/training/library"
         state={{ from: location }}
-        className="text-xs font-medium text-secondary-700 transition-colors hover:text-secondary-800 hover:underline"
+        className="py-1 text-xs font-medium text-secondary-700 transition-colors hover:text-secondary-800 hover:underline"
       >
         View all training &rarr;
       </Link>
@@ -164,7 +169,10 @@ const MyTraining: React.FC = () => {
   );
 
   const shell = (children: React.ReactNode) => (
-    <section className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+    <section
+      aria-labelledby="my-training-heading"
+      className="space-y-3 rounded-xl border border-gray-200 bg-warm-50 p-5"
+    >
       {header}
       {children}
     </section>
@@ -177,11 +185,11 @@ const MyTraining: React.FC = () => {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="h-12 animate-pulse rounded-md bg-gray-100"
+              className="h-12 animate-pulse rounded-md bg-gray-200"
             />
           ))}
         </div>
-        <div className="h-48 animate-pulse rounded-lg bg-gray-100" />
+        <div className="h-48 animate-pulse rounded-lg bg-gray-200" />
       </div>,
     );
   }
@@ -264,13 +272,13 @@ const statusTag = (
     return {
       label: "Not watched",
       icon: null,
-      className: "text-gray-400",
+      className: "text-gray-600",
     };
   }
   return {
     label: `Starts ${window.featuredOn.format("MMM D")}`,
     icon: null,
-    className: "text-gray-400",
+    className: "text-gray-600",
   };
 };
 
@@ -287,9 +295,9 @@ const ScheduleRow: React.FC<RowProps> = ({
   const tag = statusTag(state, window, progress);
 
   const rowTone = {
-    past: "hover:bg-gray-50",
+    past: "hover:bg-white",
     current: "bg-primary-50/60 hover:bg-primary-50",
-    future: "hover:bg-gray-50",
+    future: "hover:bg-white",
   }[state];
 
   const titleClass = {
@@ -299,9 +307,9 @@ const ScheduleRow: React.FC<RowProps> = ({
   }[state];
 
   const metaClass = {
-    past: "text-gray-500",
+    past: "text-gray-600",
     current: "text-primary-700",
-    future: "text-gray-400",
+    future: "text-gray-600",
   }[state];
 
   const Icon = tag.icon;
@@ -356,11 +364,13 @@ const FeaturedPanel: React.FC<{
         : "Preview";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
       <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
         <img
           src={thumb}
           alt=""
+          loading="lazy"
+          decoding="async"
           className={`h-full w-full object-cover ${state === "future" ? "opacity-70" : ""}`}
         />
       </div>
@@ -389,7 +399,7 @@ const FeaturedPanel: React.FC<{
           state={{ from: location }}
           className={`mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${
             isWatchable
-              ? "bg-primary-500 text-white hover:bg-primary-600"
+              ? "bg-primary-600 text-white hover:bg-primary-700"
               : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
           }`}
         >

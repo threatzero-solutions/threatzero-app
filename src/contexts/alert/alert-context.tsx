@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import { Draft } from "immer";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -9,7 +10,6 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { ErrorBoundary } from "react-error-boundary";
 import { useImmer } from "use-immer";
 import Alert, { AlertVariant } from "../../components/layouts/alerts/Alert";
 import ErrorPage from "../../pages/ErrorPage";
@@ -225,7 +225,11 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
         getAlertId,
       }}
     >
-      <ErrorBoundary fallback={<ErrorPage />}>
+      <Sentry.ErrorBoundary
+        fallback={({ error, eventId, resetError }) => (
+          <ErrorPage error={error} eventId={eventId} resetError={resetError} />
+        )}
+      >
         {children}
         <AlertPortal open={alerts.length > 0} delay={1000}>
           <div
@@ -251,8 +255,7 @@ export const AlertContextProvider: React.FC<PropsWithChildren> = ({
             </div>
           </div>
         </AlertPortal>
-        ,
-      </ErrorBoundary>
+      </Sentry.ErrorBoundary>
     </AlertContext.Provider>
   );
 };

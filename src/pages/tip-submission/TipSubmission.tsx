@@ -3,10 +3,12 @@ import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import Form from "../../components/forms/Form";
 import BackButton from "../../components/layouts/BackButton";
-import Dropdown, { DropdownAction } from "../../components/layouts/Dropdown";
 import EditableCell from "../../components/layouts/EditableCell";
 import SlideOver from "../../components/layouts/slide-over/SlideOver";
 import ManageNotes from "../../components/notes/ManageNotes";
+import StatusBadgePicker, {
+  StatusOption,
+} from "../../components/StatusBadgePicker";
 import { TIP_SUBMISSION_FORM_SLUG } from "../../constants/forms";
 import { LEVEL, READ, WRITE } from "../../constants/permissions";
 import { useAuth } from "../../contexts/auth/useAuth";
@@ -27,8 +29,22 @@ import {
   Tip,
   TipStatus,
 } from "../../types/entities";
+import { fromStatus } from "../../utils/core";
 import RoutingCallout from "./components/RoutingCallout";
-import StatusPill from "./components/StatusPill";
+
+const TIP_STATUS_OPTIONS: StatusOption<TipStatus>[] = [
+  { value: TipStatus.NEW, label: fromStatus(TipStatus.NEW), tone: "primary" },
+  {
+    value: TipStatus.REVIEWED,
+    label: fromStatus(TipStatus.REVIEWED),
+    tone: "info",
+  },
+  {
+    value: TipStatus.RESOLVED,
+    label: fromStatus(TipStatus.RESOLVED),
+    tone: "success",
+  },
+];
 
 const MEDIA_UPLOAD_URL = `${API_BASE_URL}/tips/submissions/presigned-upload-urls`;
 
@@ -129,30 +145,6 @@ const TipSubmission: React.FC = () => {
     [saveTipMutation.mutate, params.tipId],
   );
 
-  const tipActions: DropdownAction[] = useMemo(
-    () => [
-      {
-        id: "mark-new",
-        value: "Mark As New",
-        action: () => changeStatus(TipStatus.NEW),
-        hidden: tip?.status === TipStatus.NEW,
-      },
-      {
-        id: "mark-reviewed",
-        value: "Mark As Reviewed",
-        action: () => changeStatus(TipStatus.REVIEWED),
-        hidden: tip?.status === TipStatus.REVIEWED,
-      },
-      {
-        id: "mark-resolved",
-        value: "Mark as Resolved",
-        action: () => changeStatus(TipStatus.RESOLVED),
-        hidden: tip?.status === TipStatus.RESOLVED,
-      },
-    ],
-    [changeStatus, tip?.status],
-  );
-
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
     submission: DeepPartial<FormSubmission>,
@@ -178,14 +170,15 @@ const TipSubmission: React.FC = () => {
     <>
       {tip && <BackButton defaultTo="../" valueOnDefault="Back to Dashboard" />}
       {tip && canAlterTip && (
-        <div className="flex justify-between items-end mb-4">
-          <Dropdown
-            actions={tipActions}
-            value="Actions"
-            placement="bottom-start"
-          />
-
-          <div className="flex gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-4">
+          <div className="flex items-center gap-3">
+            <StatusBadgePicker
+              value={tip.status}
+              options={TIP_STATUS_OPTIONS}
+              onChange={changeStatus}
+              disabled={!canAlterTip}
+              loading={saveTipMutation.isPending}
+            />
             <span className="flex items-center gap-1 text-sm">
               <span className="font-medium">Tag:</span>
               <span className="italic">
@@ -203,22 +196,14 @@ const TipSubmission: React.FC = () => {
                 />
               </span>
             </span>
-            {/* <span className="inline-flex items-center gap-1 text-sm font-medium">
-              PoC files:
-              <POCFilesButtonCompact
-                pocFiles={tip.pocFiles}
-                className="text-gray-500"
-              />
-            </span> */}
-            <StatusPill status={tip.status} />
-            <button
-              type="button"
-              onClick={() => setManageNotesOpen(true)}
-              className="block self-start w-max rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-            >
-              Notes {notes && <span>({notes?.results.length ?? 0})</span>}
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={() => setManageNotesOpen(true)}
+            className="block w-max rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+          >
+            Notes {notes && <span>({notes?.results.length ?? 0})</span>}
+          </button>
         </div>
       )}
       {form === null || form?.state === FormState.DRAFT ? (

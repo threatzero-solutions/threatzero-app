@@ -1,10 +1,13 @@
 /**
  * Pre-app loading screen shown while keycloak.init() and the first /me
  * request are in flight. Warm cream backdrop matches the app's loaded
- * chrome so there's no color shift on hand-off, full wordmark gives the
+ * chrome so there's no color shift on hand-off, full TZ_logo gives the
  * brand a moment to land, and a thin brand-orange ring pulses softly
  * underneath as the only motion cue. Keyframes + reduced-motion guard
  * live in `src/index.css`.
+ *
+ * Locked: PR #105 splash design. Don't pull this into chrome-level
+ * lockup changes; the splash is its own surface.
  */
 const SplashScreen: React.FC = () => {
   return (
