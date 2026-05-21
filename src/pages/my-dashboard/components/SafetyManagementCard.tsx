@@ -48,9 +48,9 @@ interface CountBlockProps {
 }
 
 const toneClass: Record<BreakdownTone, string> = {
-  amber: "text-amber-700",
+  amber: "text-warning-700",
   blue: "text-secondary-700",
-  muted: "text-gray-500",
+  muted: "text-gray-600",
 };
 
 const CountBlock: React.FC<CountBlockProps> = ({
@@ -88,10 +88,10 @@ const CountBlock: React.FC<CountBlockProps> = ({
             {total ?? 0}
           </span>
           {accent && accent.count > 0 && (
-            <span className="inline-flex items-center gap-1.5 pb-0.5 text-xs font-semibold text-amber-700">
+            <span className="inline-flex items-center gap-1.5 pb-0.5 text-xs font-semibold text-warning-700">
               <span
                 aria-hidden
-                className="h-1.5 w-1.5 rounded-full bg-amber-500"
+                className="h-1.5 w-1.5 rounded-full bg-warning-500"
               />
               {accent.count} {accent.label}
             </span>
@@ -221,7 +221,7 @@ const SafetyManagementCard: React.FC = () => {
                     tone: "amber",
                   },
                   {
-                    label: "Mgmt ongoing",
+                    label: "Managing",
                     value:
                       assessStats.subtotals.statuses
                         .concluded_management_ongoing ?? 0,
@@ -276,7 +276,7 @@ const SafetyManagementCard: React.FC = () => {
             </h3>
             <Link
               to="/safety-management/safety-concerns"
-              className="text-xs font-medium text-secondary-700 hover:text-secondary-800 hover:underline"
+              className="py-1 text-xs font-medium text-secondary-700 hover:text-secondary-800 hover:underline"
             >
               View all &rarr;
             </Link>
@@ -286,7 +286,7 @@ const SafetyManagementCard: React.FC = () => {
               <li key={tip.id}>
                 <Link
                   to={`/safety-management/safety-concerns/${tip.id}`}
-                  className="grid grid-cols-[72px_1fr_auto_auto] items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-white"
+                  className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-white"
                 >
                   <span className="font-mono text-xs font-semibold text-gray-500">
                     {tip.tag ?? `#${tip.id.slice(0, 6)}`}
@@ -294,10 +294,12 @@ const SafetyManagementCard: React.FC = () => {
                   <span className="truncate text-sm text-gray-800">
                     {tip.unit?.name ?? "—"}
                   </span>
-                  <span className="text-xs text-gray-400">
-                    {dayjs(tip.createdOn).fromNow()}
-                  </span>
-                  <TipStatusBadge status={tip.status} />
+                  <div className="flex flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+                    <span className="text-xs text-gray-600">
+                      {dayjs(tip.createdOn).fromNow()}
+                    </span>
+                    <TipStatusBadge status={tip.status} />
+                  </div>
                 </Link>
               </li>
             ))}
@@ -311,7 +313,7 @@ const SafetyManagementCard: React.FC = () => {
 const TipStatusBadge: React.FC<{ status: TipStatus }> = ({ status }) => {
   const cls =
     status === TipStatus.NEW
-      ? "bg-amber-50 text-amber-700"
+      ? "bg-warning-50 text-warning-700"
       : status === TipStatus.REVIEWED
         ? "bg-secondary-50 text-secondary-700"
         : "bg-gray-100 text-gray-500";
