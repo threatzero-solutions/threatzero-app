@@ -195,7 +195,7 @@ const ThreatAssessmentDashboard: React.FC = withRequirePermissions(() => {
                       count:
                         assessmentStats.subtotals.statuses
                           .concluded_management_ongoing ?? 0,
-                      label: "Mgmt ongoing",
+                      label: "Managing",
                       tone: "info",
                       value: AssessmentStatus.CONCLUDED_MANAGEMENT_ONGOING,
                     },

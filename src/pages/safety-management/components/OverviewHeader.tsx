@@ -7,11 +7,12 @@
  * a row of status chips that act as quick filters, and a quiet inline
  * "Last 7d/30d/90d" line below.
  *
- * The chip palette echoes the user dashboard's SafetyManagementCard
- * tile:
- *   - amber:     attention statuses (new, in-progress)
- *   - secondary: action statuses (reviewed, ongoing)
- *   - muted:     terminal statuses (resolved, complete)
+ * Chip tone marks where a status sits in the lifecycle:
+ *   - primary: attention statuses (new, in-progress)
+ *   - info:    mid-lifecycle statuses (reviewed, managing)
+ *   - success: terminal statuses (resolved, complete)
+ * The user dashboard's SafetyManagementCard reuses the StatusChip
+ * component exported here, so both surfaces render identical badges.
  *
  * Chips become interactive when `onChipClick` is provided; the page
  * wires that to the DataTable's status filter so clicking "New"
@@ -88,7 +89,12 @@ interface ChipProps extends OverviewChip {
   onClick?: () => void;
 }
 
-const Chip: React.FC<ChipProps> = ({
+/**
+ * A count + status-label pill. Static by default; pass `onClick` to make
+ * it an interactive filter button. Exported so the user dashboard's
+ * SafetyManagementCard can render the exact same badge.
+ */
+export const StatusChip: React.FC<ChipProps> = ({
   count,
   label,
   tone = "muted",
@@ -220,7 +226,12 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
               ? c.value.join("+")
               : (c.value ?? c.label);
             return (
-              <Chip key={key} {...c} active={active} onClick={handleClick} />
+              <StatusChip
+                key={key}
+                {...c}
+                active={active}
+                onClick={handleClick}
+              />
             );
           })}
         </div>

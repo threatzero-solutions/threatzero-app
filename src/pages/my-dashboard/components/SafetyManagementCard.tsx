@@ -16,6 +16,10 @@ import {
 } from "../../../queries/safety-management";
 import { TipStatus } from "../../../types/entities";
 import { useMe } from "../../../contexts/me/MeProvider";
+import {
+  StatusChip,
+  type OverviewChip,
+} from "../../safety-management/components/OverviewHeader";
 
 // The backend serializes `statuses` with enum *values* as keys (e.g. "new",
 // not "NEW"), so we read them with a permissive shape rather than the generic
@@ -30,37 +34,32 @@ interface StatsLike {
 
 dayjs.extend(relativeTime);
 
-type BreakdownTone = "amber" | "blue" | "muted";
-interface BreakdownItem {
-  label: string;
-  value: number;
-  tone: BreakdownTone;
-}
-
 interface CountBlockProps {
   title: string;
   to: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   loading: boolean;
   total?: number;
-  accent?: { count: number; label: string };
-  breakdown?: BreakdownItem[];
+  /**
+   * Status chips, in lifecycle order. Reuses the StatusChip + tones from
+   * the safety-management pages' OverviewHeader, so a resource's tile here
+   * reads identically to its full page.
+   */
+  chips?: OverviewChip[];
 }
 
-const toneClass: Record<BreakdownTone, string> = {
-  amber: "text-warning-700",
-  blue: "text-secondary-700",
-  muted: "text-gray-600",
-};
-
+/**
+ * A single resource tile: total + "all-time" context, then the same status
+ * chips the resource's destination page shows in its OverviewHeader. The
+ * whole tile is one link to that page.
+ */
 const CountBlock: React.FC<CountBlockProps> = ({
   title,
   to,
   icon: Icon,
   loading,
   total,
-  accent,
-  breakdown,
+  chips,
 }) => (
   <Link
     to={to}
@@ -78,38 +77,30 @@ const CountBlock: React.FC<CountBlockProps> = ({
     </div>
     {loading ? (
       <>
-        <div className="h-8 w-20 animate-pulse rounded bg-gray-200/80" />
-        <div className="h-3 w-full animate-pulse rounded bg-gray-100" />
+        <div className="h-7 w-16 animate-pulse rounded bg-gray-200" />
+        <div className="flex flex-wrap gap-1.5">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="h-6 w-20 animate-pulse rounded-full bg-gray-200/70"
+            />
+          ))}
+        </div>
       </>
     ) : (
       <>
-        <div className="flex items-end gap-3">
-          <span className="text-3xl font-bold leading-none tabular-nums text-gray-900">
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <span className="text-2xl font-bold leading-none tabular-nums text-secondary-900">
             {total ?? 0}
           </span>
-          {accent && accent.count > 0 && (
-            <span className="inline-flex items-center gap-1.5 pb-0.5 text-xs font-semibold text-warning-700">
-              <span
-                aria-hidden
-                className="h-1.5 w-1.5 rounded-full bg-warning-500"
-              />
-              {accent.count} {accent.label}
-            </span>
-          )}
+          <span className="text-xs font-medium uppercase tracking-wider text-secondary-500">
+            all-time
+          </span>
         </div>
-        {breakdown && breakdown.length > 0 && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-200 pt-3">
-            {breakdown.map((b) => (
-              <div key={b.label} className="flex flex-col leading-tight">
-                <span
-                  className={`text-sm font-bold tabular-nums ${toneClass[b.tone]}`}
-                >
-                  {b.value}
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  {b.label}
-                </span>
-              </div>
+        {chips && chips.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {chips.map((c) => (
+              <StatusChip key={c.label} {...c} />
             ))}
           </div>
         )}
@@ -171,28 +162,23 @@ const SafetyManagementCard: React.FC = () => {
           icon={InboxIcon}
           loading={tips.isPending}
           total={tipStats?.total}
-          accent={
-            tipStats?.subtotals.statuses.new
-              ? { count: tipStats.subtotals.statuses.new, label: "new" }
-              : undefined
-          }
-          breakdown={
+          chips={
             tipStats
               ? [
                   {
+                    count: tipStats.subtotals.statuses.new ?? 0,
                     label: "New",
-                    value: tipStats.subtotals.statuses.new ?? 0,
-                    tone: "amber",
+                    tone: "primary",
                   },
                   {
+                    count: tipStats.subtotals.statuses.reviewed ?? 0,
                     label: "Reviewed",
-                    value: tipStats.subtotals.statuses.reviewed ?? 0,
-                    tone: "blue",
+                    tone: "info",
                   },
                   {
+                    count: tipStats.subtotals.statuses.resolved ?? 0,
                     label: "Resolved",
-                    value: tipStats.subtotals.statuses.resolved ?? 0,
-                    tone: "muted",
+                    tone: "success",
                   },
                 ]
               : undefined
@@ -204,35 +190,31 @@ const SafetyManagementCard: React.FC = () => {
           icon={ClipboardDocumentCheckIcon}
           loading={assessments.isPending}
           total={assessStats?.total}
-          accent={
-            assessStats?.subtotals.statuses.in_progress
-              ? {
-                  count: assessStats.subtotals.statuses.in_progress,
-                  label: "in progress",
-                }
-              : undefined
-          }
-          breakdown={
+          chips={
             assessStats
               ? [
                   {
+                    count: assessStats.subtotals.statuses.in_progress ?? 0,
                     label: "In progress",
-                    value: assessStats.subtotals.statuses.in_progress ?? 0,
-                    tone: "amber",
+                    tone: "primary",
                   },
                   {
-                    label: "Managing",
-                    value:
+                    count:
                       assessStats.subtotals.statuses
                         .concluded_management_ongoing ?? 0,
-                    tone: "blue",
+                    label: "Managing",
+                    tone: "info",
                   },
                   {
+                    // Mirror the page: closed-superficial rolls into
+                    // Complete — both are terminal "case closed" states.
+                    count:
+                      (assessStats.subtotals.statuses
+                        .concluded_management_complete ?? 0) +
+                      (assessStats.subtotals.statuses
+                        .closed_superficial_threat ?? 0),
                     label: "Complete",
-                    value:
-                      assessStats.subtotals.statuses
-                        .concluded_management_complete ?? 0,
-                    tone: "muted",
+                    tone: "success",
                   },
                 ]
               : undefined
@@ -244,23 +226,18 @@ const SafetyManagementCard: React.FC = () => {
           icon={DocumentTextIcon}
           loading={incidents.isPending}
           total={vrStats?.total}
-          accent={
-            vrStats?.subtotals.statuses.new
-              ? { count: vrStats.subtotals.statuses.new, label: "new" }
-              : undefined
-          }
-          breakdown={
+          chips={
             vrStats
               ? [
                   {
+                    count: vrStats.subtotals.statuses.new ?? 0,
                     label: "New",
-                    value: vrStats.subtotals.statuses.new ?? 0,
-                    tone: "amber",
+                    tone: "primary",
                   },
                   {
+                    count: vrStats.subtotals.statuses.reviewed ?? 0,
                     label: "Reviewed",
-                    value: vrStats.subtotals.statuses.reviewed ?? 0,
-                    tone: "blue",
+                    tone: "success",
                   },
                 ]
               : undefined
