@@ -57,7 +57,7 @@ export const CourseInfoPopover: React.FC<{ course: TrainingCourse }> = ({
       {({ open }) => (
         <>
           <PopoverButton
-            className="inline-flex rounded text-secondary-400 transition-colors hover:text-secondary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+            className="inline-flex cursor-pointer rounded text-secondary-400 transition-colors hover:text-secondary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
             aria-label="Course details"
           >
             <InformationCircleIcon aria-hidden className="h-4 w-4" />

@@ -16,6 +16,7 @@
 import { ArrowRight, Lifebuoy, WarningCircle } from "@phosphor-icons/react";
 import { Link, useRouteError } from "react-router";
 import Logo from "../components/brand/Logo";
+import ErrorFeedback from "../components/feedback/ErrorFeedback";
 
 declare const __APP_VERSION__: string;
 
@@ -37,24 +38,21 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
 
   return (
     <div className="min-h-screen flex flex-col bg-warm-50">
-      <header className="px-6 lg:px-8 h-20 flex items-center shrink-0">
-        <Logo size="md" variant="lockup" className="h-12 w-auto" />
-      </header>
-
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl">
+          <Logo size="md" variant="lockup" className="h-14 w-auto" />
           <WarningCircle
             size={40}
             weight="regular"
             aria-hidden="true"
-            className="text-primary-500"
+            className="mt-12 text-primary-500"
           />
           <h1 className="mt-5 text-3xl sm:text-4xl font-semibold tracking-tight text-secondary-900">
             Something didn't load right.
           </h1>
           <p className="mt-3 text-base leading-7 text-secondary-600">
             {friendlyErrorMessage ??
-              "We hit an unexpected error rendering this page. The team has been notified — there's nothing you need to do."}
+              "We hit an unexpected error rendering this page. The team has been notified, so there's nothing you need to do."}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -74,6 +72,8 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
               Contact support
             </Link>
           </div>
+
+          <ErrorFeedback eventId={eventId} />
 
           <dl className="mt-12 pt-6 border-t border-warm-200 grid grid-cols-1 gap-y-3 text-xs text-secondary-500 sm:grid-cols-[auto_1fr] sm:gap-x-6">
             <dt className="uppercase tracking-wider font-medium text-secondary-400">

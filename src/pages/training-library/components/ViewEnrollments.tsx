@@ -50,7 +50,7 @@ const EnrollmentRow: React.FC<EnrollmentRowProps> = ({
         onClick={onSelect}
         aria-current={selected ? "true" : undefined}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all",
+          "group flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-all",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500",
           selected
             ? "border-primary-300 bg-primary-50/60"
@@ -187,7 +187,7 @@ const ViewEnrollments: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-secondary-800 transition-colors hover:bg-warm-50"
+            className="cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-secondary-800 transition-colors hover:bg-warm-50"
             onClick={() => setOpen(false)}
           >
             Close
@@ -197,7 +197,7 @@ const ViewEnrollments: React.FC = () => {
             <button
               type="button"
               onClick={() => handleManageOrganizations()}
-              className="inline-flex justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              className="inline-flex cursor-pointer justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               Manage enrollments
             </button>

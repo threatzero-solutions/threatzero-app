@@ -72,7 +72,7 @@ const CourseHeader: React.FC<CourseHeaderProps> = ({
             <button
               type="button"
               onClick={() => onSelectEnrollment(switchTarget.id)}
-              className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-secondary-700 transition-colors hover:border-gray-300 hover:bg-warm-50"
+              className="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-secondary-700 transition-colors hover:border-gray-300 hover:bg-warm-50"
             >
               <ArrowsRightLeftIcon
                 aria-hidden
@@ -92,7 +92,7 @@ const CourseHeader: React.FC<CourseHeaderProps> = ({
             <button
               type="button"
               onClick={onSeeOtherCourses}
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-secondary-700 transition-colors hover:border-gray-300 hover:bg-warm-50"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-secondary-700 transition-colors hover:border-gray-300 hover:bg-warm-50"
             >
               <ChevronUpDownIcon
                 aria-hidden
@@ -106,7 +106,7 @@ const CourseHeader: React.FC<CourseHeaderProps> = ({
             <button
               type="button"
               onClick={onSeeOtherCourses}
-              className="inline-flex items-center gap-1 text-sm font-medium text-secondary-500 transition-colors hover:text-secondary-800"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-sm font-medium text-secondary-600 underline decoration-secondary-300 underline-offset-4 transition-colors hover:bg-warm-100 hover:text-secondary-900 hover:decoration-secondary-500"
             >
               <ClockIcon aria-hidden className="h-4 w-4" />
               Past courses
