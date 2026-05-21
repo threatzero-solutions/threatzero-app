@@ -29,14 +29,63 @@ import {
   getTrainingItem,
   updateOrCreateItemCompletion,
 } from "../../queries/training";
-import { Video } from "../../types/entities";
-import TrainingItemTile from "./components/TrainingItemTile";
+import {
+  ItemCompletion,
+  TrainingItem as TrainingItemType,
+  Video,
+} from "../../types/entities";
+import SectionItemRow from "./components/library/SectionItemRow";
+import { stripHtml } from "./components/library/useLibraryCourse";
 import VideoProgress from "./components/VideoProgress";
 
 const VideoUnavailable: React.FC = () => (
-  <div className="w-full h-full flex justify-center items-center bg-gray-900">
-    <p className="text-center text-white">Video unavailable.</p>
+  <div className="flex h-full w-full items-center justify-center bg-secondary-900">
+    <p className="text-center text-sm font-medium text-white">
+      Video unavailable.
+    </p>
   </div>
+);
+
+/** Loading placeholder mirroring the player + title block. */
+const PlayerSkeleton: React.FC = () => (
+  <div className="animate-pulse">
+    <div className="aspect-video w-full rounded-xl bg-gray-200" />
+    <div className="mt-5 space-y-2">
+      <div className="h-7 w-2/3 rounded bg-gray-200" />
+      <div className="h-4 w-1/2 rounded bg-gray-100" />
+    </div>
+  </div>
+);
+
+/**
+ * Prerequisite gate. The backend prerequisite path is largely unbuilt, so
+ * this stays intentionally light: it surfaces the blocked state and lists
+ * what to finish first, reusing the standard item row.
+ */
+const PrerequisitesNotice: React.FC<{
+  items: TrainingItemType[];
+  completions?: Map<string, ItemCompletion>;
+}> = ({ items, completions }) => (
+  <section className="rounded-xl border border-gray-200 bg-white p-6">
+    <h2 className="text-lg font-semibold text-secondary-900">
+      Finish the prerequisites first
+    </h2>
+    <p className="mt-1 text-sm text-secondary-600">
+      Complete the training below before starting this item.
+    </p>
+    {items.length > 0 && (
+      <ol className="mt-4 space-y-2">
+        {items.map((p) => (
+          <SectionItemRow
+            key={p.id}
+            item={p}
+            to={`/training/library/items/${p.id}`}
+            completion={completions?.get(p.id)}
+          />
+        ))}
+      </ol>
+    )}
+  </section>
 );
 
 const TrainingItem: React.FC = () => {
@@ -234,20 +283,20 @@ const TrainingItem: React.FC = () => {
     //   - Modal NOT up (escaped, dismissed, or pre-mount race) → surface
     //     the explanatory note here so the page isn't mysteriously blank.
     return (
-      <div>
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
         {authenticated && <BackButton defaultTo={"/training/library"} />}
         {isPickerOpen ? (
           <div
             aria-hidden="true"
-            className="mt-8 mx-auto max-w-3xl space-y-3 opacity-30 pointer-events-none select-none"
+            className="mt-2 select-none space-y-3 opacity-30"
           >
-            <div className="aspect-video w-full rounded-lg bg-gray-200" />
+            <div className="aspect-video w-full rounded-xl bg-gray-200" />
             <div className="h-6 w-3/4 rounded bg-gray-200" />
             <div className="h-4 w-1/2 rounded bg-gray-100" />
           </div>
         ) : (
-          <div className="mt-8 mx-auto max-w-md text-center text-sm text-gray-600">
-            <p>
+          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-6 text-center">
+            <p className="mx-auto max-w-sm text-sm text-secondary-600">
               Pick your home base before starting training. Your progress gets
               attributed there.
             </p>
@@ -258,81 +307,59 @@ const TrainingItem: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
       {authenticated && <BackButton defaultTo={"/training/library"} />}
-      {item ? (
+
+      {!item ? (
+        <PlayerSkeleton />
+      ) : item.prerequisitesFulfilled ? (
         <>
-          {item.prerequisitesFulfilled ? (
-            <>
-              <div className="w-full aspect-video">
-                {(item as Video).vimeoUrl ? (
-                  <ErrorBoundary
-                    fallback={<VideoUnavailable />}
-                    onError={handleVideoError}
-                  >
-                    <VimeoPlayer
-                      url={(item as Video).vimeoUrl ?? ""}
-                      controls
-                      responsive
-                      className="h-full w-full"
-                      onReady={handlePlayerReady}
-                      onError={handleVideoError}
-                      onProgress={handleVideoProgress}
-                      currentTime={videoStartingTime}
-                    />
-                  </ErrorBoundary>
-                ) : (
-                  <VideoUnavailable />
-                )}
-              </div>
-              <div className="flex gap-2 w-full">
-                <div className="grow">
-                  <h1
-                    className="text-2xl my-1 mt-4"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
-                    dangerouslySetInnerHTML={{ __html: item.metadata.title }}
-                  />
-                  <p
-                    className="text-gray-500 text-md"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: input controlled by Admins
-                    dangerouslySetInnerHTML={{
-                      __html: item.metadata.description ?? "",
-                    }}
-                  />
-                </div>
-                <VideoProgress
-                  duration={videoProgress.duration}
-                  currentTime={videoProgress.seconds}
-                  completionThreshold={DISPLAY_COMPLETION_THRESHOLD}
-                  className="h-12 w-12 self-center shrink-0"
+          <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200 bg-secondary-900">
+            {(item as Video).vimeoUrl ? (
+              <ErrorBoundary
+                fallback={<VideoUnavailable />}
+                onError={handleVideoError}
+              >
+                <VimeoPlayer
+                  url={(item as Video).vimeoUrl ?? ""}
+                  controls
+                  responsive
+                  className="h-full w-full"
+                  onReady={handlePlayerReady}
+                  onError={handleVideoError}
+                  onProgress={handleVideoProgress}
+                  currentTime={videoStartingTime}
                 />
-              </div>
-            </>
-          ) : (
-            <>
-              <h2>Notice: This item has prerequired training material</h2>
-              <h3>
-                The following material must be completed before viewing this
-                training item:
-              </h3>
-              <ul>
-                {item.prerequisiteItems.map((p) => (
-                  <li key={p.id}>
-                    <TrainingItemTile item={p} />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+              </ErrorBoundary>
+            ) : (
+              <VideoUnavailable />
+            )}
+          </div>
+
+          <div className="mt-5 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold leading-tight text-secondary-900">
+                {stripHtml(item.metadata.title) || "Training"}
+              </h1>
+              {stripHtml(item.metadata.description) && (
+                <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-secondary-600">
+                  {stripHtml(item.metadata.description)}
+                </p>
+              )}
+            </div>
+            <VideoProgress
+              duration={videoProgress.duration}
+              currentTime={videoProgress.seconds}
+              completionThreshold={DISPLAY_COMPLETION_THRESHOLD}
+              className="h-12 w-12 shrink-0"
+            />
+          </div>
         </>
       ) : (
-        <div className="w-full">
-          <div className="animate-pulse flex-1">
-            <div className="aspect-video bg-slate-200 rounded-sm" />
-            <div className="h-8 bg-slate-200 rounded-sm mt-4 mb-1" />
-            <div className="h-6 bg-slate-200 rounded-sm" />
-          </div>
-        </div>
+        <PrerequisitesNotice
+          items={item.prerequisiteItems}
+          completions={state.itemCompletionsMap}
+        />
       )}
     </div>
   );

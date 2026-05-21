@@ -1,115 +1,77 @@
-import { FolderOpenIcon } from "@heroicons/react/20/solid";
-import { Link } from "react-router";
 import { trainingLibraryPermissionsOptions } from "../../../constants/permission-options";
 import { withRequirePermissions } from "../../../guards/with-require-permissions";
+import { CourseEnrollment, TrainingCourse } from "../../../types/entities";
+import CourseHeader from "./library/CourseHeader";
+import CourseSections from "./library/CourseSections";
+import FocusedSectionPanel from "./library/FocusedSectionPanel";
 import {
-  CourseEnrollment,
-  TrainingCourse,
-  TrainingVisibility,
-} from "../../../types/entities";
-import CourseAvailabilityDates from "./CourseActiveStatus";
-import CourseCustomTag from "./CourseCustomTag";
-import CourseVisibilityTag from "./CourseVisibilityTag";
-import FeaturedSection from "./FeaturedSection";
-import TrainingSections from "./TrainingSections";
+  CourseEmptyState,
+  LibraryEmptyState,
+  LibrarySkeleton,
+} from "./library/LibraryStates";
+import { useLibraryCourse } from "./library/useLibraryCourse";
 
 interface TrainingCourseProps {
   enrollment: CourseEnrollment | undefined | null;
   course: TrainingCourse | undefined | null;
   loading?: boolean;
-  showMultipleEnrollments?: boolean;
-  onSeeOtherCourses?: () => void;
   isTrainingAdmin?: boolean;
+  /** All of the user's enrollments — drives the course switcher. */
+  enrollments?: CourseEnrollment[];
+  /** Switch the active course; supplied by the library page only. */
+  onSelectEnrollment?: (enrollmentId: string) => void;
+  /** Open the course slide-over (used when there are 3+ courses). */
+  onSeeOtherCourses?: () => void;
 }
 
+/**
+ * The end-user training library: a guided course shown as a focused
+ * "next section" spotlight plus the full course as a vertical timeline.
+ * Also serves the admin course preview (read-only — no editing controls).
+ */
 const ViewTrainingCourse: React.FC<TrainingCourseProps> =
   withRequirePermissions(
     ({
       enrollment,
       course,
       loading,
-      showMultipleEnrollments = false,
-      onSeeOtherCourses,
       isTrainingAdmin = false,
+      enrollments,
+      onSelectEnrollment,
+      onSeeOtherCourses,
     }) => {
+      const { rows, focused, completeCount, totalCount } = useLibraryCourse(
+        course,
+        enrollment,
+      );
+
       return (
-        <div className="flex flex-col px-5 h-full">
-          {showMultipleEnrollments && course && (
-            <div className="pb-5 flex items-center justify-between">
-              <div className="grid">
-                {onSeeOtherCourses && (
-                  <button
-                    type="button"
-                    onClick={onSeeOtherCourses}
-                    className="w-max mb-2 rounded-sm bg-secondary-100 px-2 py-1 text-sm font-semibold text-secondary-600 shadow-xs hover:bg-secondary-200"
-                  >
-                    See other courses &rarr;
-                  </button>
-                )}
-                <h1
-                  className="text-2xl font-bold text-gray-900"
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe
-                  dangerouslySetInnerHTML={{
-                    __html: course.metadata.title,
-                  }}
-                />
-                <p
-                  className="text-sm font-medium text-gray-500"
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: dangerouslySetInnerHTML is safe
-                  dangerouslySetInnerHTML={{
-                    __html: course.metadata.description ?? "",
-                  }}
-                />
-                <div className="flex gap-2 mt-3">
-                  {isTrainingAdmin &&
-                    course.visibility === TrainingVisibility.HIDDEN && (
-                      <CourseVisibilityTag visibility={course.visibility} />
-                    )}
-                  <CourseAvailabilityDates
-                    startDate={enrollment?.startDate}
-                    endDate={enrollment?.endDate}
-                  />
-                  {isTrainingAdmin && course.metadata.tag && (
-                    <CourseCustomTag tag={course.metadata.tag} />
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          {!course && !loading ? (
-            <div className="text-center h-full flex flex-col items-center justify-center">
-              <FolderOpenIcon
-                className="h-12 w-12 text-gray-400"
-                aria-hidden="true"
-              />
-              <h3 className="mt-2 text-sm font-semibold text-gray-900">
-                No courses available
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Try checking back later.
-              </p>
-              {isTrainingAdmin && (
-                <Link
-                  to="/admin-panel/organizations"
-                  className="mt-4 inline-flex justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                >
-                  Manage Organization Course Enrollments
-                </Link>
-              )}
-            </div>
+        <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+          {loading ? (
+            <LibrarySkeleton />
+          ) : !course ? (
+            <LibraryEmptyState isTrainingAdmin={isTrainingAdmin} />
           ) : (
             <>
-              <FeaturedSection
+              <CourseHeader
+                course={course}
                 enrollment={enrollment}
-                sections={course?.sections}
-                loading={loading}
+                enrollments={enrollments}
+                onSelectEnrollment={onSelectEnrollment}
+                onSeeOtherCourses={onSeeOtherCourses}
               />
-              <h2 className="mt-12 text-xl text-gray-700">All Content</h2>
-              <TrainingSections
-                enrollment={enrollment}
-                sections={course?.sections}
-                loading={loading}
-              />
+              {rows.length === 0 || !focused ? (
+                <CourseEmptyState />
+              ) : (
+                <>
+                  <FocusedSectionPanel row={focused} />
+                  <CourseSections
+                    rows={rows}
+                    completeCount={completeCount}
+                    totalCount={totalCount}
+                  />
+                </>
+              )}
             </>
           )}
         </div>
