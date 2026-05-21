@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { ArrowRightIcon, CheckIcon } from "@heroicons/react/20/solid";
 import { cn } from "../../../../utils/core";
+import VideoProgress from "../VideoProgress";
 import { formatWindow, type SectionRow } from "./useLibraryCourse";
 
 interface CourseSectionsProps {
@@ -9,7 +10,8 @@ interface CourseSectionsProps {
   totalCount: number;
 }
 
-/** The small disc on the timeline rail, styled to the section's status. */
+/** The status disc on the timeline rail. Always a block so it sizes
+ * predictably and sits cleanly on top of the connecting line. */
 const StatusNode: React.FC<{ status: SectionRow["status"] }> = ({ status }) => {
   if (status === "done") {
     return (
@@ -27,7 +29,7 @@ const StatusNode: React.FC<{ status: SectionRow["status"] }> = ({ status }) => {
   }
   if (status === "upcoming") {
     return (
-      <span className="h-7 w-7 rounded-full border-2 border-dashed border-gray-300 bg-white" />
+      <span className="block h-7 w-7 rounded-full border-2 border-dashed border-gray-300 bg-white" />
     );
   }
   return (
@@ -54,113 +56,115 @@ const RowTrailing: React.FC<{ row: SectionRow }> = ({ row }) => {
       </span>
     );
   }
-  return (
-    <span className="flex items-center gap-2">
-      {row.completedItems > 0 && row.itemCount > 1 && (
-        <span className="text-xs font-semibold tabular-nums text-secondary-600">
-          {row.completedItems}/{row.itemCount}
-        </span>
-      )}
-      <ArrowRightIcon
-        aria-hidden
-        className="h-4 w-4 text-gray-400 transition-all group-hover:translate-x-0.5 group-hover:text-primary-500"
+  if (row.watchProgress > 0) {
+    return (
+      <VideoProgress
+        duration={1}
+        currentTime={row.watchProgress}
+        className="h-8 w-8"
       />
-    </span>
+    );
+  }
+  return (
+    <ArrowRightIcon
+      aria-hidden
+      className="h-5 w-5 text-gray-400 transition-all group-hover:translate-x-0.5 group-hover:text-primary-500"
+    />
   );
 };
 
-const SectionRowItem: React.FC<{
-  row: SectionRow;
-  isFirst: boolean;
-  isLast: boolean;
-}> = ({ row, isFirst, isLast }) => {
+const SectionRowItem: React.FC<{ row: SectionRow; isLast: boolean }> = ({
+  row,
+  isLast,
+}) => {
   const location = useLocation();
 
   const meta = [
     formatWindow(row.window),
+    row.estTimeLabel,
     row.itemCount > 1 ? `${row.itemCount} items` : null,
   ]
     .filter(Boolean)
     .join("  ·  ");
 
   return (
-    <li className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-3">
-      {/* Timeline rail: connecting line + status node */}
-      <div className="relative flex justify-center pt-3">
-        {!(isFirst && isLast) && (
-          <span
-            aria-hidden
-            className={cn(
-              "absolute left-1/2 w-px -translate-x-1/2 bg-gray-200",
-              isFirst ? "top-[1.625rem]" : "top-0",
-              isLast ? "bottom-[calc(100%-1.625rem)]" : "bottom-0",
-            )}
-          />
-        )}
-        <span className="relative">
-          <StatusNode status={row.status} />
-        </span>
-      </div>
+    <li className="relative pb-2.5 last:pb-0">
+      {/* Continuous rail: a single line that runs from this node down
+          through the row gap into the next node, which caps it. */}
+      {!isLast && (
+        <span
+          aria-hidden
+          className="absolute left-[0.875rem] top-3 h-full w-px -translate-x-1/2 bg-gray-200"
+        />
+      )}
 
-      <Link
-        to={row.to}
-        state={{ from: location }}
-        className={cn(
-          "group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border p-3 transition-all",
-          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500",
-          row.status === "current"
-            ? "border-primary-300 bg-primary-50/60 hover:border-primary-400 hover:shadow-sm"
-            : row.status === "upcoming"
-              ? "border-gray-200 bg-warm-50 hover:border-gray-300 hover:bg-white hover:shadow-sm"
-              : "border-gray-200 bg-white hover:border-primary-300 hover:shadow-sm",
-        )}
-      >
-        <div className="h-12 w-20 shrink-0 overflow-hidden rounded-md bg-gray-200">
-          <img
-            src={row.thumbnailUrl}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className={cn(
-              "h-full w-full object-cover",
-              row.status === "upcoming" && "opacity-60",
-            )}
-          />
+      <div className="flex items-start gap-3">
+        <div className="relative z-10 mt-3 shrink-0">
+          <StatusNode status={row.status} />
         </div>
 
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span
+        <Link
+          to={row.to}
+          state={{ from: location }}
+          className={cn(
+            "group grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border p-3 transition-all",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500",
+            row.status === "current"
+              ? "border-primary-300 bg-primary-50/60 hover:border-primary-400 hover:shadow-sm"
+              : row.status === "upcoming"
+                ? "border-gray-200 bg-warm-50 hover:border-gray-300 hover:bg-white hover:shadow-sm"
+                : "border-gray-200 bg-white hover:border-primary-300 hover:shadow-sm",
+          )}
+        >
+          <div className="h-12 w-20 shrink-0 overflow-hidden rounded-md bg-gray-200">
+            <img
+              src={row.thumbnailUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
               className={cn(
-                "truncate text-sm font-semibold",
-                row.status === "upcoming"
-                  ? "text-secondary-600"
-                  : "text-secondary-900",
+                "h-full w-full object-cover",
+                row.status === "upcoming" && "opacity-60",
               )}
-            >
-              {row.title}
-            </span>
-            {row.status === "current" && (
-              <span className="shrink-0 rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-800">
-                Current
+            />
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "truncate text-sm font-semibold",
+                  row.status === "upcoming"
+                    ? "text-secondary-600"
+                    : "text-secondary-900",
+                )}
+              >
+                {row.title}
               </span>
+              {row.status === "current" && (
+                <span className="shrink-0 rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-800">
+                  Current
+                </span>
+              )}
+            </div>
+            {meta && (
+              <p className="mt-0.5 truncate text-xs text-secondary-500">
+                {meta}
+              </p>
             )}
           </div>
-          {meta && (
-            <p className="mt-0.5 truncate text-xs text-secondary-500">{meta}</p>
-          )}
-        </div>
 
-        <RowTrailing row={row} />
-      </Link>
+          <RowTrailing row={row} />
+        </Link>
+      </div>
     </li>
   );
 };
 
 /**
  * The full course as a vertical timeline: one row per section in program
- * order, each carrying its own status. A course-level progress bar sits
- * above so the user can see how far through the year they are.
+ * order, each carrying its own status, watch progress, and estimated time.
+ * A course-level progress bar sits above.
  */
 const CourseSections: React.FC<CourseSectionsProps> = ({
   rows,
@@ -193,12 +197,11 @@ const CourseSections: React.FC<CourseSectionsProps> = ({
         />
       </div>
 
-      <ol className="mt-5 space-y-2">
+      <ol className="mt-5">
         {rows.map((row, i) => (
           <SectionRowItem
             key={row.id}
             row={row}
-            isFirst={i === 0}
             isLast={i === rows.length - 1}
           />
         ))}

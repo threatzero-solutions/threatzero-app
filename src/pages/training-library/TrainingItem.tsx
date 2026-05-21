@@ -283,7 +283,7 @@ const TrainingItem: React.FC = () => {
     //   - Modal NOT up (escaped, dismissed, or pre-mount race) → surface
     //     the explanatory note here so the page isn't mysteriously blank.
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
         {authenticated && <BackButton defaultTo={"/training/library"} />}
         {isPickerOpen ? (
           <div
@@ -307,7 +307,7 @@ const TrainingItem: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
       {authenticated && <BackButton defaultTo={"/training/library"} />}
 
       {!item ? (

@@ -8,14 +8,15 @@ interface FocusedSectionPanelProps {
 }
 
 /**
- * The spotlight at the top of the library: the one section the user
- * should act on next. A wide panel — thumbnail beside a clear eyebrow,
- * title, blurb, progress, and a single primary action.
+ * The spotlight at the top of the library: the one piece of training the
+ * user should act on next. Sections almost always hold a single item, so
+ * a one-item section is presented simply as "training", not as a section.
  */
 const FocusedSectionPanel: React.FC<FocusedSectionPanelProps> = ({ row }) => {
   const location = useLocation();
 
-  const started = row.completedItems > 0 && !row.isComplete;
+  const noun = row.isSingleItem ? "training" : "section";
+  const started = row.watchProgress > 0 && !row.isComplete;
 
   const eyebrow = row.isComplete
     ? "Completed"
@@ -32,20 +33,22 @@ const FocusedSectionPanel: React.FC<FocusedSectionPanelProps> = ({ row }) => {
       : "text-primary-700";
 
   const cta = row.isComplete
-    ? "Review section"
+    ? `Review ${noun}`
     : row.status === "upcoming"
-      ? "Preview section"
+      ? `Preview ${noun}`
       : started
         ? "Continue"
-        : "Start section";
+        : `Start ${noun}`;
 
-  const dateRange = formatWindow(row.window);
   const meta = [
-    dateRange,
-    row.itemCount > 0
-      ? `${row.itemCount} ${row.itemCount === 1 ? "item" : "items"}`
-      : null,
+    formatWindow(row.window),
+    row.estTimeLabel,
+    !row.isSingleItem && row.itemCount > 1 ? `${row.itemCount} items` : null,
   ].filter(Boolean);
+
+  const progressLabel = row.isSingleItem
+    ? `${Math.round(row.watchProgress * 100)}% watched`
+    : `${row.completedItems} of ${row.itemCount} complete`;
 
   return (
     <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -77,16 +80,16 @@ const FocusedSectionPanel: React.FC<FocusedSectionPanelProps> = ({ row }) => {
             </p>
           )}
 
-          {started && row.itemCount > 1 && (
+          {started && (
             <div className="max-w-xs">
               <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
                 <span
                   className="block h-full rounded-full bg-primary-500"
-                  style={{ width: `${row.fraction * 100}%` }}
+                  style={{ width: `${row.watchProgress * 100}%` }}
                 />
               </div>
               <p className="mt-1.5 text-xs font-medium text-secondary-500">
-                {row.completedItems} of {row.itemCount} complete
+                {progressLabel}
               </p>
             </div>
           )}
@@ -95,7 +98,7 @@ const FocusedSectionPanel: React.FC<FocusedSectionPanelProps> = ({ row }) => {
             <Link
               to={row.to}
               state={{ from: location }}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              className="group inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               <PlayIcon aria-hidden className="h-4 w-4" />
               {cta}

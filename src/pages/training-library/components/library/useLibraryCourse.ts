@@ -1,6 +1,7 @@
 import { useContext, useMemo } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { DEFAULT_THUMBNAIL_URL } from "../../../../constants/core";
 import { TrainingContext } from "../../../../contexts/training/training-context";
 import {
@@ -17,6 +18,7 @@ import {
 } from "../../../../utils/training";
 
 dayjs.extend(duration);
+dayjs.extend(relativeTime);
 
 /**
  * Status of a section within the guided program:
@@ -35,10 +37,21 @@ export interface SectionRow {
   index: number;
   itemCount: number;
   completedItems: number;
-  /** 0..1 completion across the section's items. */
-  fraction: number;
+  /**
+   * 0..1 overall watch progress across the section's items, counting
+   * partial video progress (not just fully-completed items). This is what
+   * surfaces "halfway through" at a glance.
+   */
+  watchProgress: number;
   isComplete: boolean;
+  /**
+   * In practice nearly every section holds exactly one item, so a section
+   * effectively *is* that item. When true, treat and label it as a single
+   * piece of training, not a "section".
+   */
   isSingleItem: boolean;
+  /** Humanized total estimated time across the section's items, if known. */
+  estTimeLabel: string | null;
   title: string;
   description: string;
   thumbnailUrl: string;
@@ -74,9 +87,9 @@ export const formatWindow = (window: FeaturedWindow | null): string => {
 
 /**
  * Derives the end-user view of a training course: an ordered list of
- * sections with per-section status + completion, plus the single section
- * to spotlight. Completion is read from the active enrollment's item
- * completions in TrainingContext.
+ * sections with per-section status, completion, watch progress, and
+ * estimated time, plus the single section to spotlight. Completion is read
+ * from the active enrollment's item completions in TrainingContext.
  */
 export const useLibraryCourse = (
   course: TrainingCourse | undefined | null,
@@ -108,15 +121,37 @@ export const useLibraryCourse = (
 
     const rows: SectionRow[] = allSections.map((section, index) => {
       const items = section.items ?? [];
-      const itemIds = items
-        .map((si) => si?.item?.id)
-        .filter((id): id is string => !!id);
-      const completedItems = itemIds.filter(
-        (id) => completions?.get(id)?.completed,
-      ).length;
-      const itemCount = itemIds.length;
+
+      let itemCount = 0;
+      let completedItems = 0;
+      let progressSum = 0;
+      let estTotal = dayjs.duration(0);
+      let hasEst = false;
+
+      for (const si of items) {
+        const itemId = si?.item?.id;
+        if (!itemId) continue;
+        itemCount += 1;
+
+        const completion = completions?.get(itemId);
+        if (completion?.completed) {
+          completedItems += 1;
+          progressSum += 1;
+        } else {
+          progressSum += completion?.progress ?? 0;
+        }
+
+        const est = si?.item?.estCompletionTime;
+        if (est) {
+          estTotal = estTotal.add(dayjs.duration(est));
+          hasEst = true;
+        }
+      }
+
       const isComplete = itemCount > 0 && completedItems === itemCount;
-      const fraction = itemCount > 0 ? completedItems / itemCount : 0;
+      const watchProgress = itemCount > 0 ? progressSum / itemCount : 0;
+      const estTimeLabel =
+        hasEst && estTotal.asSeconds() >= 1 ? estTotal.humanize() : null;
 
       const window = (section.id && windowBySection.get(section.id)) || null;
       const availability = window
@@ -146,9 +181,10 @@ export const useLibraryCourse = (
         index,
         itemCount,
         completedItems,
-        fraction,
+        watchProgress,
         isComplete,
         isSingleItem,
+        estTimeLabel,
         title: stripHtml(rawTitle) || "Untitled section",
         description: stripHtml(rawDesc),
         thumbnailUrl: firstItem?.thumbnailUrl ?? DEFAULT_THUMBNAIL_URL,
