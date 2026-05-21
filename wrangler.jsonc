@@ -10,7 +10,7 @@
   // Build command + environment variables (VITE_*, SENTRY_*) are set in
   // the Cloudflare dashboard under Workers Builds, not here.
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "threatzero-app",
+  "name": "threatzero-app-review",
   "compatibility_date": "2026-05-20",
   "assets": {
     "directory": "./dist",
