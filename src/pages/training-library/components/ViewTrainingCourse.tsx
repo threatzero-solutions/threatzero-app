@@ -59,6 +59,7 @@ const ViewTrainingCourse: React.FC<TrainingCourseProps> =
                 enrollments={enrollments}
                 onSelectEnrollment={onSelectEnrollment}
                 onSeeOtherCourses={onSeeOtherCourses}
+                isTrainingAdmin={isTrainingAdmin}
               />
               {rows.length === 0 || !focused ? (
                 <CourseEmptyState />

@@ -85,6 +85,32 @@ export const formatWindow = (window: FeaturedWindow | null): string => {
   return `${a.format("MMM D, YYYY")} – ${b.format("MMM D, YYYY")}`;
 };
 
+export interface SplitEnrollments {
+  active: CourseEnrollment[];
+  past: CourseEnrollment[];
+}
+
+/**
+ * Split a user's enrollments by their date window. `active` is anything
+ * ongoing, upcoming, or undated; `past` is anything whose end date has
+ * passed. The course switcher only moves between active enrollments —
+ * past ones stay reachable as read-only history.
+ */
+export const splitEnrollments = (
+  enrollments: CourseEnrollment[] | undefined,
+): SplitEnrollments => {
+  const active: CourseEnrollment[] = [];
+  const past: CourseEnrollment[] = [];
+  for (const e of enrollments ?? []) {
+    if (getCourseAvailability(e.startDate, e.endDate) === "ended") {
+      past.push(e);
+    } else {
+      active.push(e);
+    }
+  }
+  return { active, past };
+};
+
 /**
  * Derives the end-user view of a training course: an ordered list of
  * sections with per-section status, completion, watch progress, and
