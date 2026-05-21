@@ -154,7 +154,7 @@ const MyTraining: React.FC = () => {
     <div className="flex items-baseline justify-between gap-2">
       <h2
         id="my-training-heading"
-        className="text-base font-semibold text-gray-900"
+        className="text-lg font-semibold text-gray-900"
       >
         My training
       </h2>
@@ -171,7 +171,7 @@ const MyTraining: React.FC = () => {
   const shell = (children: React.ReactNode) => (
     <section
       aria-labelledby="my-training-heading"
-      className="space-y-3 rounded-xl border border-gray-200 bg-white p-5"
+      className="space-y-3 rounded-xl border border-gray-200 bg-warm-50 p-5"
     >
       {header}
       {children}
@@ -185,11 +185,11 @@ const MyTraining: React.FC = () => {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="h-12 animate-pulse rounded-md bg-gray-100"
+              className="h-12 animate-pulse rounded-md bg-gray-200"
             />
           ))}
         </div>
-        <div className="h-48 animate-pulse rounded-lg bg-gray-100" />
+        <div className="h-48 animate-pulse rounded-lg bg-gray-200" />
       </div>,
     );
   }
@@ -295,9 +295,9 @@ const ScheduleRow: React.FC<RowProps> = ({
   const tag = statusTag(state, window, progress);
 
   const rowTone = {
-    past: "hover:bg-gray-50",
+    past: "hover:bg-white",
     current: "bg-primary-50/60 hover:bg-primary-50",
-    future: "hover:bg-gray-50",
+    future: "hover:bg-white",
   }[state];
 
   const titleClass = {
@@ -364,7 +364,7 @@ const FeaturedPanel: React.FC<{
         : "Preview";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
       <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
         <img
           src={thumb}
